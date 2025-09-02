@@ -61,15 +61,15 @@ const Hero = () => {
       overlayGradient: "linear-gradient(135deg, rgba(24, 43, 92, 0.85) 0%, rgba(24, 43, 92, 0.7) 100%)"
     },
     {
-      image: "/fibre.webp",
+      image: "/optic.jpeg",
       title: "Affordable Pricing Plans",
       description: "Get top-quality fibre internet services at competitive rates with flexible packages for homes and businesses.",
       buttonText: "VIEW PLANS",
-      buttonAction: () => navigate('/wifiPlans'),
+      buttonAction: () => navigate('/wifi-plans'),
       overlayGradient: "linear-gradient(135deg, rgba(24, 43, 92, 0.85) 0%, rgba(24, 43, 92, 0.7) 100%)"
     },
     {
-      image: "/router.jpg",
+      image: "/city2.jpg",
       title: "24/7 Customer Support",
       description: "Our dedicated team provides round-the-clock support to ensure seamless connectivity and quick issue resolution.",
       buttonText: "CONTACT US",
@@ -154,6 +154,29 @@ const Hero = () => {
       >
         <FaWhatsapp style={{ fontSize: '30px', color: 'white' }} />
       </motion.a>
+
+      {/* Chat with us text (on the right side of the icon) */}
+      <motion.div
+        className="chat-text"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 1.5 }}
+        style={{
+          position: 'fixed',
+          bottom: '52px',
+          right: '110px',
+          color: 'white',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          padding: '8px 15px',
+          borderRadius: '20px',
+          fontSize: '14px',
+          fontWeight: '500',
+          zIndex: 1000,
+          backdropFilter: 'blur(5px)',
+        }}
+      >
+        Chat with us
+      </motion.div>
 
       <Swiper
         ref={swiperRef}
@@ -372,7 +395,7 @@ const Hero = () => {
         .swiper-button-next, .swiper-button-prev {
           background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(10px);
-          border-radius: '50%';
+          border-radius: 50%;
           width: 48px;
           height: 48px;
           transition: all 0.3s ease;
@@ -396,7 +419,7 @@ const Hero = () => {
           }
         }
         
-        /* Mobile responsiveness for WhatsApp button */
+        /* Mobile responsiveness */
         @media screen and (max-width: 768px) {
           .swiper-button-next, .swiper-button-prev {
             display: none;
@@ -419,6 +442,19 @@ const Hero = () => {
           
           .whatsapp-float svg {
             font-size: 25px;
+          }
+          
+          .chat-text {
+            bottom: 32px;
+            right: 80px;
+            font-size: 12px;
+            padding: 6px 12px;
+          }
+        }
+
+        @media screen and (max-width: 480px) {
+          .chat-text {
+            display: none;
           }
         }
       `}</style>

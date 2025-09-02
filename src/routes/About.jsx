@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
@@ -7,14 +8,20 @@ import 'swiper/css/pagination';
 
 const About = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const navigate = useNavigate();
+
+  // Navigation handler
+  const handleServicesClick = () => {
+    navigate('/services');
+  };
 
   // Image gallery data
   const galleryImages = [
-    "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    "/project1.jpg",
+    "/project2.jpg",
+    "/fibre3.webp",
+    "/wifi1.jpg",
+    "pipe.webp",
   ];
 
   // Services data
@@ -40,6 +47,64 @@ const About = () => {
       icon: "🛠️"
     }
   ];
+
+  // Animation variants
+  const fadeIn = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0.6, ease: "easeOut" }
+    }
+  };
+
+  const slideUp = {
+    hidden: { y: 30, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5, ease: "easeOut" }
+    }
+  };
+
+  const scaleUp = {
+    hidden: { scale: 0.9, opacity: 0 },
+    visible: {
+      scale: 1,
+      opacity: 1,
+      transition: { duration: 0.4, ease: "easeOut" }
+    }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const staggerItem = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 12
+      }
+    }
+  };
+
+  const hoverEffect = {
+    whileHover: { 
+      scale: 1.05,
+      transition: { type: "spring", stiffness: 400, damping: 10 }
+    },
+    whileTap: { scale: 0.95 }
+  };
 
   return (
     <div className="about-page bg-gray-50 min-h-screen">
@@ -133,20 +198,18 @@ const About = () => {
               >
                 Contact Us
               </motion.a>
-              <motion.a 
-                href="#services" 
+              <motion.button 
+                onClick={handleServicesClick}
                 className="inline-block border-2 border-white text-white hover:bg-white hover:text-[#182B5C] px-8 py-3.5 rounded-md font-semibold transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 Our Services
-              </motion.a>
+              </motion.button>
             </motion.div>
           </div>
         </div>
       </section>
-
-      {/* Removed Stats Section */}
 
       {/* Tab Navigation with KCA-inspired design */}
       <section className="py-6 bg-white border-t border-gray-100">
@@ -210,17 +273,17 @@ const About = () => {
                   </p>
                   
                   <div className="mt-8">
-                    <motion.a 
-                      href="#services" 
+                    <motion.button 
+                      onClick={handleServicesClick}
                       className="inline-flex items-center bg-[#182B5C] hover:bg-[#0f7dcc] text-white px-6 py-3.5 rounded-md font-semibold transition-colors"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      Explore Our Services
+                      
                       <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                       </svg>
-                    </motion.a>
+                    </motion.button>
                   </div>
                 </div>
               </div>
@@ -323,14 +386,17 @@ const About = () => {
                 Comprehensive fibre solutions tailored to meet the evolving needs of businesses and communities across Kenya.
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <motion.div 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+              >
                 {services.map((service, index) => (
                   <motion.div 
                     key={index}
                     className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                    variants={staggerItem}
                     whileHover={{ y: -5 }}
                   >
                     <div className="text-4xl mb-4">{service.icon}</div>
@@ -338,7 +404,7 @@ const About = () => {
                     <p className="text-gray-600 text-sm">{service.description}</p>
                   </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
 
             {/* Company Bio */}
@@ -349,7 +415,7 @@ const About = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
-                Our Story
+                Optimas Bio
               </motion.h2>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -391,17 +457,17 @@ const About = () => {
                   </div>
                   
                   <div className="text-center">
-                    <motion.a 
-                      href="#services" 
+                    <motion.button 
+                      onClick={handleServicesClick}
                       className="inline-flex items-center bg-[#182B5C] hover:bg-[#0f7dcc] text-white px-6 py-3 rounded-md font-semibold transition-colors"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      Discover Our Services
+                      
                       <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                       </svg>
-                    </motion.a>
+                    </motion.button>
                   </div>
                 </div>
               </div>
@@ -426,14 +492,17 @@ const About = () => {
               Explore our successful projects and see how we've helped businesses and communities with our fibre solutions.
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
               {[1, 2, 3, 4, 5, 6].map((item) => (
                 <motion.div 
                   key={item}
                   className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: item * 0.1 }}
+                  variants={staggerItem}
                   whileHover={{ y: -5 }}
                 >
                   <div className="h-48 bg-gradient-to-r from-[#182B5C] to-[#0f7dcc] flex items-center justify-center relative overflow-hidden">
@@ -457,7 +526,7 @@ const About = () => {
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
       )}
@@ -478,14 +547,17 @@ const About = () => {
               A visual journey through our projects and the quality work we deliver.
             </p>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <motion.div 
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
               {galleryImages.map((image, index) => (
                 <motion.div 
                   key={index}
                   className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  variants={staggerItem}
                   whileHover={{ scale: 1.02 }}
                 >
                   <div className="h-56 w-full relative overflow-hidden">
@@ -502,7 +574,7 @@ const About = () => {
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
       )}

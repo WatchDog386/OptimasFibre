@@ -30,6 +30,19 @@ const Services = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
+  // Navigation handlers
+  const handleCoverageClick = () => {
+    navigate('/coverage');
+  };
+
+  const handleGetStartedClick = () => {
+    navigate('/wifi-plans');
+  };
+
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
+
   const servicesData = {
     residential: [
       {
@@ -226,18 +239,6 @@ const Services = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setTimeout(() => setSelectedService(null), 300);
-  };
-
-  const handleCoverageClick = () => {
-    navigate('/coverageMap');
-  };
-
-  const handleGetStartedClick = () => {
-    navigate('/WifiPlans');
-  };
-
-  const handleContactClick = () => {
-    navigate('/contact');
   };
 
   // Animation variants
