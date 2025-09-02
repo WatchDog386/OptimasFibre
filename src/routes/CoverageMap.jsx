@@ -1,262 +1,680 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Phone, Wifi, MapPin } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Wifi, MapPin, Navigation, Layers, Info, X, ChevronLeft, Search, CheckCircle, AlertCircle, Phone } from 'lucide-react';
 
 const CoveragePage = () => {
-  const [activeFaq, setActiveFaq] = useState(null);
+  const navigate = useNavigate();
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const kmlLayer = useRef(null);
+  const markerRef = useRef(null);
+  const accuracyCircleRef = useRef(null);
+  const pulseIntervalRef = useRef(null);
+  const locationTimeoutRef = useRef(null);
+  const wifiMarkers = useRef([]);
 
-  const toggleFaq = (index) => {
-    setActiveFaq(activeFaq === index ? null : index);
+  const [mapReady, setMapReady] = useState(false);
+  const [kmlVisible, setKmlVisible] = useState(true);
+  const [address, setAddress] = useState('');
+  const [isEligible, setIsEligible] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showEligibilityPanel, setShowEligibilityPanel] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredAreas, setFilteredAreas] = useState([]);
+  const [mapExpanded, setMapExpanded] = useState(false);
+
+  // Coverage areas with coordinates
+  const coveredAreas = [
+    { name: "Kasarani", lat: -1.2182, lng: 36.9012 },
+    { name: "Githurai", lat: -1.1944, lng: 36.9358 },
+    { name: "Ruiru", lat: -1.1489, lng: 36.9631 },
+    { name: "Juja", lat: -1.1018, lng: 37.0144 },
+    { name: "Thika Town", lat: -1.0332, lng: 37.0693 },
+    { name: "Maragwa", lat: -0.7969, lng: 37.1325 },
+    { name: "Embakasi West", lat: -1.3071, lng: 36.9142 },
+    { name: "Kiambu", lat: -1.1714, lng: 36.8356 },
+    { name: "Kiambaa", lat: -1.1833, lng: 36.8167 },
+    { name: "Githunguri", lat: -1.0667, lng: 36.8667 },
+    { name: "Kikuyu", lat: -1.2465, lng: 36.6669 },
+    { name: "Dagoretti North", lat: -1.2833, lng: 36.7167 },
+    { name: "Kabete", lat: -1.2667, lng: 36.7333 },
+    { name: "Roysambu", lat: -1.2167, lng: 36.8833 },
+  ];
+
+  const NAIROBI_BOUNDS = [
+    [-1.45, 36.65],
+    [-1.15, 37.05],
+  ];
+
+  // Filter areas based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredAreas(coveredAreas);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredAreas(
+        coveredAreas.filter(area => 
+          area.name.toLowerCase().includes(query)
+        )
+      );
+    }
+  }, [searchQuery, coveredAreas]);
+
+  // Add WiFi markers to the map
+  const addWifiMarkers = (map) => {
+    const L = window.L;
+    
+    // Clear existing markers
+    wifiMarkers.current.forEach(marker => map.removeLayer(marker));
+    wifiMarkers.current = [];
+
+    // Add new markers
+    coveredAreas.forEach(area => {
+      const wifiIcon = L.divIcon({
+        className: 'wifi-marker',
+        html: `<div class="wifi-icon-container"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#0066cc" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg></div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+
+      const marker = L.marker([area.lat, area.lng], {
+        icon: wifiIcon,
+        zIndexOffset: 500
+      }).addTo(map);
+
+      marker.bindPopup(`<div class="p-2"><b class="text-blue-800">${area.name}</b><br><span class="text-green-600">Coverage available</span></div>`);
+      wifiMarkers.current.push(marker);
+    });
   };
 
-  const coverageAreas = [
-    ["Kasarani", "Githurai", "Ruiru", "Juja", "Thika Town"],
-    ["Maragwa", "Embakasi West", "Kiambu", "Kiambaa"],
-    ["Githunguri", "Kikuyu", "Dagoretti North", "Kabete", "Roysambu"]
-  ];
-
-  const faqItems = [
-    {
-      question: "PAYMENTS",
-      answer: "Your billing cycle begins on the date you make your monthly subscription and lasts 30 days. Payments made to the wrong account should be forwarded to our customer support team for correction. When payment does not reflect your account-Forward the message to our customer support team for update."
-    },
-    {
-      question: "RELOCATION SERVICES",
-      answer: "If you are moving houses or you would like your router to be moved to different location, Contact customer support for assistance. If moving houses of location within the Optimas fibre network, kindly give a notice of 1 week prior to your moving date so you can be scheduled for a smooth transition to your new location. Relocation services are billed at Kshs.1000 payable via our paybill."
-    },
-    {
-      question: "ROUTER SERVICE FUNCTIONS",
-      answer: "Loss of signal. If your router is blinking red means you're experiencing a loss of signal. Kindly contact our customer support team for further assistance. Unable to connect to the internet? It may be due to a payment issue. If you've paid and are still not connected, please contact our customer support team."
-    },
-    {
-      question: "SLOW SPEEDS",
-      answer: "You could be maxing out the bandwith on your selected services with many devices online leading to low speeds. If there are many users using the same connection you can opt to upgrade to a higher package to solve the issue. For poor signal check kindly contact our customer care agents to perform a check for you and offer a solution."
-    },
-    {
-      question: "UPGRADES AND DOWNGRADES",
-      answer: "Incase of an upgrade or downgrade, kindly contact our customer care team for assistance."
-    },
-    {
-      question: "NEED AN INSTALLATION, WHAT ARE THE CHARGES",
-      answer: "If you need an installation, you can contact our customer care lines provided at any time and book an installation. Our customer care agents will take you through the process. Kindly note that FREE INSTALLATION only applies to 20MBPS packages and above. For users looking at 10MBPS package will be required to pay a one off installation fee of Ksh. 2,000/-"
+  const centerOnUserLocation = () => {
+    if (!mapInstance.current || !navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser');
+      return;
     }
-  ];
+
+    setIsLocating(true);
+    clearTimeout(locationTimeoutRef.current);
+    clearInterval(pulseIntervalRef.current);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const userCoords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        };
+
+        setUserLocation(userCoords);
+        setLocationError(null);
+        
+        mapInstance.current.setView([userCoords.lat, userCoords.lng], 18);
+        
+        accuracyCircleRef.current = window.L.circle([userCoords.lat, userCoords.lng], {
+          radius: userCoords.accuracy,
+          color: '#0066cc',
+          fillColor: '#0066cc',
+          fillOpacity: 0.2,
+          weight: 1
+        }).addTo(mapInstance.current);
+
+        createPulseEffect([userCoords.lat, userCoords.lng]);
+
+        const displayName = await getAddressFromCoordinates(userCoords.lat, userCoords.lng);
+        setAddress(displayName);
+
+        setIsLoading(true);
+        setShowEligibilityPanel(true);
+
+        locationTimeoutRef.current = setTimeout(() => {
+          checkEligibility(userCoords);
+          setIsLocating(false);
+        }, 1500);
+      },
+      (error) => {
+        setLocationError(error.message);
+        setIsLocating(false);
+        console.error('Geolocation error:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  const createPulseEffect = (latlng) => {
+    const L = window.L;
+    clearInterval(pulseIntervalRef.current);
+    
+    if (markerRef.current) mapInstance.current.removeLayer(markerRef.current);
+    if (accuracyCircleRef.current) mapInstance.current.removeLayer(accuracyCircleRef.current);
+
+    markerRef.current = L.marker(latlng, {
+      icon: L.divIcon({
+        className: 'custom-marker',
+        html: `<div class="marker-pin"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      }),
+      zIndexOffset: 1000
+    }).addTo(mapInstance.current);
+
+    const pulseCircle = L.circle(latlng, {
+      radius: 10,
+      stroke: false,
+      fillColor: '#0066cc',
+      fillOpacity: 0.7,
+      className: 'location-pulse',
+    }).addTo(mapInstance.current);
+
+    let radius = 10;
+    let opacity = 0.7;
+    let growing = true;
+
+    pulseIntervalRef.current = setInterval(() => {
+      if (growing) {
+        radius += 2;
+        opacity -= 0.02;
+        if (radius >= 30) growing = false;
+      } else {
+        radius -= 2;
+        opacity += 0.02;
+        if (radius <= 10) growing = true;
+      }
+
+      pulseCircle.setRadius(radius);
+      pulseCircle.setStyle({ fillOpacity: opacity });
+    }, 50);
+  };
+
+  const getAddressFromCoordinates = async (lat, lng) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+      );
+      const data = await response.json();
+      
+      let displayName = 'Your current location';
+      if (data.address) {
+        const addr = data.address;
+        displayName = [
+          addr.road,
+          addr.neighbourhood,
+          addr.suburb,
+          addr.city_district,
+          addr.city
+        ].filter(Boolean).join(', ');
+      }
+      
+      return displayName;
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      return 'Your current location';
+    }
+  };
+
+  const checkEligibility = (coords) => {
+    if (!window.L || !kmlLayer.current) return;
+    const point = window.L.latLng(coords.lat, coords.lng);
+    let eligible = false;
+
+    kmlLayer.current.eachLayer((layer) => {
+      if (layer.getBounds && layer.getBounds().contains(point)) {
+        eligible = true;
+      }
+    });
+
+    setIsEligible(eligible);
+    setIsLoading(false);
+  };
+
+  const toggleKmlVisibility = () => {
+    if (!kmlLayer.current) return;
+    if (kmlLayer.current.getMap()) {
+      kmlLayer.current.remove();
+    } else {
+      kmlLayer.current.addTo(mapInstance.current);
+    }
+    setKmlVisible(!kmlVisible);
+  };
+
+  const handleConnectClick = () => {
+    navigate('/wifiplans');
+    setShowEligibilityPanel(false);
+  };
+
+  const toggleMapSize = () => {
+    setMapExpanded(!mapExpanded);
+  };
+
+  useEffect(() => {
+    const loadLeaflet = async () => {
+      try {
+        const leafletCss = document.createElement('link');
+        leafletCss.rel = 'stylesheet';
+        leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(leafletCss);
+
+        await import('leaflet');
+
+        const omnivoreScript = document.createElement('script');
+        omnivoreScript.src = 'https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js';
+        omnivoreScript.onload = () => setMapReady(true);
+        document.body.appendChild(omnivoreScript);
+
+        const fullscreenCss = document.createElement('link');
+        fullscreenCss.rel = 'stylesheet';
+        fullscreenCss.href = 'https://unpkg.com/leaflet.fullscreen/Control.FullScreen.css';
+        document.head.appendChild(fullscreenCss);
+
+        const fullscreenScript = document.createElement('script');
+        fullscreenScript.src = 'https://unpkg.com/leaflet.fullscreen/Control.FullScreen.js';
+        document.body.appendChild(fullscreenScript);
+      } catch (err) {
+        console.error('Error loading map libraries:', err);
+      }
+    };
+
+    loadLeaflet();
+
+    return () => {
+      mapInstance.current?.remove();
+      kmlLayer.current?.remove();
+      clearTimeout(locationTimeoutRef.current);
+      clearInterval(pulseIntervalRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mapReady || !window.L || !window.omnivore || !mapRef.current) return;
+
+    const L = window.L;
+    const map = L.map(mapRef.current, {
+      minZoom: 11,
+      maxBounds: NAIROBI_BOUNDS,
+      maxBoundsViscosity: 1.0,
+      zoomControl: false,
+      attributionControl: false,
+    }).setView([-1.286389, 36.817223], 12);
+
+    mapInstance.current = map;
+
+    const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+    });
+
+    baseLayer.addTo(map);
+
+    L.control.scale({ position: 'bottomleft' }).addTo(map);
+
+    if (L.control.fullscreen) {
+      L.control.fullscreen({ position: 'topright' }).addTo(map);
+    }
+
+    L.rectangle(NAIROBI_BOUNDS, {
+      color: '#0066cc',
+      weight: 3,
+      fill: false,
+      dashArray: '10 5',
+      className: 'leaflet-animated-border',
+    }).addTo(map);
+
+    kmlLayer.current = window.omnivore.kml('/coverage.kml')
+      .on('ready', () => {
+        try {
+          map.fitBounds(kmlLayer.current.getBounds(), { padding: [30, 30] });
+        } catch (e) {
+          console.warn('Could not fit KML bounds:', e);
+        }
+      })
+      .addTo(map);
+
+    // Add WiFi markers
+    addWifiMarkers(map);
+
+    L.control.zoom({ position: 'topright' }).addTo(map);
+    L.control.attribution({
+      position: 'bottomright',
+      prefix: '<a href="https://leafletjs.com/">Leaflet</a>',
+    }).addTo(map);
+  }, [mapReady]);
+
+  // Map Controls Component
+  const MapControls = () => (
+    <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
+      <button
+        onClick={centerOnUserLocation}
+        className="bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+        title="Find my location"
+      >
+        <Navigation className="w-5 h-5 text-blue-600" />
+      </button>
+      
+      <button
+        onClick={toggleKmlVisibility}
+        className="bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+        title="Toggle coverage areas"
+      >
+        <Layers className="w-5 h-5 text-green-600" />
+      </button>
+      
+      <button
+        onClick={() => setShowLegend(!showLegend)}
+        className="bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+        title="Show legend"
+      >
+        <Info className="w-5 h-5 text-gray-600" />
+      </button>
+    </div>
+  );
+
+  // Coverage Eligibility Panel Component
+  const CoverageEligibilityPanel = ({ address, isEligible, isLoading, onClose, onConnect }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-md bg-white rounded-xl shadow-2xl z-30 p-6"
+    >
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Coverage Check</h3>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      
+      <div className="mb-4">
+        <p className="text-sm text-gray-600 mb-2">Address:</p>
+        <p className="font-medium text-gray-900">{address}</p>
+      </div>
+      
+      {isLoading ? (
+        <div className="flex items-center justify-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Checking coverage...</span>
+        </div>
+      ) : isEligible ? (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center">
+            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+            <span className="text-green-800 font-medium">Great news! Your area is covered.</span>
+          </div>
+          <p className="text-sm text-green-700 mt-2">You can now get high-speed Optimas Fibre internet.</p>
+        </div>
+      ) : (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+            <span className="text-red-800 font-medium">Not currently covered</span>
+          </div>
+          <p className="text-sm text-red-700 mt-2">We're expanding our network. Contact us for future availability.</p>
+        </div>
+      )}
+      
+      {isEligible && !isLoading && (
+        <button
+          onClick={onConnect}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+        >
+          Connect Now
+        </button>
+      )}
+      
+      {!isEligible && !isLoading && (
+        <a
+          href="tel:+254709517917"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+        >
+          <Phone className="w-5 h-5 mr-2" />
+          Contact Us
+        </a>
+      )}
+    </motion.div>
+  );
 
   return (
-    <div className="font-sans text-gray-800 bg-white">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <div className="h-8 flex items-center">
-                <span className="text-2xl font-bold text-blue-600">OPTIMAS</span>
-                <span className="text-2xl font-bold text-gray-800">FIBRE</span>
-              </div>
-            </div>
-            
-            <nav className="hidden md:flex space-x-6">
-              <a href="/" className="text-gray-700 hover:text-blue-600 font-medium">Home</a>
-              <a href="/about" className="text-gray-700 hover:text-blue-600 font-medium">About</a>
-              <a href="/coverage" className="text-blue-600 font-medium">Our Coverage</a>
-              <a href="/contact" className="text-gray-700 hover:text-blue-600 font-medium">Contact</a>
-            </nav>
-            
-            <div className="flex items-center space-x-4">
-              <a href="tel:+254709517917" className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center">
-                <Phone className="w-4 h-4 mr-1" />
-                0709517917
-              </a>
-            </div>
+    <motion.div
+      className="relative min-h-screen w-full bg-gray-50 text-gray-800 overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8, ease: 'easeInOut' }}
+    >
+      {/* Header Section */}
+      <header className="bg-white shadow-sm py-4 px-6 z-20 relative">
+        <div className="container mx-auto flex justify-between items-center">
+          <button
+            onClick={() => navigate('/')}
+            className="text-blue-700 hover:text-blue-900 font-medium flex items-center transition-colors"
+          >
+            <ChevronLeft className="h-5 w-5 mr-1" />
+            Back to Home
+          </button>
+          <div className="flex flex-col items-center">
+            <h1 className="text-2xl font-bold text-gray-900">Optimas Fibre Coverage Map</h1>
+            <p className="text-sm text-gray-600 mt-1">Check if your area is covered by our high-speed fibre network</p>
           </div>
+          <button
+            onClick={toggleMapSize}
+            className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm font-medium hover:bg-blue-200 transition-colors"
+          >
+            {mapExpanded ? 'Show Panel' : 'Expand Map'}
+          </button>
         </div>
       </header>
 
-      {/* Hero Section - Matching Vuma Design */}
-      <section className="relative bg-gradient-to-br from-blue-50 to-gray-100 py-16 overflow-hidden">
-        {/* Wave Design */}
-        <div className="absolute bottom-0 left-0 w-full">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 283.5 27.8" preserveAspectRatio="xMidYMax slice" className="w-full h-12">
-            <path fill="white" d="M0 0v6.7c1.9-.8 4.7-1.4 8.5-1 9.5 1.1 11.1 6 11.1 6s2.1-.7 4.3-.2c2.1.5 2.8 2.6 2.8 2.6s.2-.5 1.4-.7c1.2-.2 1.7.2 1.7.2s0-2.1 1.9-2.8c1.9-.7 3.6.7 3.6.7s.7-2.9 3.1-4.1 4.7 0 4.7 0s1.2-.5 2.4 0 1.7 1.4 1.7 1.4h1.4c.7 0 1.2.7 1.2.7s.8-1.8 4-2.2c3.5-.4 5.3 2.4 6.2 4.4.4-.4 1-.7 1.8-.9 2.8-.7 4 .7 4 .7s1.7-5 11.1-6c9.5-1.1 12.3 3.9 12.3 3.9s1.2-4.8 5.7-5.7c4.5-.9 6.8 1.8 6.8 1.8s.6-.6 1.5-.9c.9-.2 1.9-.2 1.9-.2s5.2-6.4 12.6-3.3c7.3 3.1 4.7 9 4.7 9s1.9-.9 4 0 2.8 2.4 2.8 2.4 1.9-1.2 4.5-1.2 4.3 1.2 4.3 1.2.2-1 1.4-1.7 2.1-.7 2.1-.7-.5-3.1 2.1-5.5 5.7-1.4 5.7-1.4 1.5-2.3 4.2-1.1c2.7 1.2 1.7 5.2 1.7 5.2s.3-.1 1.3.5c.5.4 .8.8 .9 1.1.5-1.4 2.4-5.8 8.4-4 7.1 2.1 3.5 8.9 3.5 8.9s.8-.4 2 0 1.1 1.1 1.1 1.1 1.1-1.1 2.3-1.1 2.1.5 2.1.5 1.9-3.6 6.2-1.2 1.9 6.4 1.9 6.4 2.6-2.4 7.4 0c3.4 1.7 3.9 4.9 3.9 4.9s3.3-6.9 10.4-7.9 11.5 2.6 11.5 2.6.8 0 1.2.2c.4.2 .9.9 .9.9s4.4-3.1 8.3.2c1.9 1.7 1.5 5 1.5 5s.3-1.1 1.6-1.4c1.3-.3 2.3.2 2.3.2s-.1-1.2 .5-1.9 1.9-.9 1.9-.9-4.7-9.3 4.4-13.4c5.6-2.5 9.2.9 9.2.9s5-6.2 15.9-6.2 16.1 8.1 16.1 8.1.7-.2 1.6-.4V0H0z"/>
-          </svg>
-        </div>
-        
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Areas We Get You Connected</h1>
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto">
-            Discover the extensive coverage of Optimas Fibre's high-speed internet service across multiple regions
-          </p>
-        </div>
-      </section>
-
-      {/* Coverage Areas Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Optimas Fibre Coverage Areas</h2>
+      {/* Main Content */}
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)]">
+        {/* Map Section */}
+        <div className={`${mapExpanded ? 'w-full' : 'w-full lg:w-2/3'} h-full relative transition-all duration-300`}>
+          <main ref={mapRef} className="absolute inset-0 z-10" />
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {coverageAreas.map((column, colIndex) => (
-              <div key={colIndex} className="space-y-4">
-                {column.map((area, index) => (
-                  <div key={index} className="flex items-center p-4 bg-gray-50 rounded-lg">
-                    <Wifi className="w-6 h-6 text-blue-600 mr-3" />
-                    <span className="text-lg font-medium">{area}</span>
-                  </div>
-                ))}
+          {mapReady && (
+            <MapControls />
+          )}
+        </div>
+
+        {/* Sidebar Section */}
+        {!mapExpanded && (
+          <motion.div 
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 30 }}
+            className="w-full lg:w-1/3 bg-white border-l border-gray-200 overflow-y-auto p-6"
+          >
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900">Our Coverage Areas</h2>
+              <p className="text-gray-600 mb-6">
+                Optimas Fibre is constantly expanding our network across the region. 
+                Check if your area is covered or view our current coverage areas below.
+              </p>
+              
+              {/* Search Input */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search coverage areas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Map Section - Updated to match the cloned layout */}
-      <section className="py-16 bg-gray-100">
-        <div className="container mx-auto px-4">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-5xl mx-auto">
-            <h3 className="text-2xl font-bold mb-6 text-center">Our Coverage Map</h3>
-            <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden">
-              <iframe 
-                src="https://www.google.com/maps/d/embed?mid=15BWNoqWThNq2nrDhQS5Tyvrfj6IXK5Y&ehbc=2E312F" 
-                width="100%" 
-                height="100%" 
-                frameBorder="0" 
-                allowFullScreen
-                title="Optimas Fibre Coverage Map"
-                className="absolute inset-0"
-              ></iframe>
-            </div>
-            <div className="mt-6 flex justify-center">
-              <a 
-                href="https://www.google.com/maps/d/embed?mid=15BWNoqWThNq2nrDhQS5Tyvrfj6IXK5Y&ehbc=2E312F" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-blue-600 text-white px-6 py-3 rounded-full font-medium flex items-center"
-              >
-                <MapPin className="w-5 h-5 mr-2" />
-                Open Full Screen Map
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-blue-600 font-semibold">FAQ</p>
-            <h2 className="text-3xl font-bold mt-2">Find Out Answers Here</h2>
-          </div>
-          
-          <div className="max-w-4xl mx-auto">
-            {faqItems.map((faq, index) => (
-              <div key={index} className="mb-4 border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  className="flex justify-between items-center w-full p-6 bg-gray-50 text-left font-medium text-lg"
-                  onClick={() => toggleFaq(index)}
+              
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-6 shadow-sm">
+                <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
+                  <MapPin className="w-5 h-5 mr-2" />
+                  Check Your Address
+                </h3>
+                <p className="text-sm text-blue-800 mb-4">
+                  Use your current location to check if Optimas Fibre is available in your area.
+                </p>
+                <button 
+                  onClick={centerOnUserLocation}
+                  disabled={isLocating}
+                  className="w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
                 >
-                  <span>{faq.question}</span>
-                  {activeFaq === index ? (
-                    <ChevronUp className="w-5 h-5" />
+                  {isLocating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Locating...
+                    </>
                   ) : (
-                    <ChevronDown className="w-5 h-5" />
+                    <>
+                      <Navigation className="w-5 h-5 mr-2" />
+                      Check Eligibility
+                    </>
                   )}
                 </button>
-                {activeFaq === index && (
-                  <div className="p-6 bg-white border-t border-gray-200">
-                    <p className="text-gray-700">{faq.answer}</p>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h3 className="font-bold text-lg mb-4 text-gray-900 flex items-center">
+                <Wifi className="w-5 h-5 mr-2 text-blue-600" />
+                Areas We Cover
+              </h3>
+              <div className="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto pr-2">
+                {filteredAreas.length > 0 ? (
+                  filteredAreas.map((area, index) => (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex items-center bg-gray-50 rounded-lg p-3 border border-gray-100 hover:bg-blue-50 transition-colors"
+                    >
+                      <CheckCircle className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
+                      <span className="text-gray-800 font-medium">{area.name}</span>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center py-4 text-gray-500">
+                    <AlertCircle className="w-5 h-5 mr-2" />
+                    No areas found matching your search
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 via-purple-600 to-orange-500 animate-gradient-x">
-        <div className="container mx-auto px-4 text-center text-white">
-          <h2 className="text-3xl font-bold mb-4">🚀 Get Blazing-Fast Internet with Optimas Fibre!</h2>
-          <p className="text-xl mb-8 max-w-3xl mx-auto">
-            Reliable, high-speed internet for your home or business. Connect with us today!
-          </p>
-          
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
-            <a 
-              href="tel:+254709517917" 
-              className="bg-white text-blue-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors flex items-center justify-center"
-            >
-              <Phone className="w-5 h-5 mr-2" />
-              Contact Us Now
-            </a>
-            <a 
-              href="/coverage" 
-              className="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-blue-600 transition-colors flex items-center justify-center"
-            >
-              <MapPin className="w-5 h-5 mr-2" />
-              Check Coverage
-            </a>
-          </div>
-          
-          <p className="text-lg">
-            📲 Call us: <a href="tel:+254709517917" className="underline font-semibold">0709517917</a> | 
-            <a href="tel:+254709517918" className="underline font-semibold ml-2">0709517918</a>
-          </p>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0">
-              <div className="h-8 flex items-center mb-4">
-                <span className="text-2xl font-bold text-white">OPTIMAS</span>
-                <span className="text-2xl font-bold text-blue-400">FIBRE</span>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h3 className="font-bold text-lg mb-3 text-gray-900 flex items-center">
+                <Info className="w-5 h-5 mr-2 text-blue-600" />
+                Map Legend
+              </h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 flex items-center justify-center bg-white rounded-full shadow-sm">
+                    <Wifi className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <span className="text-gray-700">Covered Area</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-white"></div>
+                  </div>
+                  <span className="text-gray-700">Your Location</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <Layers className="w-4 h-4 text-green-600" />
+                  </div>
+                  <span className="text-gray-700">Coverage Boundary</span>
+                </div>
               </div>
-              <p className="text-gray-400">© 2025 Optimas Fibre LTD. All rights reserved.</p>
             </div>
-            
-            <nav className="flex flex-wrap justify-center gap-6 mb-6 md:mb-0">
-              <a href="/" className="hover:text-blue-400 transition-colors">Home</a>
-              <a href="/about" className="hover:text-blue-400 transition-colors">About</a>
-              <a href="/coverage" className="text-blue-400">Our Coverage</a>
-              <a href="/contact" className="hover:text-blue-400 transition-colors">Contact</a>
-            </nav>
-            
-            <div className="flex space-x-4">
-              <a href="https://www.facebook.com/share/16AoQJ9akf/" target="_blank" rel="noopener noreferrer" className="bg-gray-800 p-3 rounded-full hover:bg-blue-600 transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 512 512">
-                  <path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245V327.69h-63V256h63v-54.64c0-62.15 37-96.48 93.67-96.48 27.14 0 55.52 4.84 55.52 4.84v61h-31.28c-30.8 0-40.41 19.12-40.41 38.73V256h68.78l-11 71.69h-57.78V501C413.31 482.38 504 379.78 504 256z"/>
-                </svg>
-              </a>
-              <a href="https://x.com/VumaFiber" target="_blank" rel="noopener noreferrer" className="bg-gray-800 p-3 rounded-full hover:bg-black transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 512 512">
-                  <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/>
-                </svg>
-              </a>
-              <a href="https://www.instagram.com/vumafiberke" target="_blank" rel="noopener noreferrer" className="bg-gray-800 p-3 rounded-full hover:bg-pink-600 transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 448 512">
-                  <path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8z"/>
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
 
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-500">
+                Can't find your area? <a href="/contact" className="text-blue-600 hover:underline font-medium">Contact us</a> to inquire about future expansion plans.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Eligibility Panel */}
+      <AnimatePresence>
+        {showEligibilityPanel && (
+          <CoverageEligibilityPanel
+            address={address}
+            isEligible={isEligible}
+            isLoading={isLoading}
+            onClose={() => setShowEligibilityPanel(false)}
+            onConnect={handleConnectClick}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Add custom styles for WiFi markers */}
       <style jsx global>{`
-        @keyframes gradient {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        .wifi-marker {
+          background: transparent;
+          border: none;
         }
-        
-        .animate-gradient-x {
-          background-size: 400% 400%;
-          animation: gradient 6s ease infinite;
+        .wifi-icon-container {
+          background: white;
+          border-radius: 50%;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          border: 2px solid #0066cc;
+        }
+        .wifi-marker svg {
+          width: 18px;
+          height: 18px;
+        }
+        .leaflet-popup-content-wrapper {
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .leaflet-popup-content {
+          margin: 8px 12px;
+          line-height: 1.4;
+        }
+        .leaflet-control-zoom a {
+          background-color: white;
+          color: #1e40af;
+          border-radius: 4px;
+          margin-bottom: 4px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .leaflet-control-zoom a:hover {
+          background-color: #f3f4f6;
+        }
+        .leaflet-control-layers {
+          border-radius: 8px !important;
+          overflow: hidden;
+        }
+        .leaflet-bar {
+          border: none !important;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        }
+        .leaflet-control-fullscreen a {
+          background-color: white;
+          border-radius: 4px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 
