@@ -232,21 +232,74 @@ const Services = () => {
     navigate('/coverageMap');
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 12
+      }
+    }
+  };
+
+  const fadeIn = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0.6, ease: "easeOut" }
+    }
+  };
+
+  const slideUp = {
+    hidden: { y: 30, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5, ease: "easeOut" }
+    }
+  };
+
+  const scaleUp = {
+    hidden: { scale: 0.9, opacity: 0 },
+    visible: {
+      scale: 1,
+      opacity: 1,
+      transition: { duration: 0.4, ease: "easeOut" }
+    }
+  };
+
   // Service Card Component
   const ServiceCard = ({ service, index, compact = false }) => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      variants={itemVariants}
       className={`bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 group border border-gray-100 ${
         compact ? 'h-full' : ''
       }`}
+      whileHover={{ y: -5 }}
     >
       <div className="text-center mb-6">
-        <div className="text-blue-600 group-hover:text-blue-700 transition-colors duration-300 inline-block mb-4">
+        <motion.div 
+          className="text-[#182b5c] group-hover:text-[#d0b216] transition-colors duration-300 inline-block mb-4"
+          whileHover={{ rotate: 360 }}
+          transition={{ duration: 0.5 }}
+        >
           {service.icon}
-        </div>
-        <h3 className={`font-bold text-gray-900 mb-3 ${compact ? 'text-lg' : 'text-xl'}`}>
+        </motion.div>
+        <h3 className={`font-bold text-[#182b5c] mb-3 ${compact ? 'text-lg' : 'text-xl'}`}>
           {service.title}
         </h3>
         <p className={`text-gray-600 mb-4 leading-relaxed ${compact ? 'text-sm' : ''}`}>
@@ -256,84 +309,171 @@ const Services = () => {
       
       <ul className={`space-y-2 mb-6 ${compact ? 'space-y-1' : 'space-y-3'}`}>
         {service.features.slice(0, compact ? 3 : service.features.length).map((feature, featureIndex) => (
-          <li key={featureIndex} className="flex items-center text-gray-700">
+          <motion.li 
+            key={featureIndex} 
+            className="flex items-center text-gray-700"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: featureIndex * 0.1 }}
+          >
             <FaCheckCircle className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
             <span className={compact ? 'text-sm' : ''}>{feature}</span>
-          </li>
+          </motion.li>
         ))}
       </ul>
 
-      <button 
+      <motion.button 
         onClick={() => handleLearnMore(service)}
-        className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl transition-colors duration-300 font-semibold flex items-center justify-center group-hover:shadow-md ${
+        className={`w-full bg-[#182b5c] hover:bg-[#0f1f45] text-white py-3 px-6 rounded-xl transition-colors duration-300 font-semibold flex items-center justify-center group-hover:shadow-md ${
           compact ? 'text-sm py-2' : ''
         }`}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
       >
         Learn More <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-      </button>
+      </motion.button>
     </motion.div>
   );
 
   return (
-    <div className="services-page bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-12 overflow-hidden">
+    <motion.div 
+      className="services-page bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-12 overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.7 }}
+    >
+      {/* Animated Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-0 left-0 w-full h-full bg-[#182b5c]">
+          <motion.div 
+            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] opacity-10"
+            animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, 90, 0],
+            }}
+            transition={{
+              duration: 15,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+          <motion.div 
+            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] opacity-10"
+            animate={{
+              scale: [1.2, 1, 1.2],
+              rotate: [180, 270, 180],
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+        </div>
+      </div>
+
       {/* Header Section */}
-      <section className="container mx-auto px-4 mb-16">
+      <section className="container mx-auto px-4 mb-16 relative z-10">
         <motion.div 
           className="text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Our <span className="text-blue-600">Fiber Services</span>
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <motion.h1 
+            className="text-4xl md:text-5xl font-bold text-[#182b5c] mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            Our <span className="text-[#d0b216]">Fiber Services</span>
+          </motion.h1>
+          <motion.p 
+            className="text-xl text-gray-600 max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
             Experience the future of connectivity with our comprehensive range of fiber internet solutions. 
             From homes to enterprises, we deliver reliable, high-speed internet services.
-          </p>
+          </motion.p>
+          <motion.div 
+            className="w-24 h-1 bg-[#d0b216] mx-auto mt-4"
+            initial={{ width: 0 }}
+            animate={{ width: 96 }}
+            transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
+          />
         </motion.div>
       </section>
 
       {/* Tab Navigation */}
-      <section className="container mx-auto px-4 mb-12">
+      <section className="container mx-auto px-4 mb-12 relative z-10">
         <div className="flex justify-center">
-          <div className="bg-white rounded-xl shadow-lg p-2 flex space-x-2">
+          <motion.div 
+            className="bg-white rounded-xl shadow-lg p-2 flex space-x-2"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {['residential', 'business', 'enterprise'].map((tab) => (
-              <button
+              <motion.button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-8 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center ${
                   activeTab === tab
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'
+                    ? 'bg-[#182b5c] text-white shadow-md'
+                    : 'text-gray-600 hover:text-[#182b5c] hover:bg-gray-100'
                 }`}
+                variants={itemVariants}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { type: "spring", stiffness: 400, damping: 10 }
+                }}
+                whileTap={{ scale: 0.95 }}
               >
                 {tab === 'residential' && <FaHome className="mr-2" />}
                 {tab === 'business' && <FaBuilding className="mr-2" />}
                 {tab === 'enterprise' && <FaNetworkWired className="mr-2" />}
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Services Grid */}
-      <section className="container mx-auto px-4 mb-16">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-8 capitalize">
+      <section className="container mx-auto px-4 mb-16 relative z-10">
+        <motion.h2 
+          className="text-2xl md:text-3xl font-bold text-[#182b5c] text-center mb-8 capitalize"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
           {activeTab} Services
-        </h2>
+        </motion.h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          key={activeTab}
+        >
           {servicesData[activeTab].map((service, index) => (
             <ServiceCard key={index} service={service} index={index} />
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* Coverage Map Section */}
-      <section className="container mx-auto px-4 mb-20">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl shadow-xl overflow-hidden">
+      <section className="container mx-auto px-4 mb-20 relative z-10">
+        <motion.div 
+          className="bg-gradient-to-r from-[#182b5c] to-[#0f1f45] rounded-2xl shadow-xl overflow-hidden"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          whileHover={{ y: -5 }}
+        >
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <div className="p-10 text-white">
               <h2 className="text-3xl font-bold mb-4">Check Our Coverage</h2>
@@ -341,44 +481,74 @@ const Services = () => {
                 See if our high-speed fiber network is available in your area with our interactive coverage map.
               </p>
               <ul className="space-y-3 mb-8">
-                <li className="flex items-center">
-                  <FaMapMarkerAlt className="w-5 h-5 mr-3 text-blue-200" />
+                <motion.li 
+                  className="flex items-center"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <FaMapMarkerAlt className="w-5 h-5 mr-3 text-[#d0b216]" />
                   <span>Real-time coverage checking</span>
-                </li>
-                <li className="flex items-center">
-                  <FaClock className="w-5 h-5 mr-3 text-blue-200" />
+                </motion.li>
+                <motion.li 
+                  className="flex items-center"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <FaClock className="w-5 h-5 mr-3 text-[#d0b216]" />
                   <span>Instant eligibility results</span>
-                </li>
-                <li className="flex items-center">
-                  <FaRocket className="w-5 h-5 mr-3 text-blue-200" />
+                </motion.li>
+                <motion.li 
+                  className="flex items-center"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <FaRocket className="w-5 h-5 mr-3 text-[#d0b216]" />
                   <span>Quick installation scheduling</span>
-                </li>
+                </motion.li>
               </ul>
-              <button 
+              <motion.button 
                 onClick={handleCoverageClick}
-                className="bg-white text-blue-700 hover:bg-gray-100 font-semibold py-3 px-8 rounded-xl transition-colors duration-300 flex items-center"
+                className="bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220] font-semibold py-3 px-8 rounded-xl transition-colors duration-300 flex items-center"
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { type: "spring", stiffness: 400, damping: 10 }
+                }}
+                whileTap={{ scale: 0.95 }}
               >
                 Check Coverage <FaArrowRight className="ml-2" />
-              </button>
+              </motion.button>
             </div>
             <div className="bg-gray-200 flex items-center justify-center p-10">
-              <div className="bg-white rounded-xl p-6 text-center shadow-inner w-full h-64 flex flex-col items-center justify-center">
+              <motion.div 
+                className="bg-white rounded-xl p-6 text-center shadow-inner w-full h-64 flex flex-col items-center justify-center"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.9 }}
+              >
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <FaMapMarkerAlt className="w-8 h-8 text-blue-600" />
+                  <FaMapMarkerAlt className="w-8 h-8 text-[#182b5c]" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">Interactive Coverage Map</h3>
                 <p className="text-gray-600 mb-4">Check availability in your area</p>
-                <div className="w-full h-3 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mb-2"></div>
+                <div className="w-full h-3 bg-gradient-to-r from-green-400 to-[#182b5c] rounded-full mb-2"></div>
                 <p className="text-sm text-gray-500">95% of metropolitan areas covered</p>
-              </div>
+              </motion.div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Value-Added Services Section */}
-      <section className="container mx-auto px-4 mb-20">
-        <div className="bg-gradient-to-r from-gray-900 to-blue-900 rounded-2xl p-12 text-white">
+      <section className="container mx-auto px-4 mb-20 relative z-10">
+        <motion.div 
+          className="bg-gradient-to-r from-[#182b5c] to-[#0f1f45] rounded-2xl p-12 text-white"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-4">Value-Added Services</h2>
             <p className="text-lg text-blue-200">
@@ -410,8 +580,9 @@ const Services = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="text-center p-6 bg-white bg-opacity-10 rounded-xl backdrop-blur-sm border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300"
+                whileHover={{ y: -5 }}
               >
-                <div className="text-blue-400 mb-4">
+                <div className="text-[#d0b216] mb-4">
                   {service.icon}
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
@@ -423,7 +594,7 @@ const Services = () => {
               </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Service Detail Modal */}
@@ -447,19 +618,21 @@ const Services = () => {
               <div className="p-8">
                 <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center">
-                    <div className="text-blue-600 mr-4 text-2xl">
+                    <div className="text-[#182b5c] mr-4 text-2xl">
                       {selectedService.icon}
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900">
+                    <h2 className="text-3xl font-bold text-[#182b5c]">
                       {selectedService.title}
                     </h2>
                   </div>
-                  <button 
+                  <motion.button 
                     onClick={closeModal}
                     className="text-gray-500 hover:text-gray-700 transition-colors duration-300 p-2 rounded-full hover:bg-gray-100"
+                    whileHover={{ rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     <FaTimes className="text-xl" />
-                  </button>
+                  </motion.button>
                 </div>
 
                 <p className="text-gray-600 text-lg mb-6">
@@ -468,43 +641,49 @@ const Services = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <h3 className="text-xl font-semibold text-[#182b5c] mb-4 flex items-center">
                       <FaCheckCircle className="text-green-500 mr-2" />
                       Key Features
                     </h3>
                     <ul className="space-y-3">
                       {selectedService.features.map((feature, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        <motion.li 
+                          key={index} 
+                          className="flex items-start"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <span className="w-2 h-2 bg-[#182b5c] rounded-full mt-2 mr-3 flex-shrink-0"></span>
                           <span className="text-gray-700">{feature}</span>
-                        </li>
+                        </motion.li>
                       ))}
                     </ul>
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                      <FaShieldVirus className="text-blue-500 mr-2" />
+                    <h3 className="text-xl font-semibold text-[#182b5c] mb-4 flex items-center">
+                      <FaShieldVirus className="text-[#182b5c] mr-2" />
                       Service Details
                     </h3>
                     <div className="bg-gray-50 rounded-xl p-5">
                       {selectedService.details.pricing && (
                         <div className="mb-4">
-                          <h4 className="font-semibold text-gray-900">Pricing</h4>
+                          <h4 className="font-semibold text-[#182b5c]">Pricing</h4>
                           <p className="text-gray-700">{selectedService.details.pricing}</p>
                         </div>
                       )}
                       
                       {selectedService.details.sla && (
                         <div className="mb-4">
-                          <h4 className="font-semibold text-gray-900">Uptime Guarantee</h4>
+                          <h4 className="font-semibold text-[#182b5c]">Uptime Guarantee</h4>
                           <p className="text-gray-700">{selectedService.details.sla}</p>
                         </div>
                       )}
                       
                       {selectedService.details.speedTiers && (
                         <div className="mb-4">
-                          <h4 className="font-semibold text-gray-900">Speed Tiers</h4>
+                          <h4 className="font-semibold text-[#182b5c]">Speed Tiers</h4>
                           <p className="text-gray-700">{selectedService.details.speedTiers.join(", ")}</p>
                         </div>
                       )}
@@ -514,28 +693,42 @@ const Services = () => {
 
                 {selectedService.details.benefits && (
                   <div className="mb-8">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                      <FaRocket className="text-blue-500 mr-2" />
+                    <h3 className="text-xl font-semibold text-[#182b5c] mb-4 flex items-center">
+                      <FaRocket className="text-[#182b5c] mr-2" />
                       Benefits
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedService.details.benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-start bg-blue-50 p-4 rounded-xl">
-                          <FaInfinity className="text-blue-600 mt-1 mr-3 flex-shrink-0" />
+                        <motion.div 
+                          key={index} 
+                          className="flex items-start bg-blue-50 p-4 rounded-xl"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <FaInfinity className="text-[#182b5c] mt-1 mr-3 flex-shrink-0" />
                           <span className="text-gray-700">{benefit}</span>
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
                   </div>
                 )}
 
                 <div className="flex justify-center mt-8 gap-4">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl transition-colors duration-300 font-semibold">
+                  <motion.button 
+                    className="bg-[#182b5c] hover:bg-[#0f1f45] text-white px-8 py-3 rounded-xl transition-colors duration-300 font-semibold"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     Get This Service
-                  </button>
-                  <button className="border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600 px-8 py-3 rounded-xl transition-colors duration-300 font-semibold">
+                  </motion.button>
+                  <motion.button 
+                    className="border-2 border-gray-300 text-gray-700 hover:border-[#182b5c] hover:text-[#182b5c] px-8 py-3 rounded-xl transition-colors duration-300 font-semibold"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     Contact Sales
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </motion.div>
@@ -544,14 +737,14 @@ const Services = () => {
       </AnimatePresence>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 mt-20 text-center">
+      <section className="container mx-auto px-4 mt-20 text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="bg-white rounded-2xl shadow-xl p-12"
         >
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-[#182b5c] mb-4">
             Ready to Experience True Fiber?
           </h2>
           <p className="text-gray-600 text-lg mb-8 max-w-2xl mx-auto">
@@ -559,16 +752,24 @@ const Services = () => {
             Contact our team today to find the perfect solution for your needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold shadow-md hover:shadow-lg">
+            <motion.button 
+              className="bg-[#182b5c] hover:bg-[#0f1f45] text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold shadow-md hover:shadow-lg"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               Get Started Now
-            </button>
-            <button className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold">
+            </motion.button>
+            <motion.button 
+              className="border-2 border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               Speak to an Expert
-            </button>
+            </motion.button>
           </div>
         </motion.div>
       </section>
-    </div>
+    </motion.div>
   );
 };
 

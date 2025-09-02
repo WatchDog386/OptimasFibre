@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -6,7 +6,9 @@ import {
   Settings,
   HelpCircle,
   Search,
-  ChevronDown
+  ChevronDown,
+  Phone,
+  Mail
 } from "lucide-react";
 
 const faqsData = {
@@ -264,37 +266,155 @@ const faqsData = {
   },
 };
 
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 12
+    }
+  }
+};
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+};
+
+const slideUp = {
+  hidden: { y: 30, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.5, ease: "easeOut" }
+  }
+};
+
+const scaleUp = {
+  hidden: { scale: 0.9, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: { duration: 0.4, ease: "easeOut" }
+  }
+};
+
+const rotate = {
+  hidden: { rotate: -180, opacity: 0 },
+  visible: {
+    rotate: 0,
+    opacity: 1,
+    transition: { duration: 0.4, ease: "easeOut" }
+  }
+};
+
 export default function Faqs() {
   const [activeCategory, setActiveCategory] = useState("Account Management");
   const [openIndex, setOpenIndex] = useState(null);
   const [search, setSearch] = useState("");
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   const filteredFaqs = faqsData[activeCategory].items.filter((faq) =>
     faq.question.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <section className="min-h-screen bg-gray-50 pt-32 pb-16 px-4 sm:px-6 lg:px-8 text-gray-800 relative overflow-hidden">
-      {/* Background Pattern */}
+    <motion.section 
+      className="min-h-screen bg-gray-50 pt-32 pb-16 px-4 sm:px-6 lg:px-8 text-gray-800 relative overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.7 }}
+    >
+      {/* Animated Background Pattern */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-0 left-0 w-full h-full bg-[#182b5c]"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-[#182b5c]">
+          <motion.div 
+            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] opacity-10"
+            animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, 90, 0],
+            }}
+            transition={{
+              duration: 15,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+          <motion.div 
+            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] opacity-10"
+            animate={{
+              scale: [1.2, 1, 1.2],
+              rotate: [180, 270, 180],
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+        </div>
       </div>
       
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl font-bold mb-2 text-[#182b5c]">Optimas Fibre - Self-Care Portal</h2>
-          <p className="text-gray-600">Manage your account, services, and get support 24/7</p>
-          <div className="w-24 h-1 bg-[#d0b216] mx-auto mt-4"></div>
+          <motion.h2 
+            className="text-4xl font-bold mb-2 text-[#182b5c]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            Optimas Fibre - Self-Care Portal
+          </motion.h2>
+          <motion.p 
+            className="text-gray-600"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
+            Manage your account, services, and get support 24/7
+          </motion.p>
+          <motion.div 
+            className="w-24 h-1 bg-[#d0b216] mx-auto mt-4"
+            initial={{ width: 0 }}
+            animate={{ width: 96 }}
+            transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
+          />
         </motion.div>
 
         {/* Category Tabs */}
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
+        <motion.div 
+          className="flex flex-wrap justify-center gap-3 mb-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {Object.entries(faqsData).map(([key, { icon }]) => (
             <motion.button
               key={key}
@@ -308,66 +428,114 @@ export default function Faqs() {
                   ? "bg-[#182b5c] text-white shadow-lg"
                   : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
               }`}
-              whileHover={{ scale: 1.05 }}
+              variants={itemVariants}
+              whileHover={{ 
+                scale: 1.05,
+                transition: { type: "spring", stiffness: 400, damping: 10 }
+              }}
               whileTap={{ scale: 0.95 }}
             >
-              {icon}
+              <motion.span
+                animate={{ rotate: activeCategory === key ? 360 : 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                {icon}
+              </motion.span>
               <span className="text-sm font-medium">{key}</span>
             </motion.button>
           ))}
-        </div>
+        </motion.div>
 
         {/* Search Bar */}
         <motion.div 
           className="max-w-xl mx-auto mb-8"
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
         >
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <motion.div
+              animate={{ rotate: search ? 90 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            </motion.div>
             <input
               type="text"
               placeholder={`Search ${activeCategory} FAQs...`}
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 bg-white placeholder-gray-500 text-gray-900 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 bg-white placeholder-gray-500 text-gray-900 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all duration-300"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {search && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                onClick={() => setSearch("")}
+              >
+                ×
+              </motion.button>
+            )}
           </div>
         </motion.div>
 
         {/* FAQ List */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <AnimatePresence mode="wait">
+        <motion.div 
+          className="grid md:grid-cols-2 gap-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          key={activeCategory} // This ensures re-animation when category changes
+        >
+          <AnimatePresence mode="popLayout">
             {filteredFaqs.map((faq, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3, delay: i * 0.1 }}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                layout
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300"
+                whileHover={{ y: -5 }}
               >
-                <button
+                <motion.button
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   className="w-full p-6 text-left flex justify-between items-center"
+                  whileTap={{ scale: 0.98 }}
                 >
                   <h3 className="text-base font-medium text-[#182b5c] pr-4">{faq.question}</h3>
                   <motion.span
                     animate={{ rotate: openIndex === i ? 180 : 0 }}
                     className="text-[#d0b216] flex-shrink-0"
+                    transition={{ duration: 0.3 }}
                   >
                     <ChevronDown className="h-5 w-5" />
                   </motion.span>
-                </button>
+                </motion.button>
                 <AnimatePresence>
                   {openIndex === i && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.4 }}
-                      className="px-6 pb-6 text-gray-700 text-sm"
+                      animate={{ 
+                        opacity: 1, 
+                        height: "auto",
+                        transition: {
+                          height: { duration: 0.3 },
+                          opacity: { duration: 0.4, delay: 0.1 }
+                        }
+                      }}
+                      exit={{ 
+                        opacity: 0, 
+                        height: 0,
+                        transition: {
+                          height: { duration: 0.3 },
+                          opacity: { duration: 0.2 }
+                        }
+                      }}
+                      className="px-6 pb-6 text-gray-700 text-sm overflow-hidden"
                     >
                       {faq.answer}
                     </motion.div>
@@ -376,33 +544,63 @@ export default function Faqs() {
               </motion.div>
             ))}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {/* Support CTA */}
         <motion.div 
           className="mt-12 p-8 bg-[#182b5c] rounded-xl text-center text-white"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+          whileHover={{ 
+            y: -5,
+            transition: { duration: 0.2 }
+          }}
         >
-          <h3 className="text-2xl font-bold mb-4">Need More Help?</h3>
-          <p className="mb-6 opacity-90">Our support team is available 24/7 to assist you</p>
+          <motion.h3 
+            className="text-2xl font-bold mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+          >
+            Need More Help?
+          </motion.h3>
+          <motion.p 
+            className="mb-6 opacity-90"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.9 }}
+            transition={{ delay: 0.9 }}
+          >
+            Our support team is available 24/7 to assist you
+          </motion.p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a 
+            <motion.a 
               href="tel:+254726896562" 
-              className="bg-[#d0b216] hover:bg-[#c0a220] text-[#182b5c] px-6 py-3 rounded-lg font-semibold transition-colors"
+              className="bg-[#d0b216] hover:bg-[#c0a220] text-[#182b5c] px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+              whileHover={{ 
+                scale: 1.05,
+                transition: { type: "spring", stiffness: 400, damping: 10 }
+              }}
+              whileTap={{ scale: 0.95 }}
             >
+              <Phone className="w-4 h-4" />
               Call Support: 0726 896 562
-            </a>
-            <a 
+            </motion.a>
+            <motion.a 
               href="mailto:support@knoxvilletechnologies.com" 
-              className="border border-[#d0b216] text-[#d0b216] hover:bg-[#d0b216] hover:text-[#182b5c] px-6 py-3 rounded-lg font-semibold transition-colors"
+              className="border border-[#d0b216] text-[#d0b216] hover:bg-[#d0b216] hover:text-[#182b5c] px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+              whileHover={{ 
+                scale: 1.05,
+                transition: { type: "spring", stiffness: 400, damping: 10 }
+              }}
+              whileTap={{ scale: 0.95 }}
             >
+              <Mail className="w-4 h-4" />
               Email Us
-            </a>
+            </motion.a>
           </div>
         </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 }
