@@ -11,18 +11,18 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>Knoxfill Internet | Reliable Fiber Internet in Kenya</title>
+        <title>Optimas Fibre  </title>
         <meta
           name="description"
-          content="Get fast, affordable, and reliable fiber internet across Kenya. Knoxfill delivers top-tier connectivity to rural and urban communities."
+          content="Get fast, affordable, and reliable fiber internet across Kenya. Optimas delivers top-tier connectivity to rural and urban communities."
         />
         <meta
           property="og:title"
-          content="Knoxfill Internet | Fast Fiber Internet in Kenya"
+          content="Optimas Fibre"
         />
         <meta
           property="og:description"
-          content="Experience high-speed fiber internet by Knoxfill. Designed for homes and businesses across Kenya."
+          content="Experience high-speed fiber internet by Optimas. Designed for homes and businesses across Kenya."
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://noxfill.co.ke" />

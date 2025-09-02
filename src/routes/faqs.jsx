@@ -4,12 +4,14 @@ import {
   User,
   CreditCard,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Search,
+  ChevronDown
 } from "lucide-react";
 
 const faqsData = {
   "Account Management": {
-    icon: <User className="w-5 h-5 text-purple-500" />,
+    icon: <User className="w-5 h-5 text-[#d0b216]" />,
     items: [
       {
         question: "How do I create a self-care account?",
@@ -66,7 +68,7 @@ const faqsData = {
     ],
   },
   "Billing & Payments": {
-    icon: <CreditCard className="w-5 h-5 text-blue-500" />,
+    icon: <CreditCard className="w-5 h-5 text-[#d0b216]" />,
     items: [
       {
         question: "How can I view my current bill?",
@@ -101,7 +103,7 @@ const faqsData = {
               <div className="bg-gray-50 p-3 rounded border border-blue-200 text-sm text-blue-700">
                 <h4 className="font-medium mb-2">Offline Payments</h4>
                 <ul className="space-y-1">
-                  <li>• knoxville Payment Centers</li>
+                  <li>• Optimas Payment Centers</li>
                   <li>• Authorized Agents</li>
                   <li>• Bank Deposit</li>
                 </ul>
@@ -131,7 +133,7 @@ const faqsData = {
     ],
   },
   "Service Management": {
-    icon: <Settings className="w-5 h-5 text-green-500" />,
+    icon: <Settings className="w-5 h-5 text-[#d0b216]" />,
     items: [
       {
         question: "How do I upgrade my internet package?",
@@ -195,7 +197,7 @@ const faqsData = {
     ],
   },
   "Technical Support": {
-    icon: <HelpCircle className="w-5 h-5 text-orange-500" />,
+    icon: <HelpCircle className="w-5 h-5 text-[#d0b216]" />,
     items: [
       {
         question: "What should I do if my internet is down?",
@@ -272,7 +274,12 @@ export default function Faqs() {
   );
 
   return (
-    <section className="min-h-screen bg-white py-16 px-4 sm:px-6 lg:px-8 text-gray-900 relative overflow-hidden">
+    <section className="min-h-screen bg-gray-50 pt-32 pb-16 px-4 sm:px-6 lg:px-8 text-gray-800 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-0 left-0 w-full h-full bg-[#182b5c]"></div>
+      </div>
+      
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -281,42 +288,53 @@ export default function Faqs() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl font-bold mb-2">Knoxville Tech Ltd - Self-Care Portal</h2>
+          <h2 className="text-4xl font-bold mb-2 text-[#182b5c]">Optimas Fibre - Self-Care Portal</h2>
           <p className="text-gray-600">Manage your account, services, and get support 24/7</p>
+          <div className="w-24 h-1 bg-[#d0b216] mx-auto mt-4"></div>
         </motion.div>
 
         {/* Category Tabs */}
         <div className="flex flex-wrap justify-center gap-3 mb-8">
           {Object.entries(faqsData).map(([key, { icon }]) => (
-            <button
+            <motion.button
               key={key}
               onClick={() => {
                 setActiveCategory(key);
                 setOpenIndex(null);
                 setSearch("");
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all ${
                 activeCategory === key
-                  ? "bg-cyan-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-[#182b5c] text-white shadow-lg"
+                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
               }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               {icon}
-              <span className="text-sm">{key}</span>
-            </button>
+              <span className="text-sm font-medium">{key}</span>
+            </motion.button>
           ))}
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-xl mx-auto mb-8">
-          <input
-            type="text"
-            placeholder={`Search ${activeCategory} FAQs...`}
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-50 placeholder-gray-500 text-gray-900 focus:ring-2 focus:ring-cyan-500 text-sm"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <motion.div 
+          className="max-w-xl mx-auto mb-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder={`Search ${activeCategory} FAQs...`}
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 bg-white placeholder-gray-500 text-gray-900 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </motion.div>
 
         {/* FAQ List */}
         <div className="grid md:grid-cols-2 gap-6">
@@ -327,31 +345,19 @@ export default function Faqs() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden"
+                transition={{ duration: 0.3, delay: i * 0.1 }}
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-md hover:shadow-lg transition-shadow"
               >
                 <button
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full p-4 text-left flex justify-between items-center"
+                  className="w-full p-6 text-left flex justify-between items-center"
                 >
-                  <h3 className="text-base font-medium">{faq.question}</h3>
+                  <h3 className="text-base font-medium text-[#182b5c] pr-4">{faq.question}</h3>
                   <motion.span
                     animate={{ rotate: openIndex === i ? 180 : 0 }}
-                    className="text-gray-500"
+                    className="text-[#d0b216] flex-shrink-0"
                   >
-                    {/* Chevron Icon */}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                    <ChevronDown className="h-5 w-5" />
                   </motion.span>
                 </button>
                 <AnimatePresence>
@@ -361,7 +367,7 @@ export default function Faqs() {
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.4 }}
-                      className="px-4 pb-4 text-gray-700 text-sm"
+                      className="px-6 pb-6 text-gray-700 text-sm"
                     >
                       {faq.answer}
                     </motion.div>
@@ -371,6 +377,31 @@ export default function Faqs() {
             ))}
           </AnimatePresence>
         </div>
+
+        {/* Support CTA */}
+        <motion.div 
+          className="mt-12 p-8 bg-[#182b5c] rounded-xl text-center text-white"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <h3 className="text-2xl font-bold mb-4">Need More Help?</h3>
+          <p className="mb-6 opacity-90">Our support team is available 24/7 to assist you</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a 
+              href="tel:+254726896562" 
+              className="bg-[#d0b216] hover:bg-[#c0a220] text-[#182b5c] px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              Call Support: 0726 896 562
+            </a>
+            <a 
+              href="mailto:support@knoxvilletechnologies.com" 
+              className="border border-[#d0b216] text-[#d0b216] hover:bg-[#d0b216] hover:text-[#182b5c] px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              Email Us
+            </a>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

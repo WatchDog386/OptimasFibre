@@ -1,263 +1,366 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { FaFacebookSquare, FaTiktok, FaWhatsapp } from "react-icons/fa";
-import { Helmet } from "react-helmet";
-
-const ImageModal = ({ image, onClose }) => {
-  if (!image) return null;
-
-  return (
-    <motion.div
-      className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
-      <motion.div
-        className="relative bg-white p-4 rounded-md shadow-lg max-w-md w-[90%]"
-        initial={{ scale: 0.8 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.8 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <img src={image.src} alt={image.alt} className="rounded-md" />
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-black text-xl font-bold hover:text-red-600"
-        >
-          ✕
-        </button>
-      </motion.div>
-    </motion.div>
-  );
-};
+import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, EffectFade, Navigation } from 'swiper/modules';
+import { useNavigate } from 'react-router-dom';
+import 'swiper/css';
+import 'swiper/css/effect-fade';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
 const Hero = () => {
   const navigate = useNavigate();
-  const [modalImage, setModalImage] = useState(null);
-  const [bgIndex, setBgIndex] = useState(0);
-  
-  const bgImages = [
-    "/fibre.webp",
-    "/fibre2.webp",
-    "/fibre3.webp"
-  ];
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const swiperRef = useRef(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Minimum swipe distance required
+  const minSwipeDistance = 50;
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % bgImages.length);
-    }, 10000); // Changed to 10 seconds
-    
-    return () => clearInterval(interval);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe && swiperRef.current) {
+      swiperRef.current.swiper.slideNext();
+    } else if (isRightSwipe && swiperRef.current) {
+      swiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const heroSlides = [
+    {
+      image: "/net.jpg",
+      title: "High-Speed Fibre Solutions",
+      description: "Experience lightning-fast internet connectivity with our premium fibre optic network, designed for reliability and performance.",
+      buttonText: "GET CONNECTED",
+      buttonAction: () => navigate('/coverage'),
+      overlayGradient: "linear-gradient(135deg, rgba(0, 117, 242, 0.7) 0%, rgba(38, 255, 230, 0.5) 100%)"
+    },
+    {
+      image: "/fibre.webp",
+      title: "Affordable Pricing Plans",
+      description: "Get top-quality fibre internet services at competitive rates with flexible packages for homes and businesses.",
+      buttonText: "VIEW PLANS",
+      buttonAction: () => navigate('/wifiPlans'),
+      overlayGradient: "linear-gradient(135deg, rgba(255, 105, 0, 0.7) 0%, rgba(255, 199, 0, 0.5) 100%)"
+    },
+    {
+      image: "/router.jpg",
+      title: "24/7 Customer Support",
+      description: "Our dedicated team provides round-the-clock support to ensure seamless connectivity and quick issue resolution.",
+      buttonText: "CONTACT US",
+      buttonAction: () => navigate('/contact'),
+      overlayGradient: "linear-gradient(135deg, rgba(106, 27, 154, 0.7) 0%, rgba(186, 104, 200, 0.5) 100%)"
+    }
+  ];
+
+  const textVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { 
+      opacity: 1, 
       y: 0,
-      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
-    },
+      transition: {
+        duration: 0.8,
+        ease: "easeOut"
+      }
+    }
   };
 
-  const staggerChildren = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.2 },
+  const buttonVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        delay: 0.4
+      }
     },
-  };
-
-  const floatAnimation = {
-    y: [0, -15, 0],
-    transition: {
-      duration: 6,
-      repeat: Infinity,
-      repeatType: "mirror",
-      ease: "easeInOut",
-    },
+    hover: {
+      scale: 1.05,
+      boxShadow: "0 8px 25px rgba(0, 117, 242, 0.5)",
+      transition: {
+        duration: 0.3
+      }
+    }
   };
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-white text-gray-900">
-      <Helmet>
-        <title>Knoxville Internet | Unlimited Home Fibre</title>
-        <meta
-          name="description"
-          content="Knoxville Internet - Reliable and fast fibre internet for your home and business. Explore our packages today."
-        />
-      </Helmet>
-
-      {/* Background Slideshow - Changes every 10 seconds */}
-      <div className="absolute inset-0 z-0">
-        {bgImages.map((img, index) => (
-          <div
-            key={img}
-            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
-              index === bgIndex ? "opacity-100" : "opacity-0"
-            }`}
-            style={{ backgroundImage: `url(${img})` }}
-          />
-        ))}
-      </div>
-
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-bl from-black/60 via-black/30 to-transparent z-0" />
-
-      {/* Fixed & visible logo */}
-      <div className="fixed top-4 left-4 z-50">
-        <motion.img
-          initial={{ rotate: -10, opacity: 0 }}
-          animate={{ rotate: 0, opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          src="/logo4.webp"
-          alt="Knoxville Internet Logo"
-          className="w-20 sm:w-24 md:w-28 h-auto object-contain rounded-full"
-        />
-      </div>
-
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 flex flex-col justify-center h-full">
-        <div className="grid lg:grid-cols-2 gap-10 items-center">
-          {/* Left Content */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerChildren}
-            className="text-center lg:text-left"
-          >
-            <motion.span
-              variants={fadeIn}
-              className="inline-block bg-blue-800 text-white px-4 py-1.5 rounded text-xs font-semibold uppercase tracking-widest shadow"
-            >
-              Fiber Network Solutions
-            </motion.span>
-
-            <motion.h1
-              variants={fadeIn}
-              whileHover={{ scale: 1.03, rotate: -0.5 }}
-              transition={{ type: "spring", stiffness: 150 }}
-              className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight bg-gradient-to-r from-blue-800 via-blue-600 to-blue-200 bg-clip-text text-transparent"
-            >
-              Knoxville Internet
-            </motion.h1>
-
-            <motion.p
-              variants={fadeIn}
-              className="mt-4 text-base sm:text-lg md:text-xl text-green-600 font-medium"
-            >
-              Unlimited internet for your home with Knoxville Internet – Home of Fibre Internet
-            </motion.p>
-
-            {/* CTA buttons */}
-            <motion.div
-              variants={fadeIn}
-              className="mt-6 flex flex-col sm:flex-row justify-center lg:justify-start gap-4"
-            >
-              <button
-                onClick={() => navigate("/wifiplans")}
-                className="bg-gradient-to-r from-blue-800 to-blue-500 hover:from-blue-900 hover:to-blue-600 text-white px-6 py-3 rounded-sm font-medium shadow-md"
-              >
-                🚀 Get Started
-              </button>
-              <button
-                onClick={() => navigate("/coverage")}
-                className="border border-blue-800 text-blue-900 bg-blue-100 hover:bg-blue-200 px-6 py-3 rounded-sm font-medium shadow-sm"
-              >
-                🗺️ View Coverage
-              </button>
-            </motion.div>
-
-            {/* Stats */}
-            <motion.div
-              variants={fadeIn}
-              className="mt-10 grid grid-cols-3 gap-3 max-w-sm mx-auto lg:mx-0"
-            >
-              {[
-                { label: "Speed", value: "1.2Gbps" },
-                { label: "Support", value: "24/7" },
-                { label: "Uptime", value: "99.9%" },
-              ].map((stat, idx) => (
-                <motion.div
-                  key={idx}
-                  className="text-center p-4 bg-blue-100 rounded-lg shadow-md transition hover:scale-105"
-                >
-                  <div className="text-xl font-bold text-blue-800">{stat.value}</div>
-                  <div className="text-xs text-blue-900 mt-1 uppercase tracking-wider">{stat.label}</div>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* Social links */}
-            <motion.div variants={fadeIn} className="mt-10">
-              <p className="text-gray-900 text-lg font-semibold uppercase tracking-wide mb-4">Follow Us</p>
-              <div className="flex gap-6 justify-center lg:justify-start">
-                {[
-                  {
-                    icon: <FaFacebookSquare className="text-blue-600" />,
-                    link: "https://www.facebook.com/share/1E5h7zsjFR/",
-                  },
-                  {
-                    icon: <FaTiktok className="text-black" />,
-                    link: "https://www.tiktok.com/@knoxville.home.fi?_t=ZM-8wp8uGRB36k&_r=1",
-                  },
-                  {
-                    icon: <FaWhatsapp className="text-green-600" />,
-                    link: "https://wa.me/254726818938",
-                  },
-                ].map((item, index) => (
-                  <a
-                    key={index}
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-white p-4 rounded-full shadow-lg hover:scale-110 transition"
-                  >
-                    <div className="text-3xl">{item.icon}</div>
-                  </a>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Right Visuals */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            className="relative flex items-center justify-center"
-          >
-            <motion.img
-              src="/worker.webp"
-              alt="Worker"
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-[65vw] sm:w-[50vw] md:w-[36vw] max-w-md rounded-lg shadow-xl"
-              whileHover={{ scale: 1.02 }}
+    <section className="hero p-0 relative w-full h-screen overflow-hidden">
+      <Swiper
+        ref={swiperRef}
+        modules={[Autoplay, Pagination, EffectFade, Navigation]}
+        spaceBetween={0}
+        slidesPerView={1}
+        autoplay={{ 
+          delay: 6000,
+          disableOnInteraction: false,
+          pauseOnMouseEnter: true
+        }}
+        effect="fade"
+        speed={1200}
+        loop={true}
+        pagination={{
+          clickable: true,
+          el: '.swiper-pagination',
+          renderBullet: (index, className) => {
+            return `<span class="${className} custom-bullet">
+              <span class="bullet-progress"></span>
+            </span>`;
+          }
+        }}
+        navigation={{
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev',
+        }}
+        onSlideChange={(swiper) => setCurrentSlide(swiper.realIndex)}
+        className="slider-container full-slider w-full h-full"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {heroSlides.map((slide, index) => (
+          <SwiperSlide key={index} className="slide-center slider-item w-full h-full relative">
+            {/* Background Image */}
+            <div 
+              className="slider-image full-image w-full h-full absolute top-0 left-0"
+              style={{
+                backgroundImage: `url(${slide.image})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
             />
-            {["/install.webp", "/fibre3.webp", "/image.webp"].map((img, i) => (
-              <motion.img
-                key={i}
-                src={img}
-                alt={`Floating ${i}`}
-                onClick={() => setModalImage({ src: img, alt: `Image ${i}` })}
-                className="absolute rounded-lg shadow-lg cursor-pointer"
-                style={{
-                  width: `${28 - i * 3}vw`,
-                  top: `${60 + i * 15}%`,
-                  left: `${60 + i * 5}%`,
-                  transform: `translate(-50%, -50%) rotate(${i % 2 === 0 ? -8 + i * 3 : 5}deg)`,
-                  zIndex: 2 + i,
-                }}
-                animate={floatAnimation}
-              />
-            ))}
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Image Modal */}
-      <ImageModal image={modalImage} onClose={() => setModalImage(null)} />
+            
+            {/* Gradient Overlay */}
+            <div 
+              className="absolute inset-0 w-full h-full"
+              style={{
+                background: slide.overlayGradient
+              }}
+            />
+            
+            {/* Content */}
+            <div className="slide-content row absolute inset-0 w-full h-full flex items-center justify-center z-10">
+              <div className="col-12 d-flex justify-content-center inner">
+                <motion.div 
+                  className="slider-outline center text-center text-md-center px-4"
+                  style={{ maxWidth: '800px' }}
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: {
+                        staggerChildren: 0.2
+                      }
+                    }
+                  }}
+                >
+                  <motion.h1 
+                    className="title effect-static-text mb-4"
+                    variants={textVariants}
+                    style={{
+                      backgroundImage: 'linear-gradient(45deg, #ffffff 15%, #e6f7ff 65%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      fontSize: isMobile ? '2.5rem' : '3.5rem',
+                      fontWeight: '700',
+                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+                      lineHeight: '1.2'
+                    }}
+                  >
+                    {slide.title}
+                  </motion.h1>
+                  
+                  <motion.p 
+                    className="description mb-5"
+                    variants={textVariants}
+                    style={{
+                      color: '#ffffff',
+                      fontSize: isMobile ? '1rem' : '1.25rem',
+                      maxWidth: '600px',
+                      marginLeft: 'auto',
+                      marginRight: 'auto',
+                      lineHeight: '1.6',
+                      textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)'
+                    }}
+                  >
+                    {slide.description}
+                  </motion.p>
+                  
+                  <motion.div
+                    className="buttons"
+                    variants={buttonVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <div className="d-sm-inline-flex justify-content-center">
+                      <motion.button
+                        onClick={slide.buttonAction}
+                        className="mx-auto btn primary-button"
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        style={{
+                          backgroundColor: '#0075f2',
+                          border: 'none',
+                          color: '#ffffff',
+                          padding: '16px 40px',
+                          borderRadius: '50px',
+                          fontWeight: '600',
+                          fontSize: '1rem',
+                          cursor: 'pointer',
+                          letterSpacing: '0.5px',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {slide.buttonText}
+                        <motion.span 
+                          className="absolute inset-0 bg-white"
+                          style={{ 
+                            opacity: 0,
+                            borderRadius: '50px'
+                          }}
+                          whileHover={{
+                            opacity: 0.2,
+                            transition: { duration: 0.3 }
+                          }}
+                        />
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+        
+        {/* Custom pagination */}
+        <div className="swiper-pagination slider-pagination" style={{ bottom: '30px' }} />
+        
+        {/* Navigation arrows */}
+        <div className="swiper-button-next !text-white !w-12 !h-12 after:!text-xl"></div>
+        <div className="swiper-button-prev !text-white !w-12 !h-12 after:!text-xl"></div>
+      </Swiper>
+      
+      <style jsx>{`
+        .hero {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .slider-item {
+          position: relative;
+        }
+        
+        .slider-image {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1;
+        }
+        
+        .slide-content {
+          position: relative;
+          z-index: 2;
+          height: 100%;
+        }
+        
+        .swiper-pagination-bullet {
+          width: 14px;
+          height: 14px;
+          background: rgba(255, 255, 255, 0.5);
+          opacity: 1;
+          margin: 0 8px;
+          position: relative;
+          overflow: hidden;
+          border-radius: 10px;
+        }
+        
+        .swiper-pagination-bullet-active {
+          background: transparent;
+          width: 30px;
+        }
+        
+        .swiper-pagination-bullet-active .bullet-progress {
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 100%;
+          background: #0075f2;
+          border-radius: 10px;
+          animation: progress 5s linear;
+        }
+        
+        .swiper-button-next, .swiper-button-prev {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 50%;
+          width: 48px;
+          height: 48px;
+          transition: all 0.3s ease;
+        }
+        
+        .swiper-button-next:after, .swiper-button-prev:after {
+          font-size: 20px;
+          font-weight: bold;
+        }
+        
+        .swiper-button-next:hover, .swiper-button-prev:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+        
+        @keyframes progress {
+          0% {
+            width: 0%;
+          }
+          100% {
+            width: 100%;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .swiper-button-next, .swiper-button-prev {
+            display: none;
+          }
+          
+          .title {
+            font-size: 2.5rem !important;
+          }
+          
+          .description {
+            font-size: 1rem !important;
+          }
+        }
+      `}</style>
     </section>
   );
 };
