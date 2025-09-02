@@ -1,39 +1,23 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import { 
-  FaMoon, 
-  FaSun,
-} from "react-icons/fa";
 
 export default function Footer() {
-  const [darkMode, setDarkMode] = useState(false);
-
   return (
     <motion.footer
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 1 }}
       viewport={{ once: true }}
-      className={`relative pt-10 px-6 transition-all duration-500 ${
-        darkMode ? "bg-gray-900 text-white" : "bg-[#182B5C] text-white"
-      }`}
+      className="relative pt-16 px-6 bg-[#182B5C] text-white"
     >
-      {/* Dark mode toggle */}
-      <div className="absolute top-4 right-4 cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
-        {darkMode ? (
-          <FaSun className="text-yellow-300 hover:scale-110 transition text-xl" />
-        ) : (
-          <FaMoon className="text-[#d0b216] hover:scale-110 transition text-xl" />
-        )}
-      </div>
-
-      {/* Footer content from About page */}
+      {/* Footer content */}
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Company Info */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Optimas Fibre</h3>
             <p className="text-gray-300 mb-4">
-              Leading the future of internet connectivity with cutting-edge fibre solutions.
+              Leading the future of internet connectivity with cutting-edge fibre solutions across Kenya.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-[#d0b216] transition-colors">
@@ -54,17 +38,19 @@ export default function Footer() {
             </div>
           </div>
           
+          {/* Quick Links */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li><a href="#" className="text-gray-300 hover:text-[#d0b216] transition-colors">Home</a></li>
               <li><a href="#" className="text-gray-300 hover:text-[#d0b216] transition-colors">About Us</a></li>
               <li><a href="#" className="text-gray-300 hover:text-[#d0b216] transition-colors">Services</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-[#d0b216] transition-colors">Portfolio</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-[#d0b216] transition-colors">Coverage</a></li>
               <li><a href="#" className="text-gray-300 hover:text-[#d0b216] transition-colors">Contact</a></li>
             </ul>
           </div>
           
+          {/* Services */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Services</h3>
             <ul className="space-y-2">
@@ -76,39 +62,37 @@ export default function Footer() {
             </ul>
           </div>
           
+          {/* Contact Info */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">Newsletter</h3>
-            <p className="text-gray-300 mb-4">Subscribe to our newsletter for updates.</p>
-            <form className="flex">
-              <input 
-                type="email" 
-                placeholder="Your email" 
-                className="px-4 py-2 w-full rounded-l focus:outline-none text-gray-800"
-              />
-              <button 
-                type="submit" 
-                className="bg-[#d0b216] hover:bg-[#b89b14] px-4 py-2 rounded-r text-white font-semibold transition-colors"
-              >
-                Subscribe
-              </button>
-            </form>
+            <h3 className="text-xl font-semibold mb-4">Contact Us</h3>
+            <div className="space-y-3 text-gray-300">
+              <p className="flex items-start">
+                <svg className="w-5 h-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Nairobi, Kenya
+              </p>
+              <p className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 极速5分钟极速5分钟0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+                +254 741 874 200
+              </p>
+              <p className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 极速5分钟002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                info@optimasfibre.com
+              </p>
+            </div>
           </div>
         </div>
         
-        <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+        {/* Copyright */}
+        <div className="border-t border-gray-700 mt-12 pt-8 pb-6 text-center text-gray-400">
           <p>&copy; {new Date().getFullYear()} Optimas Fibre. All rights reserved.</p>
         </div>
-      </div>
-
-      {/* Wave animation */}
-      <div className="overflow-hidden h-16 relative">
-        <svg className="absolute bottom-0 w-full h-full" viewBox="0 0 1440 320" preserveAspectRatio="none">
-          <path
-            fill={darkMode ? "#1a202c" : "#0f1c3f"}
-            fillOpacity="1"
-            d="M0,96L30,106.7C60,117,120,139,180,133.3C240,128,300,96,360,90.7C420,85,480,107,540,117.3C600,128,660,128,720,122.7C780,117,840,107,900,117.3C960,128,1020,160,1080,181.3C1140,203,1200,213,1260,197.3C1320,181,1380,139,1410,117.3L1440,96L1440,320L1410,320C1380,320,1320,320,1260,320C1200,320,1140,320,1080,320C1020,320,960,320,900,320C840,320,780,320,720,320C660,320,600,320,540,320C480,320,420,320,360,320C300,320,240,320,180,320C120,320,60,320,30,320L0,320Z"
-          ></path>
-        </svg>
       </div>
     </motion.footer>
   );

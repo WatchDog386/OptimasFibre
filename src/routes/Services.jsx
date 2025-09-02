@@ -232,6 +232,14 @@ const Services = () => {
     navigate('/coverageMap');
   };
 
+  const handleGetStartedClick = () => {
+    navigate('/WifiPlans');
+  };
+
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -279,6 +287,44 @@ const Services = () => {
       scale: 1,
       opacity: 1,
       transition: { duration: 0.4, ease: "easeOut" }
+    }
+  };
+
+  // Map animation variants
+  const mapContainerVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.7,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const mapContentVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        delay: 0.3,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const progressBarVariants = {
+    hidden: { width: 0 },
+    visible: {
+      width: "100%",
+      transition: {
+        duration: 1.5,
+        delay: 0.5,
+        ease: "easeOut"
+      }
     }
   };
 
@@ -465,13 +511,13 @@ const Services = () => {
         </motion.div>
       </section>
 
-      {/* Coverage Map Section */}
+      {/* Coverage Map Section - Animated */}
       <section className="container mx-auto px-4 mb-20 relative z-10">
         <motion.div 
           className="bg-gradient-to-r from-[#182b5c] to-[#0f1f45] rounded-2xl shadow-xl overflow-hidden"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
+          variants={mapContainerVariants}
+          initial="hidden"
+          animate="visible"
           whileHover={{ y: -5 }}
         >
           <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -524,16 +570,24 @@ const Services = () => {
             <div className="bg-gray-200 flex items-center justify-center p-10">
               <motion.div 
                 className="bg-white rounded-xl p-6 text-center shadow-inner w-full h-64 flex flex-col items-center justify-center"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.9 }}
+                variants={mapContentVariants}
               >
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <motion.div 
+                  className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.4, type: "spring", stiffness: 200, damping: 10 }}
+                >
                   <FaMapMarkerAlt className="w-8 h-8 text-[#182b5c]" />
-                </div>
+                </motion.div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">Interactive Coverage Map</h3>
                 <p className="text-gray-600 mb-4">Check availability in your area</p>
-                <div className="w-full h-3 bg-gradient-to-r from-green-400 to-[#182b5c] rounded-full mb-2"></div>
+                <div className="w-full h-3 bg-gray-300 rounded-full mb-2 overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-green-400 to-[#182b5c] rounded-full"
+                    variants={progressBarVariants}
+                  />
+                </div>
                 <p className="text-sm text-gray-500">95% of metropolitan areas covered</p>
               </motion.div>
             </div>
@@ -719,6 +773,7 @@ const Services = () => {
                     className="bg-[#182b5c] hover:bg-[#0f1f45] text-white px-8 py-3 rounded-xl transition-colors duration-300 font-semibold"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={handleGetStartedClick}
                   >
                     Get This Service
                   </motion.button>
@@ -726,6 +781,7 @@ const Services = () => {
                     className="border-2 border-gray-300 text-gray-700 hover:border-[#182b5c] hover:text-[#182b5c] px-8 py-3 rounded-xl transition-colors duration-300 font-semibold"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={handleContactClick}
                   >
                     Contact Sales
                   </motion.button>
@@ -756,6 +812,7 @@ const Services = () => {
               className="bg-[#182b5c] hover:bg-[#0f1f45] text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold shadow-md hover:shadow-lg"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleGetStartedClick}
             >
               Get Started Now
             </motion.button>
@@ -763,6 +820,7 @@ const Services = () => {
               className="border-2 border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleContactClick}
             >
               Speak to an Expert
             </motion.button>

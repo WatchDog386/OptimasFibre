@@ -17,22 +17,6 @@ const About = () => {
     "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
   ];
 
-  // Thumbnail images
-  const thumbnailImages = [
-    "https://images.unsplash.com/photo-1592928304669-9d5e0a6dd455?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-    "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-    "https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-    "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
-  ];
-
-  // Stats data
-  const stats = [
-    { value: '10+', label: 'Years Experience' },
-    { value: '500+', label: 'Projects Completed' },
-    { value: '98%', label: 'Client Satisfaction' },
-    { value: '24/7', label: 'Support' }
-  ];
-
   // Services data
   const services = [
     {
@@ -58,34 +42,61 @@ const About = () => {
   ];
 
   return (
-    <div className="about-page bg-gray-50">
+    <div className="about-page bg-gray-50 min-h-screen">
       {/* Header */}
       <header className="fixed top-0 w-full bg-white shadow-sm z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <img 
-                src="/logo.png" 
+              <motion.img 
+                src="/oppo.jpg" 
                 alt="Optimas Fibre" 
-                className="h-10"
+                className="h-10 w-10 object-contain rounded-full border-2 border-[#182B5C]"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                whileHover={{ 
+                  scale: 1.05,
+                  rotate: 2,
+                  transition: { duration: 0.2 }
+                }}
               />
+              <motion.div 
+                className="flex flex-col ml-3"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <span className="text-xl font-bold text-[#182B5C] leading-tight">OPTIMAS</span>
+                <span className="text-xl font-bold text-[#d0b216] leading-tight">FIBRE</span>
+              </motion.div>
             </div>
             <nav className="hidden md:flex space-x-8">
               {['Home', 'Services', 'About', 'Portfolio', 'Contact'].map((item) => (
-                <a key={item} href="#" className="text-[#182B5C] hover:text-[#d0b216] font-medium transition-colors text-sm">
+                <motion.a 
+                  key={item} 
+                  href="#" 
+                  className="text-[#182B5C] hover:text-[#d0b216] font-medium transition-colors text-sm"
+                  whileHover={{ y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
                   {item}
-                </a>
+                </motion.a>
               ))}
             </nav>
-            <button className="bg-[#d0b216] hover:bg-[#b89b14] text-white px-5 py-2.5 rounded-md font-medium transition-colors text-sm">
+            <motion.button 
+              className="bg-[#d0b216] hover:bg-[#b89b14] text-white px-5 py-2.5 rounded-md font-medium transition-colors text-sm"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               Get Quote
-            </button>
+            </motion.button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-gradient-to-br from-[#182B5C] via-[#0f7dcc] to-[#182B5C] relative overflow-hidden">
+      {/* Hero Section with KCA-inspired design */}
+      <section className="pt-32 pb-20 bg-gradient-to-br from-[#182B5C] via-[#0f1e42] to-[#182B5C] relative overflow-hidden">
         <div className="absolute inset-0 opacity-5 bg-white"></div>
         <div className="absolute top-0 right-0 -mt-16 mr-16 w-64 h-64 bg-[#d0b216] opacity-10 rounded-full"></div>
         <div className="absolute bottom-0 left-0 -mb-16 ml-16 w-64 h-64 bg-[#d0b216] opacity-10 rounded-full"></div>
@@ -114,55 +125,44 @@ const About = () => {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="flex justify-center space-x-4"
             >
-              <a 
+              <motion.a 
                 href="#contact" 
                 className="inline-block bg-[#d0b216] hover:bg-[#b89b14] text-white px-8 py-3.5 rounded-md font-semibold transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Contact Us
-              </a>
-              <a 
+              </motion.a>
+              <motion.a 
                 href="#services" 
                 className="inline-block border-2 border-white text-white hover:bg-white hover:text-[#182B5C] px-8 py-3.5 rounded-md font-semibold transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Our Services
-              </a>
+              </motion.a>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-12 bg-white shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div 
-                key={index}
-                className="text-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <div className="text-3xl md:text-4xl font-bold text-[#182B5C] mb-2">{stat.value}</div>
-                <div className="text-gray-600 text-sm uppercase tracking-wider">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Removed Stats Section */}
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation with KCA-inspired design */}
       <section className="py-6 bg-white border-t border-gray-100">
         <div className="container mx-auto px-4">
           <div className="flex justify-center space-x-2">
             {['overview', 'portfolio', 'gallery', 'contact'].map((tab) => (
-              <button
+              <motion.button
                 key={tab}
                 className={`px-6 py-3 rounded-md text-sm font-medium transition-all duration-300 ${activeTab === tab ? 'bg-[#182B5C] text-white shadow-md' : 'text-gray-600 hover:text-[#182B5C] hover:bg-gray-50'}`}
                 onClick={() => setActiveTab(tab)}
+                whileHover={{ y: -2 }}
+                whileTap={{ y: 0 }}
+                transition={{ duration: 0.2 }}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -210,15 +210,17 @@ const About = () => {
                   </p>
                   
                   <div className="mt-8">
-                    <a 
+                    <motion.a 
                       href="#services" 
                       className="inline-flex items-center bg-[#182B5C] hover:bg-[#0f7dcc] text-white px-6 py-3.5 rounded-md font-semibold transition-colors"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       Explore Our Services
                       <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                       </svg>
-                    </a>
+                    </motion.a>
                   </div>
                 </div>
               </div>
@@ -244,7 +246,12 @@ const About = () => {
                   >
                     {galleryImages.map((image, index) => (
                       <SwiperSlide key={index}>
-                        <div className="h-96 w-full relative">
+                        <motion.div 
+                          className="h-96 w-full relative"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.5 }}
+                        >
                           <img 
                             src={image} 
                             alt={`Optimas Fibre project ${index + 1}`}
@@ -254,40 +261,23 @@ const About = () => {
                             <h4 className="text-white text-xl font-semibold">Project {index + 1}</h4>
                             <p className="text-gray-200">Fibre optic installation</p>
                           </div>
-                        </div>
+                        </motion.div>
                       </SwiperSlide>
                     ))}
                     <div className="swiper-pagination mt-4"></div>
                   </Swiper>
-                  
-                  {/* Thumbnail Gallery */}
-                  <div className="grid grid-cols-4 gap-4 mt-8">
-                    {thumbnailImages.map((image, index) => (
-                      <motion.div 
-                        key={index} 
-                        className="h-24 rounded-lg overflow-hidden shadow-md cursor-pointer"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <img 
-                          src={image} 
-                          alt={`Optimas Fibre thumbnail ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Mission & Vision Section */}
+            {/* Mission & Vision Section with KCA-inspired design */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-20">
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="bg-gradient-to-br from-[#182B5C] to-[#0f7dcc] p-8 rounded-xl text-white"
+                className="bg-gradient-to-br from-[#182B5C] to-[#0f1e42] p-8 rounded-xl text-white"
+                whileHover={{ y: -5 }}
               >
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-6">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -305,6 +295,7 @@ const About = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="bg-gradient-to-br from-[#d0b216] to-[#e5c845] p-8 rounded-xl text-[#182B5C]"
+                whileHover={{ y: -5 }}
               >
                 <div className="w-12 h-12 bg-white/30 rounded-full flex items-center justify-center mb-6">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -386,23 +377,31 @@ const About = () => {
                   <div className="grid grid-cols-1 gap-4 mb-8">
                     {['FTTX Design & Implementation', 'Network Optimization', 'Cross-Vendor Product Integration', 
                       'Testing & Commissioning', 'Training & Certification', 'Ongoing Maintenance & Support'].map((item, index) => (
-                      <div key={index} className="flex items-start">
+                      <motion.div 
+                        key={index} 
+                        className="flex items-start"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                      >
                         <div className="w-2 h-2 bg-[#d0b216] rounded-full mt-2 mr-3 flex-shrink-0"></div>
                         <span className="text-gray-700">{item}</span>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                   
                   <div className="text-center">
-                    <a 
+                    <motion.a 
                       href="#services" 
                       className="inline-flex items-center bg-[#182B5C] hover:bg-[#0f7dcc] text-white px-6 py-3 rounded-md font-semibold transition-colors"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       Discover Our Services
                       <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                       </svg>
-                    </a>
+                    </motion.a>
                   </div>
                 </div>
               </div>
@@ -435,6 +434,7 @@ const About = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: item * 0.1 }}
+                  whileHover={{ y: -5 }}
                 >
                   <div className="h-48 bg-gradient-to-r from-[#182B5C] to-[#0f7dcc] flex items-center justify-center relative overflow-hidden">
                     <div className="absolute inset-0 bg-black/20"></div>
@@ -479,7 +479,7 @@ const About = () => {
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {galleryImages.concat(thumbnailImages).map((image, index) => (
+              {galleryImages.map((image, index) => (
                 <motion.div 
                   key={index}
                   className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
@@ -580,12 +580,14 @@ const About = () => {
                 </div>
                 
                 <div className="text-center">
-                  <button 
+                  <motion.button 
                     type="submit" 
                     className="bg-[#182B5C] hover:bg-[#0f7dcc] text-white px-8 py-3.5 rounded-lg font-semibold transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     SEND MESSAGE
-                  </button>
+                  </motion.button>
                 </div>
               </form>
             </div>

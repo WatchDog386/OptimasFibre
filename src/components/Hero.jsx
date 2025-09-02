@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade, Navigation } from 'swiper/modules';
 import { useNavigate } from 'react-router-dom';
+import { FaWhatsapp } from 'react-icons/fa';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/pagination';
@@ -57,7 +58,7 @@ const Hero = () => {
       description: "Experience lightning-fast internet connectivity with our premium fibre optic network, designed for reliability and performance.",
       buttonText: "GET CONNECTED",
       buttonAction: () => navigate('/coverage'),
-      overlayGradient: "linear-gradient(135deg, rgba(0, 117, 242, 0.7) 0%, rgba(38, 255, 230, 0.5) 100%)"
+      overlayGradient: "linear-gradient(135deg, rgba(24, 43, 92, 0.85) 0%, rgba(24, 43, 92, 0.7) 100%)"
     },
     {
       image: "/fibre.webp",
@@ -65,7 +66,7 @@ const Hero = () => {
       description: "Get top-quality fibre internet services at competitive rates with flexible packages for homes and businesses.",
       buttonText: "VIEW PLANS",
       buttonAction: () => navigate('/wifiPlans'),
-      overlayGradient: "linear-gradient(135deg, rgba(255, 105, 0, 0.7) 0%, rgba(255, 199, 0, 0.5) 100%)"
+      overlayGradient: "linear-gradient(135deg, rgba(24, 43, 92, 0.85) 0%, rgba(24, 43, 92, 0.7) 100%)"
     },
     {
       image: "/router.jpg",
@@ -73,15 +74,27 @@ const Hero = () => {
       description: "Our dedicated team provides round-the-clock support to ensure seamless connectivity and quick issue resolution.",
       buttonText: "CONTACT US",
       buttonAction: () => navigate('/contact'),
-      overlayGradient: "linear-gradient(135deg, rgba(106, 27, 154, 0.7) 0%, rgba(186, 104, 200, 0.5) 100%)"
+      overlayGradient: "linear-gradient(135deg, rgba(24, 43, 92, 0.85) 0%, rgba(24, 43, 92, 0.7) 100%)"
     }
   ];
 
   const textVariants = {
-    hidden: { opacity: 0, y: 50 },
+    hidden: { opacity: 0, x: 100 },
     visible: { 
       opacity: 1, 
-      y: 0,
+      x: 0,
+      transition: {
+        duration: 0.8,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const imageVariants = {
+    hidden: { opacity: 0, x: -100 },
+    visible: { 
+      opacity: 1, 
+      x: 0,
       transition: {
         duration: 0.8,
         ease: "easeOut"
@@ -101,7 +114,7 @@ const Hero = () => {
     },
     hover: {
       scale: 1.05,
-      boxShadow: "0 8px 25px rgba(0, 117, 242, 0.5)",
+      boxShadow: "0 8px 25px rgba(208, 178, 22, 0.4)",
       transition: {
         duration: 0.3
       }
@@ -110,13 +123,45 @@ const Hero = () => {
 
   return (
     <section className="hero p-0 relative w-full h-screen overflow-hidden">
+      {/* Floating WhatsApp Button */}
+      <motion.a
+        href="https://wa.me/254741874200"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="whatsapp-float"
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 1 }}
+        whileHover={{ scale: 1.1, boxShadow: "0 6px 20px rgba(37, 211, 102, 0.5)" }}
+        whileTap={{ scale: 0.95 }}
+        style={{
+          position: 'fixed',
+          width: '60px',
+          height: '60px',
+          bottom: '40px',
+          right: '40px',
+          backgroundColor: '#25d366',
+          color: '#FFF',
+          borderRadius: '50%',
+          textAlign: 'center',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textDecoration: 'none',
+        }}
+      >
+        <FaWhatsapp style={{ fontSize: '30px', color: 'white' }} />
+      </motion.a>
+
       <Swiper
         ref={swiperRef}
         modules={[Autoplay, Pagination, EffectFade, Navigation]}
         spaceBetween={0}
         slidesPerView={1}
         autoplay={{ 
-          delay: 6000,
+          delay: 5000,
           disableOnInteraction: false,
           pauseOnMouseEnter: true
         }}
@@ -145,7 +190,7 @@ const Hero = () => {
         {heroSlides.map((slide, index) => (
           <SwiperSlide key={index} className="slide-center slider-item w-full h-full relative">
             {/* Background Image */}
-            <div 
+            <motion.div 
               className="slider-image full-image w-full h-full absolute top-0 left-0"
               style={{
                 backgroundImage: `url(${slide.image})`,
@@ -153,6 +198,9 @@ const Hero = () => {
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat'
               }}
+              variants={imageVariants}
+              initial="hidden"
+              animate="visible"
             />
             
             {/* Gradient Overlay */}
@@ -162,6 +210,10 @@ const Hero = () => {
                 background: slide.overlayGradient
               }}
             />
+            
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 -mt-16 mr-16 w-64 h-64 bg-[#d0b216] opacity-10 rounded-full"></div>
+            <div className="absolute bottom-0 left-0 -mb-16 ml-16 w-64 h-64 bg-[#d0b216] opacity-10 rounded-full"></div>
             
             {/* Content */}
             <div className="slide-content row absolute inset-0 w-full h-full flex items-center justify-center z-10">
@@ -185,10 +237,7 @@ const Hero = () => {
                     className="title effect-static-text mb-4"
                     variants={textVariants}
                     style={{
-                      backgroundImage: 'linear-gradient(45deg, #ffffff 15%, #e6f7ff 65%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
+                      color: '#ffffff',
                       fontSize: isMobile ? '2.5rem' : '3.5rem',
                       fontWeight: '700',
                       textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
@@ -227,11 +276,11 @@ const Hero = () => {
                         variants={buttonVariants}
                         whileHover="hover"
                         style={{
-                          backgroundColor: '#0075f2',
+                          backgroundColor: '#d0b216',
                           border: 'none',
-                          color: '#ffffff',
+                          color: '#182B5C',
                           padding: '16px 40px',
-                          borderRadius: '50px',
+                          borderRadius: '8px',
                           fontWeight: '600',
                           fontSize: '1rem',
                           cursor: 'pointer',
@@ -245,7 +294,7 @@ const Hero = () => {
                           className="absolute inset-0 bg-white"
                           style={{ 
                             opacity: 0,
-                            borderRadius: '50px'
+                            borderRadius: '8px'
                           }}
                           whileHover={{
                             opacity: 0.2,
@@ -315,7 +364,7 @@ const Hero = () => {
           top: 0;
           left: 0;
           height: 100%;
-          background: #0075f2;
+          background: #d0b216;
           border-radius: 10px;
           animation: progress 5s linear;
         }
@@ -323,7 +372,7 @@ const Hero = () => {
         .swiper-button-next, .swiper-button-prev {
           background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(10px);
-          border-radius: 50%;
+          border-radius: '50%';
           width: 48px;
           height: 48px;
           transition: all 0.3s ease;
@@ -347,7 +396,8 @@ const Hero = () => {
           }
         }
         
-        @media (max-width: 768px) {
+        /* Mobile responsiveness for WhatsApp button */
+        @media screen and (max-width: 768px) {
           .swiper-button-next, .swiper-button-prev {
             display: none;
           }
@@ -358,6 +408,17 @@ const Hero = () => {
           
           .description {
             font-size: 1rem !important;
+          }
+          
+          .whatsapp-float {
+            width: 50px;
+            height: 50px;
+            bottom: 20px;
+            right: 20px;
+          }
+          
+          .whatsapp-float svg {
+            font-size: 25px;
           }
         }
       `}</style>
