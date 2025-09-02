@@ -69,7 +69,7 @@ const Hero = () => {
       overlayGradient: "linear-gradient(135deg, rgba(24, 43, 92, 0.85) 0%, rgba(24, 43, 92, 0.7) 100%)"
     },
     {
-      image: "/city2.jpg",
+      image: "/customer.jpg",
       title: "24/7 Customer Support",
       description: "Our dedicated team provides round-the-clock support to ensure seamless connectivity and quick issue resolution.",
       buttonText: "CONTACT US",

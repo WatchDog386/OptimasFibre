@@ -17,10 +17,10 @@ const About = () => {
 
   // Image gallery data
   const galleryImages = [
-    "/project1.jpg",
-    "/project2.jpg",
+    "/connection.jpg",
+    "/world.jpg",
     "/fibre3.webp",
-    "/wifi1.jpg",
+    "/city2.jpg",
     "pipe.webp",
   ];
 
