@@ -85,8 +85,8 @@ const Contact = () => {
                 <h3 className="font-semibold text-lg text-[#182b5c] dark:text-white">Call Us</h3>
               </div>
               <div className="space-y-2 pl-11">
-                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">0726 818 938</p>
-                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">0724 169 963</p>
+                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">0741874200</p>
+                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">0117151741</p>
               </div>
             </motion.div>
 
@@ -104,8 +104,8 @@ const Contact = () => {
                 <h3 className="font-semibold text-lg text-[#182b5c] dark:text-white">Email Us</h3>
               </div>
               <div className="space-y-2 pl-11">
-                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">info@optimafibre.com</p>
-                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">support@optimafibre.com</p>
+                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">info@optimas.co.ke</p>
+                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">support@optimas.co.ke</p>
               </div>
             </motion.div>
 
@@ -123,8 +123,8 @@ const Contact = () => {
                 <h3 className="font-semibold text-lg text-[#182b5c] dark:text-white">Visit Us</h3>
               </div>
               <div className="space-y-2 pl-11">
-                <p className="text-gray-700 dark:text-gray-300">Lucky Summer, Ruaraka</p>
-                <p className="text-gray-700 dark:text-gray-300">Behind Naivas Supermarket</p>
+                <p className="text-gray-700 dark:text-gray-300">Kahawa West </p>
+                <p className="text-gray-700 dark:text-gray-300">1st Avanue Court A</p>
                 <motion.a 
                   href="#" 
                   className="text-[#182b5c] dark:text-[#d0b216] hover:text-[#3b5998] dark:hover:text-[#e6c24a] text-sm inline-flex items-center gap-1 mt-2 group"

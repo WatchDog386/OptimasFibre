@@ -8,84 +8,8 @@ import 'swiper/css/pagination';
 
 const About = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [showLearnMore, setShowLearnMore] = useState(false); // For Learn More content
+  const [showLearnMore, setShowLearnMore] = useState(false);
   const navigate = useNavigate();
-
-  const handleServicesClick = () => {
-    navigate('/services');
-  };
-
-  // Updated navigation handler
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-    // Optional: Scroll to top when switching tabs
-    window.scrollTo(0, 0);
-  };
-
-  const galleryImages = [
-    "/connection.jpg",
-    "/world.jpg",
-    "/fibre3.webp",
-    "/city2.jpg",
-    "/pipe.webp",
-  ];
-
-  const services = [
-    {
-      title: "Fibre Internet",
-      description: "High-speed connectivity solutions for homes and businesses",
-      icon: "📡"
-    },
-    {
-      title: "Network Design",
-      description: "Custom network architecture tailored to your needs",
-      icon: "🔧"
-    },
-    {
-      title: "Installation",
-      description: "Professional implementation of fibre infrastructure",
-      icon: "⚡"
-    },
-    {
-      title: "Maintenance",
-      description: "Ongoing support and optimization services",
-      icon: "🛠️"
-    }
-  ];
-
-  // Learn More Content (Fibre Company Info)
-  const learnMoreContent = (
-    <div className="bg-gradient-to-br from-[#182B5C] to-[#0f1e42] text-white p-8 rounded-xl mt-6 shadow-lg">
-      <h3 className="text-2xl font-bold mb-4">Why Choose Optimas Fibre?</h3>
-      <div className="space-y-4 text-sm md:text-base leading-relaxed">
-        <p>
-          <strong>Future-Ready Infrastructure:</strong> We deploy state-of-the-art fibre optic networks that support gigabit+ speeds, ensuring your home or business stays ahead in a digital-first world.
-        </p>
-        <p>
-          <strong>Reliability & Low Latency:</strong> Unlike traditional copper cables, our fibre connections offer unmatched reliability, minimal signal loss, and ultra-low latency — ideal for cloud services, video conferencing, and IoT.
-        </p>
-        <p>
-          <strong>Scalable Solutions:</strong> Whether you're a startup or a large enterprise, our modular network design allows seamless scaling as your bandwidth needs grow.
-        </p>
-        <p>
-          <strong>Sustainable Technology:</strong> Fibre uses light instead of electricity, consuming less power and offering a greener alternative for long-term digital infrastructure.
-        </p>
-        <p>
-          <strong>Local Expertise, Global Standards:</strong> As a Kenyan leader in fibre integration, we combine international best practices with deep local knowledge to deliver robust, cost-effective networks across urban and rural areas.
-        </p>
-        <p>
-          <strong>24/7 Monitoring & Support:</strong> Our maintenance team ensures uptime with proactive monitoring, rapid response times, and SLA-backed service guarantees.
-        </p>
-      </div>
-      <motion.button
-        onClick={() => setShowLearnMore(false)}
-        className="mt-4 bg-white text-[#182B5C] px-5 py-2 rounded font-semibold text-sm"
-        whileHover={{ scale: 1.05 }}
-      >
-        Close
-      </motion.button>
-    </div>
-  );
 
   // Animation variants
   const fadeIn = {
@@ -96,11 +20,6 @@ const About = () => {
   const slideUp = {
     hidden: { y: 30, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
-
-  const scaleUp = {
-    hidden: { scale: 0.9, opacity: 0 },
-    visible: { scale: 1, opacity: 1, transition: { duration: 0.4, ease: "easeOut" } }
   };
 
   const staggerContainer = {
@@ -120,80 +39,189 @@ const About = () => {
     }
   };
 
-  const hoverEffect = {
-    whileHover: { scale: 1.05, transition: { type: "spring", stiffness: 400, damping: 10 } },
-    whileTap: { scale: 0.95 }
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    window.scrollTo(0, 0);
+  };
+
+  const handleServicesClick = () => {
+    navigate('/services');
+  };
+
+  const handlePortfolioClick = () => {
+    navigate('/portfolio');
+  };
+
+  const handleGalleryClick = () => {
+    navigate('/gallery');
+  };
+
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
+
+  const handleGetQuoteClick = () => {
+    navigate('/quote');
+  };
+
+  // Gallery Images
+  const galleryImages = [
+    "/connection.jpg",
+    "/world.jpg",
+    "/fibre3.webp",
+    "/city2.jpg",
+    "/pipe.webp",
+  ];
+
+  // Services Data
+  const services = [
+    {
+      title: "Fibre Internet",
+      description: "High-speed connectivity solutions for homes and businesses",
+      icon: "📡",
+      link: "/services#fibre"
+    },
+    {
+      title: "Network Design",
+      description: "Custom network architecture tailored to your needs",
+      icon: "🔧",
+      link: "/services#design"
+    },
+    {
+      title: "Installation",
+      description: "Professional implementation of fibre infrastructure",
+      icon: "⚡",
+      link: "/services#installation"
+    },
+    {
+      title: "Maintenance",
+      description: "Ongoing support and optimization services",
+      icon: "🛠️",
+      link: "/services#maintenance"
+    }
+  ];
+
+  // Portfolio Projects
+  const portfolioProjects = [
+    {
+      id: 1,
+      title: "Westlands Business District",
+      description: "Fibre optic network installation for commercial high-rises",
+      completion: "Jan 2023",
+      image: "/city2.jpg",
+      link: "/portfolio#westlands"
+    },
+    {
+      id: 2,
+      title: "Karen Residential Estate",
+      description: "FTTH (Fibre to the Home) deployment for upscale community",
+      completion: "Mar 2023",
+      image: "/connection.jpg",
+      link: "/portfolio#karen"
+    },
+    {
+      id: 3,
+      title: "Industrial Park Connectivity",
+      description: "Dedicated fibre lines for manufacturing facilities",
+      completion: "Jun 2023",
+      image: "/pipe.webp",
+      link: "/portfolio#industrial"
+    },
+    {
+      id: 4,
+      title: "University Campus Network",
+      description: "Campus-wide high-speed internet for education institution",
+      completion: "Aug 2023",
+      image: "/world.jpg",
+      link: "/portfolio#campus"
+    },
+    {
+      id: 5,
+      title: "Healthcare Facility Upgrade",
+      description: "Reliable connectivity for hospital digital systems",
+      completion: "Oct 2023",
+      image: "/fibre3.webp",
+      link: "/portfolio#healthcare"
+    },
+    {
+      id: 6,
+      title: "Shopping Complex Deployment",
+      description: "Public WiFi and tenant connectivity solutions",
+      completion: "Dec 2023",
+      image: "/connection.jpg",
+      link: "/portfolio#shopping"
+    }
+  ];
+
+  // Reviews Data
+  const reviews = [
+    {
+      id: 1,
+      name: "James Mwangi",
+      company: "Tech Solutions Ltd.",
+      comment: "Optimas Fibre transformed our office connectivity. We've seen a 40% increase in productivity since installation.",
+      rating: 5,
+      date: "March 15, 2023"
+    },
+    {
+      id: 2,
+      name: "Sarah Kimani",
+      company: "Karen Residence Association",
+      comment: "The professional installation and ongoing support have been exceptional. Our community finally has reliable internet.",
+      rating: 5,
+      date: "April 2, 2023"
+    },
+    {
+      id: 3,
+      name: "David Ochieng",
+      company: "Nairobi University",
+      comment: "The campus-wide fibre network has revolutionized our digital learning capabilities. The implementation was seamless.",
+      rating: 4,
+      date: "June 28, 2023"
+    },
+    {
+      id: 4,
+      name: "Grace Wanjiku",
+      company: "Westlands Business Tower",
+      comment: "As a property manager, I appreciate Optimas' minimal disruption during installation and their responsive maintenance team.",
+      rating: 5,
+      date: "August 12, 2023"
+    }
+  ];
+
+  // Learn More Content
+  const learnMoreContent = (
+    <div className="bg-gradient-to-br from-[#182B5C] to-[#0f1e42] text-white p-8 rounded-xl mt-6 shadow-lg">
+      <h3 className="text-2xl font-bold mb-4">Why Choose Optimas Fibre?</h3>
+      <div className="space-y-4 text-sm md:text-base leading-relaxed">
+        <p><strong>Future-Ready Infrastructure:</strong> We deploy state-of-the-art fibre optic networks that support gigabit+ speeds, ensuring your home or business stays ahead in a digital-first world.</p>
+        <p><strong>Reliability & Low Latency:</strong> Unlike traditional copper cables, our fibre connections offer unmatched reliability, minimal signal loss, and ultra-low latency — ideal for cloud services, video conferencing, and IoT.</p>
+        <p><strong>Scalable Solutions:</strong> Whether you're a startup or a large enterprise, our modular network design allows seamless scaling as your bandwidth needs grow.</p>
+        <p><strong>Sustainable Technology:</strong> Fibre uses light instead of electricity, consuming less power and offering a greener alternative for long-term digital infrastructure.</p>
+        <p><strong>Local Expertise, Global Standards:</strong> As a Kenyan leader in fibre integration, we combine international best practices with deep local knowledge to deliver robust, cost-effective networks across urban and rural areas.</p>
+        <p><strong>24/7 Monitoring & Support:</strong> Our maintenance team ensures uptime with proactive monitoring, rapid response times, and SLA-backed service guarantees.</p>
+      </div>
+      <motion.button
+        onClick={() => setShowLearnMore(false)}
+        className="mt-4 bg-white text-[#182B5C] px-5 py-2 rounded font-semibold text-sm"
+        whileHover={{ scale: 1.05 }}
+      >
+        Close
+      </motion.button>
+    </div>
+  );
+
+  // Render star ratings
+  const renderStars = (rating) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <span key={i} className={i < rating ? "text-yellow-400" : "text-gray-300"}>★</span>
+    ));
   };
 
   return (
-    <div className="about-page bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-white transition-colors duration-300">
-      {/* Header */}
-      <header className="fixed top-0 w-full bg-white dark:bg-gray-800 shadow-sm z-50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <motion.img 
-                src="/oppo.jpg" 
-                alt="Optimas Fibre" 
-                className="h-10 w-10 object-contain rounded-full border-2 border-[#182B5C]"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                whileHover={{ scale: 1.05, rotate: 2, transition: { duration: 0.2 } }}
-              />
-              <motion.div 
-                className="flex flex-col ml-3"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <span className="text-xl font-bold text-[#182B5C] dark:text-white leading-tight">OPTIMAS</span>
-                <span className="text-xl font-bold text-[#d0b216] leading-tight">FIBRE</span>
-              </motion.div>
-            </div>
-
-            <nav className="hidden md:flex space-x-8">
-              {[
-                { name: 'Home', path: '/' },
-                { name: 'Services', path: '/services' },
-                { name: 'About', path: '/about' },
-                { name: 'Portfolio', path: '/portfolio' },
-                { name: 'Contact', path: '/contact' }
-              ].map((item) => (
-                <motion.a 
-                  key={item.name} 
-                  href={item.path} 
-                  className="text-[#182B5C] dark:text-white hover:text-[#d0b216] dark:hover:text-[#d0b216] font-medium transition-colors text-sm"
-                  whileHover={{ y: -2 }}
-                  transition={{ duration: 0.2 }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(item.path);
-                  }}
-                >
-                  {item.name}
-                </motion.a>
-              ))}
-            </nav>
-
-            <motion.button 
-              className="bg-[#d0b216] hover:bg-[#b89b14] text-white px-5 py-2.5 rounded-md font-medium transition-colors text-sm"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/quote')}
-            >
-              Get Quote
-            </motion.button>
-          </div>
-        </div>
-      </header>
-
+    <div className="about-page bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-white transition-colors duration-300 pt-16">
       {/* Hero Section */}
       <section className="pt-32 pb-20 bg-gradient-to-br from-[#182B5C] via-[#0f1e42] to-[#182B5C] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5 dark:opacity-10 bg-white"></div>
-        <div className="absolute top-0 right-0 -mt-16 mr-16 w-64 h-64 bg-[#d0b216] opacity-10 dark:opacity-20 rounded-full"></div>
-        <div className="absolute bottom-0 left-0 -mb-16 ml-16 w-64 h-64 bg-[#d0b216] opacity-10 dark:opacity-20 rounded-full"></div>
-        
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
             <motion.h1 
@@ -218,18 +246,14 @@ const About = () => {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="flex justify-center space-x-4"
             >
-              <motion.a 
-                href="#contact" 
+              <motion.button 
                 className="inline-block bg-[#d0b216] hover:bg-[#b89b14] text-[#182B5C] px-8 py-3.5 rounded-md font-semibold transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleTabClick('contact');
-                }}
+                onClick={() => handleTabClick('contact')}
               >
                 Contact Us
-              </motion.a>
+              </motion.button>
               <motion.button 
                 onClick={handleServicesClick}
                 className="inline-block border-2 border-white text-white hover:bg-white hover:text-[#182B5C] px-8 py-3.5 rounded-md font-semibold transition-colors"
@@ -246,11 +270,11 @@ const About = () => {
       {/* Tab Navigation */}
       <section className="py-6 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
         <div className="container mx-auto px-4">
-          <div className="flex justify-center space-x-2">
-            {['overview', 'portfolio', 'gallery', 'contact'].map((tab) => (
+          <div className="flex justify-center space-x-2 overflow-x-auto">
+            {['overview', 'portfolio', 'gallery', 'reviews', 'contact'].map((tab) => (
               <motion.button
                 key={tab}
-                className={`px-6 py-3 rounded-md text-sm font-medium transition-all duration-300 ${
+                className={`px-6 py-3 rounded-md text-sm font-medium transition-all duration-300 whitespace-nowrap ${
                   activeTab === tab 
                     ? 'bg-[#182B5C] text-white shadow-md' 
                     : 'text-gray-600 dark:text-gray-300 hover:text-[#182B5C] dark:hover:text-[#d0b216] hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -267,7 +291,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Overview */}
+      {/* Overview Tab */}
       {activeTab === 'overview' && (
         <section className="py-16 bg-white dark:bg-gray-800">
           <div className="container mx-auto px-4">
@@ -311,13 +335,12 @@ const About = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Learn More
-                    <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    {showLearnMore ? 'Show Less' : 'Learn More'}
+                    <svg className={`w-5 h-5 ml-2 transform ${showLearnMore ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                   </motion.button>
 
-                  {/* Conditionally render learn more content */}
                   {showLearnMore && learnMoreContent}
                 </div>
               </div>
@@ -336,7 +359,7 @@ const About = () => {
                   >
                     {galleryImages.map((image, index) => (
                       <SwiperSlide key={index}>
-                        <motion.div className="h-96 w-full" initial="hidden" animate="visible" variants={scaleUp}>
+                        <div className="h-96 w-full">
                           <img 
                             src={image} 
                             alt={`Optimas Fibre project ${index + 1}`}
@@ -346,10 +369,22 @@ const About = () => {
                             <h4 className="text-white text-xl font-semibold">Project {index + 1}</h4>
                             <p className="text-gray-200">Fibre optic installation</p>
                           </div>
-                        </motion.div>
+                        </div>
                       </SwiperSlide>
                     ))}
                   </Swiper>
+                  <div className="text-center mt-6">
+                    <motion.button 
+                      onClick={handlePortfolioClick}
+                      className="inline-flex items-center text-[#182B5C] dark:text-[#d0b216] font-semibold"
+                      whileHover={{ x: 5 }}
+                    >
+                      View Full Portfolio
+                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                      </svg>
+                    </motion.button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -416,16 +451,34 @@ const About = () => {
                 {services.map((service, index) => (
                   <motion.div 
                     key={index}
-                    className="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border border-gray-100 dark:border-gray-600 hover:shadow-lg transition-shadow duration-300"
+                    className="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border border-gray-100 dark:border-gray-600 hover:shadow-lg transition-shadow duration-300 cursor-pointer"
                     variants={staggerItem}
                     whileHover={{ y: -5 }}
+                    onClick={() => navigate(service.link)}
                   >
                     <div className="text-4xl mb-4">{service.icon}</div>
                     <h3 className="text-xl font-semibold text-[#182B5C] dark:text-white mb-2">{service.title}</h3>
                     <p className="text-gray-600 dark:text-gray-300 text-sm">{service.description}</p>
+                    <div className="mt-4 text-[#182B5C] dark:text-[#d0b216] text-sm font-semibold flex items-center">
+                      Learn more
+                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                      </svg>
+                    </div>
                   </motion.div>
                 ))}
               </motion.div>
+
+              <div className="text-center mt-10">
+                <motion.button 
+                  onClick={handleServicesClick}
+                  className="bg-[#d0b216] hover:bg-[#b89b14] text-[#182B5C] px-8 py-3.5 rounded-md font-semibold transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  View All Services
+                </motion.button>
+              </div>
             </div>
           </div>
         </section>
@@ -443,35 +496,48 @@ const About = () => {
             </p>
             
             <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" variants={staggerContainer} initial="hidden" animate="visible">
-              {[1, 2, 3, 4, 5, 6].map((item) => (
+              {portfolioProjects.map((project) => (
                 <motion.div 
-                  key={item}
-                  className="bg-white dark:bg-gray-700 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 dark:border-gray-600"
+                  key={project.id}
+                  className="bg-white dark:bg-gray-700 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 dark:border-gray-600 cursor-pointer"
                   variants={staggerItem}
                   whileHover={{ y: -5 }}
+                  onClick={() => navigate(project.link)}
                 >
-                  <div className="h-48 bg-gradient-to-r from-[#182B5C] to-[#0f7dcc] flex items-center justify-center relative">
-                    <div className="absolute inset-0 bg-black/20"></div>
-                    <span className="text-white text-xl font-semibold z-10">Project {item}</span>
+                  <div className="h-48 bg-gradient-to-r from-[#182B5C] to-[#0f7dcc] flex items-center justify-center relative overflow-hidden">
+                    <img src={project.image} alt={project.title} className="w-full h-full object-cover absolute inset-0 opacity-70" />
+                    <div className="absolute inset-0 bg-black/30"></div>
+                    <span className="text-white text-xl font-semibold z-10">{project.title}</span>
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-semibold text-[#182B5C] dark:text-white mb-2">Fibre Network {item}</h3>
+                    <h3 className="text-xl font-semibold text-[#182B5C] dark:text-white mb-2">{project.title}</h3>
                     <p className="text-gray-700 dark:text-gray-300 mb-4 text-sm">
-                      High-speed fibre optic installation for {item === 1 ? 'commercial building' : item === 2 ? 'residential area' : 'industrial park'}.
+                      {project.description}
                     </p>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Completed: Jan 2023</span>
-                      <a href="#" className="text-[#182B5C] dark:text-[#d0b216] hover:text-[#d0b216] font-semibold text-sm transition-colors flex items-center">
-                        Details
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Completed: {project.completion}</span>
+                      <div className="text-[#182B5C] dark:text-[#d0b216] font-semibold text-sm transition-colors flex items-center">
+                        View Details
                         <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                         </svg>
-                      </a>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
               ))}
             </motion.div>
+
+            <div className="text-center mt-12">
+              <motion.button 
+                onClick={handleGetQuoteClick}
+                className="bg-[#182B5C] hover:bg-[#0f7dcc] text-white px-8 py-3.5 rounded-md font-semibold transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Start Your Project
+              </motion.button>
+            </div>
           </div>
         </section>
       )}
@@ -494,6 +560,7 @@ const About = () => {
                   className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
                   variants={staggerItem}
                   whileHover={{ scale: 1.02 }}
+                  onClick={handleGalleryClick}
                 >
                   <div className="h-56 w-full relative overflow-hidden">
                     <img 
@@ -510,6 +577,70 @@ const About = () => {
                 </motion.div>
               ))}
             </motion.div>
+
+            <div className="text-center mt-12">
+              <motion.button 
+                onClick={handleContactClick}
+                className="bg-[#d0b216] hover:bg-[#b89b14] text-[#182B5C] px-8 py-3.5 rounded-md font-semibold transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Request More Images
+              </motion.button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Reviews Tab */}
+      {activeTab === 'reviews' && (
+        <section className="py-16 bg-white dark:bg-gray-800">
+          <div className="container mx-auto px-4">
+            <motion.h2 className="text-3xl font-bold text-[#182B5C] dark:text-white mb-4 text-center" variants={fadeIn} initial="hidden" animate="visible">
+              Client Reviews
+            </motion.h2>
+            <p className="text-gray-600 dark:text-gray-400 text-center mb-12 max-w-2xl mx-auto">
+              Hear what our clients have to say about our services and solutions.
+            </p>
+            
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-8" variants={staggerContainer} initial="hidden" animate="visible">
+              {reviews.map((review) => (
+                <motion.div 
+                  key={review.id}
+                  className="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border border-gray-100 dark:border-gray-600"
+                  variants={staggerItem}
+                  whileHover={{ y: -5 }}
+                >
+                  <div className="flex items-start mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-[#182B5C] to-[#0f7dcc] rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
+                      {review.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-[#182B5C] dark:text-white">{review.name}</h3>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">{review.company}</p>
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <div className="flex mb-2">
+                      {renderStars(review.rating)}
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-300 text-sm italic">{review.date}</p>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            <div className="text-center mt-12">
+              <motion.button 
+                onClick={handleContactClick}
+                className="bg-[#182B5C] hover:bg-[#0f7dcc] text-white px-8 py-3.5 rounded-md font-semibold transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Share Your Experience
+              </motion.button>
+            </div>
           </div>
         </section>
       )}
