@@ -33,10 +33,29 @@
     <script>
       tailwind.config = {
         darkMode: 'class',
+        theme: {
+          extend: {
+            spacing: {
+              'full': '100%',
+            },
+            maxWidth: {
+              'full': '100%',
+            }
+          }
+        }
       }
     </script>
     
     <style>
+      /* Reset margins and padding for full-width layout */
+      html, body, #root {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+      
       .theme-transition * {
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
       }
@@ -50,10 +69,40 @@
       .toggle-checkbox:checked + .toggle-label {
         background-color: #4F46E5;
       }
+      
+      /* Ensure all containers are full width */
+      .container {
+        width: 100%;
+        max-width: 100%;
+      }
+      
+      /* Full-width utility classes */
+      .full-width {
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+      }
+      
+      /* Content container with original sizing */
+      .content-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .content-container {
+          padding: 0 0.5rem;
+        }
+      }
     </style>
   </head>
-  <body class="bg-white dark:bg-slate-900 text-gray-900 dark:text-white theme-transition">
-    <div id="root"></div>
+  <body class="bg-white dark:bg-slate-900 text-gray-900 dark:text-white theme-transition p-0 m-0 w-full">
+    <div id="root" class="w-full"></div>
     
     <!-- Theme toggle script -->
     <script>

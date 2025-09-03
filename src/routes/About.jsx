@@ -8,10 +8,18 @@ import 'swiper/css/pagination';
 
 const About = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showLearnMore, setShowLearnMore] = useState(false); // For Learn More content
   const navigate = useNavigate();
 
   const handleServicesClick = () => {
     navigate('/services');
+  };
+
+  // Updated navigation handler
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    // Optional: Scroll to top when switching tabs
+    window.scrollTo(0, 0);
   };
 
   const galleryImages = [
@@ -44,6 +52,40 @@ const About = () => {
       icon: "🛠️"
     }
   ];
+
+  // Learn More Content (Fibre Company Info)
+  const learnMoreContent = (
+    <div className="bg-gradient-to-br from-[#182B5C] to-[#0f1e42] text-white p-8 rounded-xl mt-6 shadow-lg">
+      <h3 className="text-2xl font-bold mb-4">Why Choose Optimas Fibre?</h3>
+      <div className="space-y-4 text-sm md:text-base leading-relaxed">
+        <p>
+          <strong>Future-Ready Infrastructure:</strong> We deploy state-of-the-art fibre optic networks that support gigabit+ speeds, ensuring your home or business stays ahead in a digital-first world.
+        </p>
+        <p>
+          <strong>Reliability & Low Latency:</strong> Unlike traditional copper cables, our fibre connections offer unmatched reliability, minimal signal loss, and ultra-low latency — ideal for cloud services, video conferencing, and IoT.
+        </p>
+        <p>
+          <strong>Scalable Solutions:</strong> Whether you're a startup or a large enterprise, our modular network design allows seamless scaling as your bandwidth needs grow.
+        </p>
+        <p>
+          <strong>Sustainable Technology:</strong> Fibre uses light instead of electricity, consuming less power and offering a greener alternative for long-term digital infrastructure.
+        </p>
+        <p>
+          <strong>Local Expertise, Global Standards:</strong> As a Kenyan leader in fibre integration, we combine international best practices with deep local knowledge to deliver robust, cost-effective networks across urban and rural areas.
+        </p>
+        <p>
+          <strong>24/7 Monitoring & Support:</strong> Our maintenance team ensures uptime with proactive monitoring, rapid response times, and SLA-backed service guarantees.
+        </p>
+      </div>
+      <motion.button
+        onClick={() => setShowLearnMore(false)}
+        className="mt-4 bg-white text-[#182B5C] px-5 py-2 rounded font-semibold text-sm"
+        whileHover={{ scale: 1.05 }}
+      >
+        Close
+      </motion.button>
+    </div>
+  );
 
   // Animation variants
   const fadeIn = {
@@ -111,15 +153,25 @@ const About = () => {
             </div>
 
             <nav className="hidden md:flex space-x-8">
-              {['Home', 'Services', 'About', 'Portfolio', 'Contact'].map((item) => (
+              {[
+                { name: 'Home', path: '/' },
+                { name: 'Services', path: '/services' },
+                { name: 'About', path: '/about' },
+                { name: 'Portfolio', path: '/portfolio' },
+                { name: 'Contact', path: '/contact' }
+              ].map((item) => (
                 <motion.a 
-                  key={item} 
-                  href="#" 
+                  key={item.name} 
+                  href={item.path} 
                   className="text-[#182B5C] dark:text-white hover:text-[#d0b216] dark:hover:text-[#d0b216] font-medium transition-colors text-sm"
                   whileHover={{ y: -2 }}
                   transition={{ duration: 0.2 }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(item.path);
+                  }}
                 >
-                  {item}
+                  {item.name}
                 </motion.a>
               ))}
             </nav>
@@ -128,6 +180,7 @@ const About = () => {
               className="bg-[#d0b216] hover:bg-[#b89b14] text-white px-5 py-2.5 rounded-md font-medium transition-colors text-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/quote')}
             >
               Get Quote
             </motion.button>
@@ -170,6 +223,10 @@ const About = () => {
                 className="inline-block bg-[#d0b216] hover:bg-[#b89b14] text-[#182B5C] px-8 py-3.5 rounded-md font-semibold transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleTabClick('contact');
+                }}
               >
                 Contact Us
               </motion.a>
@@ -198,7 +255,7 @@ const About = () => {
                     ? 'bg-[#182B5C] text-white shadow-md' 
                     : 'text-gray-600 dark:text-gray-300 hover:text-[#182B5C] dark:hover:text-[#d0b216] hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabClick(tab)}
                 whileHover={{ y: -2 }}
                 whileTap={{ y: 0 }}
                 transition={{ duration: 0.2 }}
@@ -249,7 +306,7 @@ const About = () => {
                   </p>
                   
                   <motion.button 
-                    onClick={handleServicesClick}
+                    onClick={() => setShowLearnMore(!showLearnMore)}
                     className="inline-flex items-center bg-[#182B5C] hover:bg-[#0f7dcc] text-white px-6 py-3.5 rounded-md font-semibold transition-colors"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -259,6 +316,9 @@ const About = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                     </svg>
                   </motion.button>
+
+                  {/* Conditionally render learn more content */}
+                  {showLearnMore && learnMoreContent}
                 </div>
               </div>
 
@@ -371,7 +431,7 @@ const About = () => {
         </section>
       )}
 
-      {/* Portfolio */}
+      {/* Portfolio Tab */}
       {activeTab === 'portfolio' && (
         <section className="py-16 bg-white dark:bg-gray-800">
           <div className="container mx-auto px-4">
@@ -416,7 +476,7 @@ const About = () => {
         </section>
       )}
 
-      {/* Gallery */}
+      {/* Gallery Tab */}
       {activeTab === 'gallery' && (
         <section className="py-16 bg-white dark:bg-gray-800">
           <div className="container mx-auto px-4">
@@ -454,7 +514,7 @@ const About = () => {
         </section>
       )}
 
-      {/* Contact */}
+      {/* Contact Tab */}
       {activeTab === 'contact' && (
         <section className="py-16 bg-gray-50 dark:bg-gray-900">
           <div className="container mx-auto px-4">

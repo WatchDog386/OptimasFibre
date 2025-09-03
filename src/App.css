@@ -1,6 +1,13 @@
 /* =====================
    Global Light/Dark Base
    ===================== */
+html, body {
+  margin: 0;               /* remove default margins */
+  padding: 0;              /* remove default paddings */
+  width: 100%;             /* full width */
+  min-height: 100vh;        /* full viewport height */
+}
+
 body {
   background-color: #ffffff;
   color: #111111;

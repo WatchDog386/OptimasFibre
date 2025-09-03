@@ -24,7 +24,7 @@ export default function MainLayout() {
       {/* Content Layer (above background) */}
       <div className="relative z-10 flex flex-col min-h-screen">
         <Navbar />
-        <main className="flex-1 px-4 sm:px-6 md:px-8 lg:px-12 mt-4">
+        <main className="flex-1 w-full"> {/* Removed all horizontal padding */}
           <Outlet />
         </main>
         <Footer />
