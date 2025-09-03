@@ -21,7 +21,7 @@ const faqsData = {
           <div className="space-y-3">
             <p>To create your self-care account:</p>
             <ol className="list-decimal pl-5 space-y-2 text-gray-700 dark:text-gray-300">
-              <li>Visit our self-care portal at knoxvilletechnologies.com</li>
+              <li>Visit our self-care portal at optimaswifi.co.ke</li>
               <li>Click on 'Get Started'</li>
               <li>Enter your details as prompted</li>
               <li>Create a password and verify your identity via SMS</li>
@@ -97,7 +97,7 @@ const faqsData = {
               <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-300">
                 <h4 className="font-medium mb-2">Online Payments</h4>
                 <ul className="space-y-1">
-                  <li>• M-Pesa  paybill:4136553</li>
+                  <li>• M-Pesa  paybill:4092707</li>
                   <li>• Credit/Debit Cards</li>
                   <li>• Bank Transfer</li>
                 </ul>
@@ -214,7 +214,7 @@ const faqsData = {
               <li>Submit trouble ticket if issue persists</li>
             </ol>
             <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
-              <p>Emergency: Call 0726896562 for immediate assistance with outages.</p>
+              <p>Emergency: Call 0117151741 for immediate assistance with outages.</p>
             </div>
           </div>
         ),
@@ -584,10 +584,10 @@ export default function Faqs() {
               whileTap={{ scale: 0.95 }}
             >
               <Phone className="w-4 h-4" />
-              Call Support: 0726 896 562
+              Call Support: 0117151741
             </motion.a>
             <motion.a 
-              href="mailto:support@knoxvilletechnologies.com" 
+              href="mailto:support@optimasfibre.co.ke" 
               className="border border-white dark:border-[#182b5c] text-white dark:text-[#182b5c] hover:bg-white dark:hover:bg-[#182b5c] hover:text-[#182b5c] dark:hover:text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
               whileHover={{ 
                 scale: 1.05,
