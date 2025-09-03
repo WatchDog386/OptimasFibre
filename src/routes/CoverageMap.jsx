@@ -93,11 +93,11 @@ const CoveragePage = () => {
             
             <div className="flex items-center space-x-4">
               <a 
-                href="tel:+254709517917" 
+                href="tel:+254741874200" 
                 className="bg-[#d0b216] hover:bg-[#c0a220] text-white px-5 py-2.5 rounded-md font-medium transition-colors flex items-center"
               >
                 <Phone className="w-4 h-4 mr-1" />
-                0709517917
+                0741874200
               </a>
             </div>
           </div>
@@ -291,10 +291,10 @@ const CoveragePage = () => {
                 className="bg-[#d0b216] hover:bg-[#c0a220] text-[#182B5C] px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
               >
                 <Phone className="w-4 h-4" />
-                Call Support: 0726 896 562
+                Call Support: 0741874200
               </a>
               <a 
-                href="mailto:support@knoxvilletechnologies.com" 
+                href="mailto:suppor@optimasfibre.co.ke" 
                 className="border border-[#d0b216] text-[#d0b216] hover:bg-[#d0b216] hover:text-[#182B5C] px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
               >
                 <Mail className="w-4 h-4" />
@@ -315,7 +315,7 @@ const CoveragePage = () => {
           
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
             <a 
-              href="tel:+254709517917" 
+              href="tel:+254741874200" 
               className="bg-[#d0b216] hover:bg-yellow-500 text-[#182B5C] px-8 py-4 rounded-md font-bold text-lg transition-colors flex items-center justify-center"
             >
               <Phone className="w-5 h-5 mr-2" />
