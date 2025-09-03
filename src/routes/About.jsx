@@ -109,7 +109,9 @@ const About = () => {
       description: "Fibre optic network installation for commercial high-rises",
       completion: "Jan 2023",
       image: "/city2.jpg",
-      link: "/portfolio#westlands"
+      link: "/portfolio#westlands",
+      category: "Commercial",
+      technologies: ["FTTH", "GPON", "10G Ethernet"]
     },
     {
       id: 2,
@@ -117,7 +119,9 @@ const About = () => {
       description: "FTTH (Fibre to the Home) deployment for upscale community",
       completion: "Mar 2023",
       image: "/connection.jpg",
-      link: "/portfolio#karen"
+      link: "/portfolio#karen",
+      category: "Residential",
+      technologies: ["FTTH", "WiFi Mesh", "Smart Home Integration"]
     },
     {
       id: 3,
@@ -125,7 +129,9 @@ const About = () => {
       description: "Dedicated fibre lines for manufacturing facilities",
       completion: "Jun 2023",
       image: "/pipe.webp",
-      link: "/portfolio#industrial"
+      link: "/portfolio#industrial",
+      category: "Industrial",
+      technologies: ["Dedicated Fibre", "Redundant Links", "Industrial Ethernet"]
     },
     {
       id: 4,
@@ -133,7 +139,9 @@ const About = () => {
       description: "Campus-wide high-speed internet for education institution",
       completion: "Aug 2023",
       image: "/world.jpg",
-      link: "/portfolio#campus"
+      link: "/portfolio#campus",
+      category: "Education",
+      technologies: ["Campus Network", "Eduroam", "High-Density WiFi"]
     },
     {
       id: 5,
@@ -141,7 +149,9 @@ const About = () => {
       description: "Reliable connectivity for hospital digital systems",
       completion: "Oct 2023",
       image: "/fibre3.webp",
-      link: "/portfolio#healthcare"
+      link: "/portfolio#healthcare",
+      category: "Healthcare",
+      technologies: ["Medical IoT", "Low Latency", "High Availability"]
     },
     {
       id: 6,
@@ -149,7 +159,9 @@ const About = () => {
       description: "Public WiFi and tenant connectivity solutions",
       completion: "Dec 2023",
       image: "/connection.jpg",
-      link: "/portfolio#shopping"
+      link: "/portfolio#shopping",
+      category: "Retail",
+      technologies: ["Public WiFi", "Multi-Tenant", "Guest Portal"]
     }
   ];
 
@@ -375,7 +387,7 @@ const About = () => {
                   </Swiper>
                   <div className="text-center mt-6">
                     <motion.button 
-                      onClick={handlePortfolioClick}
+                      onClick={() => handleTabClick('portfolio')}
                       className="inline-flex items-center text-[#182B5C] dark:text-[#d0b216] font-semibold"
                       whileHover={{ x: 5 }}
                     >
@@ -495,30 +507,53 @@ const About = () => {
               Explore our successful projects and see how we've helped businesses and communities with our fibre solutions.
             </p>
             
-            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" variants={staggerContainer} initial="hidden" animate="visible">
-              {portfolioProjects.map((project) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {portfolioProjects.map((project, index) => (
                 <motion.div 
                   key={project.id}
-                  className="bg-white dark:bg-gray-700 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 dark:border-gray-600 cursor-pointer"
-                  variants={staggerItem}
+                  className="group bg-white dark:bg-gray-700 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-600 cursor-pointer"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
                   whileHover={{ y: -5 }}
                   onClick={() => navigate(project.link)}
                 >
-                  <div className="h-48 bg-gradient-to-r from-[#182B5C] to-[#0f7dcc] flex items-center justify-center relative overflow-hidden">
-                    <img src={project.image} alt={project.title} className="w-full h-full object-cover absolute inset-0 opacity-70" />
-                    <div className="absolute inset-0 bg-black/30"></div>
-                    <span className="text-white text-xl font-semibold z-10">{project.title}</span>
+                  <div className="relative h-56 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10"></div>
+                    <img 
+                      src={project.image} 
+                      alt={project.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute top-4 left-4 z-20">
+                      <span className="px-3 py-1 bg-[#182B5C] text-white text-xs font-medium rounded-full">
+                        {project.category}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-4 left-4 z-20">
+                      <h3 className="text-xl font-bold text-white">{project.title}</h3>
+                      <p className="text-gray-200 text-sm mt-1">{project.completion}</p>
+                    </div>
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-[#182B5C] dark:text-white mb-2">{project.title}</h3>
-                    <p className="text-gray-700 dark:text-gray-300 mb-4 text-sm">
+                  
+                  <div className="p-5">
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
                       {project.description}
                     </p>
+                    
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {project.technologies.map((tech, i) => (
+                        <span key={i} className="px-2 py-1 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                    
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-500 dark:text-gray-400">Completed: {project.completion}</span>
-                      <div className="text-[#182B5C] dark:text-[#d0b216] font-semibold text-sm transition-colors flex items-center">
-                        View Details
-                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="text-[#182B5C] dark:text-[#d0b216] font-semibold text-sm transition-colors flex items-center group-hover:text-[#0f7dcc]">
+                        View Project
+                        <svg className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                         </svg>
                       </div>
@@ -526,12 +561,12 @@ const About = () => {
                   </div>
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
 
             <div className="text-center mt-12">
               <motion.button 
                 onClick={handleGetQuoteClick}
-                className="bg-[#182B5C] hover:bg-[#0f7dcc] text-white px-8 py-3.5 rounded-md font-semibold transition-colors"
+                className="bg-gradient-to-r from-[#182B5C] to-[#0f7dcc] hover:from-[#0f7dcc] hover:to-[#182B5C] text-white px-8 py-3.5 rounded-md font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -560,7 +595,7 @@ const About = () => {
                   className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
                   variants={staggerItem}
                   whileHover={{ scale: 1.02 }}
-                  onClick={handleGalleryClick}
+                  onClick={() => handleTabClick('gallery')}
                 >
                   <div className="h-56 w-full relative overflow-hidden">
                     <img 

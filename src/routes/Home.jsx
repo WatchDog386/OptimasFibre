@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import Hero from "../components/Hero";
 import About from "./About"; // Re-added About
 import Services from "./Services";
+import WifiPlans from "./WifiPlans"
 import Faqs from "./faqs";
 import Contact from "./Contact";
 
@@ -39,6 +40,9 @@ export default function Home() {
 
       <section id="services">
         <Services />
+      </section>
+      <section id="WifiPlans">
+        <WifiPlans />
       </section>
 
       <section id="faq">
