@@ -6,7 +6,7 @@ import About from "./About"; // Re-added About
 import Services from "./Services";
 import WifiPlans from "./WifiPlans"
 import Faqs from "./faqs";
-import Contact from "./Contact";
+
 
 export default function Home() {
   return (
@@ -26,8 +26,8 @@ export default function Home() {
           content="Experience high-speed fiber internet by Optimas. Designed for homes and businesses across Kenya."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://noxfill.co.ke" />
-        {/* <meta property="og:image" content="https://noxfill.co.ke/assets/og-image.webp" /> */}
+        <meta property="og:url" content="https://optimaswifi.co.ke" />
+        {/* <meta property="og:image" content="https://optimaswifi.co.ke/assets/og-image.webp" /> */}
       </Helmet>
 
       <section id="hero">
@@ -49,9 +49,7 @@ export default function Home() {
         <Faqs />
       </section>
 
-      <section id="contact">
-        <Contact />
-      </section>
+      
     </>
   );
 }

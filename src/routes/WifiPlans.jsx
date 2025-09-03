@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CheckCircle, X, Wifi, Star, ChevronDown, ChevronUp, Phone, Mail, MapPin } from "lucide-react";
+import { CheckCircle, X, Wifi, Star, ChevronDown, ChevronUp, Phone, Mail, MapPin, Zap, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DomeCard = ({ plan, color, index, onSelect }) => {
@@ -87,8 +87,12 @@ const DomeCard = ({ plan, color, index, onSelect }) => {
         </motion.div>
       )}
       
-      {/* Image Top Section */}
-      <div className="h-48 relative overflow-hidden">
+      {/* Image Top Section - Zoomed out to fill gap */}
+      <motion.div 
+        className="h-48 relative overflow-hidden"
+        whileHover={{ scale: 1.05 }}
+        transition={{ duration: 0.3 }}
+      >
         <motion.div 
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
@@ -99,7 +103,12 @@ const DomeCard = ({ plan, color, index, onSelect }) => {
             src={unsplashImages[index]}
             alt={plan.name}
             className="w-full h-full object-cover object-center"
-            style={{ objectFit: "cover", width: "100%", height: "100%" }}
+            style={{ 
+              objectFit: "cover", 
+              width: "100%", 
+              height: "100%",
+              margin: 0 // Remove any margins
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
             <div className="text-white">
@@ -111,7 +120,7 @@ const DomeCard = ({ plan, color, index, onSelect }) => {
             </div>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
       
       {/* Card Content with Color Background */}
       <div className="flex-grow flex flex-col" style={{ background: currentColor.bg }}>
@@ -174,6 +183,164 @@ const DomeCard = ({ plan, color, index, onSelect }) => {
   );
 };
 
+const MobileHotspotCard = ({ plan, color, index, onSelect }) => {
+  const colorMap = {
+    teal: {
+      bg: "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
+      button: "bg-teal-600 hover:bg-teal-700",
+      gradientStart: "#0d9488",
+      gradientEnd: "#0f766e"
+    },
+    amber: {
+      bg: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+      button: "bg-amber-600 hover:bg-amber-700",
+      gradientStart: "#d97706",
+      gradientEnd: "#b45309"
+    },
+    violet: {
+      bg: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+      button: "bg-violet-600 hover:bg-violet-700",
+      gradientStart: "#7c3aed",
+      gradientEnd: "#6d28d9"
+    },
+    rose: {
+      bg: "linear-gradient(135deg, #e11d48 0%, #be123c 100%)",
+      button: "bg-rose-600 hover:bg-rose-700",
+      gradientStart: "#e11d48",
+      gradientEnd: "#be123c"
+    },
+    emerald: {
+      bg: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+      button: "bg-emerald-600 hover:bg-emerald-700",
+      gradientStart: "#059669",
+      gradientEnd: "#047857"
+    },
+    blue: {
+      bg: "linear-gradient(135deg, #2563eb 0%, #1e40af 100%)",
+      button: "bg-blue-600 hover:bg-blue-700",
+      gradientStart: "#2563eb",
+      gradientEnd: "#1e40af"
+    }
+  };
+
+  const currentColor = colorMap[color];
+  
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 100, scale: 0.9 }}
+      animate={{ 
+        opacity: 1, 
+        y: 0, 
+        scale: 1,
+        transition: {
+          type: "spring",
+          stiffness: 300,
+          damping: 15,
+          delay: index * 0.1
+        }
+      }}
+      whileHover={{ 
+        y: -10, 
+        transition: { duration: 0.2 }
+      }}
+      className="rounded-2xl shadow-xl overflow-hidden relative h-full flex flex-col group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {plan.popular && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: index * 0.1 + 0.3 }}
+          className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 py-1 text-sm font-bold rounded-full z-10 flex items-center shadow-md"
+        >
+          <Star size={14} className="mr-1 fill-current" />
+          Popular
+        </motion.div>
+      )}
+      
+      {/* Wide color header instead of image */}
+      <motion.div 
+        className="h-24 relative overflow-hidden"
+        initial={{ scale: 1 }}
+        whileHover={{ scale: 1.05 }}
+        transition={{ duration: 0.3 }}
+        style={{ background: currentColor.bg }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent flex items-end p-4">
+          <div className="text-white w-full">
+            <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Smartphone size={14} className="mr-2" />
+                <span className="text-xs opacity-90">{plan.devices}</span>
+              </div>
+              <span className="text-sm font-bold">{plan.duration}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Animated elements */}
+        <motion.div 
+          className="absolute top-0 left-0 w-full h-full"
+          initial={{ opacity: 0 }}
+          whileHover={{ opacity: 1 }}
+        >
+          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <pattern id="circles" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="10" cy="10" r="2" fill="white" opacity="0.1" />
+            </pattern>
+            <rect x="0" y="0" width="100" height="100" fill="url(#circles)" />
+          </svg>
+        </motion.div>
+      </motion.div>
+      
+      {/* Card Content with Color Background */}
+      <div className="flex-grow flex flex-col" style={{ background: currentColor.bg }}>
+        <div className="p-4 flex-grow">
+          <div className="text-center mb-4">
+            <span className="text-2xl font-bold text-white">Ksh {plan.price}</span>
+          </div>
+          
+          <ul className="mb-4 flex-grow">
+            {plan.features.map((feature, idx) => (
+              <motion.li 
+                key={idx} 
+                className="flex items-center mb-2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 + 0.4 + (idx * 0.1) }}
+              >
+                <CheckCircle className="w-4 h-4 text-white mr-2 flex-shrink-0" />
+                <span className="text-white text-sm">{feature}</span>
+              </motion.li>
+            ))}
+          </ul>
+        </div>
+        
+        {/* Bottom Section */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: index * 0.1 + 0.8 }}
+          className="relative pb-4 px-4"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onSelect(plan)}
+            className={`w-full text-white py-2 rounded-xl font-semibold transition-all ${currentColor.button} shadow-md text-sm`}
+          >
+            BUY NOW
+          </motion.button>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
 const WifiPlans = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -189,10 +356,75 @@ const WifiPlans = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
 
+  const mobilePlans = [
+    {
+      id: 1,
+      name: "2 Hours",
+      price: "15",
+      duration: "2hrs",
+      devices: "1 Device",
+      features: ["Fast browsing", "Social media access", "Email checking"],
+      popular: false,
+      link: "https://wifi.optimassys.co.ke/2hrs"
+    },
+    {
+      id: 2,
+      name: "12 Hours",
+      price: "30",
+      duration: "12hrs",
+      devices: "1 Device",
+      features: ["Extended browsing", "Streaming music", "Social media"],
+      popular: false,
+      link: "https://wifi.optimassys.co.ke/12hrs"
+    },
+    {
+      id: 3,
+      name: "1 Day",
+      price: "40",
+      duration: "1 day",
+      devices: "1 Device",
+      features: ["Full day access", "Standard streaming", "Online gaming"],
+      popular: true,
+      link: "https://wifi.optimassys.co.ke/1day"
+    },
+    {
+      id: 4,
+      name: "Weekly",
+      price: "250",
+      duration: "week",
+      devices: "2 Devices",
+      features: ["7 days unlimited", "HD streaming", "Multiple devices"],
+      popular: false,
+      link: "https://wifi.optimassys.co.ke/weekly"
+    },
+    {
+      id: 5,
+      name: "Monthly Single",
+      price: "610",
+      duration: "month",
+      devices: "1 Device",
+      features: ["30 days access", "Priority bandwidth", "24/7 support"],
+      popular: false,
+      link: "https://wifi.optimassys.co.ke/monthly-single"
+    },
+    {
+      id: 6,
+      name: "Monthly Dual",
+      price: "1000",
+      duration: "month",
+      devices: "2 Devices",
+      features: ["30 days unlimited", "4K streaming", "Two devices simultaneously"],
+      popular: false,
+      link: "https://wifi.optimassys.co.ke/monthly-dual"
+    },
+  ];
+
+  const mobileColors = ["teal", "amber", "violet", "rose", "emerald", "blue"];
+
   const plans = [
     {
       id: 1,
-      name: "Basic",
+      name: "Jumbo",
       price: "1,500",
       speed: "6Mbps",
       features: ["Great for browsing", "24/7 Support", "Free Installation"],
@@ -201,7 +433,7 @@ const WifiPlans = () => {
     },
     {
       id: 2,
-      name: "Essential",
+      name: "Buffalo",
       price: "2,000",
       speed: "12Mbps",
       features: ["Streaming & Social Media", "24/7 Support", "Free Installation"],
@@ -210,7 +442,7 @@ const WifiPlans = () => {
     },
     {
       id: 3,
-      name: "Family",
+      name: "Ndovu",
       price: "2,500",
       speed: "20Mbps",
       features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"],
@@ -219,7 +451,7 @@ const WifiPlans = () => {
     },
     {
       id: 4,
-      name: "Streaming",
+      name: "Gazzelle",
       price: "3,000",
       speed: "30Mbps",
       features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"],
@@ -228,7 +460,7 @@ const WifiPlans = () => {
     },
     {
       id: 5,
-      name: "Pro",
+      name: "Tiger",
       price: "4,000",
       speed: "40Mbps",
       features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"],
@@ -237,7 +469,7 @@ const WifiPlans = () => {
     },
     {
       id: 6,
-      name: "Premium",
+      name: "Chui",
       price: "6,000",
       speed: "60Mbps",
       features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"],
@@ -292,6 +524,11 @@ const WifiPlans = () => {
     setMessageStatus(null);
   };
 
+  const handleMobilePlanSelect = (plan) => {
+    // Redirect to the specific package page
+    window.open(plan.link, '_blank');
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -305,7 +542,18 @@ const WifiPlans = () => {
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Format the WhatsApp message
+      const message = `Hello! I'm interested in the ${formData.connectionType} plan.\n\nName: ${formData.name}\nPhone: ${formData.phone}\nEmail: ${formData.email}\nLocation: ${formData.location}`;
+      
+      // Encode the message for URL
+      const encodedMessage = encodeURIComponent(message);
+      
+      // Create WhatsApp URL
+      const whatsappUrl = `https://wa.me/254741874200?text=${encodedMessage}`;
+      
+      // Redirect to WhatsApp
+      window.open(whatsappUrl, '_blank');
+      
       setMessageStatus("success");
       setTimeout(() => {
         setShowForm(false);
@@ -326,13 +574,13 @@ const WifiPlans = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none">
         {[...Array(5)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-blue-200 opacity-20"
+            className="absolute rounded-full bg-blue-200 dark:bg-blue-800 opacity-20"
             style={{
               width: Math.random() * 200 + 100,
               height: Math.random() * 200 + 100,
@@ -356,7 +604,7 @@ const WifiPlans = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 10 }}
-        className="bg-white/80 backdrop-blur-md shadow-sm py-4 sticky top-0 z-40"
+        className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm py-4 sticky top-0 z-40"
       >
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div className="flex items-center">
@@ -370,9 +618,10 @@ const WifiPlans = () => {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Optimas Fibre</h1>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
-            <motion.a whileHover={{ y: -2 }} href="#plans" className="text-blue-900 hover:text-blue-700 font-medium">Plans</motion.a>
-            <motion.a whileHover={{ y: -2 }} href="#features" className="text-blue-900 hover:text-blue-700 font-medium">Features</motion.a>
-            <motion.a whileHover={{ y: -2 }} href="#contact" className="text-blue-900 hover:text-blue-700 font-medium">Contact</motion.a>
+            <motion.a whileHover={{ y: -2 }} href="#mobile-hotspot" className="text-blue-900 dark:text-blue-100 hover:text-blue-700 dark:hover:text-blue-300 font-medium">Hotspot</motion.a>
+            <motion.a whileHover={{ y: -2 }} href="#plans" className="text-blue-900 dark:text-blue-100 hover:text-blue-700 dark:hover:text-blue-300 font-medium">Fibre Plans</motion.a>
+            <motion.a whileHover={{ y: -2 }} href="#features" className="text-blue-900 dark:text-blue-100 hover:text-blue-700 dark:hover:text-blue-300 font-medium">Features</motion.a>
+            <motion.a whileHover={{ y: -2 }} href="#contact" className="text-blue-900 dark:text-blue-100 hover:text-blue-700 dark:hover:text-blue-300 font-medium">Contact</motion.a>
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -396,13 +645,13 @@ const WifiPlans = () => {
             <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
               Connect To The World With Optimas Fibre
             </h2>
-            <p className="text-xl mb-8 text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl mb-8 text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               Experience lightning-fast internet with our reliable fibre connections. Perfect for streaming, gaming, and working from home.
             </p>
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => document.getElementById("plans").scrollIntoView({ behavior: "smooth" })}
+              onClick={() => document.getElementById("mobile-hotspot").scrollIntoView({ behavior: "smooth" })}
               className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition-all shadow-md"
             >
               View Our Plans
@@ -412,7 +661,7 @@ const WifiPlans = () => {
         
         {/* Animated circles in hero */}
         <motion.div 
-          className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-blue-200 opacity-10"
+          className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-blue-200 dark:bg-blue-800 opacity-10"
           animate={{
             scale: [1, 1.2, 1],
           }}
@@ -422,7 +671,7 @@ const WifiPlans = () => {
           }}
         />
         <motion.div 
-          className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-blue-300 opacity-10"
+          className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-blue-300 dark:bg-blue-700 opacity-10"
           animate={{
             scale: [1.2, 1, 1.2],
           }}
@@ -433,8 +682,97 @@ const WifiPlans = () => {
         />
       </section>
 
+      {/* Mobile Hotspot Section - Added at the top */}
+      <section id="mobile-hotspot" className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full opacity-10"
+              style={{
+                width: Math.random() * 100 + 50,
+                height: Math.random() * 100 + 50,
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                background: `linear-gradient(135deg, ${mobileColors[i % mobileColors.length] === 'teal' ? '#0d9488' : 
+                  mobileColors[i % mobileColors.length] === 'amber' ? '#d97706' :
+                  mobileColors[i % mobileColors.length] === 'violet' ? '#7c3aed' :
+                  mobileColors[i % mobileColors.length] === 'rose' ? '#e11d48' :
+                  mobileColors[i % mobileColors.length] === 'emerald' ? '#059669' : '#2563eb'} 0%, 
+                  ${mobileColors[i % mobileColors.length] === 'teal' ? '#0f766e' : 
+                  mobileColors[i % mobileColors.length] === 'amber' ? '#b45309' :
+                  mobileColors[i % mobileColors.length] === 'violet' ? '#6d28d9' :
+                  mobileColors[i % mobileColors.length] === 'rose' ? '#be123c' :
+                  mobileColors[i % mobileColors.length] === 'emerald' ? '#047857' : '#1e40af'} 100%)`
+              }}
+              animate={{
+                y: [0, Math.random() * 20 - 10, 0],
+                x: [0, Math.random() * 20 - 10, 0],
+                rotate: [0, Math.random() * 360],
+              }}
+              transition={{
+                duration: Math.random() * 15 + 15,
+                repeat: Infinity,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center justify-center p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
+              <Zap className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h3 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-4">Mobile Hotspot Packages</h3>
+            <p className="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+              Stay connected on the go with our affordable and flexible mobile data packages. Perfect for travelers and mobile users.
+            </p>
+          </motion.div>
+
+          {/* Mobile Plans Grid */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6"
+          >
+            {mobilePlans.map((plan, index) => (
+              <MobileHotspotCard 
+                key={plan.id} 
+                plan={plan} 
+                color={mobileColors[index]}
+                index={index}
+                onSelect={handleMobilePlanSelect}
+              />
+            ))}
+          </motion.div>
+
+          {/* Additional Info */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            viewport={{ once: true }}
+            className="mt-12 text-center bg-white dark:bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg"
+          >
+            <p className="text-gray-600 dark:text-gray-300">
+              <strong>Note:</strong> All mobile hotspot packages automatically redirect to our secure payment portal. 
+              After payment, you'll receive your access credentials via SMS.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Features Section */}
-      <section id="features" className="py-16 bg-white/80 backdrop-blur-sm">
+      <section id="features" className="py-16 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -443,8 +781,8 @@ const WifiPlans = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h3 className="text-3xl font-bold text-blue-900 mb-4">Why Choose Optimas Fibre?</h3>
-            <p className="text-gray-600 max-w-3xl mx-auto">
+            <h3 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-4">Why Choose Optimas Fibre?</h3>
+            <p className="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               We provide the best internet experience with cutting-edge technology and exceptional customer service.
             </p>
           </motion.div>
@@ -457,19 +795,19 @@ const WifiPlans = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className={`bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-100 transition-all duration-300 ${activeFeature === index ? 'ring-2 ring-blue-500 scale-105' : 'hover:shadow-xl'}`}
+                className={`bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-300 ${activeFeature === index ? 'ring-2 ring-blue-500 scale-105' : 'hover:shadow-xl'}`}
                 onMouseEnter={() => setActiveFeature(index)}
               >
-                <div className="text-blue-600 mb-4">{feature.icon}</div>
-                <h4 className="text-xl font-semibold text-blue-900 mb-2">{feature.title}</h4>
-                <p className="text-gray-600">{feature.description}</p>
+                <div className="text-blue-600 dark:text-blue-400 mb-4">{feature.icon}</div>
+                <h4 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-2">{feature.title}</h4>
+                <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Plans Section */}
+      {/* Fibre Plans Section */}
       <section id="plans" className="py-16 relative">
         <div className="container mx-auto px-4">
           <motion.div 
@@ -479,8 +817,8 @@ const WifiPlans = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h3 className="text-3xl font-bold text-blue-900 mb-4">Optimas Fibre Packages</h3>
-            <p className="text-gray-600 max-w-3xl mx-auto">
+            <h3 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-4">Optimas Fibre Packages</h3>
+            <p className="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               Check out our speeds and plans to suit every need and budget. Installs take just 1 hour & can be booked for the next day.
             </p>
           </motion.div>
@@ -515,26 +853,26 @@ const WifiPlans = () => {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 50 }}
               transition={{ type: "spring", damping: 15 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 relative"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setShowForm(false)}
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 <X className="w-6 h-6" />
               </button>
 
               <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-blue-900">Get {selectedPlan?.name}</h3>
-                <p className="text-gray-600">Fill out the form and we'll contact you shortly</p>
+                <h3 className="text-2xl font-bold text-blue-900 dark:text-blue-100">Get {selectedPlan?.name}</h3>
+                <p className="text-gray-600 dark:text-gray-300">Fill out the form and we'll contact you shortly</p>
               </div>
 
               {messageStatus === "success" && (
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl mb-4"
+                  className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-4"
                 >
                   <p>Message sent successfully! We'll contact you shortly.</p>
                 </motion.div>
@@ -544,7 +882,7 @@ const WifiPlans = () => {
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4"
+                  className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-4"
                 >
                   <p>Failed to send message. Please try again or contact us directly.</p>
                 </motion.div>
@@ -553,57 +891,57 @@ const WifiPlans = () => {
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name *</label>
                     <input
                       type="text"
                       name="name"
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                       value={formData.name}
                       onChange={handleInputChange}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number *</label>
                     <input
                       type="tel"
                       name="phone"
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                       value={formData.phone}
                       onChange={handleInputChange}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
                     <input
                       type="email"
                       name="email"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                       value={formData.email}
                       onChange={handleInputChange}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location *</label>
                     <input
                       type="text"
                       name="location"
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                       value={formData.location}
                       onChange={handleInputChange}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Package</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Package</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-xl cursor-not-allowed dark:text-white"
                       value={formData.connectionType}
                       readOnly
                     />
@@ -616,7 +954,7 @@ const WifiPlans = () => {
                     whileTap={{ scale: 0.95 }}
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 font-medium"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium"
                   >
                     Cancel
                   </motion.button>
@@ -636,7 +974,7 @@ const WifiPlans = () => {
                         Processing...
                       </>
                     ) : (
-                      "Send Request"
+                      "Send via WhatsApp"
                     )}
                   </motion.button>
                 </div>

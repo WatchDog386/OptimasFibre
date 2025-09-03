@@ -67,7 +67,7 @@ const About = () => {
   // Gallery Images
   const galleryImages = [
     "/connection.jpg",
-    "/world.jpg",
+    "/work.jpg",
     "/fibre3.webp",
     "/city2.jpg",
     "/pipe.webp",
@@ -108,7 +108,7 @@ const About = () => {
       title: "Westlands Business District",
       description: "Fibre optic network installation for commercial high-rises",
       completion: "Jan 2023",
-      image: "/city2.jpg",
+      image: "/work2.jpg",
       link: "/portfolio#westlands",
       category: "Commercial",
       technologies: ["FTTH", "GPON", "10G Ethernet"]
@@ -138,7 +138,7 @@ const About = () => {
       title: "University Campus Network",
       description: "Campus-wide high-speed internet for education institution",
       completion: "Aug 2023",
-      image: "/world.jpg",
+      image: "/work2.JPG",
       link: "/portfolio#campus",
       category: "Education",
       technologies: ["Campus Network", "Eduroam", "High-Density WiFi"]

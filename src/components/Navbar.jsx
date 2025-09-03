@@ -16,7 +16,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const navRef = useRef(null);
   const { darkMode, toggleDarkMode } = useTheme();
-  const fullText = "OPTIMAS FIBRE";
+  const fullText = "OPTIMAS HOME FIBRE";
 
   // Scroll handler
   const handleScroll = useCallback(
@@ -114,19 +114,20 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <NavLink to="/" className="flex items-center gap-3 transition-all duration-300 group">
-          <div className="flex items-center justify-center bg-white dark:bg-gray-800 rounded-full p-1.5 shadow-sm group-hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-center rounded-full transition-shadow">
             <img
               src="/oppo.jpg"
-              alt="Optimas Fibre Logo"
-              className="h-10 w-10 object-contain rounded-full border-2 border-[#182B5C] dark:border-gray-300"
+              alt="Optimas Home Fibre Logo"
+              className="h-20 w-20 object-contain rounded-full"
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-bold leading-tight">
-              <span className="text-[#182B5C] dark:text-white">OPTIMAS</span>
+            <span className="text-2xl font-bold leading-tight">
+              <span className="text-[#d0b216]">OPTIMAS</span>
+              <span className="text-orange-500"> HOME</span>
               <span className="text-[#d0b216]"> FIBRE</span>
               {showCursor && (
-                <span className="inline-block w-0.5 h-5 bg-[#182B5C] dark:bg-white ml-1 animate-pulse"></span>
+                <span className="inline-block w-0.5 h-6 bg-[#d0b216] ml-1 animate-pulse"></span>
               )}
             </span>
           </div>
@@ -134,7 +135,7 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center justify-center flex-1 mx-8">
-          <div className={`flex items-center justify-between w-full max-w-2xl ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} rounded-full px-6 py-2 shadow-sm border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className="flex items-center justify-between w-full max-w-2xl">
             {menuItems.map((item) => (
               <NavItem key={item.id} item={item} />
             ))}
