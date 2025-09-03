@@ -3,8 +3,8 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ParallaxProvider } from "react-scroll-parallax";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 
-// Context
-import { LanguageProvider } from "./contexts/LanguageContext";
+// Context - Replaced LanguageProvider with ThemeProvider
+import { ThemeProvider } from "./contexts/ThemeContext"; // Make sure this file exists
 
 // Layouts
 import MainLayout from "./layouts/MainLayout";
@@ -20,6 +20,7 @@ import Articles from "./routes/Articles";
 import ArticleDetail from "./routes/ArticleDetail";
 import CoverageMap from "./routes/CoverageMap";
 
+// Track page views with GA
 const TrackPageViews = () => {
   const location = useLocation();
 
@@ -34,6 +35,7 @@ const TrackPageViews = () => {
   return null;
 };
 
+// Define routes
 function AppRoutes() {
   return (
     <Routes>
@@ -53,27 +55,42 @@ function AppRoutes() {
   );
 }
 
+// Main App Component
 export default function App() {
   return (
     <HelmetProvider>
       <ParallaxProvider>
-        <LanguageProvider>
-          {/* Google Analytics */}
+        <ThemeProvider> {/* ✅ Theme context now wraps everything */}
+          {/* Google Analytics Scripts */}
           <Helmet>
-            <script async src="https://www.googletagmanager.com/gtag/js?id=G-6TTHG2D146"></script>
+            {/* Load gtag.js */}
+            <script
+              async
+              src="https://www.googletagmanager.com/gtag/js?id=G-6TTHG2D146"
+            />
+
+            {/* Initialize gtag and set initial config */}
             <script>
               {`
                 window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
+                function gtag() {
+                  dataLayer.push(arguments);
+                }
                 gtag('js', new Date());
                 gtag('config', 'G-6TTHG2D146');
               `}
             </script>
+
+            {/* Optional: Add body class for smooth theme transitions */}
+            <body className="bg-white dark:bg-gray-900 text-[#182B5C] dark:text-white transition-colors duration-300" />
           </Helmet>
 
+          {/* Track page views on route change */}
           <TrackPageViews />
+
+          {/* Render all routes */}
           <AppRoutes />
-        </LanguageProvider>
+        </ThemeProvider>
       </ParallaxProvider>
     </HelmetProvider>
   );

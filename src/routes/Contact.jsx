@@ -41,7 +41,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen px-4 pt-24 pb-10 relative bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-800">
+    <div className="min-h-screen px-4 pt-24 pb-10 relative bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-white transition-colors duration-300">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -59,7 +59,7 @@ const Contact = () => {
             Contact Us
           </motion.h1>
           <motion.p 
-            className="text-gray-600 max-w-xl mx-auto text-lg"
+            className="text-gray-600 dark:text-gray-300 max-w-xl mx-auto text-lg"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -72,7 +72,7 @@ const Contact = () => {
           {/* Contact Info */}
           <div className="space-y-6">
             <motion.div 
-              className="p-6 rounded-xl bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-shadow"
+              className="p-6 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg hover:shadow-xl transition-shadow"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
@@ -82,16 +82,16 @@ const Contact = () => {
                 <div className="bg-gradient-to-r from-[#182b5c] to-[#3b5998] p-2 rounded-full">
                   <Phone className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="font-semibold text-lg">Call Us</h3>
+                <h3 className="font-semibold text-lg text-[#182b5c] dark:text-white">Call Us</h3>
               </div>
               <div className="space-y-2 pl-11">
-                <p className="text-gray-700 hover:text-[#182b5c] transition-colors">0726 818 938</p>
-                <p className="text-gray-700 hover:text-[#182b5c] transition-colors">0724 169 963</p>
+                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">0726 818 938</p>
+                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">0724 169 963</p>
               </div>
             </motion.div>
 
             <motion.div 
-              className="p-6 rounded-xl bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-shadow"
+              className="p-6 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg hover:shadow-xl transition-shadow"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 }}
@@ -101,16 +101,16 @@ const Contact = () => {
                 <div className="bg-gradient-to-r from-[#182b5c] to-[#3b5998] p-2 rounded-full">
                   <Mail className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="font-semibold text-lg">Email Us</h3>
+                <h3 className="font-semibold text-lg text-[#182b5c] dark:text-white">Email Us</h3>
               </div>
               <div className="space-y-2 pl-11">
-                <p className="text-gray-700 hover:text-[#182b5c] transition-colors">info@optimafibre.com</p>
-                <p className="text-gray-700 hover:text-[#182b5c] transition-colors">support@optimafibre.com</p>
+                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">info@optimafibre.com</p>
+                <p className="text-gray-700 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-[#d0b216] transition-colors">support@optimafibre.com</p>
               </div>
             </motion.div>
 
             <motion.div 
-              className="p-6 rounded-xl bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-shadow"
+              className="p-6 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg hover:shadow-xl transition-shadow"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.6 }}
@@ -120,14 +120,14 @@ const Contact = () => {
                 <div className="bg-gradient-to-r from-[#182b5c] to-[#3b5998] p-2 rounded-full">
                   <MapPin className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="font-semibold text-lg">Visit Us</h3>
+                <h3 className="font-semibold text-lg text-[#182b5c] dark:text-white">Visit Us</h3>
               </div>
               <div className="space-y-2 pl-11">
-                <p className="text-gray-700">Lucky Summer, Ruaraka</p>
-                <p className="text-gray-700">Behind Naivas Supermarket</p>
+                <p className="text-gray-700 dark:text-gray-300">Lucky Summer, Ruaraka</p>
+                <p className="text-gray-700 dark:text-gray-300">Behind Naivas Supermarket</p>
                 <motion.a 
                   href="#" 
-                  className="text-[#182b5c] hover:text-[#3b5998] text-sm inline-flex items-center gap-1 mt-2 group"
+                  className="text-[#182b5c] dark:text-[#d0b216] hover:text-[#3b5998] dark:hover:text-[#e6c24a] text-sm inline-flex items-center gap-1 mt-2 group"
                   whileHover={{ x: 3 }}
                 >
                   View on map 
@@ -181,13 +181,13 @@ const Contact = () => {
           {/* Contact Form */}
           <motion.form
             onSubmit={handleSubmit}
-            className="p-7 rounded-xl bg-white border border-gray-100 shadow-lg space-y-6"
+            className="p-7 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg space-y-6"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
           >
-            <h3 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#182b5c] to-[#3b5998] mb-2">
+            <h3 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#182b5c] to-[#3b5998] mb-2 dark:text-white">
               Send us a message
             </h3>
 
@@ -199,7 +199,7 @@ const Contact = () => {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Your Name"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#182b5c] dark:focus:ring-[#d0b216] focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -211,7 +211,7 @@ const Contact = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Email Address"
-                  className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all"
+                  className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#182b5c] dark:focus:ring-[#d0b216] focus:border-transparent transition-all"
                   required
                 />
                 <input
@@ -220,7 +220,7 @@ const Contact = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Phone Number"
-                  className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all"
+                  className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#182b5c] dark:focus:ring-[#d0b216] focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -230,7 +230,7 @@ const Contact = () => {
                   name="service"
                   value={formData.service}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all appearance-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#182b5c] dark:focus:ring-[#d0b216] focus:border-transparent transition-all appearance-none"
                   required
                 >
                   <option value="">Select service type</option>
@@ -249,7 +249,7 @@ const Contact = () => {
                   onChange={handleChange}
                   placeholder="How can we help you?"
                   rows="4"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#182b5c] dark:focus:ring-[#d0b216] focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -269,7 +269,7 @@ const Contact = () => {
 
         {/* Business Hours */}
         <motion.div 
-          className="p-6 rounded-xl bg-white border border-gray-100 shadow-lg text-center mb-8"
+          className="p-6 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg text-center mb-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -277,20 +277,20 @@ const Contact = () => {
         >
           <div className="flex items-center justify-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-[#3b5998]" />
-            <h3 className="font-semibold text-lg">Business Hours</h3>
+            <h3 className="font-semibold text-lg text-[#182b5c] dark:text-white">Business Hours</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm">
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="font-medium text-[#182b5c]">Mon - Fri</p>
-              <p className="text-gray-700">8:00 AM - 5:00 PM</p>
+            <div className="p-3 bg-blue-50 dark:bg-gray-700 rounded-lg">
+              <p className="font-medium text-[#182b5c] dark:text-[#d0b216]">Mon - Fri</p>
+              <p className="text-gray-700 dark:text-gray-300">8:00 AM - 5:00 PM</p>
             </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="font-medium text-[#182b5c]">Saturday</p>
-              <p className="text-gray-700">9:00 AM - 2:00 PM</p>
+            <div className="p-3 bg-blue-50 dark:bg-gray-700 rounded-lg">
+              <p className="font-medium text-[#182b5c] dark:text-[#d0b216]">Saturday</p>
+              <p className="text-gray-700 dark:text-gray-300">9:00 AM - 2:00 PM</p>
             </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="font-medium text-[#182b5c]">Sunday</p>
-              <p className="text-gray-700">Closed</p>
+            <div className="p-3 bg-blue-50 dark:bg-gray-700 rounded-lg">
+              <p className="font-medium text-[#182b5c] dark:text-[#d0b216]">Sunday</p>
+              <p className="text-gray-700 dark:text-gray-300">Closed</p>
             </div>
           </div>
         </motion.div>
@@ -304,7 +304,7 @@ const Contact = () => {
         >
           <motion.a
             href="#"
-            className="inline-flex items-center gap-2 text-[#182b5c] hover:text-[#3b5998] font-medium group"
+            className="inline-flex items-center gap-2 text-[#182b5c] dark:text-[#d0b216] hover:text-[#3b5998] dark:hover:text-[#e6c24a] font-medium group"
             whileHover={{ scale: 1.05 }}
           >
             <MapPin className="w-5 h-5" />

@@ -27,9 +27,57 @@
 
     <!-- Optional: Theme Color for Mobile Browsers -->
     <meta name="theme-color" content="#1e3a8a" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+      }
+    </script>
+    
+    <style>
+      .theme-transition * {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+      }
+      
+      /* Custom toggle switch */
+      .toggle-checkbox:checked {
+        right: 0;
+        border-color: #4F46E5;
+      }
+      
+      .toggle-checkbox:checked + .toggle-label {
+        background-color: #4F46E5;
+      }
+    </style>
   </head>
-  <body class="bg-slate-900 text-white">
+  <body class="bg-white dark:bg-slate-900 text-gray-900 dark:text-white theme-transition">
     <div id="root"></div>
+    
+    <!-- Theme toggle script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Check for saved theme preference or use system preference
+        const savedTheme = localStorage.getItem('theme') || 
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        
+        // Apply the saved theme
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+        
+        // Create a global function to toggle theme
+        window.toggleTheme = function() {
+          const isDark = document.documentElement.classList.toggle('dark');
+          localStorage.setItem('theme', isDark ? 'dark' : 'light');
+          return isDark ? 'dark' : 'light';
+        };
+      });
+    </script>
+    
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

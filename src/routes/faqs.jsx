@@ -20,14 +20,14 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>To create your self-care account:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+            <ol className="list-decimal pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Visit our self-care portal at knoxvilletechnologies.com</li>
               <li>Click on 'Get Started'</li>
               <li>Enter your details as prompted</li>
               <li>Create a password and verify your identity via SMS</li>
               <li>Complete your profile details</li>
             </ol>
-            <div className="bg-blue-50 p-3 rounded border border-blue-200 text-sm text-blue-700">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-300">
               <p>Note: Your account number can be found on your invoice or by contacting customer care.</p>
             </div>
           </div>
@@ -38,13 +38,13 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>Password reset options:</p>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+            <ul className="list-disc pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Click 'Forgot Password' on the login page</li>
               <li>Enter your registered email or phone number</li>
               <li>Follow the OTP verification process</li>
               <li>Set a new strong password</li>
             </ul>
-            <div className="bg-yellow-50 p-3 rounded border border-yellow-200 text-sm text-yellow-800">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded border border-yellow-200 dark:border-yellow-800 text-sm text-yellow-800 dark:text-yellow-300">
               <p>Security Tip: Use a combination of letters, numbers and special characters for your password.</p>
             </div>
           </div>
@@ -55,13 +55,13 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>To update your account details:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+            <ol className="list-decimal pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Log in to your self-care account</li>
               <li>Go to 'Profile Settings'</li>
               <li>Edit the information you want to change</li>
               <li>Save your changes</li>
             </ol>
-            <div className="bg-green-50 p-3 rounded border border-green-200 text-sm text-green-800">
+            <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded border border-green-200 dark:border-green-800 text-sm text-green-800 dark:text-green-300">
               <p>Important: Some changes may require verification for security purposes.</p>
             </div>
           </div>
@@ -77,12 +77,12 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>View your bill through:</p>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+            <ul className="list-disc pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Self-care portal dashboard</li>
               <li>Email notifications (if subscribed)</li>
               <li>Mobile app under 'Billing' section</li>
             </ul>
-            <div className="bg-purple-50 p-3 rounded border border-purple-200 text-sm text-purple-700">
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded border border-purple-200 dark:border-purple-800 text-sm text-purple-700 dark:text-purple-300">
               <p>Tip: Enable auto-notifications to receive bills directly to your email.</p>
             </div>
           </div>
@@ -94,7 +94,7 @@ const faqsData = {
           <div className="space-y-3">
             <p>We accept multiple payment options:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-gray-50 p-3 rounded border border-green-200 text-sm text-green-700">
+              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-300">
                 <h4 className="font-medium mb-2">Online Payments</h4>
                 <ul className="space-y-1">
                   <li>• M-Pesa  paybill:4136553</li>
@@ -102,7 +102,7 @@ const faqsData = {
                   <li>• Bank Transfer</li>
                 </ul>
               </div>
-              <div className="bg-gray-50 p-3 rounded border border-blue-200 text-sm text-blue-700">
+              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded border border-blue-200 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-300">
                 <h4 className="font-medium mb-2">Offline Payments</h4>
                 <ul className="space-y-1">
                   <li>• Optimas Payment Centers</li>
@@ -119,14 +119,14 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>To enable auto-payments:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+            <ol className="list-decimal pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Log in to your self-care account</li>
               <li>Navigate to 'Payment Methods'</li>
               <li>Select 'Set Up Auto-Pay'</li>
               <li>Choose your preferred payment method</li>
               <li>Set payment threshold and confirm</li>
             </ol>
-            <div className="bg-yellow-50 p-3 rounded border border-yellow-200 text-sm text-yellow-800">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded border border-yellow-200 dark:border-yellow-800 text-sm text-yellow-800 dark:text-yellow-300">
               <p>Note: You'll receive notifications before each auto-payment is processed.</p>
             </div>
           </div>
@@ -142,12 +142,12 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>Package upgrade options:</p>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+            <ul className="list-disc pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Through self-care portal under 'Packages'</li>
               <li>Via mobile app by selecting new package</li>
               <li>By contacting customer support</li>
             </ul>
-            <div className="bg-blue-50 p-3 rounded border border-blue-200 text-sm text-blue-700">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-300">
               <p>Changes take effect immediately or at next billing cycle based on your selection.</p>
             </div>
           </div>
@@ -158,13 +158,13 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>Service suspension options:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+            <ol className="list-decimal pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Minimum suspension period: 7 days</li>
               <li>Maximum suspension period: 90 days</li>
               <li>Reduced monthly charges during suspension</li>
               <li>Reactivate anytime through self-care</li>
             </ol>
-            <div className="bg-purple-50 p-3 rounded border border-purple-200 text-sm text-purple-700">
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded border border-purple-200 dark:border-purple-800 text-sm text-purple-700 dark:text-purple-300">
               <p>Note: Equipment must remain connected during suspension.</p>
             </div>
           </div>
@@ -176,7 +176,7 @@ const faqsData = {
           <div className="space-y-3">
             <p>Service issue reporting channels:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-red-50 p-3 rounded border border-red-200 text-sm text-red-700">
+              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
                 <h4 className="font-medium mb-2">Self-Service</h4>
                 <ul className="space-y-1">
                   <li>• Online troubleshooting</li>
@@ -184,7 +184,7 @@ const faqsData = {
                   <li>• Ticket submission</li>
                 </ul>
               </div>
-              <div className="bg-green-50 p-3 rounded border border-green-200 text-sm text-green-700">
+              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-300">
                 <h4 className="font-medium mb-2">Support</h4>
                 <ul className="space-y-1">
                   <li>• Live chat (24/7)</li>
@@ -206,14 +206,14 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>First troubleshooting steps:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+            <ol className="list-decimal pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Check all cable connections</li>
               <li>Restart your router/modem</li>
               <li>Check for service alerts in your area</li>
               <li>Run speed test from self-care portal</li>
               <li>Submit trouble ticket if issue persists</li>
             </ol>
-            <div className="bg-red-50 p-3 rounded border border-red-200 text-sm text-red-700">
+            <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
               <p>Emergency: Call 0726896562 for immediate assistance with outages.</p>
             </div>
           </div>
@@ -225,7 +225,7 @@ const faqsData = {
           <div className="space-y-3">
             <p>Wi-Fi optimization tips:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-blue-50 p-3 rounded border border-blue-200 text-sm text-blue-700">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-300">
                 <h4 className="font-medium mb-2">Placement</h4>
                 <ul className="space-y-1">
                   <li>• Central location</li>
@@ -233,7 +233,7 @@ const faqsData = {
                   <li>• Away from interference</li>
                 </ul>
               </div>
-              <div className="bg-green-50 p-3 rounded border border-green-200 text-sm text-green-700">
+              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-300">
                 <h4 className="font-medium mb-2">Settings</h4>
                 <ul className="space-y-1">
                   <li>• 5GHz for speed</li>
@@ -250,13 +250,13 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>Device connection options:</p>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+            <ul className="list-disc pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>Standard routers support 10-15 devices</li>
               <li>Upgrade to mesh system for larger homes</li>
               <li>Use wired connections for stationary devices</li>
               <li>Enable guest network for visitors</li>
             </ul>
-            <div className="bg-purple-50 p-3 rounded border border-purple-200 text-sm text-purple-700">
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded border border-purple-200 dark:border-purple-800 text-sm text-purple-700 dark:text-purple-300">
               <p>Tip: Monitor connected devices through self-care portal.</p>
             </div>
           </div>
@@ -341,16 +341,16 @@ export default function Faqs() {
 
   return (
     <motion.section 
-      className="min-h-screen bg-gray-50 pt-32 pb-16 px-4 sm:px-6 lg:px-8 text-gray-800 relative overflow-hidden"
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-32 pb-16 px-4 sm:px-6 lg:px-8 text-gray-800 dark:text-gray-200 relative overflow-hidden transition-colors duration-300"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
     >
       {/* Animated Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-0 left-0 w-full h-full bg-[#182b5c]">
+      <div className="absolute inset-0 opacity-5 dark:opacity-[0.03]">
+        <div className="absolute top-0 left-0 w-full h-full bg-[#182b5c] dark:bg-[#d0b216]">
           <motion.div 
-            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] opacity-10"
+            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] dark:bg-[#182b5c] opacity-10"
             animate={{
               scale: [1, 1.2, 1],
               rotate: [0, 90, 0],
@@ -362,7 +362,7 @@ export default function Faqs() {
             }}
           />
           <motion.div 
-            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] opacity-10"
+            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] dark:bg-[#182b5c] opacity-10"
             animate={{
               scale: [1.2, 1, 1.2],
               rotate: [180, 270, 180],
@@ -385,7 +385,7 @@ export default function Faqs() {
           className="text-center mb-12"
         >
           <motion.h2 
-            className="text-4xl font-bold mb-2 text-[#182b5c]"
+            className="text-4xl font-bold mb-2 text-[#182b5c] dark:text-[#d0b216]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -393,7 +393,7 @@ export default function Faqs() {
             Optimas Fibre - Self-Care Portal
           </motion.h2>
           <motion.p 
-            className="text-gray-600"
+            className="text-gray-600 dark:text-gray-400"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -401,7 +401,7 @@ export default function Faqs() {
             Manage your account, services, and get support 24/7
           </motion.p>
           <motion.div 
-            className="w-24 h-1 bg-[#d0b216] mx-auto mt-4"
+            className="w-24 h-1 bg-[#d0b216] dark:bg-[#182b5c] mx-auto mt-4"
             initial={{ width: 0 }}
             animate={{ width: 96 }}
             transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
@@ -425,8 +425,8 @@ export default function Faqs() {
               }}
               className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all ${
                 activeCategory === key
-                  ? "bg-[#182b5c] text-white shadow-lg"
-                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                  ? "bg-[#182b5c] dark:bg-[#d0b216] text-white dark:text-[#182b5c] shadow-lg"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
               }`}
               variants={itemVariants}
               whileHover={{ 
@@ -458,12 +458,12 @@ export default function Faqs() {
               animate={{ rotate: search ? 90 : 0 }}
               transition={{ duration: 0.3 }}
             >
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
             </motion.div>
             <input
               type="text"
               placeholder={`Search ${activeCategory} FAQs...`}
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 bg-white placeholder-gray-500 text-gray-900 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all duration-300"
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#182b5c] dark:focus:ring-[#d0b216] focus:border-transparent transition-all duration-300"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -472,7 +472,7 @@ export default function Faqs() {
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
                 onClick={() => setSearch("")}
               >
                 ×
@@ -498,7 +498,7 @@ export default function Faqs() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300"
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-md hover:shadow-lg dark:hover:shadow-gray-800/30 transition-all duration-300"
                 whileHover={{ y: -5 }}
               >
                 <motion.button
@@ -506,10 +506,10 @@ export default function Faqs() {
                   className="w-full p-6 text-left flex justify-between items-center"
                   whileTap={{ scale: 0.98 }}
                 >
-                  <h3 className="text-base font-medium text-[#182b5c] pr-4">{faq.question}</h3>
+                  <h3 className="text-base font-medium text-[#182b5c] dark:text-[#d0b216] pr-4">{faq.question}</h3>
                   <motion.span
                     animate={{ rotate: openIndex === i ? 180 : 0 }}
-                    className="text-[#d0b216] flex-shrink-0"
+                    className="text-[#d0b216] dark:text-[#182b5c] flex-shrink-0"
                     transition={{ duration: 0.3 }}
                   >
                     <ChevronDown className="h-5 w-5" />
@@ -535,7 +535,7 @@ export default function Faqs() {
                           opacity: { duration: 0.2 }
                         }
                       }}
-                      className="px-6 pb-6 text-gray-700 text-sm overflow-hidden"
+                      className="px-6 pb-6 text-gray-700 dark:text-gray-300 text-sm overflow-hidden"
                     >
                       {faq.answer}
                     </motion.div>
@@ -548,7 +548,7 @@ export default function Faqs() {
 
         {/* Support CTA */}
         <motion.div 
-          className="mt-12 p-8 bg-[#182b5c] rounded-xl text-center text-white"
+          className="mt-12 p-8 bg-[#182b5c] dark:bg-[#d0b216] rounded-xl text-center text-white dark:text-[#182b5c]"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
@@ -576,7 +576,7 @@ export default function Faqs() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <motion.a 
               href="tel:+254726896562" 
-              className="bg-[#d0b216] hover:bg-[#c0a220] text-[#182b5c] px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+              className="bg-[#d0b216] dark:bg-[#182b5c] hover:bg-[#c0a220] dark:hover:bg-[#0f1c3a] text-[#182b5c] dark:text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
               whileHover={{ 
                 scale: 1.05,
                 transition: { type: "spring", stiffness: 400, damping: 10 }
@@ -588,7 +588,7 @@ export default function Faqs() {
             </motion.a>
             <motion.a 
               href="mailto:support@knoxvilletechnologies.com" 
-              className="border border-[#d0b216] text-[#d0b216] hover:bg-[#d0b216] hover:text-[#182b5c] px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+              className="border border-white dark:border-[#182b5c] text-white dark:text-[#182b5c] hover:bg-white dark:hover:bg-[#182b5c] hover:text-[#182b5c] dark:hover:text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
               whileHover={{ 
                 scale: 1.05,
                 transition: { type: "spring", stiffness: 400, damping: 10 }

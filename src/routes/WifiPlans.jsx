@@ -11,7 +11,7 @@ const unsplashImages = {
   pro: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
   premium: "https://images.unsplash.com/photo-1547658719-da2b51169166?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
   business: "https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-  enterprise: "https://images.unsplash.com/photo-1568992687947-868a62a9f521?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+  enterprise: "https://images.unsplash.com/photo-1568992687947-868a62a9f521?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
 };
 
 const plans = [
@@ -23,7 +23,7 @@ const plans = [
     image: unsplashImages.basic,
     features: ["Great for browsing", "24/7 Support", "Free Installation"],
     type: "home",
-    popular: false
+    popular: false,
   },
   {
     id: 2,
@@ -33,7 +33,7 @@ const plans = [
     image: unsplashImages.essential,
     features: ["Streaming & Social Media", "24/7 Support", "Free Installation"],
     type: "home",
-    popular: false
+    popular: false,
   },
   {
     id: 3,
@@ -43,7 +43,7 @@ const plans = [
     image: unsplashImages.family,
     features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"],
     type: "home",
-    popular: false  // Removed popular tag as requested
+    popular: false,
   },
   {
     id: 4,
@@ -53,7 +53,7 @@ const plans = [
     image: unsplashImages.streaming,
     features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"],
     type: "home",
-    popular: false
+    popular: false,
   },
   {
     id: 5,
@@ -63,7 +63,7 @@ const plans = [
     image: unsplashImages.pro,
     features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"],
     type: "home",
-    popular: false
+    popular: false,
   },
   {
     id: 6,
@@ -73,7 +73,7 @@ const plans = [
     image: unsplashImages.premium,
     features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"],
     type: "home",
-    popular: false
+    popular: false,
   },
   {
     id: 7,
@@ -83,7 +83,7 @@ const plans = [
     image: unsplashImages.business,
     features: ["5 IP phones", "3 Static IPs", "Priority support", "99.5% uptime"],
     type: "business",
-    popular: false
+    popular: false,
   },
   {
     id: 8,
@@ -93,7 +93,7 @@ const plans = [
     image: unsplashImages.business,
     features: ["10 IP phones", "5 Static IPs", "Dedicated line", "99.9% uptime"],
     type: "business",
-    popular: false  // Removed popular tag
+    popular: false,
   },
   {
     id: 9,
@@ -103,41 +103,41 @@ const plans = [
     image: unsplashImages.enterprise,
     features: ["Unlimited IP phones", "10+ Static IPs", "SLA guarantee", "24/7 monitoring"],
     type: "enterprise",
-    popular: false
-  }
+    popular: false,
+  },
 ];
 
 const features = [
   {
     icon: "far fa-check-circle",
     title: "High Speed",
-    description: "Enjoy our high speeds of VTL Telecom fiber for your Home & office meetings and entertainment purpose"
+    description: "Enjoy our high speeds of VTL Telecom fiber for your Home & office meetings and entertainment purpose",
   },
   {
     icon: "fas fa-user-clock",
     title: "Customer Service",
-    description: "We provide 24/7 Customer support. Reach out to us at any time of the day for any inquiries"
+    description: "We provide 24/7 Customer support. Reach out to us at any time of the day for any inquiries",
   },
   {
     icon: "fas fa-infinity",
     title: "Unlimited Access",
-    description: "Browse and stream your favorite movies without internet limit restrictions."
+    description: "Browse and stream your favorite movies without internet limit restrictions.",
   },
   {
     icon: "far fa-thumbs-up",
     title: "Reliability",
-    description: "With our internet plans you get connected to internet that works 24/7 with zero downtime."
+    description: "With our internet plans you get connected to internet that works 24/7 with zero downtime.",
   },
   {
     icon: "fas fa-money-check-alt",
     title: "Affordability",
-    description: "With us you get more for less. We do Installations free of charge. We have no capping on your usage."
+    description: "With us you get more for less. We do Installations free of charge. We have no capping on your usage.",
   },
   {
     icon: "fas fa-check-double",
     title: "Safety",
-    description: "Your privacy and security is our core priority and with us you are assured of both."
-  }
+    description: "Your privacy and security is our core priority and with us you are assured of both.",
+  },
 ];
 
 export default function WifiPlans() {
@@ -145,11 +145,11 @@ export default function WifiPlans() {
   const [showForm, setShowForm] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    location: '',
-    connectionType: ''
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    connectionType: "",
   });
   const [messageStatus, setMessageStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -158,9 +158,9 @@ export default function WifiPlans() {
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      connectionType: plan.name
+      connectionType: plan.name,
     }));
     setShowForm(true);
     setMessageStatus(null);
@@ -168,75 +168,63 @@ export default function WifiPlans() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const whatsappNumber = "+254741874200";
     const message = `New Connection Request:%0A%0A` +
-                   `*Name:* ${formData.name}%0A` +
-                   `*Phone:* ${formData.phone}%0A` +
-                   `*Email:* ${formData.email}%0A` +
-                   `*Location:* ${formData.location}%0A` +
-                   `*Connection Type:* ${formData.connectionType}%0A%0A` +
-                   `I would like to get connected!`;
-    
-    // Open WhatsApp in a new tab
-    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
-    
-    // Simulate message delivery status
+      `*Name:* ${formData.name}%0A` +
+      `*Phone:* ${formData.phone}%0A` +
+      `*Email:* ${formData.email}%0A` +
+      `*Location:* ${formData.location}%0A` +
+      `*Connection Type:* ${formData.connectionType}%0A%0A` +
+      `I would like to get connected!`;
+
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank");
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For demo purposes, we'll assume it's always successful
-      // In a real app, you would check the actual status
-      setMessageStatus('success');
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setMessageStatus("success");
+
       setTimeout(() => {
         setShowForm(false);
         setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          location: '',
-          connectionType: ''
+          name: "",
+          email: "",
+          phone: "",
+          location: "",
+          connectionType: "",
         });
         setSelectedPlan(null);
       }, 2000);
     } catch (err) {
-      setMessageStatus('error');
+      setMessageStatus("error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredPlans = plans.filter(plan => plan.type === activeTab);
+  const filteredPlans = plans.filter((plan) => plan.type === activeTab);
 
   // Card animation variants
   const cardVariants = {
-    offscreen: {
-      y: 100,
-      opacity: 0
-    },
+    offscreen: { y: 100, opacity: 0 },
     onscreen: {
       y: 0,
       opacity: 1,
-      transition: {
-        type: "spring",
-        bounce: 0.4,
-        duration: 0.8
-      }
-    }
+      transition: { type: "spring", bounce: 0.4, duration: 0.8 },
+    },
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white transition-colors duration-300">
       {/* Floating WhatsApp Chat Button */}
       <motion.button
         initial={{ scale: 0 }}
@@ -255,7 +243,7 @@ export default function WifiPlans() {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-24 right-6 w-80 bg-white rounded-lg shadow-xl z-50 overflow-hidden"
+            className="fixed bottom-24 right-6 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 overflow-hidden"
           >
             <div className="bg-green-500 text-white p-3 flex justify-between items-center">
               <h3 className="font-semibold">Chat with us on WhatsApp</h3>
@@ -263,47 +251,47 @@ export default function WifiPlans() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-4">
-              <p className="text-gray-600 mb-4">Hello! How can we help you today?</p>
-              
+              <p className="text-gray-600 dark:text-gray-300 mb-4">Hello! How can we help you today?</p>
+
               <div className="space-y-3">
                 <button
                   onClick={() => {
-                    window.open(`https://wa.me/+254741874200?text=Hello! I need information about your internet plans.`, '_blank');
+                    window.open(`https://wa.me/+254741874200?text=Hello! I need information about your internet plans.`, "_blank");
                     setShowChatBot(false);
                   }}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-lg transition-colors text-left"
+                  className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-2 px-4 rounded-lg transition-colors text-left"
                 >
                   📋 Information about plans
                 </button>
-                
+
                 <button
                   onClick={() => {
-                    window.open(`https://wa.me/+254741874200?text=Hello! I need support with my current connection.`, '_blank');
+                    window.open(`https://wa.me/+254741874200?text=Hello! I need support with my current connection.`, "_blank");
                     setShowChatBot(false);
                   }}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-lg transition-colors text-left"
+                  className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-2 px-4 rounded-lg transition-colors text-left"
                 >
                   🔧 Technical support
                 </button>
-                
+
                 <button
                   onClick={() => {
-                    window.open(`https://wa.me/+254741874200?text=Hello! I'd like to make a complaint.`, '_blank');
+                    window.open(`https://wa.me/+254741874200?text=Hello! I'd like to make a complaint.`, "_blank");
                     setShowChatBot(false);
                   }}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-lg transition-colors text-left"
+                  className="w-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-2 px-4 rounded-lg transition-colors text-left"
                 >
                   📝 Make a complaint
                 </button>
               </div>
-              
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-500">Or start a conversation directly:</p>
+
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Or start a conversation directly:</p>
                 <button
                   onClick={() => {
-                    window.open(`https://wa.me/+254741874200`, '_blank');
+                    window.open(`https://wa.me/+254741874200`, "_blank");
                     setShowChatBot(false);
                   }}
                   className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors mt-2 flex items-center justify-center"
@@ -317,11 +305,11 @@ export default function WifiPlans() {
         )}
       </AnimatePresence>
 
-      {/* Hero Section with VTL-inspired design */}
-      <section className="relative bg-gradient-to-r from-[#0033a0] to-[#0099cc] text-white py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-black opacity-10"></div>
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-r from-[#0033a0] to-[#0099cc] dark:from-[#0f1e42] dark:to-[#182b5c] text-white py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-black opacity-10 dark:opacity-20"></div>
         <div className="container mx-auto px-4 text-center relative z-10">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -329,14 +317,13 @@ export default function WifiPlans() {
           >
             High-Speed Fibre Internet
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-xl mb-10 max-w-3xl mx-auto"
           >
-            Experience lightning-fast internet with our reliable fibre connections. 
-            Perfect for streaming, gaming, and working from home.
+            Experience lightning-fast internet with our reliable fibre connections. Perfect for streaming, gaming, and working from home.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -344,9 +331,9 @@ export default function WifiPlans() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="flex justify-center"
           >
-            <button 
-              onClick={() => document.getElementById('plans-section').scrollIntoView({ behavior: 'smooth' })}
-              className="bg-white text-[#0033a0] px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-all transform hover:-translate-y-1 shadow-lg"
+            <button
+              onClick={() => document.getElementById("plans-section").scrollIntoView({ behavior: "smooth" })}
+              className="bg-white text-[#0033a0] dark:text-[#d0b216] px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-all transform hover:-translate-y-1 shadow-lg"
             >
               View Plans
             </button>
@@ -364,45 +351,40 @@ export default function WifiPlans() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-[#0033a0] to-[#0099cc] bg-clip-text text-transparent">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-[#0033a0] to-[#0099cc] dark:from-[#d0b216] dark:to-[#b89b14] bg-clip-text text-transparent">
               Internet Plans
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               Choose the perfect plan for your home or business with our reliable fibre internet solutions
             </p>
           </motion.div>
 
-          {/* Tab Navigation - VTL Style */}
+          {/* Tab Navigation */}
           <div className="flex justify-center mb-12">
-            <motion.div 
-              className="inline-flex rounded-lg bg-gray-200 p-1 shadow-md"
+            <motion.div
+              className="inline-flex rounded-lg bg-gray-200 dark:bg-gray-700 p-1 shadow-md"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               viewport={{ once: true }}
             >
-              <button
-                onClick={() => setActiveTab("home")}
-                className={`px-6 py-3 rounded-md font-medium transition-all duration-300 ${activeTab === "home" ? "bg-[#0033a0] text-white shadow-md" : "text-gray-700 hover:text-gray-900 hover:bg-gray-300"}`}
-              >
-                Home Plans
-              </button>
-              <button
-                onClick={() => setActiveTab("business")}
-                className={`px-6 py-3 rounded-md font-medium transition-all duration-300 ${activeTab === "business" ? "bg-[#0033a0] text-white shadow-md" : "text-gray-700 hover:text-gray-900 hover:bg-gray-300"}`}
-              >
-                Business Plans
-              </button>
-              <button
-                onClick={() => setActiveTab("enterprise")}
-                className={`px-6 py-3 rounded-md font-medium transition-all duration-300 ${activeTab === "enterprise" ? "bg-[#0033a0] text-white shadow-md" : "text-gray-700 hover:text-gray-900 hover:bg-gray-300"}`}
-              >
-                Enterprise
-              </button>
+              {["home", "business", "enterprise"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-6 py-3 rounded-md font-medium transition-all duration-300 capitalize ${
+                    activeTab === tab
+                      ? "bg-[#0033a0] dark:bg-[#d0b216] text-white shadow-md"
+                      : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                  }`}
+                >
+                  {tab === "home" ? "Home Plans" : tab === "business" ? "Business Plans" : "Enterprise"}
+                </button>
+              ))}
             </motion.div>
           </div>
 
-          {/* Plans Grid with VTL-inspired design */}
+          {/* Plans Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredPlans.map((plan, index) => (
               <motion.div
@@ -417,33 +399,32 @@ export default function WifiPlans() {
                 onMouseLeave={() => setHoveredPlan(null)}
               >
                 <motion.div
-                  whileHover={{ 
-                    y: -10,
-                    transition: { duration: 0.3 }
-                  }}
-                  className={`bg-white rounded-xl shadow-lg overflow-hidden border-2 transition-all duration-300 relative h-full flex flex-col ${hoveredPlan === plan.id ? 'border-[#0033a0]' : 'border-transparent'}`}
+                  whileHover={{ y: -10, transition: { duration: 0.3 } }}
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border-2 transition-all duration-300 relative h-full flex flex-col ${
+                    hoveredPlan === plan.id ? "border-[#0033a0] dark:border-[#d0b216]" : "border-transparent"
+                  }`}
                 >
-                  <div className="p-6 border-b border-gray-200">
+                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-xl font-bold text-[#0033a0]">{plan.name}</h3>
-                      <span className="text-2xl font-bold text-[#0033a0]">{plan.price}</span>
+                      <h3 className="text-xl font-bold text-[#0033a0] dark:text-[#d0b216]">{plan.name}</h3>
+                      <span className="text-2xl font-bold text-[#0033a0] dark:text-[#d0b216]">{plan.price}</span>
                     </div>
                     <div className="text-center mb-4">
-                      <span className="text-3xl font-bold text-gray-800">{plan.speed}</span>
-                      <span className="text-gray-600"> download speed</span>
+                      <span className="text-3xl font-bold text-gray-800 dark:text-white">{plan.speed}</span>
+                      <span className="text-gray-600 dark:text-gray-300"> download speed</span>
                     </div>
                   </div>
                   <div className="p-6 flex-grow">
                     <ul className="mb-6 space-y-3">
                       {plan.features.map((feature, i) => (
-                        <motion.li 
-                          key={i} 
+                        <motion.li
+                          key={i}
                           className="flex items-center"
                           whileHover={{ x: 5 }}
                           transition={{ type: "spring", stiffness: 300 }}
                         >
-                          <CheckCircle className="w-5 h-5 text-[#0099cc] mr-3 flex-shrink-0" />
-                          <span className="text-gray-600">{feature}</span>
+                          <CheckCircle className="w-5 h-5 text-[#0099cc] dark:text-[#d0b216] mr-3 flex-shrink-0" />
+                          <span className="text-gray-600 dark:text-gray-300">{feature}</span>
                         </motion.li>
                       ))}
                     </ul>
@@ -453,7 +434,7 @@ export default function WifiPlans() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handlePlanSelect(plan)}
-                      className="w-full bg-gradient-to-r from-[#0033a0] to-[#0099cc] text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center"
+                      className="w-full bg-gradient-to-r from-[#0033a0] to-[#0099cc] dark:from-[#182b5c] dark:to-[#0f1e42] text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center"
                     >
                       Get Connected
                       <ChevronRight className="w-5 h-5 ml-2" />
@@ -471,7 +452,7 @@ export default function WifiPlans() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50"
                 onClick={() => setShowForm(false)}
               >
                 <motion.div
@@ -479,36 +460,36 @@ export default function WifiPlans() {
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.9, opacity: 0 }}
                   transition={{ type: "spring", damping: 20 }}
-                  className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative"
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 relative"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     onClick={() => setShowForm(false)}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
+                    className="absolute top-4 right-4 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white transition-colors"
                   >
                     <X className="w-6 h-6" />
                   </button>
 
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold text-[#0033a0]">Get {selectedPlan?.name}</h3>
+                    <h3 className="text-xl font-bold text-[#0033a0] dark:text-[#d0b216]">Get {selectedPlan?.name}</h3>
                   </div>
 
                   {/* Status Messages */}
-                  {messageStatus === 'success' && (
-                    <motion.div 
+                  {messageStatus === "success" && (
+                    <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4"
+                      className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-4"
                     >
                       <p>Message sent successfully! We'll contact you shortly.</p>
                     </motion.div>
                   )}
 
-                  {messageStatus === 'error' && (
-                    <motion.div 
+                  {messageStatus === "error" && (
+                    <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
+                      className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4"
                     >
                       <p>Failed to send message. Please try again or contact us directly.</p>
                     </motion.div>
@@ -517,57 +498,57 @@ export default function WifiPlans() {
                   <form onSubmit={handleSubmit}>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name *</label>
                         <input
                           type="text"
                           name="name"
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033a0] transition-all"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0033a0] dark:focus:ring-[#d0b216] transition-all"
                           value={formData.name}
                           onChange={handleInputChange}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number *</label>
                         <input
                           type="tel"
                           name="phone"
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033a0] transition-all"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0033a0] dark:focus:ring-[#d0b216] transition-all"
                           value={formData.phone}
                           onChange={handleInputChange}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
                         <input
                           type="email"
                           name="email"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033a0] transition-all"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0033a0] dark:focus:ring-[#d0b216] transition-all"
                           value={formData.email}
                           onChange={handleInputChange}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location *</label>
                         <input
                           type="text"
                           name="location"
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033a0] transition-all"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0033a0] dark:focus:ring-[#d0b216] transition-all"
                           value={formData.location}
                           onChange={handleInputChange}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Connection Type</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Connection Type</label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-900 cursor-not-allowed"
+                          className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white cursor-not-allowed"
                           value={formData.connectionType}
                           readOnly
                         />
@@ -580,7 +561,7 @@ export default function WifiPlans() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setShowForm(false)}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       >
                         Cancel
                       </motion.button>
@@ -589,7 +570,7 @@ export default function WifiPlans() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center transition-colors disabled:opacity-70"
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center transition-colors disabled:opacity-70"
                       >
                         {isLoading ? (
                           <>
@@ -615,114 +596,57 @@ export default function WifiPlans() {
             )}
           </AnimatePresence>
 
-          {/* Features Section with Marquee Animation */}
+          {/* Features Section */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
             viewport={{ once: true }}
-            className="mt-16 bg-white rounded-xl p-8 shadow-lg overflow-hidden"
+            className="mt-16 bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg overflow-hidden"
           >
-            <h3 className="text-2xl font-bold text-center text-[#0033a0] mb-8">All Plans Include</h3>
-            
-            {/* Marquee Container */}
+            <h3 className="text-2xl font-bold text-center text-[#0033a0] dark:text-[#d0b216] mb-8">All Plans Include</h3>
+
             <div className="relative flex overflow-hidden">
-              <motion.div 
+              <motion.div
                 className="flex flex-none"
                 animate={{ x: [0, -1000] }}
-                transition={{ 
-                  x: {
-                    repeat: Infinity,
-                    repeatType: "loop",
-                    duration: 20,
-                    ease: "linear"
-                  }
-                }}
+                transition={{ x: { repeat: Infinity, repeatType: "loop", duration: 20, ease: "linear" } }}
               >
-                {/* First set of icons */}
+                {/* First set */}
                 <div className="flex space-x-8 pr-8">
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Clock className="w-7 h-7 text-white" />
+                  {[
+                    { icon: Clock, title: "24/7 Support", desc: "Round-the-clock technical assistance" },
+                    { icon: HardHat, title: "Quick Installation", desc: "Professional setup within 48 hours" },
+                    { icon: Zap, title: "Low Latency", desc: "<5ms ping for gaming" },
+                    { icon: Wifi, title: "Free Router", desc: "High-quality router included" },
+                    { icon: CheckCircle, title: "Reliability", desc: "99.9% uptime guarantee" },
+                  ].map((item, i) => (
+                    <div key={i} className="text-center flex-shrink-0 w-40">
+                      <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] dark:from-[#182b5c] dark:to-[#0f1e42] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <item.icon className="w-7 h-7 text-white" />
+                      </div>
+                      <h4 className="font-semibold text-[#0033a0] dark:text-[#d0b216] mb-2">{item.title}</h4>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm">{item.desc}</p>
                     </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">24/7 Support</h4>
-                    <p className="text-gray-600 text-sm">Round-the-clock technical assistance</p>
-                  </div>
-                  
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <HardHat className="w-7 h-7 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">Quick Installation</h4>
-                    <p className="text-gray-600 text-sm">Professional setup within 48 hours</p>
-                  </div>
-                  
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Zap className="w-7 h-7 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">Low Latency</h4>
-                    <p className="text-gray-600 text-sm">&lt;5ms ping for gaming</p>
-                  </div>
-                  
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Wifi className="w-7 h-7 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">Free Router</h4>
-                    <p className="text-gray-600 text-sm">High-quality router included</p>
-                  </div>
-                  
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle className="w-7 h-7 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">Reliability</h4>
-                    <p className="text-gray-600 text-sm">99.9% uptime guarantee</p>
-                  </div>
+                  ))}
                 </div>
-                
-                {/* Duplicate set for seamless looping */}
+                {/* Duplicate for seamless loop */}
                 <div className="flex space-x-8 pr-8">
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Clock className="w-7 h-7 text-white" />
+                  {[
+                    { icon: Clock, title: "24/7 Support", desc: "Round-the-clock technical assistance" },
+                    { icon: HardHat, title: "Quick Installation", desc: "Professional setup within 48 hours" },
+                    { icon: Zap, title: "Low Latency", desc: "<5ms ping for gaming" },
+                    { icon: Wifi, title: "Free Router", desc: "High-quality router included" },
+                    { icon: CheckCircle, title: "Reliability", desc: "99.9% uptime guarantee" },
+                  ].map((item, i) => (
+                    <div key={i + 10} className="text-center flex-shrink-0 w-40">
+                      <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] dark:from-[#182b5c] dark:to-[#0f1e42] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <item.icon className="w-7 h-7 text-white" />
+                      </div>
+                      <h4 className="font-semibold text-[#0033a0] dark:text-[#d0b216] mb-2">{item.title}</h4>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm">{item.desc}</p>
                     </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">24/7 Support</h4>
-                    <p className="text-gray-600 text-sm">Round-the-clock technical assistance</p>
-                  </div>
-                  
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <HardHat className="w-7 h-7 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">Quick Installation</h4>
-                    <p className="text-gray-600 text-sm">Professional setup within 48 hours</p>
-                  </div>
-                  
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Zap className="w-7 h-7 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">Low Latency</h4>
-                    <p className="text-gray-600 text-sm">&lt;5ms ping for gaming</p>
-                  </div>
-                  
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Wifi className="w-7 h-7 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">Free Router</h4>
-                    <p className="text-gray-600 text-sm">High-quality router included</p>
-                  </div>
-                  
-                  <div className="text-center flex-shrink-0 w-40">
-                    <div className="bg-gradient-to-r from-[#0033a0] to-[#0099cc] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle className="w-7 h-7 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-[#0033a0] mb-2">Reliability</h4>
-                    <p className="text-gray-600 text-sm">99.9% uptime guarantee</p>
-                  </div>
+                  ))}
                 </div>
               </motion.div>
             </div>
@@ -734,42 +658,40 @@ export default function WifiPlans() {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.5 }}
             viewport={{ once: true }}
-            className="mt-16 bg-gradient-to-r from-[#0033a0] to-[#0099cc] rounded-xl p-8 text-white"
+            className="mt-16 bg-gradient-to-r from-[#0033a0] to-[#0099cc] dark:from-[#182b5c] dark:to-[#0f1e42] rounded-xl p-8 text-white"
           >
             <div className="text-center mb-8">
               <h3 className="text-2xl font-bold mb-2">Let's Talk?</h3>
               <p className="opacity-90">Talk to one of our consultants today and learn how to start leveraging your business.</p>
             </div>
-            
             <form className="max-w-2xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Name</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033a0]"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0033a0] dark:focus:ring-[#d0b216]"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Email</label>
                   <input
                     type="email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033a0]"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0033a0] dark:focus:ring-[#d0b216]"
                   />
                 </div>
               </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Phone</label>
                   <input
                     type="tel"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033a0]"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0033a0] dark:focus:ring-[#d0b216]"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Service</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033a0]">
+                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0033a0] dark:focus:ring-[#d0b216]">
                     <option value="">Click to Select</option>
                     <option value="ICT Consultancy">ICT Consultancy</option>
                     <option value="Internet Provision">Internet Provision</option>
@@ -780,21 +702,19 @@ export default function WifiPlans() {
                   </select>
                 </div>
               </div>
-              
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">Message</label>
                 <textarea
                   rows="4"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0033a0]"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0033a0] dark:focus:ring-[#d0b216]"
                 ></textarea>
               </div>
-              
               <div className="text-center">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   type="submit"
-                  className="bg-white text-[#0033a0] px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                  className="bg-white text-[#0033a0] dark:text-[#d0b216] px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
                 >
                   SEND
                 </motion.button>

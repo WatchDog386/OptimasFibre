@@ -333,47 +333,43 @@ const Services = () => {
   const ServiceCard = ({ service, index, compact = false }) => (
     <motion.div
       variants={itemVariants}
-      className={`bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 group border border-gray-100 ${
-        compact ? 'h-full' : ''
-      }`}
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 group border border-gray-100 dark:border-gray-700 h-full"
       whileHover={{ y: -5 }}
     >
       <div className="text-center mb-6">
         <motion.div 
-          className="text-[#182b5c] group-hover:text-[#d0b216] transition-colors duration-300 inline-block mb-4"
+          className="text-[#182b5c] dark:text-blue-400 group-hover:text-[#d0b216] dark:group-hover:text-yellow-400 transition-colors duration-300 inline-block mb-4"
           whileHover={{ rotate: 360 }}
           transition={{ duration: 0.5 }}
         >
           {service.icon}
         </motion.div>
-        <h3 className={`font-bold text-[#182b5c] mb-3 ${compact ? 'text-lg' : 'text-xl'}`}>
+        <h3 className="font-bold text-[#182b5c] dark:text-white mb-3 text-xl">
           {service.title}
         </h3>
-        <p className={`text-gray-600 mb-4 leading-relaxed ${compact ? 'text-sm' : ''}`}>
+        <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
           {service.description}
         </p>
       </div>
       
-      <ul className={`space-y-2 mb-6 ${compact ? 'space-y-1' : 'space-y-3'}`}>
+      <ul className="space-y-3 mb-6">
         {service.features.slice(0, compact ? 3 : service.features.length).map((feature, featureIndex) => (
           <motion.li 
             key={featureIndex} 
-            className="flex items-center text-gray-700"
+            className="flex items-center text-gray-700 dark:text-gray-300"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: featureIndex * 0.1 }}
           >
             <FaCheckCircle className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-            <span className={compact ? 'text-sm' : ''}>{feature}</span>
+            <span>{feature}</span>
           </motion.li>
         ))}
       </ul>
 
       <motion.button 
         onClick={() => handleLearnMore(service)}
-        className={`w-full bg-[#182b5c] hover:bg-[#0f1f45] text-white py-3 px-6 rounded-xl transition-colors duration-300 font-semibold flex items-center justify-center group-hover:shadow-md ${
-          compact ? 'text-sm py-2' : ''
-        }`}
+        className="w-full bg-[#182b5c] hover:bg-[#0f1f45] dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-3 px-6 rounded-xl transition-colors duration-300 font-semibold flex items-center justify-center group-hover:shadow-md"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
@@ -384,16 +380,16 @@ const Services = () => {
 
   return (
     <motion.div 
-      className="services-page bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-12 overflow-hidden"
+      className="services-page bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen py-12 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
     >
       {/* Animated Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-0 left-0 w-full h-full bg-[#182b5c]">
+      <div className="absolute inset-0 opacity-5 dark:opacity-10">
+        <div className="absolute top-0 left-0 w-full h-full bg-[#182b5c] dark:bg-blue-900">
           <motion.div 
-            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] opacity-10"
+            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] dark:bg-yellow-500 opacity-10 dark:opacity-20"
             animate={{
               scale: [1, 1.2, 1],
               rotate: [0, 90, 0],
@@ -405,7 +401,7 @@ const Services = () => {
             }}
           />
           <motion.div 
-            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] opacity-10"
+            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] dark:bg-yellow-500 opacity-10 dark:opacity-20"
             animate={{
               scale: [1.2, 1, 1.2],
               rotate: [180, 270, 180],
@@ -428,15 +424,15 @@ const Services = () => {
           transition={{ duration: 0.6 }}
         >
           <motion.h1 
-            className="text-4xl md:text-5xl font-bold text-[#182b5c] mb-4"
+            className="text-4xl md:text-5xl font-bold text-[#182b5c] dark:text-white mb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            Our <span className="text-[#d0b216]">Fiber Services</span>
+            Our <span className="text-[#d0b216] dark:text-yellow-400">Fiber Services</span>
           </motion.h1>
           <motion.p 
-            className="text-xl text-gray-600 max-w-3xl mx-auto"
+            className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -445,7 +441,7 @@ const Services = () => {
             From homes to enterprises, we deliver reliable, high-speed internet services.
           </motion.p>
           <motion.div 
-            className="w-24 h-1 bg-[#d0b216] mx-auto mt-4"
+            className="w-24 h-1 bg-[#d0b216] dark:bg-yellow-400 mx-auto mt-4"
             initial={{ width: 0 }}
             animate={{ width: 96 }}
             transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
@@ -457,7 +453,7 @@ const Services = () => {
       <section className="container mx-auto px-4 mb-12 relative z-10">
         <div className="flex justify-center">
           <motion.div 
-            className="bg-white rounded-xl shadow-lg p-2 flex space-x-2"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2 flex space-x-2"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -468,8 +464,8 @@ const Services = () => {
                 onClick={() => setActiveTab(tab)}
                 className={`px-8 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center ${
                   activeTab === tab
-                    ? 'bg-[#182b5c] text-white shadow-md'
-                    : 'text-gray-600 hover:text-[#182b5c] hover:bg-gray-100'
+                    ? 'bg-[#182b5c] dark:bg-blue-600 text-white shadow-md'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-[#182b5c] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
                 variants={itemVariants}
                 whileHover={{ 
@@ -491,7 +487,7 @@ const Services = () => {
       {/* Services Grid */}
       <section className="container mx-auto px-4 mb-16 relative z-10">
         <motion.h2 
-          className="text-2xl md:text-3xl font-bold text-[#182b5c] text-center mb-8 capitalize"
+          className="text-2xl md:text-3xl font-bold text-[#182b5c] dark:text-white text-center mb-8 capitalize"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -515,7 +511,7 @@ const Services = () => {
       {/* Coverage Map Section - Animated */}
       <section className="container mx-auto px-4 mb-20 relative z-10">
         <motion.div 
-          className="bg-gradient-to-r from-[#182b5c] to-[#0f1f45] rounded-2xl shadow-xl overflow-hidden"
+          className="bg-gradient-to-r from-[#182b5c] to-[#0f1f45] dark:from-blue-900 dark:to-blue-800 rounded-2xl shadow-xl overflow-hidden"
           variants={mapContainerVariants}
           initial="hidden"
           animate="visible"
@@ -524,7 +520,7 @@ const Services = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <div className="p-10 text-white">
               <h2 className="text-3xl font-bold mb-4">Check Our Coverage</h2>
-              <p className="text-blue-100 mb-6 text-lg">
+              <p className="text-blue-100 dark:text-blue-200 mb-6 text-lg">
                 See if our high-speed fiber network is available in your area with our interactive coverage map.
               </p>
               <ul className="space-y-3 mb-8">
@@ -534,7 +530,7 @@ const Services = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.6 }}
                 >
-                  <FaMapMarkerAlt className="w-5 h-5 mr-3 text-[#d0b216]" />
+                  <FaMapMarkerAlt className="w-5 h-5 mr-3 text-[#d0b216] dark:text-yellow-400" />
                   <span>Real-time coverage checking</span>
                 </motion.li>
                 <motion.li 
@@ -543,7 +539,7 @@ const Services = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 }}
                 >
-                  <FaClock className="w-5 h-5 mr-3 text-[#d0b216]" />
+                  <FaClock className="w-5 h-5 mr-3 text-[#d0b216] dark:text-yellow-400" />
                   <span>Instant eligibility results</span>
                 </motion.li>
                 <motion.li 
@@ -552,13 +548,13 @@ const Services = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.8 }}
                 >
-                  <FaRocket className="w-5 h-5 mr-3 text-[#d0b216]" />
+                  <FaRocket className="w-5 h-5 mr-3 text-[#d0b216] dark:text-yellow-400" />
                   <span>Quick installation scheduling</span>
                 </motion.li>
               </ul>
               <motion.button 
                 onClick={handleCoverageClick}
-                className="bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220] font-semibold py-3 px-8 rounded-xl transition-colors duration-300 flex items-center"
+                className="bg-[#d0b216] dark:bg-yellow-500 text-[#182b5c] dark:text-gray-900 hover:bg-[#c0a220] dark:hover:bg-yellow-600 font-semibold py-3 px-8 rounded-xl transition-colors duration-300 flex items-center"
                 whileHover={{ 
                   scale: 1.05,
                   transition: { type: "spring", stiffness: 400, damping: 10 }
@@ -568,28 +564,28 @@ const Services = () => {
                 Check Coverage <FaArrowRight className="ml-2" />
               </motion.button>
             </div>
-            <div className="bg-gray-200 flex items-center justify-center p-10">
+            <div className="bg-gray-200 dark:bg-gray-700 flex items-center justify-center p-10">
               <motion.div 
-                className="bg-white rounded-xl p-6 text-center shadow-inner w-full h-64 flex flex-col items-center justify-center"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-inner w-full h-64 flex flex-col items-center justify-center"
                 variants={mapContentVariants}
               >
                 <motion.div 
-                  className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4"
+                  className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.4, type: "spring", stiffness: 200, damping: 10 }}
                 >
-                  <FaMapMarkerAlt className="w-8 h-8 text-[#182b5c]" />
+                  <FaMapMarkerAlt className="w-8 h-8 text-[#182b5c] dark:text-blue-400" />
                 </motion.div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Interactive Coverage Map</h3>
-                <p className="text-gray-600 mb-4">Check availability in your area</p>
-                <div className="w-full h-3 bg-gray-300 rounded-full mb-2 overflow-hidden">
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Interactive Coverage Map</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">Check availability in your area</p>
+                <div className="w-full h-3 bg-gray-300 dark:bg-gray-600 rounded-full mb-2 overflow-hidden">
                   <motion.div 
-                    className="h-full bg-gradient-to-r from-green-400 to-[#182b5c] rounded-full"
+                    className="h-full bg-gradient-to-r from-green-400 to-[#182b5c] dark:from-green-500 dark:to-blue-600 rounded-full"
                     variants={progressBarVariants}
                   />
                 </div>
-                <p className="text-sm text-gray-500">95% of metropolitan areas covered</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">95% of metropolitan areas covered</p>
               </motion.div>
             </div>
           </div>
@@ -599,14 +595,14 @@ const Services = () => {
       {/* Value-Added Services Section */}
       <section className="container mx-auto px-4 mb-20 relative z-10">
         <motion.div 
-          className="bg-gradient-to-r from-[#182b5c] to-[#0f1f45] rounded-2xl p-12 text-white"
+          className="bg-gradient-to-r from-[#182b5c] to-[#0f1f45] dark:from-blue-900 dark:to-blue-800 rounded-2xl p-12 text-white"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-4">Value-Added Services</h2>
-            <p className="text-lg text-blue-200">
+            <p className="text-lg text-blue-200 dark:text-blue-100">
               Enhance your internet experience with our premium additional services
             </p>
           </div>
@@ -634,16 +630,16 @@ const Services = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="text-center p-6 bg-white bg-opacity-10 rounded-xl backdrop-blur-sm border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300"
+                className="text-center p-6 bg-white bg-opacity-10 dark:bg-gray-900 dark:bg-opacity-30 rounded-xl backdrop-blur-sm border border-white border-opacity-20 dark:border-gray-700 hover:bg-opacity-20 dark:hover:bg-opacity-40 transition-all duration-300"
                 whileHover={{ y: -5 }}
               >
-                <div className="text-[#d0b216] mb-4">
+                <div className="text-[#d0b216] dark:text-yellow-400 mb-4">
                   {service.icon}
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
                   {service.title}
                 </h3>
-                <p className="text-blue-100">
+                <p className="text-blue-100 dark:text-blue-200">
                   {service.description}
                 </p>
               </motion.div>
@@ -667,22 +663,22 @@ const Services = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-8">
                 <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center">
-                    <div className="text-[#182b5c] mr-4 text-2xl">
+                    <div className="text-[#182b5c] dark:text-blue-400 mr-4 text-2xl">
                       {selectedService.icon}
                     </div>
-                    <h2 className="text-3xl font-bold text-[#182b5c]">
+                    <h2 className="text-3xl font-bold text-[#182b5c] dark:text-white">
                       {selectedService.title}
                     </h2>
                   </div>
                   <motion.button 
                     onClick={closeModal}
-                    className="text-gray-500 hover:text-gray-700 transition-colors duration-300 p-2 rounded-full hover:bg-gray-100"
+                    className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                     whileHover={{ rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
                   >
@@ -690,13 +686,13 @@ const Services = () => {
                   </motion.button>
                 </div>
 
-                <p className="text-gray-600 text-lg mb-6">
+                <p className="text-gray-600 dark:text-gray-300 text-lg mb-6">
                   {selectedService.description}
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                   <div>
-                    <h3 className="text-xl font-semibold text-[#182b5c] mb-4 flex items-center">
+                    <h3 className="text-xl font-semibold text-[#182b5c] dark:text-white mb-4 flex items-center">
                       <FaCheckCircle className="text-green-500 mr-2" />
                       Key Features
                     </h3>
@@ -709,37 +705,37 @@ const Services = () => {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <span className="w-2 h-2 bg-[#182b5c] rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                          <span className="text-gray-700">{feature}</span>
+                          <span className="w-2 h-2 bg-[#182b5c] dark:bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                          <span className="text-gray-700 dark:text-gray-300">{feature}</span>
                         </motion.li>
                       ))}
                     </ul>
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-semibold text-[#182b5c] mb-4 flex items-center">
-                      <FaShieldVirus className="text-[#182b5c] mr-2" />
+                    <h3 className="text-xl font-semibold text-[#182b5c] dark:text-white mb-4 flex items-center">
+                      <FaShieldVirus className="text-[#182b5c] dark:text-blue-400 mr-2" />
                       Service Details
                     </h3>
-                    <div className="bg-gray-50 rounded-xl p-5">
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-5">
                       {selectedService.details.pricing && (
                         <div className="mb-4">
-                          <h4 className="font-semibold text-[#182b5c]">Pricing</h4>
-                          <p className="text-gray-700">{selectedService.details.pricing}</p>
+                          <h4 className="font-semibold text-[#182b5c] dark:text-white">Pricing</h4>
+                          <p className="text-gray-700 dark:text-gray-300">{selectedService.details.pricing}</p>
                         </div>
                       )}
                       
                       {selectedService.details.sla && (
                         <div className="mb-4">
-                          <h4 className="font-semibold text-[#182b5c]">Uptime Guarantee</h4>
-                          <p className="text-gray-700">{selectedService.details.sla}</p>
+                          <h4 className="font-semibold text-[#182b5c] dark:text-white">Uptime Guarantee</h4>
+                          <p className="text-gray-700 dark:text-gray-300">{selectedService.details.sla}</p>
                         </div>
                       )}
                       
                       {selectedService.details.speedTiers && (
                         <div className="mb-4">
-                          <h4 className="font-semibold text-[#182b5c]">Speed Tiers</h4>
-                          <p className="text-gray-700">{selectedService.details.speedTiers.join(", ")}</p>
+                          <h4 className="font-semibold text-[#182b5c] dark:text-white">Speed Tiers</h4>
+                          <p className="text-gray-700 dark:text-gray-300">{selectedService.details.speedTiers.join(", ")}</p>
                         </div>
                       )}
                     </div>
@@ -748,21 +744,21 @@ const Services = () => {
 
                 {selectedService.details.benefits && (
                   <div className="mb-8">
-                    <h3 className="text-xl font-semibold text-[#182b5c] mb-4 flex items-center">
-                      <FaRocket className="text-[#182b5c] mr-2" />
+                    <h3 className="text-xl font-semibold text-[#182b5c] dark:text-white mb-4 flex items-center">
+                      <FaRocket className="text-[#182b5c] dark:text-blue-400 mr-2" />
                       Benefits
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedService.details.benefits.map((benefit, index) => (
                         <motion.div 
                           key={index} 
-                          className="flex items-start bg-blue-50 p-4 rounded-xl"
+                          className="flex items-start bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl"
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <FaInfinity className="text-[#182b5c] mt-1 mr-3 flex-shrink-0" />
-                          <span className="text-gray-700">{benefit}</span>
+                          <FaInfinity className="text-[#182b5c] dark:text-blue-400 mt-1 mr-3 flex-shrink-0" />
+                          <span className="text-gray-700 dark:text-gray-300">{benefit}</span>
                         </motion.div>
                       ))}
                     </div>
@@ -771,7 +767,7 @@ const Services = () => {
 
                 <div className="flex justify-center mt-8 gap-4">
                   <motion.button 
-                    className="bg-[#182b5c] hover:bg-[#0f1f45] text-white px-8 py-3 rounded-xl transition-colors duration-300 font-semibold"
+                    className="bg-[#182b5c] hover:bg-[#0f1f45] dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-8 py-3 rounded-xl transition-colors duration-300 font-semibold"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleGetStartedClick}
@@ -779,7 +775,7 @@ const Services = () => {
                     Get This Service
                   </motion.button>
                   <motion.button 
-                    className="border-2 border-gray-300 text-gray-700 hover:border-[#182b5c] hover:text-[#182b5c] px-8 py-3 rounded-xl transition-colors duration-300 font-semibold"
+                    className="border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-[#182b5c] dark:hover:border-blue-400 hover:text-[#182b5c] dark:hover:text-white px-8 py-3 rounded-xl transition-colors duration-300 font-semibold"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleContactClick}
@@ -799,18 +795,18 @@ const Services = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-white rounded-2xl shadow-xl p-12"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12"
         >
-          <h2 className="text-3xl font-bold text-[#182b5c] mb-4">
+          <h2 className="text-3xl font-bold text-[#182b5c] dark:text-white mb-4">
             Ready to Experience True Fiber?
           </h2>
-          <p className="text-gray-600 text-lg mb-8 max-w-2xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
             Join thousands of satisfied customers enjoying lightning-fast internet. 
             Contact our team today to find the perfect solution for your needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <motion.button 
-              className="bg-[#182b5c] hover:bg-[#0f1f45] text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold shadow-md hover:shadow-lg"
+              className="bg-[#182b5c] hover:bg-[#0f1f45] dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold shadow-md hover:shadow-lg"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleGetStartedClick}
@@ -818,7 +814,7 @@ const Services = () => {
               Get Started Now
             </motion.button>
             <motion.button 
-              className="border-2 border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold"
+              className="border-2 border-[#182b5c] dark:border-blue-600 text-[#182b5c] dark:text-blue-600 hover:bg-[#182b5c] dark:hover:bg-blue-600 hover:text-white dark:hover:text-white px-8 py-4 rounded-xl transition-colors duration-300 font-semibold"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleContactClick}

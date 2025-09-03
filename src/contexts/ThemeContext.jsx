@@ -1,11 +1,21 @@
+// src/contexts/ThemeContext.js
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-const ThemeContext = createContext();
+const ThemeContext = createContext(null);
 
 export const ThemeProvider = ({ children }) => {
-  const [darkMode, setDarkMode] = useState(
-    () => localStorage.getItem("darkMode") === "true"
-  );
+  const [darkMode, setDarkMode] = useState(() => {
+    // Try to get saved preference
+    try {
+      const saved = localStorage.getItem("darkMode");
+      if (saved !== null) return saved === "true";
+    } catch (e) {
+      console.warn("Failed to read from localStorage:", e);
+    }
+
+    // Fallback to system preference
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
   useEffect(() => {
     const root = document.documentElement;
@@ -14,7 +24,13 @@ export const ThemeProvider = ({ children }) => {
     } else {
       root.classList.remove("dark");
     }
-    localStorage.setItem("darkMode", darkMode);
+
+    // Save to localStorage if possible
+    try {
+      localStorage.setItem("darkMode", String(darkMode)); // Use String() instead of JSON.stringify for boolean
+    } catch (e) {
+      console.warn("Failed to save theme to localStorage:", e);
+    }
   }, [darkMode]);
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
@@ -26,4 +42,10 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return context;
+};

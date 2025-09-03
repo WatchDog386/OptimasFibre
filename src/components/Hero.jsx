@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, EffectFade, Navigation } from 'swiper/modules';
+import { Autoplay, Pagination, EffectFade } from 'swiper/modules';
 import { useNavigate } from 'react-router-dom';
 import { FaWhatsapp } from 'react-icons/fa';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/pagination';
-import 'swiper/css/navigation';
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -180,7 +179,7 @@ const Hero = () => {
 
       <Swiper
         ref={swiperRef}
-        modules={[Autoplay, Pagination, EffectFade, Navigation]}
+        modules={[Autoplay, Pagination, EffectFade]}
         spaceBetween={0}
         slidesPerView={1}
         autoplay={{ 
@@ -199,10 +198,6 @@ const Hero = () => {
               <span class="bullet-progress"></span>
             </span>`;
           }
-        }}
-        navigation={{
-          nextEl: '.swiper-button-next',
-          prevEl: '.swiper-button-prev',
         }}
         onSlideChange={(swiper) => setCurrentSlide(swiper.realIndex)}
         className="slider-container full-slider w-full h-full"
@@ -260,7 +255,7 @@ const Hero = () => {
                     className="title effect-static-text mb-4"
                     variants={textVariants}
                     style={{
-                      color: '#ffffff',
+                      color: '#d0b216', // Changed to VTL Fibre gold color
                       fontSize: isMobile ? '2.5rem' : '3.5rem',
                       fontWeight: '700',
                       textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
@@ -335,10 +330,6 @@ const Hero = () => {
         
         {/* Custom pagination */}
         <div className="swiper-pagination slider-pagination" style={{ bottom: '30px' }} />
-        
-        {/* Navigation arrows */}
-        <div className="swiper-button-next !text-white !w-12 !h-12 after:!text-xl"></div>
-        <div className="swiper-button-prev !text-white !w-12 !h-12 after:!text-xl"></div>
       </Swiper>
       
       <style jsx>{`
@@ -392,24 +383,6 @@ const Hero = () => {
           animation: progress 5s linear;
         }
         
-        .swiper-button-next, .swiper-button-prev {
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          border-radius: 50%;
-          width: 48px;
-          height: 48px;
-          transition: all 0.3s ease;
-        }
-        
-        .swiper-button-next:after, .swiper-button-prev:after {
-          font-size: 20px;
-          font-weight: bold;
-        }
-        
-        .swiper-button-next:hover, .swiper-button-prev:hover {
-          background: rgba(255, 255, 255, 0.2);
-        }
-        
         @keyframes progress {
           0% {
             width: 0%;
@@ -421,10 +394,6 @@ const Hero = () => {
         
         /* Mobile responsiveness */
         @media screen and (max-width: 768px) {
-          .swiper-button-next, .swiper-button-prev {
-            display: none;
-          }
-          
           .title {
             font-size: 2.5rem !important;
           }
