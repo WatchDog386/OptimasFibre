@@ -76,10 +76,10 @@ const About = () => {
   // Services Data
   const services = [
     {
-      title: "Fibre Internet",
+      title: "Fiber Internet",
       description: "High-speed connectivity solutions for homes and businesses",
       icon: "📡",
-      link: "/services#fibre"
+      link: "/services#fiber"
     },
     {
       title: "Network Design",
@@ -89,7 +89,7 @@ const About = () => {
     },
     {
       title: "Installation",
-      description: "Professional implementation of fibre infrastructure",
+      description: "Professional implementation of fiber infrastructure",
       icon: "⚡",
       link: "/services#installation"
     },
@@ -106,7 +106,7 @@ const About = () => {
     {
       id: 1,
       title: "Westlands Business District",
-      description: "Fibre optic network installation for commercial high-rises",
+      description: "Fiber optic network installation for commercial high-rises",
       completion: "Jan 2023",
       image: "/work2.jpg",
       link: "/portfolio#westlands",
@@ -116,7 +116,7 @@ const About = () => {
     {
       id: 2,
       title: "Karen Residential Estate",
-      description: "FTTH (Fibre to the Home) deployment for upscale community",
+      description: "FTTH (Fiber to the Home) deployment for upscale community",
       completion: "Mar 2023",
       image: "/connection.jpg",
       link: "/portfolio#karen",
@@ -126,12 +126,12 @@ const About = () => {
     {
       id: 3,
       title: "Industrial Park Connectivity",
-      description: "Dedicated fibre lines for manufacturing facilities",
+      description: "Dedicated fiber lines for manufacturing facilities",
       completion: "Jun 2023",
       image: "/pipe.webp",
       link: "/portfolio#industrial",
       category: "Industrial",
-      technologies: ["Dedicated Fibre", "Redundant Links", "Industrial Ethernet"]
+      technologies: ["Dedicated Fiber", "Redundant Links", "Industrial Ethernet"]
     },
     {
       id: 4,
@@ -171,7 +171,7 @@ const About = () => {
       id: 1,
       name: "James Mwangi",
       company: "Tech Solutions Ltd.",
-      comment: "Optimas Fibre transformed our office connectivity. We've seen a 40% increase in productivity since installation.",
+      comment: "Optimas Fiber transformed our office connectivity. We've seen a 40% increase in productivity since installation.",
       rating: 5,
       date: "March 15, 2023"
     },
@@ -187,7 +187,7 @@ const About = () => {
       id: 3,
       name: "David Ochieng",
       company: "Nairobi University",
-      comment: "The campus-wide fibre network has revolutionized our digital learning capabilities. The implementation was seamless.",
+      comment: "The campus-wide fiber network has revolutionized our digital learning capabilities. The implementation was seamless.",
       rating: 4,
       date: "June 28, 2023"
     },
@@ -204,13 +204,13 @@ const About = () => {
   // Learn More Content
   const learnMoreContent = (
     <div className="bg-gradient-to-br from-[#182B5C] to-[#0f1e42] text-white p-8 rounded-xl mt-6 shadow-lg">
-      <h3 className="text-2xl font-bold mb-4">Why Choose Optimas Fibre?</h3>
+      <h3 className="text-2xl font-bold mb-4">Why Choose Optimas Fiber?</h3>
       <div className="space-y-4 text-sm md:text-base leading-relaxed">
-        <p><strong>Future-Ready Infrastructure:</strong> We deploy state-of-the-art fibre optic networks that support gigabit+ speeds, ensuring your home or business stays ahead in a digital-first world.</p>
-        <p><strong>Reliability & Low Latency:</strong> Unlike traditional copper cables, our fibre connections offer unmatched reliability, minimal signal loss, and ultra-low latency — ideal for cloud services, video conferencing, and IoT.</p>
+        <p><strong>Future-Ready Infrastructure:</strong> We deploy state-of-the-art fiber optic networks that support gigabit+ speeds, ensuring your home or business stays ahead in a digital-first world.</p>
+        <p><strong>Reliability & Low Latency:</strong> Unlike traditional copper cables, our fiber connections offer unmatched reliability, minimal signal loss, and ultra-low latency — ideal for cloud services, video conferencing, and IoT.</p>
         <p><strong>Scalable Solutions:</strong> Whether you're a startup or a large enterprise, our modular network design allows seamless scaling as your bandwidth needs grow.</p>
-        <p><strong>Sustainable Technology:</strong> Fibre uses light instead of electricity, consuming less power and offering a greener alternative for long-term digital infrastructure.</p>
-        <p><strong>Local Expertise, Global Standards:</strong> As a Kenyan leader in fibre integration, we combine international best practices with deep local knowledge to deliver robust, cost-effective networks across urban and rural areas.</p>
+        <p><strong>Sustainable Technology:</strong> Fiber uses light instead of electricity, consuming less power and offering a greener alternative for long-term digital infrastructure.</p>
+        <p><strong>Local Expertise, Global Standards:</strong> As a Kenyan leader in fiber integration, we combine international best practices with deep local knowledge to deliver robust, cost-effective networks across urban and rural areas.</p>
         <p><strong>24/7 Monitoring & Support:</strong> Our maintenance team ensures uptime with proactive monitoring, rapid response times, and SLA-backed service guarantees.</p>
       </div>
       <motion.button
@@ -242,7 +242,7 @@ const About = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              About Optimas Fibre
+              About Optimas Fiber
             </motion.h1>
             <motion.p 
               className="text-lg md:text-xl text-white opacity-90 mb-10 font-light"
@@ -250,7 +250,7 @@ const About = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Leading Kenya's digital transformation with cutting-edge fibre solutions
+              Leading Kenya's digital transformation with cutting-edge fiber solutions
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -320,9 +320,9 @@ const About = () => {
                 
                 <div className="space-y-6 text-gray-700 dark:text-gray-300">
                   <p className="text-lg leading-relaxed">
-                    Optimas Fibre is a premier Kenyan systems integrator with a distinguished reputation in telecommunications. 
+                    Optimas Fiber is a premier Kenyan systems integrator with a distinguished reputation in telecommunications. 
                     We deliver comprehensive end-to-end solutions including innovative design, premium supply, precision installation, 
-                    expert commissioning, and reliable maintenance of cutting-edge fibre optic systems.
+                    expert commissioning, and reliable maintenance of cutting-edge fiber optic systems.
                   </p>
                   <p className="text-lg leading-relaxed">
                     Our expertise has evolved from foundational infrastructure design to encompass comprehensive Internet Service Provision, 
@@ -335,9 +335,9 @@ const About = () => {
                 </div>
 
                 <div className="mt-12">
-                  <h3 className="text-2xl font-semibold text-[#182B5C] dark:text-white mb-6">Integrated Fibre Solutions</h3>
+                  <h3 className="text-2xl font-semibold text-[#182B5C] dark:text-white mb-6">Integrated Fiber Solutions</h3>
                   <p className="text-gray-700 dark:text-gray-300 mb-6">
-                    We provide comprehensive fibre optics solutions with specialized expertise in FTTX design, network optimization, 
+                    We provide comprehensive fiber optics solutions with specialized expertise in FTTX design, network optimization, 
                     cross-vendor product integration, rigorous testing protocols, and professional commissioning services.
                   </p>
                   
@@ -374,12 +374,12 @@ const About = () => {
                         <div className="h-96 w-full">
                           <img 
                             src={image} 
-                            alt={`Optimas Fibre project ${index + 1}`}
+                            alt={`Optimas Fiber project ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
                             <h4 className="text-white text-xl font-semibold">Project {index + 1}</h4>
-                            <p className="text-gray-200">Fibre optic installation</p>
+                            <p className="text-gray-200">Fiber optic installation</p>
                           </div>
                         </div>
                       </SwiperSlide>
@@ -417,7 +417,7 @@ const About = () => {
                 </div>
                 <h3 className="text-2xl font-semibold mb-4">Our Mission</h3>
                 <p className="opacity-90">
-                  Deliver cost-effective, detail-oriented fibre solutions that exceed client expectations through innovation and technical excellence.
+                  Deliver cost-effective, detail-oriented fiber solutions that exceed client expectations through innovation and technical excellence.
                 </p>
               </motion.div>
               
@@ -451,7 +451,7 @@ const About = () => {
                 Our Services
               </motion.h2>
               <p className="text-gray-600 dark:text-gray-400 text-center mb-12 max-w-2xl mx-auto">
-                Comprehensive fibre solutions tailored to meet the evolving needs of businesses and communities across Kenya.
+                Comprehensive fiber solutions tailored to meet the evolving needs of businesses and communities across Kenya.
               </p>
               
               <motion.div 
@@ -465,7 +465,7 @@ const About = () => {
                     key={index}
                     className="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border border-gray-100 dark:border-gray-600 hover:shadow-lg transition-shadow duration-300 cursor-pointer"
                     variants={staggerItem}
-                    whileHover={{ y: -5 }}
+                    whileHover={{ y: 5 }}
                     onClick={() => navigate(service.link)}
                   >
                     <div className="text-4xl mb-4">{service.icon}</div>
@@ -504,7 +504,7 @@ const About = () => {
               Our Portfolio
             </motion.h2>
             <p className="text-gray-600 dark:text-gray-400 text-center mb-12 max-w-2xl mx-auto">
-              Explore our successful projects and see how we've helped businesses and communities with our fibre solutions.
+              Explore our successful projects and see how we've helped businesses and communities with our fiber solutions.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -600,7 +600,7 @@ const About = () => {
                   <div className="h-56 w-full relative overflow-hidden">
                     <img 
                       src={image} 
-                      alt={`Optimas Fibre gallery ${index + 1}`}
+                      alt={`Optimas Fiber gallery ${index + 1}`}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -730,7 +730,7 @@ const About = () => {
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#182B5C] bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
                       <option value="">Select a service</option>
-                      <option value="fibre-internet">Fibre Internet</option>
+                      <option value="fiber-internet">Fiber Internet</option>
                       <option value="network-design">Network Design</option>
                       <option value="installation">Installation</option>
                       <option value="maintenance">Maintenance</option>
@@ -779,8 +779,8 @@ const About = () => {
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-[#182B5C] dark:text-white mb-2">Email</h3>
-                <p className="text-gray-600 dark:text-gray-300">info@optimasfibre.com</p>
-                <p className="text-gray-600 dark:text-gray-300">support@optimasfibre.com</p>
+                <p className="text-gray-600 dark:text-gray-300">info@optimasfiber.com</p>
+                <p className="text-gray-600 dark:text-gray-300">support@optimasfiber.com</p>
               </div>
               
               <div className="text-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">

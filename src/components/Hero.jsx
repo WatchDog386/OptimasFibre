@@ -53,8 +53,8 @@ const Hero = () => {
   const heroSlides = [
     {
       image: "/net.jpg",
-      title: "High-Speed Fibre Solutions",
-      description: "Experience lightning-fast internet connectivity with our premium fibre optic network, designed for reliability and performance.",
+      title: "High-Speed Fiber Solutions",
+      description: "Experience lightning-fast internet connectivity with our premium fiber optic network, designed for reliability and performance.",
       buttonText: "GET CONNECTED",
       buttonAction: () => navigate('/coverage'),
       overlayGradient: "linear-gradient(135deg, rgba(24, 43, 92, 0.85) 0%, rgba(24, 43, 92, 0.7) 100%)"
@@ -62,7 +62,7 @@ const Hero = () => {
     {
       image: "/optic.jpeg",
       title: "Affordable Pricing Plans",
-      description: "Get top-quality fibre internet services at competitive rates with flexible packages for homes and businesses.",
+      description: "Get top-quality fiber internet services at competitive rates with flexible packages for homes and businesses.",
       buttonText: "VIEW PLANS",
       buttonAction: () => navigate('/wifi-plans'),
       overlayGradient: "linear-gradient(135deg, rgba(24, 43, 92, 0.85) 0%, rgba(24, 43, 92, 0.7) 100%)"
@@ -255,7 +255,7 @@ const Hero = () => {
                     className="title effect-static-text mb-4"
                     variants={textVariants}
                     style={{
-                      color: '#d0b216', // Changed to VTL Fibre gold color
+                      color: '#d0b216', // Changed to VTL Fiber gold color
                       fontSize: isMobile ? '2.5rem' : '3.5rem',
                       fontWeight: '700',
                       textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
@@ -390,6 +390,17 @@ const Hero = () => {
           100% {
             width: 100%;
           }
+        }
+        
+        /* Logo styling to stand out in both light and dark modes */
+        .logo {
+          filter: brightness(1.2) contrast(1.2);
+          border: 2px solid #d0b216;
+          border-radius: 8px;
+          padding: 4px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
         /* Mobile responsiveness */

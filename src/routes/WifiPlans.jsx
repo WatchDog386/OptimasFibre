@@ -365,7 +365,7 @@ const WifiPlans = () => {
       devices: "1 Device",
       features: ["Fast browsing", "Social media access", "Email checking"],
       popular: false,
-      link: "https://wifi.optimassys.co.ke/2hrs"
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
     },
     {
       id: 2,
@@ -375,7 +375,7 @@ const WifiPlans = () => {
       devices: "1 Device",
       features: ["Extended browsing", "Streaming music", "Social media"],
       popular: false,
-      link: "https://wifi.optimassys.co.ke/12hrs"
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
     },
     {
       id: 3,
@@ -385,7 +385,7 @@ const WifiPlans = () => {
       devices: "1 Device",
       features: ["Full day access", "Standard streaming", "Online gaming"],
       popular: true,
-      link: "https://wifi.optimassys.co.ke/1day"
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
     },
     {
       id: 4,
@@ -395,7 +395,7 @@ const WifiPlans = () => {
       devices: "2 Devices",
       features: ["7 days unlimited", "HD streaming", "Multiple devices"],
       popular: false,
-      link: "https://wifi.optimassys.co.ke/weekly"
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
     },
     {
       id: 5,
@@ -405,7 +405,7 @@ const WifiPlans = () => {
       devices: "1 Device",
       features: ["30 days access", "Priority bandwidth", "24/7 support"],
       popular: false,
-      link: "https://wifi.optimassys.co.ke/monthly-single"
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
     },
     {
       id: 6,
@@ -415,7 +415,7 @@ const WifiPlans = () => {
       devices: "2 Devices",
       features: ["30 days unlimited", "4K streaming", "Two devices simultaneously"],
       popular: false,
-      link: "https://wifi.optimassys.co.ke/monthly-dual"
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
     },
   ];
 
@@ -483,7 +483,7 @@ const WifiPlans = () => {
   const features = [
     {
       title: "Lightning Fast Speeds",
-      description: "Experience blazing fast internet with our fibre optic technology",
+      description: "Experience blazing fast internet with our fiber optic technology",
       icon: <Wifi size={32} />
     },
     {
@@ -599,42 +599,8 @@ const WifiPlans = () => {
         ))}
       </div>
 
-      {/* Header Section */}
-      <motion.header 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", damping: 10 }}
-        className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm py-4 sticky top-0 z-40"
-      >
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <motion.div 
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.5 }}
-              className="h-12 w-12 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-white font-bold mr-3 shadow-md"
-            >
-              <Wifi size={24} />
-            </motion.div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Optimas Fibre</h1>
-          </div>
-          <nav className="hidden md:flex items-center space-x-6">
-            <motion.a whileHover={{ y: -2 }} href="#mobile-hotspot" className="text-blue-900 dark:text-blue-100 hover:text-blue-700 dark:hover:text-blue-300 font-medium">Hotspot</motion.a>
-            <motion.a whileHover={{ y: -2 }} href="#plans" className="text-blue-900 dark:text-blue-100 hover:text-blue-700 dark:hover:text-blue-300 font-medium">Fibre Plans</motion.a>
-            <motion.a whileHover={{ y: -2 }} href="#features" className="text-blue-900 dark:text-blue-100 hover:text-blue-700 dark:hover:text-blue-300 font-medium">Features</motion.a>
-            <motion.a whileHover={{ y: -2 }} href="#contact" className="text-blue-900 dark:text-blue-100 hover:text-blue-700 dark:hover:text-blue-300 font-medium">Contact</motion.a>
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-4 py-2 rounded-lg hover:shadow-md font-medium"
-            >
-              Book Installation
-            </motion.button>
-          </nav>
-        </div>
-      </motion.header>
-
-      {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
+      {/* Hero Section - Fixed top padding and replaced "fibre" with "fiber" */}
+      <section className="relative pt-16 pb-20 overflow-hidden">
         <div className="container mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -642,11 +608,11 @@ const WifiPlans = () => {
             transition={{ duration: 0.7 }}
             className="max-w-4xl mx-auto"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-              Connect To The World With Optimas Fibre
+            <h2 className="text-4xl md:text-6xl font-bold mb-6 text-gray-800 dark:text-gray-200">
+              Connect To The World With Optimas Fiber
             </h2>
-            <p className="text-xl mb-8 text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Experience lightning-fast internet with our reliable fibre connections. Perfect for streaming, gaming, and working from home.
+            <p className="text-xl mb-8 text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+              Experience lightning-fast internet with our reliable fiber connections. Perfect for streaming, gaming, and working from home.
             </p>
             <motion.button 
               whileHover={{ scale: 1.05 }}
@@ -682,7 +648,7 @@ const WifiPlans = () => {
         />
       </section>
 
-      {/* Mobile Hotspot Section - Added at the top */}
+      {/* Mobile Hotspot Section */}
       <section id="mobile-hotspot" className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 pointer-events-none">
@@ -730,8 +696,8 @@ const WifiPlans = () => {
             <div className="inline-flex items-center justify-center p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
               <Zap className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-4">Mobile Hotspot Packages</h3>
-            <p className="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">Mobile Hotspot Packages</h3>
+            <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Stay connected on the go with our affordable and flexible mobile data packages. Perfect for travelers and mobile users.
             </p>
           </motion.div>
@@ -763,7 +729,7 @@ const WifiPlans = () => {
             viewport={{ once: true }}
             className="mt-12 text-center bg-white dark:bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg"
           >
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-gray-600 dark:text-gray-400">
               <strong>Note:</strong> All mobile hotspot packages automatically redirect to our secure payment portal. 
               After payment, you'll receive your access credentials via SMS.
             </p>
@@ -771,7 +737,7 @@ const WifiPlans = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section - Replaced "fibre" with "fiber" */}
       <section id="features" className="py-16 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <motion.div 
@@ -781,8 +747,8 @@ const WifiPlans = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h3 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-4">Why Choose Optimas Fibre?</h3>
-            <p className="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">Why Choose Optimas Fiber?</h3>
+            <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               We provide the best internet experience with cutting-edge technology and exceptional customer service.
             </p>
           </motion.div>
@@ -799,15 +765,15 @@ const WifiPlans = () => {
                 onMouseEnter={() => setActiveFeature(index)}
               >
                 <div className="text-blue-600 dark:text-blue-400 mb-4">{feature.icon}</div>
-                <h4 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-2">{feature.title}</h4>
-                <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
+                <h4 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">{feature.title}</h4>
+                <p className="text-gray-600 dark:text-gray-400">{feature.description}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Fibre Plans Section */}
+      {/* Fiber Plans Section - Replaced "fibre" with "fiber" */}
       <section id="plans" className="py-16 relative">
         <div className="container mx-auto px-4">
           <motion.div 
@@ -817,8 +783,8 @@ const WifiPlans = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h3 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-4">Optimas Fibre Packages</h3>
-            <p className="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">Optimas Fiber Packages</h3>
+            <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Check out our speeds and plans to suit every need and budget. Installs take just 1 hour & can be booked for the next day.
             </p>
           </motion.div>
@@ -864,8 +830,8 @@ const WifiPlans = () => {
               </button>
 
               <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-blue-900 dark:text-blue-100">Get {selectedPlan?.name}</h3>
-                <p className="text-gray-600 dark:text-gray-300">Fill out the form and we'll contact you shortly</p>
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Get {selectedPlan?.name}</h3>
+                <p className="text-gray-600 dark:text-gray-400">Fill out the form and we'll contact you shortly</p>
               </div>
 
               {messageStatus === "success" && (
