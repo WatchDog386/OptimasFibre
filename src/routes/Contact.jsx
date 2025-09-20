@@ -1,17 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { motion } from "framer-motion";
 import {
   Phone, Mail, MapPin, Clock, MessageCircle, Wifi,
   Send, ChevronRight
 } from "lucide-react";
 import { FaWhatsapp, FaFacebook, FaTwitter, FaInstagram } from "react-icons/fa";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 const services = [
-  { value: "installation", label: "Fibre Installation", icon: <Wifi className="w-5 h-5" /> },
-  { value: "support", label: "Technical Support", icon: <MessageCircle className="w-5 h-5" /> },
-  { value: "billing", label: "Billing Inquiry", icon: <Mail className="w-5 h-5" /> },
-  { value: "coverage", label: "Coverage Check", icon: <MapPin className="w-5 h-5" /> },
-  { value: "other", label: "Other", icon: <MessageCircle className="w-5 h-5" /> },
+  { value: "installation", label: "Fibre Installation", icon: <Wifi className="w-4 h-4" /> },
+  { value: "support", label: "Technical Support", icon: <MessageCircle className="w-4 h-4" /> },
+  { value: "billing", label: "Billing Inquiry", icon: <Mail className="w-4 h-4" /> },
+  { value: "coverage", label: "Coverage Check", icon: <MapPin className="w-4 h-4" /> },
+  { value: "other", label: "Other", icon: <MessageCircle className="w-4 h-4" /> },
 ];
 
 const Contact = () => {
@@ -22,6 +23,7 @@ const Contact = () => {
     service: "",
     message: "",
   });
+  const { darkMode } = useContext(ThemeContext);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,7 +43,9 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen px-4 pt-24 pb-10 relative bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-800">
+    <div className={`min-h-screen px-4 pt-20 pb-8 relative transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'
+    }`} style={{ fontFamily: "'Poppins', sans-serif" }}>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -49,9 +53,11 @@ const Contact = () => {
         className="max-w-4xl mx-auto"
       >
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <motion.h1 
-            className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#182b5c] to-[#3b5998]"
+            className={`text-2xl md:text-3xl font-semibold mb-3 ${
+              darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+            }`}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -59,7 +65,7 @@ const Contact = () => {
             Contact Us
           </motion.h1>
           <motion.p 
-            className="text-gray-600 max-w-xl mx-auto text-lg"
+            className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-xl mx-auto text-sm`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -68,106 +74,120 @@ const Contact = () => {
           </motion.p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Contact Info */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <motion.div 
-              className="p-6 rounded-xl bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-shadow"
+              className={`p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow ${
+                darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+              }`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              whileHover={{ y: -3, transition: { duration: 0.2 } }}
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-gradient-to-r from-[#182b5c] to-[#3b5998] p-2 rounded-full">
-                  <Phone className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-[#182b5c] p-2 rounded-full">
+                  <Phone className="w-4 h-4 text-white" />
                 </div>
-                <h3 className="font-semibold text-lg">Call Us</h3>
+                <h3 className={`font-medium text-base ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                }`}>Call Us</h3>
               </div>
-              <div className="space-y-2 pl-11">
-                <p className="text-gray-700 hover:text-[#182b5c] transition-colors">0726 818 938</p>
-                <p className="text-gray-700 hover:text-[#182b5c] transition-colors">0724 169 963</p>
+              <div className="space-y-1 pl-11">
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>0726 818 938</p>
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>0724 169 963</p>
               </div>
             </motion.div>
 
             <motion.div 
-              className="p-6 rounded-xl bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-shadow"
+              className={`p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow ${
+                darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+              }`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 }}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              whileHover={{ y: -3, transition: { duration: 0.2 } }}
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-gradient-to-r from-[#182b5c] to-[#3b5998] p-2 rounded-full">
-                  <Mail className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-[#182b5c] p-2 rounded-full">
+                  <Mail className="w-4 h-4 text-white" />
                 </div>
-                <h3 className="font-semibold text-lg">Email Us</h3>
+                <h3 className={`font-medium text-base ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                }`}>Email Us</h3>
               </div>
-              <div className="space-y-2 pl-11">
-                <p className="text-gray-700 hover:text-[#182b5c] transition-colors">info@optimafibre.com</p>
-                <p className="text-gray-700 hover:text-[#182b5c] transition-colors">support@optimafibre.com</p>
+              <div className="space-y-1 pl-11">
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>info@optimafibre.com</p>
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>support@optimafibre.com</p>
               </div>
             </motion.div>
 
             <motion.div 
-              className="p-6 rounded-xl bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-shadow"
+              className={`p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow ${
+                darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+              }`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.6 }}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              whileHover={{ y: -3, transition: { duration: 0.2 } }}
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-gradient-to-r from-[#182b5c] to-[#3b5998] p-2 rounded-full">
-                  <MapPin className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-[#182b5c] p-2 rounded-full">
+                  <MapPin className="w-4 h-4 text-white" />
                 </div>
-                <h3 className="font-semibold text-lg">Visit Us</h3>
+                <h3 className={`font-medium text-base ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                }`}>Visit Us</h3>
               </div>
-              <div className="space-y-2 pl-11">
-                <p className="text-gray-700">Lucky Summer, Ruaraka</p>
-                <p className="text-gray-700">Behind Naivas Supermarket</p>
+              <div className="space-y-1 pl-11">
+                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}>Lucky Summer, Ruaraka</p>
+                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}>Behind Naivas Supermarket</p>
                 <motion.a 
                   href="#" 
-                  className="text-[#182b5c] hover:text-[#3b5998] text-sm inline-flex items-center gap-1 mt-2 group"
+                  className={`text-xs inline-flex items-center gap-1 mt-2 group ${
+                    darkMode ? 'text-[#d0b216] hover:text-[#e0c226]' : 'text-[#182b5c] hover:text-[#3b5998]'
+                  }`}
                   whileHover={{ x: 3 }}
                 >
                   View on map 
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </motion.a>
               </div>
             </motion.div>
 
             {/* Quick Actions */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <motion.a
                 href="https://wa.me/254726818938"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white px-5 py-3.5 rounded-xl hover:shadow-lg transition-shadow text-sm font-medium"
+                className="flex items-center gap-2 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white px-4 py-2.5 rounded-[1.25rem] hover:shadow-md transition-shadow text-xs font-medium"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
                 whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
               >
-                <FaWhatsapp className="w-5 h-5" />
+                <FaWhatsapp className="w-4 h-4" />
                 <span>Chat on WhatsApp</span>
               </motion.a>
 
               <motion.div 
-                className="flex gap-4 justify-center mt-4"
+                className="flex gap-3 justify-center mt-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
               >
                 {[
-                  { icon: <FaFacebook className="w-5 h-5" />, href: "#", label: "Facebook" },
-                  { icon: <FaTwitter className="w-5 h-5" />, href: "#", label: "Twitter" },
-                  { icon: <FaInstagram className="w-5 h-5" />, href: "#", label: "Instagram" }
+                  { icon: <FaFacebook className="w-4 h-4" />, href: "#", label: "Facebook" },
+                  { icon: <FaTwitter className="w-4 h-4" />, href: "#", label: "Twitter" },
+                  { icon: <FaInstagram className="w-4 h-4" />, href: "#", label: "Instagram" }
                 ].map((social, index) => (
                   <motion.a
                     key={index}
                     href={social.href}
-                    className="p-3 bg-gradient-to-r from-[#182b5c] to-[#3b5998] text-white rounded-xl hover:shadow-lg transition-shadow"
-                    whileHover={{ scale: 1.1, y: -3 }}
+                    className="p-2.5 bg-[#182b5c] text-white rounded-xl hover:shadow-md transition-shadow"
+                    whileHover={{ scale: 1.1, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                     aria-label={social.label}
                   >
@@ -181,17 +201,21 @@ const Contact = () => {
           {/* Contact Form */}
           <motion.form
             onSubmit={handleSubmit}
-            className="p-7 rounded-xl bg-white border border-gray-100 shadow-lg space-y-6"
+            className={`p-5 rounded-xl shadow-md space-y-4 ${
+              darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+            }`}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
           >
-            <h3 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#182b5c] to-[#3b5998] mb-2">
+            <h3 className={`text-xl font-semibold mb-1 ${
+              darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+            }`}>
               Send us a message
             </h3>
 
-            <div className="space-y-5">
+            <div className="space-y-4">
               <div>
                 <input
                   type="text"
@@ -199,19 +223,27 @@ const Contact = () => {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Your Name"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all"
+                  className={`w-full px-3 py-2.5 rounded-xl transition-all text-sm ${
+                    darkMode 
+                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
+                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
+                  } focus:outline-none focus:ring-1 focus:border-transparent`}
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Email Address"
-                  className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all"
+                  className={`px-3 py-2.5 rounded-xl transition-all text-sm ${
+                    darkMode 
+                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
+                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
+                  } focus:outline-none focus:ring-1 focus:border-transparent`}
                   required
                 />
                 <input
@@ -220,7 +252,11 @@ const Contact = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Phone Number"
-                  className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all"
+                  className={`px-3 py-2.5 rounded-xl transition-all text-sm ${
+                    darkMode 
+                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
+                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
+                  } focus:outline-none focus:ring-1 focus:border-transparent`}
                   required
                 />
               </div>
@@ -230,7 +266,11 @@ const Contact = () => {
                   name="service"
                   value={formData.service}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all appearance-none"
+                  className={`w-full px-3 py-2.5 rounded-xl transition-all text-sm appearance-none ${
+                    darkMode 
+                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
+                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
+                  } focus:outline-none focus:ring-1 focus:border-transparent`}
                   required
                 >
                   <option value="">Select service type</option>
@@ -249,14 +289,18 @@ const Contact = () => {
                   onChange={handleChange}
                   placeholder="How can we help you?"
                   rows="4"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#182b5c] focus:border-transparent transition-all"
+                  className={`w-full px-3 py-2.5 rounded-xl transition-all text-sm ${
+                    darkMode 
+                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
+                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
+                  } focus:outline-none focus:ring-1 focus:border-transparent`}
                   required
                 />
               </div>
 
               <motion.button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#182b5c] to-[#3b5998] hover:from-[#3b5998] hover:to-[#182b5c] text-white font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
+                className="w-full bg-[#182b5c] hover:bg-[#0f1f45] text-white font-medium py-2.5 px-4 rounded-[1.25rem] transition-all flex items-center justify-center gap-2 text-sm"
                 whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -269,28 +313,44 @@ const Contact = () => {
 
         {/* Business Hours */}
         <motion.div 
-          className="p-6 rounded-xl bg-white border border-gray-100 shadow-lg text-center mb-8"
+          className={`p-5 rounded-xl shadow-md text-center mb-6 ${
+            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+          }`}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
         >
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Clock className="w-5 h-5 text-[#3b5998]" />
-            <h3 className="font-semibold text-lg">Business Hours</h3>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Clock className="w-4 h-4 text-[#182b5c]" />
+            <h3 className={`font-medium text-base ${
+              darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+            }`}>Business Hours</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm">
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="font-medium text-[#182b5c]">Mon - Fri</p>
-              <p className="text-gray-700">8:00 AM - 5:00 PM</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div className={`p-2.5 rounded-lg ${
+              darkMode ? 'bg-gray-700' : 'bg-blue-50'
+            }`}>
+              <p className={`font-medium ${
+                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+              }`}>Mon - Fri</p>
+              <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>8:00 AM - 5:00 PM</p>
             </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="font-medium text-[#182b5c]">Saturday</p>
-              <p className="text-gray-700">9:00 AM - 2:00 PM</p>
+            <div className={`p-2.5 rounded-lg ${
+              darkMode ? 'bg-gray-700' : 'bg-blue-50'
+            }`}>
+              <p className={`font-medium ${
+                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+              }`}>Saturday</p>
+              <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>9:00 AM - 2:00 PM</p>
             </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="font-medium text-[#182b5c]">Sunday</p>
-              <p className="text-gray-700">Closed</p>
+            <div className={`p-2.5 rounded-lg ${
+              darkMode ? 'bg-gray-700' : 'bg-blue-50'
+            }`}>
+              <p className={`font-medium ${
+                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+              }`}>Sunday</p>
+              <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Closed</p>
             </div>
           </div>
         </motion.div>
@@ -304,12 +364,14 @@ const Contact = () => {
         >
           <motion.a
             href="#"
-            className="inline-flex items-center gap-2 text-[#182b5c] hover:text-[#3b5998] font-medium group"
+            className={`inline-flex items-center gap-1 font-medium group text-sm ${
+              darkMode ? 'text-[#d0b216] hover:text-[#e0c226]' : 'text-[#182b5c] hover:text-[#3b5998]'
+            }`}
             whileHover={{ scale: 1.05 }}
           >
-            <MapPin className="w-5 h-5" />
+            <MapPin className="w-4 h-4" />
             Find us on Google Maps
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
           </motion.a>
         </motion.div>
       </motion.div>

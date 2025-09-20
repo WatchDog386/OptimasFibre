@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, EffectFade, Navigation } from 'swiper/modules';
+import { Autoplay, Pagination, EffectFade } from 'swiper/modules';
 import { useNavigate } from 'react-router-dom';
 import { FaWhatsapp } from 'react-icons/fa';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/pagination';
-import 'swiper/css/navigation';
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -122,8 +121,14 @@ const Hero = () => {
   };
 
   return (
-    <section className="hero p-0 relative w-full h-screen overflow-hidden">
-      {/* Floating WhatsApp Button */}
+    <section 
+      className="hero p-0 relative w-full overflow-hidden"
+      style={{ 
+        fontFamily: "'Poppins', sans-serif",
+        height: isMobile ? '60vh' : '90vh' // 👈 MUCH SMALLER ON MOBILE
+      }}
+    >
+      {/* Floating WhatsApp Button — slightly inset on mobile */}
       <motion.a
         href="https://wa.me/254741874200"
         target="_blank"
@@ -136,10 +141,10 @@ const Hero = () => {
         whileTap={{ scale: 0.95 }}
         style={{
           position: 'fixed',
-          width: '60px',
-          height: '60px',
-          bottom: '40px',
-          right: '40px',
+          width: isMobile ? '40px' : '56px',
+          height: isMobile ? '40px' : '56px',
+          bottom: isMobile ? '16px' : '32px',
+          right: isMobile ? '16px' : '32px',
           backgroundColor: '#25d366',
           color: '#FFF',
           borderRadius: '50%',
@@ -152,35 +157,37 @@ const Hero = () => {
           textDecoration: 'none',
         }}
       >
-        <FaWhatsapp style={{ fontSize: '30px', color: 'white' }} />
+        <FaWhatsapp style={{ fontSize: isMobile ? '20px' : '28px', color: 'white' }} />
       </motion.a>
 
-      {/* Chat with us text (on the right side of the icon) */}
-      <motion.div
-        className="chat-text"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 1.5 }}
-        style={{
-          position: 'fixed',
-          bottom: '52px',
-          right: '110px',
-          color: 'white',
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          padding: '8px 15px',
-          borderRadius: '20px',
-          fontSize: '14px',
-          fontWeight: '500',
-          zIndex: 1000,
-          backdropFilter: 'blur(5px)',
-        }}
-      >
-        Chat with us
-      </motion.div>
+      {/* Chat with us text (hidden on mobile) */}
+      {!isMobile && (
+        <motion.div
+          className="chat-text"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 1.5 }}
+          style={{
+            position: 'fixed',
+            bottom: '48px',
+            right: '100px',
+            color: 'white',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            padding: '6px 12px',
+            borderRadius: '16px',
+            fontSize: '13px',
+            fontWeight: '500',
+            zIndex: 1000,
+            backdropFilter: 'blur(5px)',
+          }}
+        >
+          Chat with us
+        </motion.div>
+      )}
 
       <Swiper
         ref={swiperRef}
-        modules={[Autoplay, Pagination, EffectFade, Navigation]}
+        modules={[Autoplay, Pagination, EffectFade]}
         spaceBetween={0}
         slidesPerView={1}
         autoplay={{ 
@@ -199,10 +206,6 @@ const Hero = () => {
               <span class="bullet-progress"></span>
             </span>`;
           }
-        }}
-        navigation={{
-          nextEl: '.swiper-button-next',
-          prevEl: '.swiper-button-prev',
         }}
         onSlideChange={(swiper) => setCurrentSlide(swiper.realIndex)}
         className="slider-container full-slider w-full h-full"
@@ -234,114 +237,133 @@ const Hero = () => {
               }}
             />
             
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 -mt-16 mr-16 w-64 h-64 bg-[#d0b216] opacity-10 rounded-full"></div>
-            <div className="absolute bottom-0 left-0 -mb-16 ml-16 w-64 h-64 bg-[#d0b216] opacity-10 rounded-full"></div>
+            {/* Decorative Elements — Now much smaller on mobile */}
+            <div 
+              className={`absolute top-0 right-0 rounded-full bg-[#d0b216] opacity-10`}
+              style={{
+                width: isMobile ? '80px' : '192px',
+                height: isMobile ? '80px' : '192px',
+                marginTop: isMobile ? '-40px' : '-80px',
+                marginRight: isMobile ? '16px' : '64px',
+              }}
+            ></div>
+            <div 
+              className={`absolute bottom-0 left-0 rounded-full bg-[#d0b216] opacity-10`}
+              style={{
+                width: isMobile ? '80px' : '192px',
+                height: isMobile ? '80px' : '192px',
+                marginBottom: isMobile ? '-40px' : '-80px',
+                marginLeft: isMobile ? '16px' : '64px',
+              }}
+            ></div>
             
-            {/* Content */}
-            <div className="slide-content row absolute inset-0 w-full h-full flex items-center justify-center z-10">
-              <div className="col-12 d-flex justify-content-center inner">
-                <motion.div 
-                  className="slider-outline center text-center text-md-center px-4"
-                  style={{ maxWidth: '800px' }}
-                  initial="hidden"
-                  animate="visible"
-                  variants={{
-                    hidden: { opacity: 0 },
-                    visible: {
-                      opacity: 1,
-                      transition: {
-                        staggerChildren: 0.2
-                      }
+            {/* Content — TIGHTER, SMALLER, CENTERED */}
+            <div className="slide-content row absolute inset-0 w-full h-full flex items-center justify-center z-10 px-4">
+              <motion.div 
+                className="slider-outline center text-center"
+                style={{ 
+                  maxWidth: isMobile ? '92%' : '800px',
+                  width: '100%'
+                }}
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.2
                     }
+                  }
+                }}
+              >
+                <motion.h1 
+                  className="title effect-static-text mb-2"
+                  variants={textVariants}
+                  style={{
+                    color: '#ffffff',
+                    fontSize: isMobile ? '1.375rem' : '2.5rem', // 👈 22px on mobile
+                    fontWeight: '700',
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                    lineHeight: isMobile ? '1.3' : '1.2'
                   }}
                 >
-                  <motion.h1 
-                    className="title effect-static-text mb-4"
-                    variants={textVariants}
-                    style={{
-                      color: '#ffffff',
-                      fontSize: isMobile ? '2.5rem' : '3.5rem',
-                      fontWeight: '700',
-                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-                      lineHeight: '1.2'
-                    }}
-                  >
-                    {slide.title}
-                  </motion.h1>
-                  
-                  <motion.p 
-                    className="description mb-5"
-                    variants={textVariants}
-                    style={{
-                      color: '#ffffff',
-                      fontSize: isMobile ? '1rem' : '1.25rem',
-                      maxWidth: '600px',
-                      marginLeft: 'auto',
-                      marginRight: 'auto',
-                      lineHeight: '1.6',
-                      textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)'
-                    }}
-                  >
-                    {slide.description}
-                  </motion.p>
-                  
-                  <motion.div
-                    className="buttons"
-                    variants={buttonVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    <div className="d-sm-inline-flex justify-content-center">
-                      <motion.button
-                        onClick={slide.buttonAction}
-                        className="mx-auto btn primary-button"
-                        variants={buttonVariants}
-                        whileHover="hover"
-                        style={{
-                          backgroundColor: '#d0b216',
-                          border: 'none',
-                          color: '#182B5C',
-                          padding: '16px 40px',
-                          borderRadius: '8px',
-                          fontWeight: '600',
-                          fontSize: '1rem',
-                          cursor: 'pointer',
-                          letterSpacing: '0.5px',
-                          position: 'relative',
-                          overflow: 'hidden'
+                  {slide.title}
+                </motion.h1>
+                
+                <motion.p 
+                  className="description mb-3"
+                  variants={textVariants}
+                  style={{
+                    color: '#ffffff',
+                    fontSize: isMobile ? '0.75rem' : '1.125rem', // 👈 12px on mobile
+                    maxWidth: isMobile ? '100%' : '600px',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    lineHeight: isMobile ? '1.45' : '1.6',
+                    textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)'
+                  }}
+                >
+                  {slide.description}
+                </motion.p>
+                
+                <motion.div
+                  className="buttons"
+                  variants={buttonVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <div className="d-sm-inline-flex justify-content-center">
+                    <motion.button
+                      onClick={slide.buttonAction}
+                      className="mx-auto btn primary-button"
+                      variants={buttonVariants}
+                      whileHover="hover"
+                      style={{
+                        backgroundColor: '#d0b216',
+                        border: 'none',
+                        color: '#182B5C',
+                        padding: isMobile ? '8px 20px' : '14px 36px', // 👈 tighter button
+                        borderRadius: '8px',
+                        fontWeight: '600',
+                        fontSize: isMobile ? '0.875rem' : '1rem',
+                        cursor: 'pointer',
+                        letterSpacing: '0.5px',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {slide.buttonText}
+                      <motion.span 
+                        className="absolute inset-0 bg-white"
+                        style={{ 
+                          opacity: 0,
+                          borderRadius: '8px'
                         }}
-                      >
-                        {slide.buttonText}
-                        <motion.span 
-                          className="absolute inset-0 bg-white"
-                          style={{ 
-                            opacity: 0,
-                            borderRadius: '8px'
-                          }}
-                          whileHover={{
-                            opacity: 0.2,
-                            transition: { duration: 0.3 }
-                          }}
-                        />
-                      </motion.button>
-                    </div>
-                  </motion.div>
+                        whileHover={{
+                          opacity: 0.2,
+                          transition: { duration: 0.3 }
+                        }}
+                      />
+                    </motion.button>
+                  </div>
                 </motion.div>
-              </div>
+              </motion.div>
             </div>
           </SwiperSlide>
         ))}
         
-        {/* Custom pagination */}
-        <div className="swiper-pagination slider-pagination" style={{ bottom: '30px' }} />
-        
-        {/* Navigation arrows */}
-        <div className="swiper-button-next !text-white !w-12 !h-12 after:!text-xl"></div>
-        <div className="swiper-button-prev !text-white !w-12 !h-12 after:!text-xl"></div>
+        {/* Custom pagination — smaller bullets on mobile */}
+        <div 
+          className="swiper-pagination slider-pagination" 
+          style={{ 
+            bottom: isMobile ? '14px' : '28px',
+            zIndex: 10
+          }} 
+        />
       </Swiper>
       
-      <style jsx>{`
+      <style>{`
         .hero {
           position: relative;
           overflow: hidden;
@@ -363,23 +385,22 @@ const Hero = () => {
         .slide-content {
           position: relative;
           z-index: 2;
-          height: 100%;
         }
         
         .swiper-pagination-bullet {
-          width: 14px;
-          height: 14px;
+          width: 8px;
+          height: 8px;
           background: rgba(255, 255, 255, 0.5);
           opacity: 1;
-          margin: 0 8px;
+          margin: 0 3px;
           position: relative;
           overflow: hidden;
-          border-radius: 10px;
+          border-radius: 6px;
         }
         
         .swiper-pagination-bullet-active {
           background: transparent;
-          width: 30px;
+          width: 18px;
         }
         
         .swiper-pagination-bullet-active .bullet-progress {
@@ -388,26 +409,8 @@ const Hero = () => {
           left: 0;
           height: 100%;
           background: #d0b216;
-          border-radius: 10px;
+          border-radius: 6px;
           animation: progress 5s linear;
-        }
-        
-        .swiper-button-next, .swiper-button-prev {
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          border-radius: 50%;
-          width: 48px;
-          height: 48px;
-          transition: all 0.3s ease;
-        }
-        
-        .swiper-button-next:after, .swiper-button-prev:after {
-          font-size: 20px;
-          font-weight: bold;
-        }
-        
-        .swiper-button-next:hover, .swiper-button-prev:hover {
-          background: rgba(255, 255, 255, 0.2);
         }
         
         @keyframes progress {
@@ -419,40 +422,18 @@ const Hero = () => {
           }
         }
         
-        /* Mobile responsiveness */
         @media screen and (max-width: 768px) {
-          .swiper-button-next, .swiper-button-prev {
-            display: none;
-          }
-          
-          .title {
-            font-size: 2.5rem !important;
-          }
-          
-          .description {
-            font-size: 1rem !important;
-          }
-          
           .whatsapp-float {
-            width: 50px;
-            height: 50px;
-            bottom: 20px;
-            right: 20px;
+            width: 40px;
+            height: 40px;
+            bottom: 16px;
+            right: 16px;
           }
           
           .whatsapp-float svg {
-            font-size: 25px;
+            font-size: 20px;
           }
           
-          .chat-text {
-            bottom: 32px;
-            right: 80px;
-            font-size: 12px;
-            padding: 6px 12px;
-          }
-        }
-
-        @media screen and (max-width: 480px) {
           .chat-text {
             display: none;
           }

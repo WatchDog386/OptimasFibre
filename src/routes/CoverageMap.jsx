@@ -1,12 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Phone, Wifi, MapPin, HelpCircle, User, CreditCard, Settings, Mail } from 'lucide-react';
+import { ChevronDown, ChevronUp, Phone, Wifi, MapPin, HelpCircle, User, CreditCard, Settings, Mail, Sun, Moon } from 'lucide-react';
 
 const CoveragePage = () => {
   const [activeFaq, setActiveFaq] = useState(null);
+  const [activeCategory, setActiveCategory] = useState("Account & Billing");
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Load user preference on mount
+  useEffect(() => {
+    const savedMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedMode);
+  }, []);
+
+  // Save preference when darkMode changes
+  useEffect(() => {
+    localStorage.setItem('darkMode', darkMode);
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const toggleFaq = (index) => {
     setActiveFaq(activeFaq === index ? null : index);
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
   };
 
   const coverageAreas = [
@@ -15,10 +37,9 @@ const CoveragePage = () => {
     ["Githunguri", "Kikuyu", "Dagoretti North", "Kabete", "Roysambu"]
   ];
 
-  // Enhanced FAQ data with categories and icons
   const faqCategories = {
     "Account & Billing": {
-      icon: <User className="w-5 h-5 text-[#d0b216]" />,
+      icon: <User className={`w-5 h-5 ${darkMode ? 'text-yellow-300' : 'text-[#d0b216]'}`} />,
       items: [
         {
           question: "PAYMENTS",
@@ -31,7 +52,7 @@ const CoveragePage = () => {
       ]
     },
     "Services": {
-      icon: <Settings className="w-5 h-5 text-[#d0b216]" />,
+      icon: <Settings className={`w-5 h-5 ${darkMode ? 'text-yellow-300' : 'text-[#d0b216]'}`} />,
       items: [
         {
           question: "RELOCATION SERVICES",
@@ -48,7 +69,7 @@ const CoveragePage = () => {
       ]
     },
     "Installation": {
-      icon: <HelpCircle className="w-5 h-5 text-[#d0b216]" />,
+      icon: <HelpCircle className={`w-5 h-5 ${darkMode ? 'text-yellow-300' : 'text-[#d0b216]'}`} />,
       items: [
         {
           question: "NEED AN INSTALLATION, WHAT ARE THE CHARGES",
@@ -58,30 +79,50 @@ const CoveragePage = () => {
     }
   };
 
-  const [activeCategory, setActiveCategory] = useState("Account & Billing");
+  // Color tokens based on mode
+  const colors = {
+    primary: darkMode ? '#eab308' : '#d0b216', // yellow
+    primaryHover: darkMode ? '#ca8a04' : '#b89b14',
+    textPrimary: darkMode ? '#f9fafb' : '#182B5C',
+    textSecondary: darkMode ? '#d1d5db' : '#4b5563',
+    bgPrimary: darkMode ? '#111827' : '#ffffff',
+    bgSecondary: darkMode ? '#1f2937' : '#f9fafb',
+    bgTertiary: darkMode ? '#374151' : '#f3f4f6',
+    border: darkMode ? '#374151' : '#e5e7eb',
+    cardBg: darkMode ? '#1f2937' : '#ffffff',
+    cardHover: darkMode ? '#374151' : '#f3f4f6',
+  };
 
   return (
-    <div className="font-sans text-gray-800 bg-white min-h-screen">
+    <div className={`font-sans min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-800'}`}>
       {/* Header */}
-      <header className="fixed top-0 w-full bg-white shadow-sm z-50">
+      <header className={`fixed top-0 w-full z-50 shadow-sm transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <div className="h-10 flex items-center">
-                <span className="text-2xl font-bold text-[#182B5C]">OPTIMAS</span>
-                <span className="text-2xl font-bold text-[#d0b216]">FIBRE</span>
+                <span className={`text-2xl font-bold ${darkMode ? 'text-blue-300' : 'text-[#182B5C]'}`}>OPTIMAS</span>
+                <span className="text-2xl font-bold" style={{ color: colors.primary }}>FIBRE</span>
               </div>
             </div>
             
             <nav className="hidden md:flex space-x-8">
-              <a href="/" className="text-[#182B5C] hover:text-[#d0b216] font-medium transition-colors">Home</a>
-              <a href="/about" className="text-[#182B5C] hover:text-[#d0b216] font-medium transition-colors">About</a>
-              <a href="/coverage" className="text-[#d0b216] font-medium">Our Coverage</a>
-              <a href="/contact" className="text-[#182B5C] hover:text-[#d0b216] font-medium transition-colors">Contact</a>
+              <a href="/" className={`${darkMode ? 'text-gray-300 hover:text-yellow-300' : 'text-[#182B5C] hover:text-[#d0b216]'} font-medium transition-colors`}>Home</a>
+              <a href="/about" className={`${darkMode ? 'text-gray-300 hover:text-yellow-300' : 'text-[#182B5C] hover:text-[#d0b216]'} font-medium transition-colors`}>About</a>
+              <a href="/coverage" className={`${darkMode ? 'text-yellow-300' : 'text-[#d0b216]'} font-medium`}>Our Coverage</a>
+              <a href="/contact" className={`${darkMode ? 'text-gray-300 hover:text-yellow-300' : 'text-[#182B5C] hover:text-[#d0b216]'} font-medium transition-colors`}>Contact</a>
             </nav>
             
             <div className="flex items-center space-x-4">
-              <a href="tel:+254709517917" className="bg-[#d0b216] hover:bg-[#b89b14] text-white px-5 py-2.5 rounded-md font-medium transition-colors flex items-center">
+              <button
+                onClick={toggleDarkMode}
+                className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-yellow-300' : 'bg-gray-200 text-gray-700'} transition-colors`}
+                aria-label="Toggle dark mode"
+              >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+
+              <a href="tel:+254709517917" className={`px-5 py-2.5 rounded-md font-medium transition-colors flex items-center ${darkMode ? 'bg-yellow-500 hover:bg-yellow-400 text-gray-900' : 'bg-[#d0b216] hover:bg-[#b89b14] text-white'}`}>
                 <Phone className="w-4 h-4 mr-1" />
                 0709517917
               </a>
@@ -90,9 +131,8 @@ const CoveragePage = () => {
         </div>
       </header>
 
-      {/* Hero Section - Restored to Original */}
+      {/* Hero Section */}
       <section className="relative overflow-hidden pt-20">
-        {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -102,7 +142,6 @@ const CoveragePage = () => {
           }}
         ></div>
 
-        {/* Hero Content */}
         <div className="relative z-10 flex items-center justify-center h-[500px]">
           <div className="text-center text-white">
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
@@ -121,16 +160,23 @@ const CoveragePage = () => {
       </section>
 
       {/* Coverage Areas Section */}
-      <section className="py-12 bg-white">
+      <section className={`py-12 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center mb-8 text-[#182B5C]">Optimas Fibre Coverage Areas</h2>
+          <h2 className={`text-2xl font-bold text-center mb-8 ${darkMode ? 'text-blue-300' : 'text-[#182B5C]'}`}>Optimas Fibre Coverage Areas</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {coverageAreas.map((column, colIndex) => (
               <div key={colIndex} className="space-y-3">
                 {column.map((area, index) => (
-                  <div key={index} className="flex items-center text-gray-700 hover:text-[#182B5C] transition-colors p-3 rounded-lg hover:bg-gray-50">
-                    <Wifi className="w-4 h-4 text-[#d0b216] mr-2" />
+                  <div 
+                    key={index} 
+                    className={`flex items-center p-3 rounded-lg transition-colors ${
+                      darkMode 
+                        ? 'text-gray-300 hover:text-yellow-300 hover:bg-gray-800' 
+                        : 'text-gray-700 hover:text-[#182B5C] hover:bg-gray-50'
+                    }`}
+                  >
+                    <Wifi className={`w-4 h-4 mr-2 ${darkMode ? 'text-yellow-300' : 'text-[#d0b216]'}`} />
                     <span className="text-sm font-medium">{area}</span>
                   </div>
                 ))}
@@ -141,11 +187,11 @@ const CoveragePage = () => {
       </section>
 
       {/* Map Section */}
-      <section className="py-16 bg-gray-100">
+      <section className={`py-16 transition-colors duration-300 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
         <div className="container mx-auto px-4">
-          <div className="bg-white rounded-xl shadow-lg p-8 max-w-5xl mx-auto">
-            <h3 className="text-2xl font-bold mb-6 text-center text-[#182B5C]">Our Coverage Map</h3>
-            <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden border-2 border-[#d0b216]">
+          <div className={`rounded-xl shadow-lg p-8 max-w-5xl mx-auto ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+            <h3 className={`text-2xl font-bold mb-6 text-center ${darkMode ? 'text-blue-300' : 'text-[#182B5C]'}`}>Our Coverage Map</h3>
+            <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden border-2" style={{ borderColor: colors.primary }}>
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63821.14200482106!2d36.78668749999999!3d-1.2482205!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f175b5a63350d%3A0x8175674316496788!2sNairobi%2C%20Kenya!5e0!3m2!1sen!2sus!4v1715000000000"
                 width="100%"
@@ -162,7 +208,11 @@ const CoveragePage = () => {
                 href="https://www.google.com/maps/place/Nairobi,+Kenya/@-1.3032094,36.5672001,10z/data=!3m1!4b1!4m6!3m5!1s0x182f175b5a63350d:0x8175674316496788!8m2!3d-1.2920659!4d36.8219462!16zL20vMDVmNDk?entry=ttu"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-[#182B5C] hover:bg-blue-800 text-white px-6 py-3 rounded-md font-medium flex items-center transition-colors"
+                className={`px-6 py-3 rounded-md font-medium flex items-center transition-colors ${
+                  darkMode 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    : 'bg-[#182B5C] hover:bg-blue-800 text-white'
+                }`}
               >
                 <MapPin className="w-5 h-5 mr-2" />
                 Open Full Screen Map
@@ -172,13 +222,13 @@ const CoveragePage = () => {
         </div>
       </section>
 
-      {/* FAQ Section - Redesigned */}
-      <section className="py-16 bg-gray-50">
+      {/* FAQ Section */}
+      <section className={`py-16 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <p className="text-[#d0b216] font-semibold uppercase tracking-wider">FAQ</p>
-            <h2 className="text-3xl font-bold mt-2 text-[#182B5C]">Frequently Asked Questions</h2>
-            <div className="w-24 h-1 bg-[#d0b216] mx-auto mt-4"></div>
+            <p className="font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>FAQ</p>
+            <h2 className={`text-3xl font-bold mt-2 ${darkMode ? 'text-blue-300' : 'text-[#182B5C]'}`}>Frequently Asked Questions</h2>
+            <div className="w-24 h-1 mx-auto mt-4" style={{ backgroundColor: colors.primary }}></div>
           </div>
           
           {/* Category Tabs */}
@@ -189,8 +239,8 @@ const CoveragePage = () => {
                 onClick={() => setActiveCategory(key)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all ${
                   activeCategory === key
-                    ? "bg-[#182B5C] text-white shadow-lg"
-                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                    ? `bg-blue-600 text-white shadow-lg ${darkMode ? 'bg-blue-700' : ''}`
+                    : `bg-white text-gray-700 hover:bg-gray-100 border ${darkMode ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' : 'border-gray-200'}`
                 }`}
               >
                 {icon}
@@ -209,17 +259,21 @@ const CoveragePage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="mb-4 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-md hover:shadow-lg transition-all"
+                  className={`mb-4 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all ${
+                    darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                  }`}
                 >
                   <button
-                    className="flex justify-between items-center w-full p-6 text-left font-medium text-lg text-[#182B5C] hover:bg-gray-50 transition-colors"
+                    className={`flex justify-between items-center w-full p-6 text-left font-medium text-lg hover:bg-opacity-90 transition-colors ${
+                      darkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-[#182B5C] hover:bg-gray-50'
+                    }`}
                     onClick={() => toggleFaq(index)}
                   >
                     <span>{faq.question}</span>
                     {activeFaq === index ? (
-                      <ChevronUp className="w-5 h-5 text-[#d0b216]" />
+                      <ChevronUp className={`w-5 h-5 ${darkMode ? 'text-yellow-300' : 'text-[#d0b216]'}`} />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-[#d0b216]" />
+                      <ChevronDown className={`w-5 h-5 ${darkMode ? 'text-yellow-300' : 'text-[#d0b216]'}`} />
                     )}
                   </button>
                   <AnimatePresence>
@@ -242,9 +296,9 @@ const CoveragePage = () => {
                             opacity: { duration: 0.2 }
                           }
                         }}
-                        className="px-6 pb-6 border-t border-gray-200"
+                        className={`px-6 pb-6 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
                       >
-                        <p className="text-gray-700 mt-4">{faq.answer}</p>
+                        <p className={`mt-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{faq.answer}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -253,9 +307,11 @@ const CoveragePage = () => {
             </AnimatePresence>
           </div>
 
-          {/* Need More Help Container - Added to FAQ Section */}
+          {/* Need More Help */}
           <motion.div 
-            className="mt-12 p-8 bg-[#182B5C] rounded-xl text-center text-white"
+            className={`mt-12 p-8 rounded-xl text-center transition-colors ${
+              darkMode ? 'bg-blue-900 text-blue-100' : 'bg-[#182B5C] text-white'
+            }`}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
@@ -265,14 +321,22 @@ const CoveragePage = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a 
                 href="tel:+254726896562" 
-                className="bg-[#d0b216] hover:bg-[#c0a220] text-[#182B5C] px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                className={`px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
+                  darkMode 
+                    ? 'bg-yellow-400 text-gray-900 hover:bg-yellow-300' 
+                    : 'bg-[#d0b216] hover:bg-[#c0a220] text-[#182B5C]'
+                }`}
               >
                 <Phone className="w-4 h-4" />
                 Call Support: 0726 896 562
               </a>
               <a 
                 href="mailto:support@knoxvilletechnologies.com" 
-                className="border border-[#d0b216] text-[#d0b216] hover:bg-[#d0b216] hover:text-[#182B5C] px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                className={`px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
+                  darkMode 
+                    ? 'border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-gray-900' 
+                    : 'border border-[#d0b216] text-[#d0b216] hover:bg-[#d0b216] hover:text-[#182B5C]'
+                }`}
               >
                 <Mail className="w-4 h-4" />
                 Email Us
@@ -283,7 +347,7 @@ const CoveragePage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-br from-[#182B5C] to-[#0f1e42] text-white">
+      <section className={`py-16 bg-gradient-to-br ${darkMode ? 'from-blue-900 to-blue-800' : 'from-[#182B5C] to-[#0f1e42]'} text-white`}>
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Get Blazing-Fast Internet with Optimas Fibre!</h2>
           <p className="text-xl mb-8 max-w-3xl mx-auto opacity-90">
@@ -293,14 +357,20 @@ const CoveragePage = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
             <a 
               href="tel:+254709517917" 
-              className="bg-[#d0b216] hover:bg-yellow-500 text-white px-8 py-4 rounded-md font-bold text-lg transition-colors flex items-center justify-center"
+              className={`px-8 py-4 rounded-md font-bold text-lg transition-colors flex items-center justify-center ${
+                darkMode ? 'bg-yellow-400 text-gray-900 hover:bg-yellow-300' : 'bg-[#d0b216] hover:bg-yellow-500 text-white'
+              }`}
             >
               <Phone className="w-5 h-5 mr-2" />
               Contact Us Now
             </a>
             <a 
               href="#coverage-map" 
-              className="border-2 border-white text-white px-8 py-4 rounded-md font-bold text-lg hover:bg-white hover:text-[#182B5C] transition-colors flex items-center justify-center"
+              className={`px-8 py-4 rounded-md font-bold text-lg hover:text-[#182B5C] transition-colors flex items-center justify-center ${
+                darkMode 
+                  ? 'border-2 border-white text-white hover:bg-white' 
+                  : 'border-2 border-white text-white hover:bg-white'
+              }`}
             >
               <MapPin className="w-5 h-5 mr-2" />
               Check Coverage
@@ -313,8 +383,6 @@ const CoveragePage = () => {
           </p>
         </div>
       </section>
-
-      {/* Footer has been removed as requested */}
     </div>
   );
 };
