@@ -55,18 +55,18 @@ const BlogList = () => {
       try {
         setLoading(true);
         setError('');
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
         const res = await fetch(`${API_BASE_URL}/api/blog`);
         
         if (!res.ok) {
-          throw new Error(`Failed to fetch blogs: ${res.status} ${res.statusText}`);
+          throw new Error(`Failed to fetch blog posts: ${res.status} ${res.statusText}`);
         }
         
         const data = await res.json();
         setBlogPosts(data);
       } catch (error) {
         console.error('Error fetching blogs:', error);
-        setError('Failed to load blog posts. Please try again later.');
+        setError('Unable to load blog posts. Please check your internet connection and try again.');
       } finally {
         setLoading(false);
       }
@@ -162,12 +162,20 @@ const BlogList = () => {
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg mb-4 text-center text-xs">
-                {error}
+                <div className="flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  {error}
+                </div>
                 <button 
                   onClick={() => window.location.reload()} 
-                  className="ml-2 text-red-900 font-medium hover:underline text-xs"
+                  className="mt-2 inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
                 >
-                  Try again
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Try Again
                 </button>
               </div>
             )}

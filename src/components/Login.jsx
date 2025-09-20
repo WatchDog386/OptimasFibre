@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, LogIn, Shield, Server, Database, Cpu, Home, Wifi, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, LogIn, Shield, Server, Database, Cpu, Home, Wifi, Sun, Moon, AlertCircle, CheckCircle } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -42,7 +42,7 @@ const Login = () => {
 
   const verifyToken = async (token) => {
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
       const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
         method: 'GET',
         headers: {
@@ -78,7 +78,7 @@ const Login = () => {
     }
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -99,11 +99,11 @@ const Login = () => {
         
         navigate('/admin');
       } else {
-        setError(data.message || 'Invalid email or password');
+        setError(data.message || 'Invalid credentials. Please try again.');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Network error. Please try again later.');
+      setError('Unable to connect to server. Please check your internet connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -115,7 +115,7 @@ const Login = () => {
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) return null;
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
       const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
         headers: {
@@ -149,7 +149,7 @@ const Login = () => {
     setForgotSuccess('');
 
     if (!forgotEmail) {
-      setForgotError('Please enter your email');
+      setForgotError('Please enter your email address');
       return;
     }
 
@@ -159,7 +159,7 @@ const Login = () => {
     }
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
       const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
@@ -171,15 +171,15 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setForgotSuccess(data.message || 'Password reset instructions sent to your email');
+        setForgotSuccess(data.message || 'Password reset instructions have been sent to your email address.');
         setForgotEmail('');
         setTimeout(() => setShowForgotModal(false), 3000);
       } else {
-        setForgotError(data.message || 'Failed to send reset instructions');
+        setForgotError(data.message || 'Failed to send password reset instructions. Please try again.');
       }
     } catch (err) {
       console.error('Forgot password error:', err);
-      setForgotError('Network error. Please try again later.');
+      setForgotError('Network error. Please check your connection and try again.');
     }
   };
 
@@ -290,10 +290,10 @@ const Login = () => {
               <div className={`p-1.5 rounded-full mr-2 ${
                 darkMode ? 'bg-red-800/50' : 'bg-red-100'
               }`}>
-                <Shield className="h-4 w-4 text-red-500" />
+                <AlertCircle className="h-4 w-4 text-red-500" />
               </div>
               <div>
-                <div className="font-medium">Authentication Failed</div>
+                <div className="font-medium">Authentication Error</div>
                 <div>{error}</div>
               </div>
             </div>
@@ -479,24 +479,13 @@ const Login = () => {
                 </div>
                 {forgotError && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <Shield className="w-3 h-3 mr-1" />
+                    <AlertCircle className="w-3 h-3 mr-1" />
                     {forgotError}
                   </p>
                 )}
                 {forgotSuccess && (
                   <p className="text-green-600 text-xs mt-1 flex items-center">
-                    <svg
-                      className="w-3 h-3 mr-1"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      ></path>
-                    </svg>
+                    <CheckCircle className="w-3 h-3 mr-1" />
                     {forgotSuccess}
                   </p>
                 )}

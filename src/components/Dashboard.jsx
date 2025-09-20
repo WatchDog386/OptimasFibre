@@ -77,8 +77,8 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [notification, setNotification] = useState({ show: false, message: '', type: 'info' });
   
-  // Use localhost:5000 for API calls
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+  // ✅ POINT TO YOUR RENDER BACKEND
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
 
   // Show notification
   const showNotification = (message, type = 'info') => {
@@ -323,7 +323,6 @@ const Dashboard = () => {
       setEditingItem(null);
       setIsEditing(false);
       setUploadMethod('url');
-      
       showNotification(`${activeTab === 'blog' ? 'Blog post' : 'Portfolio item'} ${isEditing ? 'updated' : 'created'} successfully!`, 'success');
     } catch (err) {
       console.error('Error saving item:', err);
@@ -403,7 +402,6 @@ const Dashboard = () => {
         </div>
       );
     }
-    
     if (error && activeTab === 'dashboard') {
       return (
         <div className={`p-6 mb-6 rounded-xl ${darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-200'} backdrop-blur-sm`}>
@@ -1381,7 +1379,7 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             <div className="pt-4 mt-4 border-t border-gray-200">
               <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>API Configuration</h4>
               <div className={`p-3 rounded-lg text-xs font-mono ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} break-all`}>
-                {import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}
+                {API_BASE_URL}
               </div>
             </div>
           </div>

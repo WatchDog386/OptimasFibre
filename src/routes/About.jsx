@@ -48,7 +48,7 @@ const About = () => {
     "/world.jpg",
     "/fibre3.webp",
     "/city2.jpg",
-    "pipe.webp",
+    "/pipe.webp",
   ];
 
   // Services data
@@ -81,18 +81,18 @@ const About = () => {
       try {
         setLoading(true);
         setError('');
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
         const res = await fetch(`${API_BASE_URL}/api/portfolio`);
         
         if (!res.ok) {
-          throw new Error(`Failed to fetch portfolio: ${res.status} ${res.statusText}`);
+          throw new Error(`Failed to load portfolio items: ${res.status} ${res.statusText}`);
         }
         
         const data = await res.json();
         setPortfolioItems(data);
       } catch (error) {
         console.error('Error fetching portfolio:', error);
-        setError('Failed to load portfolio items. Please try again later.');
+        setError('Unable to load portfolio items. Please check your internet connection and try again.');
       } finally {
         setLoading(false);
       }
@@ -570,12 +570,20 @@ const About = () => {
             
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg mb-6 text-center">
-                {error}
+                <div className="flex items-center justify-center mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  {error}
+                </div>
                 <button 
                   onClick={() => window.location.reload()} 
-                  className="ml-2 text-red-900 font-medium hover:underline"
+                  className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
                 >
-                  Try again
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Try Again
                 </button>
               </div>
             )}
