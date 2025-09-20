@@ -19,30 +19,33 @@ import {
   Link,
   Download,
   Eye,
-  Globe
+  Globe,
+  AlertCircle,
+  CheckCircle,
+  Info
 } from 'lucide-react';
 
 // ✅ COMPACT BUTTON STYLES — NO ICONS, NATURAL WIDTH
 const BUTTON_STYLES = {
   primary: {
-    base: 'py-2 px-4 rounded-lg font-medium text-sm transition-colors whitespace-nowrap',
-    light: 'bg-blue-600 hover:bg-blue-700 text-white',
-    dark: 'bg-blue-600 hover:bg-blue-700 text-white',
+    base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
+    light: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border border-transparent',
+    dark: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border border-transparent',
   },
   secondary: {
-    base: 'py-2 px-4 rounded-lg font-medium text-sm transition-colors whitespace-nowrap',
-    light: 'bg-gray-200 hover:bg-gray-300 text-gray-800',
-    dark: 'bg-gray-700 hover:bg-gray-600 text-white',
+    base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
+    light: 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 hover:border-gray-300',
+    dark: 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-700 hover:border-gray-600',
   },
   danger: {
-    base: 'py-2 px-4 rounded-lg font-medium text-sm transition-colors whitespace-nowrap',
-    light: 'bg-red-600 hover:bg-red-700 text-white',
-    dark: 'bg-red-600 hover:bg-red-700 text-white',
+    base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
+    light: 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border border-transparent',
+    dark: 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border border-transparent',
   },
   small: {
-    base: 'py-1.5 px-3 rounded-lg font-medium text-xs transition-colors whitespace-nowrap',
-    light: 'bg-blue-600 hover:bg-blue-700 text-white',
-    dark: 'bg-blue-600 hover:bg-blue-700 text-white',
+    base: 'py-1.5 px-3.5 rounded-lg font-medium text-xs transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow',
+    light: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border border-transparent',
+    dark: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border border-transparent',
   }
 };
 
@@ -72,9 +75,18 @@ const Dashboard = () => {
   const [uploadMethod, setUploadMethod] = useState('url');
   const [darkMode, setDarkMode] = useState(false);
   const [error, setError] = useState('');
-
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'info' });
+  
   // Use localhost:5000 for API calls
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+  // Show notification
+  const showNotification = (message, type = 'info') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: 'info' });
+    }, 5000);
+  };
 
   // Toggle dark mode
   const toggleDarkMode = () => setDarkMode(!darkMode);
@@ -82,11 +94,11 @@ const Dashboard = () => {
   // Theme classes for dark mode
   const themeClasses = {
     background: darkMode ? 'bg-gray-900' : 'bg-gray-50',
-    text: darkMode ? 'text-white' : 'text-gray-800',
+    text: darkMode ? 'text-gray-100' : 'text-gray-800',
     card: darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
     input: darkMode 
-      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-      : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500',
+      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500' 
+      : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500 focus:border-blue-500',
     button: BUTTON_STYLES
   };
 
@@ -99,7 +111,7 @@ const Dashboard = () => {
         // Get the token from localStorage
         const token = localStorage.getItem('token');
         if (!token) {
-          throw new Error('No authentication token found. Please log in again.');
+          throw new Error('Authentication session expired. Please log in again.');
         }
         // Define headers with Authorization for ALL requests
         const headers = {
@@ -112,6 +124,7 @@ const Dashboard = () => {
         }
         const blogs = await blogRes.json();
         setBlogPosts(blogs);
+        
         // Fetch portfolio items
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
@@ -119,9 +132,17 @@ const Dashboard = () => {
         }
         const portfolio = await portfolioRes.json();
         setPortfolioItems(portfolio);
+        
+        // Fetch settings
+        const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
+        if (settingsRes.ok) {
+          const settings = await settingsRes.json();
+          setSettingsData(settings);
+        }
       } catch (err) {
-        console.error('Error fetching data:', err);
+        console.error('Error fetching ', err);
         setError(err.message);
+        showNotification(err.message, 'error');
         if (err.message.includes('401') || err.message.includes('token')) {
           setTimeout(() => {
             handleLogout();
@@ -131,13 +152,15 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    window.location.href = '/admin/login';
+    showNotification('You have been logged out successfully.', 'success');
+    setTimeout(() => {
+      window.location.href = '/admin/login';
+    }, 1500);
   };
 
   const handleInputChange = (e) => {
@@ -156,11 +179,12 @@ const Dashboard = () => {
     });
   };
 
+  // ✅ FIXED: Save settings properly
   const saveSettings = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No authentication token found.');
+        throw new Error('Authentication session expired. Please log in again.');
       }
       const res = await fetch(`${API_BASE_URL}/api/settings`, {
         method: 'POST',
@@ -172,13 +196,14 @@ const Dashboard = () => {
       });
       const responseData = await res.json();
       if (res.ok) {
-        alert('Settings saved successfully!');
+        setSettingsData(responseData);
+        showNotification('Settings saved successfully!', 'success');
       } else {
         throw new Error(responseData.message || 'Failed to save settings');
       }
     } catch (err) {
       console.error('Error saving settings:', err);
-      alert(`Error: ${err.message}`);
+      showNotification(`Error: ${err.message}`, 'error');
     }
   };
 
@@ -186,12 +211,12 @@ const Dashboard = () => {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        setError('Please select an image file.');
+        showNotification('Please select an image file.', 'error');
         return;
       }
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        setError('Image size should be less than 5MB.');
+        showNotification('Image size should be less than 5MB.', 'error');
         return;
       }
       const reader = new FileReader();
@@ -201,7 +226,6 @@ const Dashboard = () => {
           image: file,
           imageUrl: event.target.result
         });
-        setError('');
       };
       reader.readAsDataURL(file);
     }
@@ -215,25 +239,37 @@ const Dashboard = () => {
     });
   };
 
+  // ✅ FIXED: Handle blog vs portfolio field mapping
   const handleSave = async () => {
     try {
       setError('');
       let endpoint;
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
+        throw new Error('Authentication session expired. Please log in again.');
       }
-      // Create FormData for file uploads
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title.trim());
-      formDataToSend.append('content', formData.content.trim());
-      formDataToSend.append('category', formData.category.trim());
-      if (formData.image) {
-        formDataToSend.append('image', formData.image);
-      } else if (formData.imageUrl) {
-        formDataToSend.append('imageUrl', formData.imageUrl.trim());
+      // ✅ VALIDATE FIELDS
+      if (!formData.title?.trim()) {
+        throw new Error('Title is required');
       }
-
+      if (!formData.content?.trim()) {
+        throw new Error('Content is required');
+      }
+      if (!formData.category?.trim()) {
+        throw new Error('Category is required');
+      }
+      // ✅ BUILD PAYLOAD — RENAME 'content' to 'description' for portfolio
+      const payload = {
+        title: formData.title.trim(),
+        category: formData.category.trim(),
+        imageUrl: formData.imageUrl?.trim() || ''
+      };
+      if (activeTab === 'blog') {
+        payload.content = formData.content.trim();
+      } else {
+        payload.description = formData.content.trim(); // ← Portfolio expects 'description'
+      }
+      // ✅ SET ENDPOINT
       if (activeTab === 'blog') {
         endpoint = `${API_BASE_URL}/api/blog`;
         if (isEditing && editingItem && editingItem._id) {
@@ -245,59 +281,60 @@ const Dashboard = () => {
           endpoint = `${endpoint}/${editingItem._id}`;
         }
       }
-
+      // ✅ SEND JSON
       const res = await fetch(endpoint, {
         method: isEditing && editingItem && editingItem._id ? 'PUT' : 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: formDataToSend
+        body: JSON.stringify(payload)
       });
-
       const responseData = await res.json();
-      if (res.ok) {
-        if (activeTab === 'blog') {
-          if (isEditing) {
-            setBlogPosts(prev => prev.map(item => 
-              item._id === editingItem._id ? responseData : item
-            ));
-          } else {
-            setBlogPosts(prev => [...prev, responseData]);
-          }
-        } else {
-          if (isEditing) {
-            setPortfolioItems(prev => prev.map(item => 
-              item._id === editingItem._id ? responseData : item
-            ));
-          } else {
-            setPortfolioItems(prev => [...prev, responseData]);
-          }
-        }
-        // Reset form
-        setFormData({
-          title: '',
-          content: '',
-          category: '',
-          image: null,
-          imageUrl: ''
-        });
-        setEditingItem(null);
-        setIsEditing(false);
-        setUploadMethod('url');
-        setError('');
-      } else {
+      if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
+      // ✅ UPDATE STATE
+      if (activeTab === 'blog') {
+        if (isEditing) {
+          setBlogPosts(prev => prev.map(item => 
+            item._id === editingItem._id ? responseData : item
+          ));
+        } else {
+          setBlogPosts(prev => [...prev, responseData]);
+        }
+      } else {
+        if (isEditing) {
+          setPortfolioItems(prev => prev.map(item => 
+            item._id === editingItem._id ? responseData : item
+          ));
+        } else {
+          setPortfolioItems(prev => [...prev, responseData]);
+        }
+      }
+      // ✅ RESET FORM
+      setFormData({
+        title: '',
+        content: '',
+        category: '',
+        image: null,
+        imageUrl: ''
+      });
+      setEditingItem(null);
+      setIsEditing(false);
+      setUploadMethod('url');
+      
+      showNotification(`${activeTab === 'blog' ? 'Blog post' : 'Portfolio item'} ${isEditing ? 'updated' : 'created'} successfully!`, 'success');
     } catch (err) {
       console.error('Error saving item:', err);
-      setError(err.message);
+      showNotification(err.message, 'error');
     }
   };
 
   const handleEdit = (item) => {
     setFormData({
       title: item.title,
-      content: item.content || item.description,
+      content: item.content || item.description, // ← Handles both blog.content and portfolio.description
       category: item.category || 'General',
       image: null,
       imageUrl: item.imageUrl
@@ -309,13 +346,13 @@ const Dashboard = () => {
   };
 
   const handleDelete = async (id, type) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) {
+    if (!window.confirm(`Are you sure you want to delete this ${type === 'blog' ? 'blog post' : 'portfolio item'}? This action cannot be undone.`)) {
       return;
     }
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No authentication token found.');
+        throw new Error('Authentication session expired. Please log in again.');
       }
       const endpoint = type === 'blog' 
         ? `${API_BASE_URL}/api/blog/${id}` 
@@ -333,12 +370,13 @@ const Dashboard = () => {
         } else {
           setPortfolioItems(prev => prev.filter(item => item._id !== id));
         }
+        showNotification(`${type === 'blog' ? 'Blog post' : 'Portfolio item'} deleted successfully!`, 'success');
       } else {
         throw new Error(responseData.message || 'Failed to delete');
       }
     } catch (err) {
       console.error('Error deleting item:', err);
-      setError(err.message);
+      showNotification(err.message, 'error');
     }
   };
 
@@ -359,21 +397,30 @@ const Dashboard = () => {
   // Render content based on active tab
   const renderContent = () => {
     if (loading && activeTab === 'dashboard') {
-      return <div className="flex justify-center items-center h-64">
-        <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${darkMode ? 'border-blue-400' : 'border-blue-600'}`}></div>
-      </div>;
+      return (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-t-2 border-blue-600"></div>
+        </div>
+      );
     }
-
+    
     if (error && activeTab === 'dashboard') {
       return (
-        <div className={`p-4 mb-4 rounded-lg ${darkMode ? 'bg-red-900/30 border-red-700' : 'bg-red-50 border-red-200'} border`}>
-          <p className={darkMode ? 'text-red-200' : 'text-red-800'}>{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className={`mt-2 ${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light}`}
-          >
-            Try Again
-          </button>
+        <div className={`p-6 mb-6 rounded-xl ${darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-200'} backdrop-blur-sm`}>
+          <div className="flex items-start">
+            <AlertCircle className={`w-5 h-5 mr-3 flex-shrink-0 ${darkMode ? 'text-red-400' : 'text-red-500'} mt-0.5`} />
+            <div>
+              <h3 className={`text-sm font-medium ${darkMode ? 'text-red-200' : 'text-red-800'}`}>Error Loading Data</h3>
+              <p className={`mt-1 text-sm ${darkMode ? 'text-red-300' : 'text-red-700'}`}>{error}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className={`mt-3 ${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center`}
+              >
+                <RefreshIcon />
+                <span className="ml-1">Try Again</span>
+              </button>
+            </div>
+          </div>
         </div>
       );
     }
@@ -400,6 +447,7 @@ const Dashboard = () => {
             darkMode={darkMode}
             themeClasses={themeClasses}
             error={error}
+            contentType="blog"
           />
         );
       case 'portfolio':
@@ -421,6 +469,7 @@ const Dashboard = () => {
             darkMode={darkMode}
             themeClasses={themeClasses}
             error={error}
+            contentType="portfolio"
           />
         );
       case 'settings':
@@ -439,124 +488,179 @@ const Dashboard = () => {
   };
 
   return (
-    <div className={`flex h-screen ${themeClasses.background} ${themeClasses.text}`}>
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
-
-      {/* Sidebar */}
-      <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-lg fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <h1 className={`text-lg font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Admin Panel</h1>
+    <div className={`flex h-screen ${themeClasses.background} ${themeClasses.text} transition-colors duration-300`}>
+    {/* Notification System */}
+    {notification.show && (
+      <div className="fixed top-4 right-4 z-50 max-w-md">
+        <div className={`rounded-lg shadow-lg transform transition-all duration-300 ${
+          notification.type === 'success' ? 'bg-green-500' : 
+          notification.type === 'error' ? 'bg-red-500' : 
+          notification.type === 'info' ? 'bg-blue-500' : 'bg-gray-500'
+        } text-white p-4 flex items-start animate-fade-in`}>
+          <div className="flex-shrink-0">
+            {notification.type === 'success' && <CheckCircle className="h-5 w-5" />}
+            {notification.type === 'error' && <AlertCircle className="h-5 w-5" />}
+            {notification.type === 'info' && <Info className="h-5 w-5" />}
+          </div>
+          <div className="ml-3">
+            <p className="text-sm font-medium">{notification.message}</p>
+          </div>
           <button 
-            onClick={() => setSidebarOpen(false)}
-            className="md:hidden"
+            onClick={() => setNotification({ ...notification, show: false })}
+            className="ml-auto flex-shrink-0 text-white hover:text-gray-200 focus:outline-none"
           >
-            <X size={20} className={themeClasses.text} />
-          </button>
-        </div>
-        <nav className="mt-4 px-3 space-y-1">
-          <NavItem 
-            icon={<BarChart3 size={16} />} 
-            text="Dashboard" 
-            active={activeTab === 'dashboard'} 
-            onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }} 
-            darkMode={darkMode}
-          />
-          <NavItem 
-            icon={<FileText size={16} />} 
-            text="Blog Posts" 
-            active={activeTab === 'blog'} 
-            onClick={() => { setActiveTab('blog'); setSidebarOpen(false); }} 
-            darkMode={darkMode}
-          />
-          <NavItem 
-            icon={<Image size={16} />} 
-            text="Portfolio" 
-            active={activeTab === 'portfolio'} 
-            onClick={() => { setActiveTab('portfolio'); setSidebarOpen(false); }} 
-            darkMode={darkMode}
-          />
-          <NavItem 
-            icon={<Settings size={16} />} 
-            text="Settings" 
-            active={activeTab === 'settings'} 
-            onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }} 
-            darkMode={darkMode}
-          />
-        </nav>
-        <div className="mt-6 px-3 pb-4">
-          <h3 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
-          <button 
-            onClick={() => { setActiveTab('blog'); setIsEditing(true); setSidebarOpen(false); }}
-            className={`w-full flex items-center text-left p-2 rounded-lg transition-colors text-xs ${darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-700'}`}
-          >
-            <Plus size={14} className="mr-2 text-green-500" />
-            New Blog
-          </button>
-          <button 
-            onClick={() => { setActiveTab('portfolio'); setIsEditing(true); setSidebarOpen(false); }}
-            className={`w-full flex items-center text-left p-2 rounded-lg transition-colors mt-1 text-xs ${darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-700'}`}
-          >
-            <Plus size={14} className="mr-2 text-blue-500" />
-            New Portfolio
-          </button>
-        </div>
-        {/* Logout Button in Sidebar */}
-        <div className="mt-auto px-3 pb-4">
-          <button
-            onClick={handleLogout}
-            className={`w-full flex items-center justify-center p-2 rounded-lg transition-colors text-sm ${darkMode ? 'bg-red-700 hover:bg-red-600 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}`}
-          >
-            <LogOut size={16} className="mr-2" />
-            Logout
+            <X className="h-5 w-5" />
           </button>
         </div>
       </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <header className={`${themeClasses.card} shadow-sm p-3 md:p-4 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <div className="flex items-center">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden mr-3">
-              <Menu size={20} className={themeClasses.text} />
-            </button>
-            <h2 className="text-lg md:text-xl font-semibold capitalize">{activeTab}</h2>
+    )}
+    
+    {/* Mobile overlay */}
+    {sidebarOpen && (
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+        onClick={() => setSidebarOpen(false)}
+      ></div>
+    )}
+    
+    {/* Sidebar */}
+    <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
+      <div className="p-5 border-b border-gray-200 flex justify-between items-center">
+        <div className="flex items-center">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${darkMode ? 'bg-blue-600' : 'bg-blue-100'}`}>
+            <BarChart3 className={`w-5 h-5 ${darkMode ? 'text-white' : 'text-blue-600'}`} />
           </div>
-          <div className="flex items-center space-y-2 md:space-y-0 md:space-x-2">
-            <div className="relative hidden md:block">
-              <Search size={16} className={`absolute left-2.5 top-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className={`pl-8 pr-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-              />
-            </div>
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleDarkMode}
-              className={`p-1.5 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-              aria-label="Toggle theme"
-            >
-              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-            <div className="flex items-center space-x-2">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center font-medium text-xs ${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'}`}>
-                <User size={12} />
-              </div>
-              <span className="text-xs font-medium hidden md:block">Admin</span>
-            </div>
+          <h1 className={`text-lg font-bold ml-2 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Admin Panel</h1>
+        </div>
+        <button 
+          onClick={() => setSidebarOpen(false)}
+          className="md:hidden text-gray-500 hover:text-gray-700"
+        >
+          <X size={20} />
+        </button>
+      </div>
+      
+      <nav className="mt-6 px-3 space-y-1">
+        <NavItem 
+          icon={<BarChart3 size={18} />} 
+          text="Dashboard" 
+          active={activeTab === 'dashboard'} 
+          onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }} 
+          darkMode={darkMode}
+        />
+        <NavItem 
+          icon={<FileText size={18} />} 
+          text="Blog Posts" 
+          active={activeTab === 'blog'} 
+          onClick={() => { setActiveTab('blog'); setSidebarOpen(false); }} 
+          darkMode={darkMode}
+        />
+        <NavItem 
+          icon={<Image size={18} />} 
+          text="Portfolio" 
+          active={activeTab === 'portfolio'} 
+          onClick={() => { setActiveTab('portfolio'); setSidebarOpen(false); }} 
+          darkMode={darkMode}
+        />
+        <NavItem 
+          icon={<Settings size={18} />} 
+          text="Settings" 
+          active={activeTab === 'settings'} 
+          onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }} 
+          darkMode={darkMode}
+        />
+      </nav>
+      
+      <div className="mt-8 px-3 pb-4">
+        <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
+        <button 
+          onClick={() => { setActiveTab('blog'); setIsEditing(true); setSidebarOpen(false); }}
+          className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
+            darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
+          }`}
+        >
+          <div className={`p-1.5 rounded-md mr-2 ${darkMode ? 'bg-green-900/50' : 'bg-green-100'}`}>
+            <Plus size={16} className={`text-green-500`} />
           </div>
-        </header>
-        <main className="p-3 md:p-4">
-          {renderContent()}
-        </main>
+          New Blog Post
+        </button>
+        <button 
+          onClick={() => { setActiveTab('portfolio'); setIsEditing(true); setSidebarOpen(false); }}
+          className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
+            darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
+          }`}
+        >
+          <div className={`p-1.5 rounded-md mr-2 ${darkMode ? 'bg-blue-900/50' : 'bg-blue-100'}`}>
+            <Plus size={16} className={`text-blue-500`} />
+          </div>
+          New Portfolio Item
+        </button>
+      </div>
+      
+      {/* Logout Button in Sidebar */}
+      <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
+        <button
+          onClick={handleLogout}
+          className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
+            darkMode ? 'bg-red-700 hover:bg-red-600 text-white shadow hover:shadow-lg' : 'bg-red-600 hover:bg-red-700 text-white shadow hover:shadow-lg'
+          }`}
+        >
+          <LogOut size={18} className="mr-2" />
+          Sign Out
+        </button>
       </div>
     </div>
+    
+    {/* Main Content */}
+    <div className="flex-1 overflow-auto">
+      <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
+        <div className="flex items-center">
+          <button onClick={() => setSidebarOpen(true)} className="md:hidden mr-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <Menu size={22} className={themeClasses.text} />
+          </button>
+          <h2 className="text-xl md:text-2xl font-bold capitalize bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{activeTab}</h2>
+        </div>
+        
+        <div className="flex items-center space-x-3">
+          <div className="relative hidden md:block">
+            <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+            <input 
+              type="text" 
+              placeholder="Search..." 
+              className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`}
+            />
+          </div>
+          
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleDarkMode}
+            className={`p-2.5 rounded-xl transition-all duration-300 ${
+              darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300 hover:shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'
+            }`}
+            aria-label="Toggle theme"
+          >
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          
+          <div className="flex items-center space-x-3">
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${
+              darkMode ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-100 text-blue-800 shadow'
+            }`}>
+              <User size={18} />
+            </div>
+            <div className="hidden md:block">
+              <div className="text-sm font-medium">Admin</div>
+              <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Administrator</div>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <main className="p-4 md:p-6">
+        {renderContent()}
+      </main>
+    </div>
+  </div>
   );
 };
 
@@ -564,13 +668,15 @@ const Dashboard = () => {
 const NavItem = ({ icon, text, active, onClick, darkMode }) => (
   <button
     onClick={onClick}
-    className={`flex items-center w-full p-2 text-xs rounded-lg transition-colors ${
+    className={`flex items-center w-full p-3 text-sm rounded-xl transition-all duration-200 font-medium ${
       active 
-        ? (darkMode ? 'bg-blue-900 text-white' : 'bg-blue-100 text-blue-800') 
-        : (darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100')
+        ? (darkMode ? 'bg-blue-900/50 text-white shadow-lg border border-blue-800/30' : 'bg-blue-50 text-blue-800 shadow-md border border-blue-200') 
+        : (darkMode ? 'text-gray-300 hover:bg-gray-700/70 hover:text-white hover:shadow' : 'text-gray-700 hover:bg-gray-100 hover:shadow hover:border hover:border-gray-200')
     }`}
   >
-    <span className="mr-2">{icon}</span>
+    <span className={`p-1.5 rounded-md mr-3 ${active ? (darkMode ? 'bg-blue-800/50' : 'bg-blue-100') : (darkMode ? 'bg-gray-700/50' : 'bg-gray-100')}`}>
+      {icon}
+    </span>
     {text}
   </button>
 );
@@ -578,35 +684,38 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
 // Dashboard Overview Component
 const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }) => (
   <div>
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-      <h2 className="text-xl font-bold mb-3">Dashboard Overview</h2>
-      <div className="flex space-x-2">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+      <div>
+        <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dashboard Overview</h2>
+        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Welcome back! Here's what's happening with your content.</p>
+      </div>
+      
+      <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
         <button 
           onClick={() => { setIsEditing(true); setActiveTab('blog'); }}
-          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center`}
+          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
         >
-          <Plus size={14} className="mr-1" />
-          <span className="hidden md:inline">Blog</span>
-          <span className="md:hidden">New</span>
+          <Plus size={16} className="mr-1.5" />
+          <span>New Blog Post</span>
         </button>
         <button 
           onClick={() => { setIsEditing(true); setActiveTab('portfolio'); }}
-          className={`py-1.5 px-3 rounded-lg font-medium text-xs transition-colors whitespace-nowrap ${
-            darkMode ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+          className={`py-1.5 px-3.5 rounded-lg font-medium text-xs transition-all duration-200 whitespace-nowrap shadow-md hover:shadow-lg ${
+            darkMode ? 'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white' : 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white'
           }`}
         >
-          <Plus size={14} className="mr-1" />
-          <span className="hidden md:inline">Portfolio</span>
-          <span className="md:hidden">New</span>
+          <Plus size={16} className="mr-1.5" />
+          <span>New Portfolio</span>
         </button>
       </div>
     </div>
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+    
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <StatCard 
         title="Blog Posts" 
         value={blogPosts.length} 
         change={`${blogPosts.length} published`} 
-        icon={<FileText size={16} />}
+        icon={<FileText size={20} />}
         color="blue"
         darkMode={darkMode}
       />
@@ -614,7 +723,7 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         title="Portfolio Items" 
         value={portfolioItems.length} 
         change={`${portfolioItems.length} published`} 
-        icon={<Image size={16} />}
+        icon={<Image size={20} />}
         color="green"
         darkMode={darkMode}
       />
@@ -622,7 +731,7 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         title="Draft Content" 
         value="0" 
         change="0 drafts" 
-        icon={<Edit size={16} />}
+        icon={<Edit size={20} />}
         color="yellow"
         darkMode={darkMode}
       />
@@ -630,22 +739,23 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         title="Total Views" 
         value="0" 
         change="No data yet" 
-        icon={<BarChart3 size={16} />}
+        icon={<BarChart3 size={20} />}
         color="purple"
         darkMode={darkMode}
       />
     </div>
-    <div className="grid grid-cols-1 gap-3">
+    
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <RecentList 
         title="Recent Blog Posts" 
-        items={blogPosts.slice(0, 3)} 
+        items={blogPosts.slice(0, 5)} 
         viewAllLink="/admin/blog"
         darkMode={darkMode}
         themeClasses={themeClasses}
       />
       <RecentList 
-        title="Recent Portfolio" 
-        items={portfolioItems.slice(0, 3)} 
+        title="Recent Portfolio Items" 
+        items={portfolioItems.slice(0, 5)} 
         viewAllLink="/admin/portfolio"
         darkMode={darkMode}
         themeClasses={themeClasses}
@@ -657,29 +767,31 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
 // Stat Card Component
 const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   const colorClasses = {
-    blue: darkMode ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-200',
-    green: darkMode ? 'bg-green-900/30 border-green-700' : 'bg-green-50 border-green-200',
-    yellow: darkMode ? 'bg-yellow-900/30 border-yellow-700' : 'bg-yellow-50 border-yellow-200',
-    purple: darkMode ? 'bg-purple-900/30 border-purple-700' : 'bg-purple-50 border-purple-200'
+    blue: darkMode ? 'bg-blue-900/20 border-blue-800/30' : 'bg-blue-50 border-blue-200',
+    green: darkMode ? 'bg-green-900/20 border-green-800/30' : 'bg-green-50 border-green-200',
+    yellow: darkMode ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200',
+    purple: darkMode ? 'bg-purple-900/20 border-purple-800/30' : 'bg-purple-50 border-purple-200'
   };
+  
   const iconColor = {
     blue: 'text-blue-500',
     green: 'text-green-500',
     yellow: 'text-yellow-500',
     purple: 'text-purple-500'
   };
-  const textColor = darkMode ? 'text-gray-200' : 'text-gray-900';
+  
+  const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
   const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
-
+  
   return (
-    <div className={`${colorClasses[color]} p-3 rounded-lg border-l-4 ${darkMode ? `border-${color}-500` : `border-${color}-400`}`}>
+    <div className={`${colorClasses[color]} p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className={`text-xs font-medium ${subTextColor}`}>{title}</p>
-          <p className={`text-xl font-bold mt-1 ${textColor}`}>{value}</p>
-          <p className={`text-xs mt-1 ${subTextColor}`}>{change}</p>
+          <p className={`text-sm font-medium ${subTextColor}`}>{title}</p>
+          <p className={`text-2xl font-bold mt-1 ${textColor}`}>{value}</p>
+          <p className={`text-xs mt-2 ${subTextColor}`}>{change}</p>
         </div>
-        <div className={`p-2 rounded-lg ${iconColor[color]}`}>
+        <div className={`p-3 rounded-xl ${iconColor[color]} bg-opacity-10 backdrop-blur-sm`}>
           {icon}
         </div>
       </div>
@@ -689,30 +801,59 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
 
 // Recent List Component
 const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses }) => (
-  <div className={`${themeClasses.card} p-3 rounded-lg shadow-sm border`}>
-    <div className="flex justify-between items-center mb-3">
-      <h3 className={`text-base font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{title}</h3>
-      <a href={viewAllLink} className={`text-xs font-medium hover:underline ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}>
-        View all
+  <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
+    <div className="flex justify-between items-center mb-4">
+      <h3 className={`text-lg font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{title}</h3>
+      <a href={viewAllLink} className={`text-sm font-medium hover:underline transition-colors ${
+        darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
+      }`}>
+        View All
       </a>
     </div>
-    <div className="space-y-2">
+    
+    <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
       {items.length === 0 ? (
-        <p className={`text-center py-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No items yet</p>
+        <div className={`text-center py-8 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+          <div className={`inline-flex p-3 rounded-full mb-3 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
+            <FileText className={`w-6 h-6 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+          <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>No items yet</p>
+          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Create your first item to get started!</p>
+        </div>
       ) : (
         items.map((item) => (
-          <div key={item._id} className={`flex items-start p-2 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'} transition-colors last:border-0`}>
-            <img 
-              src={item.imageUrl || '/placeholder-image.jpg'} 
-              alt={item.title} 
-              className="w-10 h-10 object-cover rounded border border-gray-300" 
-              onError={(e) => { e.target.src = '/placeholder-image.jpg'; e.target.onerror = null; }} 
-            />
-            <div className="ml-3">
-              <h4 className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{item.title}</h4>
+          <div key={item._id} className={`flex items-center p-3 rounded-lg border transition-all duration-200 ${
+            darkMode ? 'border-gray-700 hover:bg-gray-700/50 hover:shadow' : 'border-gray-100 hover:bg-gray-50 hover:shadow'
+          }`}>
+            <div className="flex-shrink-0">
+              <img 
+                src={item.imageUrl || '/placeholder-image.jpg'} 
+                alt={item.title} 
+                className="w-12 h-12 object-cover rounded-lg border border-gray-300 shadow-sm" 
+                onError={(e) => { e.target.src = '/placeholder-image.jpg'; e.target.onerror = null; }} 
+              />
+            </div>
+            <div className="ml-4 flex-grow min-w-0">
+              <h4 className={`font-medium text-sm ${darkMode ? 'text-gray-100' : 'text-gray-900'} truncate`}>{item.title}</h4>
               <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 {item.category || 'General'} • {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
               </p>
+            </div>
+            <div className="flex-shrink-0 ml-3 flex space-x-1">
+              <button 
+                onClick={() => onEdit(item)}
+                className={`p-2 rounded-lg text-blue-600 hover:bg-blue-100 transition-colors ${darkMode ? 'text-blue-400 hover:bg-blue-900/30' : ''}`}
+                title="Edit"
+              >
+                <Edit size={16} />
+              </button>
+              <button 
+                onClick={() => onDelete(item._id, title.toLowerCase().includes('blog') ? 'blog' : 'portfolio')}
+                className={`p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/30' : ''}`}
+                title="Delete"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           </div>
         ))
@@ -738,190 +879,247 @@ const ContentManager = ({
   setUploadMethod,
   darkMode,
   themeClasses,
-  error
+  error,
+  contentType
 }) => {
   return (
     <div>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-        <h2 className="text-xl font-bold mb-3">Manage {title}</h2>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">{isEditing ? 'Edit' : 'Manage'} {title}</h2>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            {isEditing ? `Edit your ${title.slice(0, -1).toLowerCase()}` : `Manage all your ${title.toLowerCase()}`}
+          </p>
+        </div>
+        
         {!isEditing && (
           <button 
             onClick={() => onEdit({ id: null })}
-            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center`}
+            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg mt-4 md:mt-0`}
           >
-            <Plus size={16} className="mr-1" />
-            Add New
+            <Plus size={16} className="mr-1.5" />
+            Add New {title.slice(0, -1)}
           </button>
         )}
       </div>
-
+      
       {error && (
-        <div className={`p-3 mb-4 rounded-lg ${darkMode ? 'bg-red-900/30 border-red-700' : 'bg-red-50 border-red-200'} border`}>
-          <p className={darkMode ? 'text-red-200 text-xs' : 'text-red-800 text-xs'}>{error}</p>
+        <div className={`p-4 mb-6 rounded-xl ${darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-200'} backdrop-blur-sm animate-fade-in`}>
+          <div className="flex items-start">
+            <AlertCircle className={`w-5 h-5 mr-3 flex-shrink-0 ${darkMode ? 'text-red-400' : 'text-red-500'} mt-0.5`} />
+            <div>
+              <h3 className={`text-sm font-medium ${darkMode ? 'text-red-200' : 'text-red-800'}`}>Error</h3>
+              <p className={`mt-1 text-sm ${darkMode ? 'text-red-300' : 'text-red-700'}`}>{error}</p>
+            </div>
+          </div>
         </div>
       )}
-
+      
       {isEditing ? (
-        <div className={`${themeClasses.card} p-3 md:p-4 rounded-lg shadow-sm mb-4 border`}>
-          <h3 className={`text-base font-semibold mb-3 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{formData.id ? 'Edit' : 'Add New'} {title.slice(0, -1)}</h3>
-          <div className="grid grid-cols-1 gap-3 mb-4">
-            <div>
-              <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Title *</label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title ?? ''}
-                onChange={onInputChange}
-                className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-                placeholder="Enter title"
-                required
-              />
-            </div>
-            <div>
-              <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Category *</label>
-              <input
-                type="text"
-                name="category"
-                value={formData.category ?? ''}
-                onChange={onInputChange}
-                className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-                placeholder="Enter category"
-                required
-              />
-            </div>
-          </div>
-          <div className="mb-4">
-            <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Content *</label>
-            <textarea
-              name="content"
-              value={formData.content ?? ''}
-              onChange={onInputChange}
-              rows="4"
-              className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-              placeholder="Enter content"
-              required
-            ></textarea>
-          </div>
-          <div className="mb-4">
-            <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
-            {/* Upload Method Selector */}
-            <div className="flex flex-wrap gap-1 mb-2">
-              <button
-                type="button"
-                onClick={() => setUploadMethod('url')}
-                className={`px-2 py-1 text-xs rounded ${uploadMethod === 'url' ? themeClasses.button.primary.base + ' ' + themeClasses.button.primary.light : themeClasses.button.secondary.base + ' ' + themeClasses.button.secondary.light}`}
-              >
-                <Link size={12} className="mr-1" />
-                URL
-              </button>
-              <button
-                type="button"
-                onClick={() => setUploadMethod('upload')}
-                className={`px-2 py-1 text-xs rounded ${uploadMethod === 'upload' ? themeClasses.button.primary.base + ' ' + themeClasses.button.primary.light : themeClasses.button.secondary.base + ' ' + themeClasses.button.secondary.light}`}
-              >
-                <Upload size={12} className="mr-1" />
-                Upload
-              </button>
-            </div>
-            {/* URL Input */}
-            {uploadMethod === 'url' && (
+        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm mb-6 border backdrop-blur-sm`}>
+          <h3 className={`text-xl font-semibold mb-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+            {formData.id ? 'Edit' : 'Create New'} {title.slice(0, -1)}
+          </h3>
+          
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Title *</label>
                 <input
-                  type="url"
-                  value={formData.imageUrl ?? ''}
-                  onChange={(e) => onImageUrlChange(e.target.value)}
-                  className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-                  placeholder="https://example.com/image.jpg"
+                  type="text"
+                  name="title"
+                  value={formData.title ?? ''}
+                  onChange={onInputChange}
+                  className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                  placeholder="Enter title"
+                  required
                 />
-                <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Enter a direct image URL</p>
               </div>
-            )}
-            {/* File Upload */}
-            {uploadMethod === 'upload' && (
+              
               <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Category *</label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => onImageChange(e.target.files[0])}
-                  className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
+                  type="text"
+                  name="category"
+                  value={formData.category ?? ''}
+                  onChange={onInputChange}
+                  className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                  placeholder="Enter category"
+                  required
                 />
-                <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Max file size: 5MB</p>
               </div>
-            )}
-            {/* Image Preview */}
-            {(formData.imageUrl || formData.image) && (
-              <div className={`mt-2 p-2 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-                <h4 className={`text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Image Preview</h4>
-                <div className="relative group">
-                  <img 
-                    src={formData.imageUrl || URL.createObjectURL(formData.image)} 
-                    alt="Preview" 
-                    className="max-w-full h-auto rounded border border-gray-300 max-h-48 object-contain"
-                    onError={(e) => { e.target.style.display = 'none'; }} 
+            </div>
+            
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {contentType === 'portfolio' ? 'Description *' : 'Content *'}
+              </label>
+              <textarea
+                name="content"
+                value={formData.content ?? ''}
+                onChange={onInputChange}
+                rows="6"
+                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                placeholder={contentType === 'portfolio' ? 'Enter description for your portfolio item' : 'Enter content for your blog post'}
+                required
+              ></textarea>
+            </div>
+            
+            <div>
+              <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Featured Image</label>
+              
+              {/* Upload Method Selector */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setUploadMethod('url')}
+                  className={`px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
+                    uploadMethod === 'url' 
+                      ? `${BUTTON_STYLES.primary.light} ${BUTTON_STYLES.primary.base}` 
+                      : `${BUTTON_STYLES.secondary.light} ${BUTTON_STYLES.secondary.base}`
+                  }`}
+                >
+                  <Link size={14} className="mr-2" />
+                  Image URL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadMethod('upload')}
+                  className={`px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
+                    uploadMethod === 'upload' 
+                      ? `${BUTTON_STYLES.primary.light} ${BUTTON_STYLES.primary.base}` 
+                      : `${BUTTON_STYLES.secondary.light} ${BUTTON_STYLES.secondary.base}`
+                  }`}
+                >
+                  <Upload size={14} className="mr-2" />
+                  Upload File
+                </button>
+              </div>
+              
+              {/* URL Input */}
+              {uploadMethod === 'url' && (
+                <div className="space-y-2">
+                  <input
+                    type="url"
+                    value={formData.imageUrl ?? ''}
+                    onChange={(e) => onImageUrlChange(e.target.value)}
+                    className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                    placeholder="https://example.com/image.jpg"
                   />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded">
-                    <Eye className="text-white" size={18} />
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Enter a direct image URL (JPEG, PNG, GIF, or WEBP)</p>
+                </div>
+              )}
+              
+              {/* File Upload */}
+              {uploadMethod === 'upload' && (
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => onImageChange(e.target.files[0])}
+                    className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                  />
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Max file size: 5MB • Supported formats: JPEG, PNG, GIF, WEBP</p>
+                </div>
+              )}
+              
+              {/* Image Preview */}
+              {(formData.imageUrl || formData.image) && (
+                <div className={`mt-4 p-4 rounded-xl border ${darkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                  <h4 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Image Preview</h4>
+                  <div className="relative group overflow-hidden rounded-lg border border-gray-300">
+                    <img 
+                      src={formData.imageUrl || URL.createObjectURL(formData.image)} 
+                      alt="Preview" 
+                      className="w-full h-auto max-h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => { e.target.style.display = 'none'; }} 
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                      <Eye className="text-white" size={24} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-          <div className="flex flex-col md:flex-row justify-end space-y-2 md:space-y-0 md:space-x-2 pt-3 border-t border-gray-200">
+          
+          <div className="flex flex-col md:flex-row justify-end space-y-3 md:space-y-0 md:space-x-3 pt-6 border-t border-gray-200 mt-6">
             <button 
               onClick={onCancel}
-              className={`px-3 py-1.5 text-xs rounded transition-colors ${darkMode ? 'border border-gray-600 text-gray-300 hover:bg-gray-700' : 'border border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+              className={`px-5 py-2.5 text-sm rounded-xl transition-all duration-200 ${
+                darkMode ? 'border border-gray-600 text-gray-300 hover:bg-gray-700 hover:shadow' : 'border border-gray-300 text-gray-700 hover:bg-gray-100 hover:shadow'
+              }`}
             >
               Cancel
             </button>
             <button 
               onClick={onSave}
               disabled={!formData.title || !formData.content || !formData.category}
-              className={`px-3 py-1.5 text-xs rounded transition-colors ${!formData.title || !formData.content || !formData.category ? 'bg-gray-400 cursor-not-allowed' : themeClasses.button.primary.light}`}
+              className={`px-5 py-2.5 text-sm rounded-xl transition-all duration-200 ${
+                !formData.title || !formData.content || !formData.category 
+                  ? 'bg-gray-400 cursor-not-allowed opacity-70' 
+                  : `${BUTTON_STYLES.primary.light} ${BUTTON_STYLES.primary.base} hover:shadow-lg transform hover:-translate-y-0.5`
+              }`}
             >
-              {formData.id ? 'Update' : 'Save'}
+              <Save size={16} className="mr-1.5 inline" />
+              {formData.id ? 'Update' : 'Save'} {title.slice(0, -1)}
             </button>
           </div>
         </div>
       ) : null}
-
-      <div className={`${themeClasses.card} rounded-lg shadow-sm overflow-hidden border`}>
+      
+      <div className={`${themeClasses.card} rounded-xl shadow-sm overflow-hidden border backdrop-blur-sm`}>
         {items.length === 0 ? (
-          <div className={`p-6 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            <p className="text-base">No {title.toLowerCase()} yet.</p>
-            <p className="mt-1 text-sm">Click "Add New" to create your first item!</p>
+          <div className={`p-12 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <div className={`inline-flex p-4 rounded-full mb-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+              <FileText className={`w-8 h-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+            </div>
+            <h3 className={`text-lg font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>No {title.toLowerCase()} yet</h3>
+            <p className="mb-6">Get started by creating your first content item.</p>
+            <button 
+              onClick={() => onEdit({ id: null })}
+              className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center mx-auto`}
+            >
+              <Plus size={16} className="mr-1.5" />
+              Create New {title.slice(0, -1)}
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
             {/* Mobile: Card Grid | Desktop: Table */}
-            <div className="md:hidden space-y-3 p-3">
+            <div className="md:hidden space-y-4 p-4">
               {items.map((item, index) => (
-                <div key={item._id} className={`p-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'}`}>
+                <div key={item._id} className={`p-4 rounded-xl border transition-all duration-200 ${
+                  darkMode ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-600/70 hover:shadow-lg' : 'bg-white border-gray-200 hover:bg-gray-50 hover:shadow-lg'
+                }`}>
                   <div className="flex items-start">
                     <img 
                       src={item.imageUrl || '/placeholder-image.jpg'} 
                       alt={item.title} 
-                      className="w-12 h-12 object-cover rounded border border-gray-300"
+                      className="w-16 h-16 object-cover rounded-lg border border-gray-300 shadow-sm"
                       onError={(e) => { e.target.src = '/placeholder-image.jpg'; e.target.onerror = null; }} 
                     />
-                    <div className="ml-3 flex-grow">
-                      <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item.title}</div>
-                      <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div className="ml-4 flex-grow">
+                      <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'} truncate`}>{item.title}</div>
+                      <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
                         {item.category || 'General'} • {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
                          item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
                       </div>
                     </div>
-                    <div className="flex space-x-2 ml-2">
+                    <div className="flex space-x-2 ml-3">
                       <button 
                         onClick={() => onEdit(item)}
-                        className={`text-blue-600 hover:text-blue-900 transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : ''}`}
+                        className={`p-2 rounded-lg text-blue-600 hover:bg-blue-100 transition-colors ${darkMode ? 'text-blue-400 hover:bg-blue-900/30' : ''}`}
+                        title="Edit"
                       >
-                        <Edit size={16} />
+                        <Edit size={18} />
                       </button>
                       <button 
                         onClick={() => onDelete(item._id, title.toLowerCase().includes('blog') ? 'blog' : 'portfolio')}
-                        className={`text-red-600 hover:text-red-900 transition-colors ${darkMode ? 'text-red-400 hover:text-red-300' : ''}`}
+                        className={`p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/30' : ''}`}
+                        title="Delete"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </div>
@@ -930,61 +1128,65 @@ const ContentManager = ({
             </div>
             
             {/* Desktop Table */}
-            <table className="min-w-full divide-y divide-gray-200 hidden md:table">
-              <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Image</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Title</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell">Category</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell">Date</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className={`divide-y ${darkMode ? 'divide-gray-600 bg-gray-800' : 'divide-gray-200 bg-white'}`}>
-                {items.map((item, index) => (
-                  <tr key={item._id} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      <img 
-                        src={item.imageUrl || '/placeholder-image.jpg'} 
-                        alt={item.title} 
-                        className="w-10 h-10 object-cover rounded border border-gray-200"
-                        onError={(e) => { e.target.src = '/placeholder-image.jpg'; e.target.onerror = null; }} 
-                      />
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item.title}</div>
-                      <div className={`text-xs md:hidden ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {item.category || 'General'} • {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
-                         item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap hidden md:table-cell">
-                      <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>{item.category || 'General'}</div>
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap hidden md:table-cell">
-                      <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-                        {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
-                         item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-medium">
-                      <button 
-                        onClick={() => onEdit(item)}
-                        className={`text-blue-600 hover:text-blue-900 mr-2 transition-colors ${darkMode ? 'text-blue-400 hover:text-blue-300' : ''}`}
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button 
-                        onClick={() => onDelete(item._id, title.toLowerCase().includes('blog') ? 'blog' : 'portfolio')}
-                        className={`text-red-600 hover:text-red-900 transition-colors ${darkMode ? 'text-red-400 hover:text-red-300' : ''}`}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="hidden md:block">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className={darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}>
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Image</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Category</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Date</th>
+                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                    {items.map((item, index) => (
+                      <tr key={item._id} className={`${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition-colors duration-150`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <img 
+                            src={item.imageUrl || '/placeholder-image.jpg'} 
+                            alt={item.title} 
+                            className="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm"
+                            onError={(e) => { e.target.src = '/placeholder-image.jpg'; e.target.onerror = null; }} 
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item.title}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>{item.category || 'General'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                            {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
+                             item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end space-x-2">
+                            <button 
+                              onClick={() => onEdit(item)}
+                              className={`p-2 rounded-lg text-blue-600 hover:bg-blue-100 transition-colors ${darkMode ? 'text-blue-400 hover:bg-blue-900/30' : ''}`}
+                              title="Edit"
+                            >
+                              <Edit size={18} />
+                            </button>
+                            <button 
+                              onClick={() => onDelete(item._id, title.toLowerCase().includes('blog') ? 'blog' : 'portfolio')}
+                              className={`p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/30' : ''}`}
+                              title="Delete"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -996,53 +1198,57 @@ const ContentManager = ({
 const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => {
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Settings</h2>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">System Settings</h2>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Configure your admin panel preferences and site settings</p>
+        </div>
         <button 
           onClick={saveSettings}
-          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center`}
+          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
         >
-          <Save size={16} className="mr-1" />
-          Save
+          <Save size={16} className="mr-1.5" />
+          Save Changes
         </button>
       </div>
-      <div className="grid grid-cols-1 gap-4">
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Site Settings Card */}
-        <div className={`${themeClasses.card} p-4 rounded-lg shadow-sm border`}>
-          <h3 className={`text-base font-semibold mb-3 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            <Globe size={16} className="mr-2" />
-            Site Settings
+        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+            <Globe size={20} className="mr-2" />
+            Site Configuration
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-5">
             <div>
-              <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Site Title</label>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Site Title</label>
               <input
                 type="text"
                 name="siteTitle"
                 value={settingsData.siteTitle}
                 onChange={handleSettingsChange}
-                className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-                placeholder="Site Title"
+                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                placeholder="Your Site Title"
               />
             </div>
             <div>
-              <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Admin Email</label>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Admin Email</label>
               <input
                 type="email"
                 name="adminEmail"
                 value={settingsData.adminEmail}
                 onChange={handleSettingsChange}
-                className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-                placeholder="admin@example.com"
+                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                placeholder="admin@yoursite.com"
               />
             </div>
             <div>
-              <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Language</label>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Default Language</label>
               <select
                 name="language"
                 value={settingsData.language}
                 onChange={handleSettingsChange}
-                className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
+                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
               >
                 <option value="en">English</option>
                 <option value="es">Spanish</option>
@@ -1052,119 +1258,131 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             </div>
           </div>
         </div>
-
+        
         {/* Preferences Card */}
-        <div className={`${themeClasses.card} p-4 rounded-lg shadow-sm border`}>
-          <h3 className={`text-base font-semibold mb-3 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            <Settings size={16} className="mr-2" />
-            Preferences
+        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+            <Settings size={20} className="mr-2" />
+            User Preferences
           </h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Notifications</h4>
-                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Receive email notifications</p>
+          <div className="space-y-5">
+            <div className={`p-4 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Email Notifications</h4>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Receive notifications about system updates and important events</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="notifications"
+                    checked={settingsData.notifications}
+                    onChange={handleSettingsChange}
+                    className="sr-only peer"
+                  />
+                  <div className={`w-11 h-6 rounded-full peer ${darkMode ? 'bg-gray-700 peer-checked:bg-blue-600' : 'bg-gray-300 peer-checked:bg-blue-600'} peer-checked:after:translate-x-full peer-after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
+                </label>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="notifications"
-                  checked={settingsData.notifications}
-                  onChange={handleSettingsChange}
-                  className="sr-only peer"
-                />
-                <div className={`w-9 h-5 rounded-full peer ${darkMode ? 'bg-gray-700 peer-checked:bg-blue-600' : 'bg-gray-300 peer-checked:bg-blue-600'} peer-checked:after:translate-x-full peer-after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all`}></div>
-              </label>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Auto Save</h4>
-                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Automatically save changes</p>
+            
+            <div className={`p-4 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Auto Save</h4>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Automatically save your changes as you work</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="autoSave"
+                    checked={settingsData.autoSave}
+                    onChange={handleSettingsChange}
+                    className="sr-only peer"
+                  />
+                  <div className={`w-11 h-6 rounded-full peer ${darkMode ? 'bg-gray-700 peer-checked:bg-blue-600' : 'bg-gray-300 peer-checked:bg-blue-600'} peer-checked:after:translate-x-full peer-after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
+                </label>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="autoSave"
-                  checked={settingsData.autoSave}
-                  onChange={handleSettingsChange}
-                  className="sr-only peer"
-                />
-                <div className={`w-9 h-5 rounded-full peer ${darkMode ? 'bg-gray-700 peer-checked:bg-blue-600' : 'bg-gray-300 peer-checked:bg-blue-600'} peer-checked:after:translate-x-full peer-after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all`}></div>
-              </label>
             </div>
           </div>
         </div>
-
+        
         {/* Account Settings Card */}
-        <div className={`${themeClasses.card} p-4 rounded-lg shadow-sm border`}>
-          <h3 className={`text-base font-semibold mb-3 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            <User size={16} className="mr-2" />
-            Account Settings
+        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+            <User size={20} className="mr-2" />
+            Account Security
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-5">
             <div>
-              <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Current Password</label>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Current Password</label>
               <input
                 type="password"
-                className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-                placeholder="Enter current password"
+                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                placeholder="••••••••"
               />
             </div>
             <div>
-              <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>New Password</label>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>New Password</label>
               <input
                 type="password"
-                className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-                placeholder="Enter new password"
+                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                placeholder="••••••••"
               />
             </div>
             <div>
-              <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Confirm New Password</label>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Confirm New Password</label>
               <input
                 type="password"
-                className={`w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.input}`}
-                placeholder="Confirm new password"
+                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+                placeholder="••••••••"
               />
             </div>
-            <button className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} w-full`}>
+            <button className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} w-full mt-2`}>
               Update Password
             </button>
           </div>
         </div>
-
+        
         {/* System Info Card */}
-        <div className={`${themeClasses.card} p-4 rounded-lg shadow-sm border`}>
-          <h3 className={`text-base font-semibold mb-3 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            <BarChart3 size={16} className="mr-2" />
+        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+            <BarChart3 size={20} className="mr-2" />
             System Information
           </h3>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className={darkMode ? 'text-gray-400 text-xs' : 'text-gray-600 text-xs'}>Platform Version</span>
-              <span className={darkMode ? 'text-gray-200 text-xs' : 'text-gray-800 text-xs'}>v2.4.1</span>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
+                <span className={darkMode ? 'text-gray-400 text-sm' : 'text-gray-600 text-sm'}>Platform Version</span>
+                <span className={darkMode ? 'text-gray-200 text-sm font-medium' : 'text-gray-800 text-sm font-medium'}>v2.4.1</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
+                <span className={darkMode ? 'text-gray-400 text-sm' : 'text-gray-600 text-sm'}>Last Update</span>
+                <span className={darkMode ? 'text-gray-200 text-sm font-medium' : 'text-gray-800 text-sm font-medium'}>October 15, 2023</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
+                <span className={darkMode ? 'text-gray-400 text-sm' : 'text-gray-600 text-sm'}>Database</span>
+                <span className={darkMode ? 'text-gray-200 text-sm font-medium' : 'text-gray-800 text-sm font-medium'}>MongoDB 6.0</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
+                <span className={darkMode ? 'text-gray-400 text-sm' : 'text-gray-600 text-sm'}>Server Status</span>
+                <span className="text-green-500 text-sm font-medium flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                  Online
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className={darkMode ? 'text-gray-400 text-xs' : 'text-gray-600 text-xs'}>Last Update</span>
-              <span className={darkMode ? 'text-gray-200 text-xs' : 'text-gray-800 text-xs'}>2023-10-15</span>
-            </div>
-            <div className="flex justify-between">
-              <span className={darkMode ? 'text-gray-400 text-xs' : 'text-gray-600 text-xs'}>Database</span>
-              <span className={darkMode ? 'text-gray-200 text-xs' : 'text-gray-800 text-xs'}>MongoDB 6.0</span>
-            </div>
-            <div className="flex justify-between">
-              <span className={darkMode ? 'text-gray-400 text-xs' : 'text-gray-600 text-xs'}>Server Status</span>
-              <span className="text-green-500 text-xs">Online</span>
-            </div>
-            <div className="pt-3 mt-3 border-t border-gray-200">
+            
+            <div className="pt-4 mt-4 border-t border-gray-200">
               <button className={`${BUTTON_STYLES.small.base} ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'} w-full`}>
                 Check for Updates
               </button>
             </div>
-            <div className="pt-3 mt-3 border-t border-gray-200">
-              <h4 className={`font-medium mb-1 text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>API Base URL</h4>
-              <code className={`text-xs p-2 rounded block ${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>
+            
+            <div className="pt-4 mt-4 border-t border-gray-200">
+              <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>API Configuration</h4>
+              <div className={`p-3 rounded-lg text-xs font-mono ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} break-all`}>
                 {import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}
-              </code>
+              </div>
             </div>
           </div>
         </div>
@@ -1172,5 +1390,13 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
     </div>
   );
 };
+
+// Helper component for refresh icon
+const RefreshIcon = () => (
+  <svg className="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
 
 export default Dashboard;

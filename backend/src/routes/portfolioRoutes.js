@@ -1,7 +1,6 @@
 // backend/src/routes/portfolioRoutes.js
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
-import upload from '../middleware/uploadMiddleware.js';
 import {
   getAllPortfolioItems,
   createPortfolioItem,
@@ -45,13 +44,22 @@ router.get(
 /**
  * POST /api/portfolio
  * Protected route for admin to create a new portfolio item
+ * → Now accepts JSON body: { title, description, category, imageUrl }
  */
 router.post(
   '/',
   protect,
-  upload.single('image'),
   asyncHandler(async (req, res) => {
-    const newItem = await createPortfolioItem(req.body, req.file, req.user);
+    console.log('📥 [PORTFOLIO CREATE] Received body:', req.body); // Debug log
+
+    // Validate required fields at route level (optional, controller also validates)
+    if (!req.body.title || !req.body.description) {
+      return res.status(400).json({
+        message: 'Title and description are required'
+      });
+    }
+
+    const newItem = await createPortfolioItem(req.body, req.user);
     res.status(201).json(newItem);
   })
 );
@@ -63,9 +71,16 @@ router.post(
 router.put(
   '/:id',
   protect,
-  upload.single('image'),
   asyncHandler(async (req, res) => {
-    const updatedItem = await updatePortfolioItem(req.params.id, req.body, req.file, req.user);
+    console.log('📥 [PORTFOLIO UPDATE] Received body:', req.body); // Debug log
+
+    if (!req.body.title || !req.body.description) {
+      return res.status(400).json({
+        message: 'Title and description are required'
+      });
+    }
+
+    const updatedItem = await updatePortfolioItem(req.params.id, req.body, req.user);
     res.status(200).json(updatedItem);
   })
 );
@@ -84,15 +99,20 @@ router.delete(
 );
 
 /**
- * Error handler for this router
- * Logs the real error to the server console and always responds with JSON
+ * Centralized error handler for portfolio routes
  */
 router.use((err, req, res, next) => {
-  console.error('Portfolio Route Error:', err.message, err.stack);
-  res.status(err.statusCode || 500).json({
-    message: 'An error occurred while processing your request.',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  console.error('❌ Portfolio Route Error:', err);
+
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+
+  res.status(statusCode).json({
+    success: false,
+    message,
+    ...(process.env.NODE_ENV === 'development' && {
+      stack: err.stack
+    })
   });
 });
 

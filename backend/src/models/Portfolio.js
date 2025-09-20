@@ -1,30 +1,52 @@
 // backend/src/models/Portfolio.js
 import mongoose from 'mongoose';
-import slugify from 'slugify';
 
-const portfolioItemSchema = new mongoose.Schema({
+// Simple slug generator (no external dependency)
+const generateSlug = (title) => {
+  return title
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')     // Remove non-word chars
+    .replace(/[\s_-]+/g, '-')     // Replace spaces/underscores/hyphens with single hyphen
+    .replace(/^-+|-+$/g, '');     // Remove leading/trailing hyphens
+};
+
+const portfolioSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
-    trim: true
+    required: [true, 'Title is required'],
+    trim: true,
+    minlength: [3, 'Title must be at least 3 characters']
   },
   description: {
     type: String,
-    required: true
+    required: [true, 'Description is required'],
+    trim: true,
+    minlength: [10, 'Description must be at least 10 characters']
   },
   imageUrl: {
     type: String,
-    default: ''
+    default: '',
+    validate: {
+      validator: function(v) {
+        if (!v) return true; // allow empty
+        return /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))$/i.test(v);
+      },
+      message: props => `${props.value} is not a valid image URL!`
+    }
   },
   category: {
     type: String,
-    default: 'General'
+    default: 'General',
+    trim: true
   },
   slug: {
     type: String,
     unique: true,
     lowercase: true,
-    required: true
+    required: true,
+    index: true
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
@@ -34,48 +56,46 @@ const portfolioItemSchema = new mongoose.Schema({
   uploadedAt: {
     type: Date,
     default: Date.now
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
   }
+}, {
+  timestamps: true // ✅ Automatically manages createdAt and updatedAt
 });
 
 // Generate slug from title before saving
-portfolioItemSchema.pre('save', async function (next) {
+portfolioSchema.pre('save', async function(next) {
   if (this.isModified('title') || !this.slug) {
-    let baseSlug = slugify(this.title, { lower: true, strict: true });
+    let baseSlug = generateSlug(this.title);
+    
+    // Fallback if title is empty or only special chars
     if (!baseSlug) {
-      baseSlug = `project-${Date.now()}`;
+      baseSlug = `item-${Date.now()}`;
     }
 
     let slug = baseSlug;
     let counter = 1;
 
-    // Ensure uniqueness
-    while (await mongoose.models.PortfolioItem.exists({ slug, _id: { $ne: this._id } })) {
+    // Ensure slug is unique
+    const PortfolioModel = mongoose.model('Portfolio'); // ✅ Use correct model name
+    while (await PortfolioModel.exists({ slug, _id: { $ne: this._id } })) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
 
     this.slug = slug;
   }
-  
-  // Update the updatedAt field
-  if (this.isModified()) {
-    this.updatedAt = Date.now();
-  }
-  
   next();
 });
 
-// Index for better performance
-portfolioItemSchema.index({ slug: 1 });
-portfolioItemSchema.index({ uploadedAt: -1 });
-portfolioItemSchema.index({ author: 1 });
+// Add indexes for performance
+portfolioSchema.index({ slug: 1 }, { unique: true });
+portfolioSchema.index({ uploadedAt: -1 });
+portfolioSchema.index({ author: 1 });
+portfolioSchema.index({ category: 1 });
 
-export default mongoose.model('PortfolioItem', portfolioItemSchema);
+// Optional: Instance method to check if item belongs to user
+portfolioSchema.methods.isAuthor = function(userId) {
+  return this.author.toString() === userId.toString();
+};
+
+export default mongoose.model('Portfolio', portfolioSchema); // ✅ Export as 'Portfolio'
+

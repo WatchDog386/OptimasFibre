@@ -4,11 +4,11 @@ import mongoose from 'mongoose';
 const settingSchema = new mongoose.Schema({
   siteTitle: {
     type: String,
-    default: 'Optimas Home Fiber'
+    default: 'My Website'
   },
   adminEmail: {
     type: String,
-    default: 'admin@optimas.com'
+    default: 'admin@example.com'
   },
   notifications: {
     type: Boolean,
@@ -27,11 +27,10 @@ const settingSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Use findOneAndUpdate to ensure only one settings document exists
+// Singleton pattern — only one settings document
 settingSchema.statics.getSettings = async function() {
   let settings = await this.findOne();
   if (!settings) {
-    // Create default settings if none exist
     settings = await this.create({});
   }
   return settings;
