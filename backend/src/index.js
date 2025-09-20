@@ -1,4 +1,3 @@
-// backend/src/index.js
 import dotenv from 'dotenv';
 // ✅ Load env variables first, before any other imports
 dotenv.config();
@@ -70,9 +69,30 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS configuration
+// ✅ UPDATED: CORS configuration — Allow multiple origins
+const allowedOrigins = [
+  'https://optimsawifi.co.ke',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Log the origin for debugging
+    console.log('🔍 CORS check for origin:', origin);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `❌ The CORS policy for this site does not allow access from the specified origin: ${origin}`;
+      console.warn(msg);
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true
 }));
 
@@ -203,8 +223,10 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectDB();
-    const server = app.listen(PORT, () => {
-      console.log(`✅ Server running in ${NODE_ENV} mode on http://localhost:${PORT}`);
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ Server running in ${NODE_ENV} mode on port ${PORT}`);
+      console.log(`✅ Listening on all interfaces (0.0.0.0:${PORT})`);
+      console.log(`✅ Allowed CORS origins: ${allowedOrigins.join(', ')}`);
     });
 
     const shutdown = (signal) => {

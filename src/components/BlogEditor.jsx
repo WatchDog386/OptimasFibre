@@ -15,29 +15,29 @@ const BlogEditor = () => {
 
     // Client-side validation
     if (!title.trim()) {
-      setMessage('❌ Error: Title is required.');
+      setMessage('❌ Title is required to publish your blog post.');
       setPublishing(false);
       return;
     }
     
     if (!category.trim()) {
-      setMessage('❌ Error: Category is required.');
+      setMessage('❌ Please specify a category for your blog post.');
       setPublishing(false);
       return;
     }
     
     if (!content.trim() || content.length < 100) {
-      setMessage('❌ Error: Content must be at least 100 characters.');
+      setMessage('❌ Content must be at least 100 characters to ensure quality.');
       setPublishing(false);
       return;
     }
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
       const token = localStorage.getItem('token');
       
       if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
+        throw new Error('Authentication session expired. Please log in again.');
       }
 
       const res = await fetch(`${API_BASE_URL}/api/blog`, {
@@ -57,16 +57,22 @@ const BlogEditor = () => {
       const responseData = await res.json();
 
       if (res.ok) {
-        setMessage('✅ Blog post published successfully!');
+        setMessage('✅ Blog post published successfully! Redirecting to blog list...');
         setTitle('');
         setContent('');
         setCategory('');
         setImageUrl('');
+        
+        // Redirect after success
+        setTimeout(() => {
+          window.location.href = '/admin/blog';
+        }, 2000);
       } else {
-        throw new Error(responseData.message || `Server error: ${res.status}`);
+        throw new Error(responseData.message || 'Failed to publish blog post. Please try again.');
       }
     } catch (err) {
-      setMessage(`❌ Error: ${err.message}`);
+      setMessage(`❌ ${err.message}`);
+      console.error('Blog publishing error:', err);
     } finally {
       setPublishing(false);
     }
@@ -74,11 +80,19 @@ const BlogEditor = () => {
 
   const handleImagePreviewError = (e) => {
     e.target.style.display = 'none';
+    setMessage('❌ Invalid image URL. Please check the link and try again.');
+  };
+
+  const handleImageChange = (e) => {
+    setImageUrl(e.target.value);
+    if (message.includes('Invalid image URL')) {
+      setMessage('');
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <h2 className="text-2xl font-bold text-[#182B5C] mb-6">Create Blog Post</h2>
 
         {message && (
@@ -86,8 +100,9 @@ const BlogEditor = () => {
             message.includes('✅') 
               ? 'bg-green-50 border-green-200 text-green-800' 
               : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
-            {message}
+          } flex items-start`}>
+            <span className="mr-2 mt-0.5">{message.includes('✅') ? '✅' : '❌'}</span>
+            <span>{message}</span>
           </div>
         )}
 
@@ -141,7 +156,11 @@ const BlogEditor = () => {
             ></textarea>
             <div className="flex justify-between mt-1">
               <span className="text-xs text-gray-500">Minimum 100 characters</span>
-              <span className="text-xs text-gray-500">{content.length}/2000 characters</span>
+              <span className={`text-xs ${
+                content.length < 100 ? 'text-red-500 font-medium' : 'text-gray-500'
+              }`}>
+                {content.length}/2000 characters
+              </span>
             </div>
           </div>
 
@@ -154,22 +173,28 @@ const BlogEditor = () => {
               id="imageUrl"
               type="url"
               value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              onChange={handleImageChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#182B5C] focus:border-transparent transition-colors"
               placeholder="https://example.com/image.jpg"
             />
+            <p className="text-xs text-gray-500 mt-1">Supports: JPG, PNG, GIF, WEBP (Max 5MB)</p>
           </div>
 
           {/* Image Preview */}
           {imageUrl && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Image Preview</h4>
-              <img
-                src={imageUrl}
-                alt="Featured"
-                className="max-w-full h-auto rounded-lg shadow-sm max-h-64 object-contain"
-                onError={handleImagePreviewError}
-              />
+              <div className="relative group">
+                <img
+                  src={imageUrl}
+                  alt="Featured"
+                  className="max-w-full h-auto rounded-lg shadow-sm max-h-64 object-contain border border-gray-300"
+                  onError={handleImagePreviewError}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                  <span className="text-white text-sm">Hover to preview</span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -192,6 +217,9 @@ const BlogEditor = () => {
                 'Publish Blog Post'
               )}
             </button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Your blog post will be published immediately and visible on your website.
+            </p>
           </div>
         </form>
       </div>
