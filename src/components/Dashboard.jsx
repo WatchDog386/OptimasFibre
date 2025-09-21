@@ -439,7 +439,18 @@ const Dashboard = () => {
     }
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardOverview blogPosts={blogPosts} portfolioItems={portfolioItems} darkMode={darkMode} themeClasses={themeClasses} />;
+        return (
+          <DashboardOverview 
+            blogPosts={blogPosts} 
+            portfolioItems={portfolioItems} 
+            darkMode={darkMode} 
+            themeClasses={themeClasses}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            setIsEditing={setIsEditing}
+            setActiveTab={setActiveTab}
+          />
+        );
       case 'blog':
         return (
           <ContentManager
@@ -495,7 +506,18 @@ const Dashboard = () => {
           />
         );
       default:
-        return <DashboardOverview blogPosts={blogPosts} portfolioItems={portfolioItems} darkMode={darkMode} themeClasses={themeClasses} />;
+        return (
+          <DashboardOverview 
+            blogPosts={blogPosts} 
+            portfolioItems={portfolioItems} 
+            darkMode={darkMode} 
+            themeClasses={themeClasses}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            setIsEditing={setIsEditing}
+            setActiveTab={setActiveTab}
+          />
+        );
     }
   };
 
@@ -684,7 +706,16 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
 );
 
 // Dashboard Overview Component
-const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }) => (
+const DashboardOverview = ({ 
+  blogPosts, 
+  portfolioItems, 
+  darkMode, 
+  themeClasses,
+  onEdit,
+  onDelete,
+  setIsEditing,
+  setActiveTab
+}) => (
   <div>
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
       <div>
@@ -751,8 +782,8 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         viewAllLink="/admin/blog"
         darkMode={darkMode}
         themeClasses={themeClasses}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        onEdit={onEdit}
+        onDelete={onDelete}
       />
       <RecentList 
         title="Recent Portfolio Items" 
@@ -760,8 +791,8 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         viewAllLink="/admin/portfolio"
         darkMode={darkMode}
         themeClasses={themeClasses}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        onEdit={onEdit}
+        onDelete={onDelete}
       />
     </div>
   </div>
