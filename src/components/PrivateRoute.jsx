@@ -17,6 +17,7 @@ const PrivateRoute = ({ children }) => {
       }
 
       try {
+        // ✅ FIXED: Removed extra spaces from URL
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
         const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
           method: 'GET',

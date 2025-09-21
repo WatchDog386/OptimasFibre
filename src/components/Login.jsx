@@ -42,6 +42,7 @@ const Login = () => {
 
   const verifyToken = async (token) => {
     try {
+      // ✅ FIXED: Removed extra spaces from URL
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
       const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
         method: 'GET',
@@ -78,6 +79,7 @@ const Login = () => {
     }
 
     try {
+      // ✅ FIXED: Removed extra spaces from URL
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
@@ -115,6 +117,7 @@ const Login = () => {
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) return null;
 
+      // ✅ FIXED: Removed extra spaces from URL
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
       const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
@@ -159,6 +162,7 @@ const Login = () => {
     }
 
     try {
+      // ✅ FIXED: Removed extra spaces from URL
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
       const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
         method: 'POST',

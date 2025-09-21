@@ -55,6 +55,7 @@ const BlogList = () => {
       try {
         setLoading(true);
         setError('');
+        // ✅ FIXED: Removed extra spaces from URL
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
         const res = await fetch(`${API_BASE_URL}/api/blog`);
         

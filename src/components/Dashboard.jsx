@@ -22,7 +22,8 @@ import {
   Globe,
   AlertCircle,
   CheckCircle,
-  Info
+  Info,
+  RefreshCw
 } from 'lucide-react';
 
 // ✅ COMPACT BUTTON STYLES — NO ICONS, NATURAL WIDTH
@@ -76,9 +77,25 @@ const Dashboard = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [error, setError] = useState('');
   const [notification, setNotification] = useState({ show: false, message: '', type: 'info' });
-  
-  // ✅ POINT TO YOUR RENDER BACKEND
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
+
+  // ✅ DYNAMIC API URL - Will work in any environment
+  const getApiBaseUrl = () => {
+    // If VITE_API_BASE_URL is set, use it
+    if (import.meta.env.VITE_API_BASE_URL) {
+      return import.meta.env.VITE_API_BASE_URL;
+    }
+    
+    // In development, use localhost
+    if (import.meta.env.DEV) {
+      return 'http://localhost:5000';
+    }
+    
+    // In production, construct URL based on current window location
+    // This will work when hosted on any domain
+    return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+  };
+
+  const API_BASE_URL = getApiBaseUrl();
 
   // Show notification
   const showNotification = (message, type = 'info') => {
@@ -124,7 +141,6 @@ const Dashboard = () => {
         }
         const blogs = await blogRes.json();
         setBlogPosts(blogs);
-        
         // Fetch portfolio items
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
@@ -132,7 +148,6 @@ const Dashboard = () => {
         }
         const portfolio = await portfolioRes.json();
         setPortfolioItems(portfolio);
-        
         // Fetch settings
         const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
         if (settingsRes.ok) {
@@ -153,7 +168,7 @@ const Dashboard = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [API_BASE_URL]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -414,15 +429,14 @@ const Dashboard = () => {
                 onClick={() => window.location.reload()} 
                 className={`mt-3 ${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center`}
               >
-                <RefreshIcon />
-                <span className="ml-1">Try Again</span>
+                <RefreshCw size={14} className="mr-1" />
+                <span>Try Again</span>
               </button>
             </div>
           </div>
         </div>
       );
     }
-
     switch (activeTab) {
       case 'dashboard':
         return <DashboardOverview blogPosts={blogPosts} portfolioItems={portfolioItems} darkMode={darkMode} themeClasses={themeClasses} />;
@@ -512,7 +526,6 @@ const Dashboard = () => {
         </div>
       </div>
     )}
-    
     {/* Mobile overlay */}
     {sidebarOpen && (
       <div 
@@ -520,7 +533,6 @@ const Dashboard = () => {
         onClick={() => setSidebarOpen(false)}
       ></div>
     )}
-    
     {/* Sidebar */}
     <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
       <div className="p-5 border-b border-gray-200 flex justify-between items-center">
@@ -537,7 +549,6 @@ const Dashboard = () => {
           <X size={20} />
         </button>
       </div>
-      
       <nav className="mt-6 px-3 space-y-1">
         <NavItem 
           icon={<BarChart3 size={18} />} 
@@ -568,7 +579,6 @@ const Dashboard = () => {
           darkMode={darkMode}
         />
       </nav>
-      
       <div className="mt-8 px-3 pb-4">
         <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
         <button 
@@ -594,7 +604,6 @@ const Dashboard = () => {
           New Portfolio Item
         </button>
       </div>
-      
       {/* Logout Button in Sidebar */}
       <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
         <button
@@ -608,7 +617,6 @@ const Dashboard = () => {
         </button>
       </div>
     </div>
-    
     {/* Main Content */}
     <div className="flex-1 overflow-auto">
       <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
@@ -618,7 +626,6 @@ const Dashboard = () => {
           </button>
           <h2 className="text-xl md:text-2xl font-bold capitalize bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{activeTab}</h2>
         </div>
-        
         <div className="flex items-center space-x-3">
           <div className="relative hidden md:block">
             <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -628,7 +635,6 @@ const Dashboard = () => {
               className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`}
             />
           </div>
-          
           {/* Theme Toggle Button */}
           <button
             onClick={toggleDarkMode}
@@ -639,7 +645,6 @@ const Dashboard = () => {
           >
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          
           <div className="flex items-center space-x-3">
             <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${
               darkMode ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-100 text-blue-800 shadow'
@@ -653,7 +658,6 @@ const Dashboard = () => {
           </div>
         </div>
       </header>
-      
       <main className="p-4 md:p-6">
         {renderContent()}
       </main>
@@ -687,7 +691,6 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dashboard Overview</h2>
         <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Welcome back! Here's what's happening with your content.</p>
       </div>
-      
       <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
         <button 
           onClick={() => { setIsEditing(true); setActiveTab('blog'); }}
@@ -707,7 +710,6 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         </button>
       </div>
     </div>
-    
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <StatCard 
         title="Blog Posts" 
@@ -742,7 +744,6 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         darkMode={darkMode}
       />
     </div>
-    
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <RecentList 
         title="Recent Blog Posts" 
@@ -750,6 +751,8 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         viewAllLink="/admin/blog"
         darkMode={darkMode}
         themeClasses={themeClasses}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
       <RecentList 
         title="Recent Portfolio Items" 
@@ -757,6 +760,8 @@ const DashboardOverview = ({ blogPosts, portfolioItems, darkMode, themeClasses }
         viewAllLink="/admin/portfolio"
         darkMode={darkMode}
         themeClasses={themeClasses}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
     </div>
   </div>
@@ -770,17 +775,14 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
     yellow: darkMode ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200',
     purple: darkMode ? 'bg-purple-900/20 border-purple-800/30' : 'bg-purple-50 border-purple-200'
   };
-  
   const iconColor = {
     blue: 'text-blue-500',
     green: 'text-green-500',
     yellow: 'text-yellow-500',
     purple: 'text-purple-500'
   };
-  
   const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
   const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
-  
   return (
     <div className={`${colorClasses[color]} p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105`}>
       <div className="flex items-center justify-between">
@@ -798,7 +800,7 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
 };
 
 // Recent List Component
-const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses }) => (
+const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete }) => (
   <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
     <div className="flex justify-between items-center mb-4">
       <h3 className={`text-lg font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{title}</h3>
@@ -808,7 +810,6 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses }) => (
         View All
       </a>
     </div>
-    
     <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
       {items.length === 0 ? (
         <div className={`text-center py-8 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
@@ -889,10 +890,9 @@ const ContentManager = ({
             {isEditing ? `Edit your ${title.slice(0, -1).toLowerCase()}` : `Manage all your ${title.toLowerCase()}`}
           </p>
         </div>
-        
         {!isEditing && (
           <button 
-            onClick={() => onEdit({ id: null })}
+            onClick={() => onEdit({})}
             className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg mt-4 md:mt-0`}
           >
             <Plus size={16} className="mr-1.5" />
@@ -900,7 +900,6 @@ const ContentManager = ({
           </button>
         )}
       </div>
-      
       {error && (
         <div className={`p-4 mb-6 rounded-xl ${darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-200'} backdrop-blur-sm animate-fade-in`}>
           <div className="flex items-start">
@@ -912,13 +911,11 @@ const ContentManager = ({
           </div>
         </div>
       )}
-      
       {isEditing ? (
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm mb-6 border backdrop-blur-sm`}>
           <h3 className={`text-xl font-semibold mb-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
             {formData.id ? 'Edit' : 'Create New'} {title.slice(0, -1)}
           </h3>
-          
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -933,7 +930,6 @@ const ContentManager = ({
                   required
                 />
               </div>
-              
               <div>
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Category *</label>
                 <input
@@ -947,7 +943,6 @@ const ContentManager = ({
                 />
               </div>
             </div>
-            
             <div>
               <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 {contentType === 'portfolio' ? 'Description *' : 'Content *'}
@@ -962,10 +957,8 @@ const ContentManager = ({
                 required
               ></textarea>
             </div>
-            
             <div>
               <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Featured Image</label>
-              
               {/* Upload Method Selector */}
               <div className="flex flex-wrap gap-2 mb-4">
                 <button
@@ -993,7 +986,6 @@ const ContentManager = ({
                   Upload File
                 </button>
               </div>
-              
               {/* URL Input */}
               {uploadMethod === 'url' && (
                 <div className="space-y-2">
@@ -1007,7 +999,6 @@ const ContentManager = ({
                   <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Enter a direct image URL (JPEG, PNG, GIF, or WEBP)</p>
                 </div>
               )}
-              
               {/* File Upload */}
               {uploadMethod === 'upload' && (
                 <div className="space-y-2">
@@ -1020,7 +1011,6 @@ const ContentManager = ({
                   <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Max file size: 5MB • Supported formats: JPEG, PNG, GIF, WEBP</p>
                 </div>
               )}
-              
               {/* Image Preview */}
               {(formData.imageUrl || formData.image) && (
                 <div className={`mt-4 p-4 rounded-xl border ${darkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
@@ -1040,7 +1030,6 @@ const ContentManager = ({
               )}
             </div>
           </div>
-          
           <div className="flex flex-col md:flex-row justify-end space-y-3 md:space-y-0 md:space-x-3 pt-6 border-t border-gray-200 mt-6">
             <button 
               onClick={onCancel}
@@ -1065,7 +1054,6 @@ const ContentManager = ({
           </div>
         </div>
       ) : null}
-      
       <div className={`${themeClasses.card} rounded-xl shadow-sm overflow-hidden border backdrop-blur-sm`}>
         {items.length === 0 ? (
           <div className={`p-12 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -1075,7 +1063,7 @@ const ContentManager = ({
             <h3 className={`text-lg font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>No {title.toLowerCase()} yet</h3>
             <p className="mb-6">Get started by creating your first content item.</p>
             <button 
-              onClick={() => onEdit({ id: null })}
+              onClick={() => onEdit({})}
               className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center mx-auto`}
             >
               <Plus size={16} className="mr-1.5" />
@@ -1124,7 +1112,6 @@ const ContentManager = ({
                 </div>
               ))}
             </div>
-            
             {/* Desktop Table */}
             <div className="hidden md:block">
               <div className="overflow-x-auto">
@@ -1209,7 +1196,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
           Save Changes
         </button>
       </div>
-      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Site Settings Card */}
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
@@ -1256,7 +1242,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             </div>
           </div>
         </div>
-        
         {/* Preferences Card */}
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
           <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -1282,7 +1267,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
                 </label>
               </div>
             </div>
-            
             <div className={`p-4 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200 bg-gray-50'}`}>
               <div className="flex items-center justify-between">
                 <div>
@@ -1303,7 +1287,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             </div>
           </div>
         </div>
-        
         {/* Account Settings Card */}
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
           <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -1340,7 +1323,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             </button>
           </div>
         </div>
-        
         {/* System Info Card */}
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
           <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -1369,13 +1351,11 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
                 </span>
               </div>
             </div>
-            
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button className={`${BUTTON_STYLES.small.base} ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'} w-full`}>
                 Check for Updates
               </button>
             </div>
-            
             <div className="pt-4 mt-4 border-t border-gray-200">
               <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>API Configuration</h4>
               <div className={`p-3 rounded-lg text-xs font-mono ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} break-all`}>
@@ -1388,13 +1368,5 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
     </div>
   );
 };
-
-// Helper component for refresh icon
-const RefreshIcon = () => (
-  <svg className="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-  </svg>
-);
 
 export default Dashboard;
