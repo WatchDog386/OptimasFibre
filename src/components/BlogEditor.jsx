@@ -33,7 +33,8 @@ const BlogEditor = () => {
     }
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
+      // ✅ FIXED: Removed extra spaces from URL
+      const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
       const token = localStorage.getItem('token');
       
       if (!token) {

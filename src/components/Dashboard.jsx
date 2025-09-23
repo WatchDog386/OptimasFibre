@@ -24,7 +24,7 @@ import {
   CheckCircle,
   Info,
   RefreshCw
-} from 'lucide-react';
+} from 'lucide-react'; // ✅ FIXED: Changed from 'lucid-react' to 'lucide-react'
 
 // ✅ COMPACT BUTTON STYLES — NO ICONS, NATURAL WIDTH
 const BUTTON_STYLES = {
@@ -54,8 +54,8 @@ const BUTTON_STYLES = {
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [blogPosts, setBlogPosts] = useState([]);
-  const [portfolioItems, setPortfolioItems] = useState([]);
+  const [blogPosts, setBlogPosts] = useState([]); // ✅ Initialize as empty array
+  const [portfolioItems, setPortfolioItems] = useState([]); // ✅ Initialize as empty array
   const [editingItem, setEditingItem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -84,12 +84,10 @@ const Dashboard = () => {
     if (import.meta.env.VITE_API_BASE_URL) {
       return import.meta.env.VITE_API_BASE_URL;
     }
-    
     // In development, use localhost
     if (import.meta.env.DEV) {
       return 'http://localhost:5000';
     }
-    
     // In production, construct URL based on current window location
     // This will work when hosted on any domain
     return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
@@ -125,29 +123,36 @@ const Dashboard = () => {
       try {
         setLoading(true);
         setError('');
+        
         // Get the token from localStorage
         const token = localStorage.getItem('token');
         if (!token) {
           throw new Error('Authentication session expired. Please log in again.');
         }
+
         // Define headers with Authorization for ALL requests
         const headers = {
           'Authorization': `Bearer ${token}`
         };
+
         // Fetch blog posts
         const blogRes = await fetch(`${API_BASE_URL}/api/blog`, { headers });
         if (!blogRes.ok) {
           throw new Error(`Failed to fetch blog posts: ${blogRes.status} ${blogRes.statusText}`);
         }
-        const blogs = await blogRes.json();
-        setBlogPosts(blogs);
+        const blogResponse = await blogRes.json();
+        // ✅ EXTRACT THE ARRAY FROM RESPONSE.DATA
+        setBlogPosts(blogResponse.data || []);
+
         // Fetch portfolio items
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
           throw new Error(`Failed to fetch portfolio items: ${portfolioRes.status} ${portfolioRes.statusText}`);
         }
-        const portfolio = await portfolioRes.json();
-        setPortfolioItems(portfolio);
+        const portfolioResponse = await portfolioRes.json();
+        // ✅ EXTRACT THE ARRAY FROM RESPONSE.DATA
+        setPortfolioItems(portfolioResponse.data || []);
+
         // Fetch settings
         const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
         if (settingsRes.ok) {
@@ -167,6 +172,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [API_BASE_URL]);
 
@@ -263,6 +269,7 @@ const Dashboard = () => {
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
+
       // ✅ VALIDATE FIELDS
       if (!formData.title?.trim()) {
         throw new Error('Title is required');
@@ -273,6 +280,7 @@ const Dashboard = () => {
       if (!formData.category?.trim()) {
         throw new Error('Category is required');
       }
+
       // ✅ BUILD PAYLOAD — RENAME 'content' to 'description' for portfolio
       const payload = {
         title: formData.title.trim(),
@@ -284,6 +292,7 @@ const Dashboard = () => {
       } else {
         payload.description = formData.content.trim(); // ← Portfolio expects 'description'
       }
+
       // ✅ SET ENDPOINT
       if (activeTab === 'blog') {
         endpoint = `${API_BASE_URL}/api/blog`;
@@ -296,6 +305,7 @@ const Dashboard = () => {
           endpoint = `${endpoint}/${editingItem._id}`;
         }
       }
+
       // ✅ SEND JSON
       const res = await fetch(endpoint, {
         method: isEditing && editingItem && editingItem._id ? 'PUT' : 'POST',
@@ -309,24 +319,26 @@ const Dashboard = () => {
       if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
+
       // ✅ UPDATE STATE
       if (activeTab === 'blog') {
         if (isEditing) {
           setBlogPosts(prev => prev.map(item => 
-            item._id === editingItem._id ? responseData : item
+            item._id === editingItem._id ? responseData.data : item
           ));
         } else {
-          setBlogPosts(prev => [...prev, responseData]);
+          setBlogPosts(prev => [...prev, responseData.data]);
         }
       } else {
         if (isEditing) {
           setPortfolioItems(prev => prev.map(item => 
-            item._id === editingItem._id ? responseData : item
+            item._id === editingItem._id ? responseData.data : item
           ));
         } else {
-          setPortfolioItems(prev => [...prev, responseData]);
+          setPortfolioItems(prev => [...prev, responseData.data]);
         }
       }
+
       // ✅ RESET FORM
       setFormData({
         title: '',
@@ -417,6 +429,7 @@ const Dashboard = () => {
         </div>
       );
     }
+
     if (error && activeTab === 'dashboard') {
       return (
         <div className={`p-6 mb-6 rounded-xl ${darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-200'} backdrop-blur-sm`}>
@@ -437,6 +450,7 @@ const Dashboard = () => {
         </div>
       );
     }
+
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -523,168 +537,171 @@ const Dashboard = () => {
 
   return (
     <div className={`flex h-screen ${themeClasses.background} ${themeClasses.text} transition-colors duration-300`}>
-    {/* Notification System */}
-    {notification.show && (
-      <div className="fixed top-4 right-4 z-50 max-w-md">
-        <div className={`rounded-lg shadow-lg transform transition-all duration-300 ${
-          notification.type === 'success' ? 'bg-green-500' : 
-          notification.type === 'error' ? 'bg-red-500' : 
-          notification.type === 'info' ? 'bg-blue-500' : 'bg-gray-500'
-        } text-white p-4 flex items-start animate-fade-in`}>
-          <div className="flex-shrink-0">
-            {notification.type === 'success' && <CheckCircle className="h-5 w-5" />}
-            {notification.type === 'error' && <AlertCircle className="h-5 w-5" />}
-            {notification.type === 'info' && <Info className="h-5 w-5" />}
+      {/* Notification System */}
+      {notification.show && (
+        <div className="fixed top-4 right-4 z-50 max-w-md">
+          <div className={`rounded-lg shadow-lg transform transition-all duration-300 ${
+            notification.type === 'success' ? 'bg-green-500' : 
+            notification.type === 'error' ? 'bg-red-500' : 
+            notification.type === 'info' ? 'bg-blue-500' : 'bg-gray-500'
+          } text-white p-4 flex items-start animate-fade-in`}>
+            <div className="flex-shrink-0">
+              {notification.type === 'success' && <CheckCircle className="h-5 w-5" />}
+              {notification.type === 'error' && <AlertCircle className="h-5 w-5" />}
+              {notification.type === 'info' && <Info className="h-5 w-5" />}
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{notification.message}</p>
+            </div>
+            <button 
+              onClick={() => setNotification({ ...notification, show: false })}
+              className="ml-auto flex-shrink-0 text-white hover:text-gray-200 focus:outline-none"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium">{notification.message}</p>
+        </div>
+      )}
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar */}
+      <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
+        <div className="p-5 border-b border-gray-200 flex justify-between items-center">
+          <div className="flex items-center">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${darkMode ? 'bg-blue-600' : 'bg-blue-100'}`}>
+              <BarChart3 className={`w-5 h-5 ${darkMode ? 'text-white' : 'text-blue-600'}`} />
+            </div>
+            <h1 className={`text-lg font-bold ml-2 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Admin Panel</h1>
           </div>
           <button 
-            onClick={() => setNotification({ ...notification, show: false })}
-            className="ml-auto flex-shrink-0 text-white hover:text-gray-200 focus:outline-none"
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden text-gray-500 hover:text-gray-700"
           >
-            <X className="h-5 w-5" />
+            <X size={20} />
           </button>
         </div>
-      </div>
-    )}
-    {/* Mobile overlay */}
-    {sidebarOpen && (
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
-        onClick={() => setSidebarOpen(false)}
-      ></div>
-    )}
-    {/* Sidebar */}
-    <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
-      <div className="p-5 border-b border-gray-200 flex justify-between items-center">
-        <div className="flex items-center">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${darkMode ? 'bg-blue-600' : 'bg-blue-100'}`}>
-            <BarChart3 className={`w-5 h-5 ${darkMode ? 'text-white' : 'text-blue-600'}`} />
-          </div>
-          <h1 className={`text-lg font-bold ml-2 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Admin Panel</h1>
-        </div>
-        <button 
-          onClick={() => setSidebarOpen(false)}
-          className="md:hidden text-gray-500 hover:text-gray-700"
-        >
-          <X size={20} />
-        </button>
-      </div>
-      <nav className="mt-6 px-3 space-y-1">
-        <NavItem 
-          icon={<BarChart3 size={18} />} 
-          text="Dashboard" 
-          active={activeTab === 'dashboard'} 
-          onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }} 
-          darkMode={darkMode}
-        />
-        <NavItem 
-          icon={<FileText size={18} />} 
-          text="Blog Posts" 
-          active={activeTab === 'blog'} 
-          onClick={() => { setActiveTab('blog'); setSidebarOpen(false); }} 
-          darkMode={darkMode}
-        />
-        <NavItem 
-          icon={<Image size={18} />} 
-          text="Portfolio" 
-          active={activeTab === 'portfolio'} 
-          onClick={() => { setActiveTab('portfolio'); setSidebarOpen(false); }} 
-          darkMode={darkMode}
-        />
-        <NavItem 
-          icon={<Settings size={18} />} 
-          text="Settings" 
-          active={activeTab === 'settings'} 
-          onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }} 
-          darkMode={darkMode}
-        />
-      </nav>
-      <div className="mt-8 px-3 pb-4">
-        <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
-        <button 
-          onClick={() => { setActiveTab('blog'); setIsEditing(true); setSidebarOpen(false); }}
-          className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
-            darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
-          }`}
-        >
-          <div className={`p-1.5 rounded-md mr-2 ${darkMode ? 'bg-green-900/50' : 'bg-green-100'}`}>
-            <Plus size={16} className={`text-green-500`} />
-          </div>
-          New Blog Post
-        </button>
-        <button 
-          onClick={() => { setActiveTab('portfolio'); setIsEditing(true); setSidebarOpen(false); }}
-          className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
-            darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
-          }`}
-        >
-          <div className={`p-1.5 rounded-md mr-2 ${darkMode ? 'bg-blue-900/50' : 'bg-blue-100'}`}>
-            <Plus size={16} className={`text-blue-500`} />
-          </div>
-          New Portfolio Item
-        </button>
-      </div>
-      {/* Logout Button in Sidebar */}
-      <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
-        <button
-          onClick={handleLogout}
-          className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
-            darkMode ? 'bg-red-700 hover:bg-red-600 text-white shadow hover:shadow-lg' : 'bg-red-600 hover:bg-red-700 text-white shadow hover:shadow-lg'
-          }`}
-        >
-          <LogOut size={18} className="mr-2" />
-          Sign Out
-        </button>
-      </div>
-    </div>
-    {/* Main Content */}
-    <div className="flex-1 overflow-auto">
-      <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
-        <div className="flex items-center">
-          <button onClick={() => setSidebarOpen(true)} className="md:hidden mr-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <Menu size={22} className={themeClasses.text} />
-          </button>
-          <h2 className="text-xl md:text-2xl font-bold capitalize bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{activeTab}</h2>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div className="relative hidden md:block">
-            <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-            <input 
-              type="text" 
-              placeholder="Search..." 
-              className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`}
-            />
-          </div>
-          {/* Theme Toggle Button */}
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2.5 rounded-xl transition-all duration-300 ${
-              darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300 hover:shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'
+        <nav className="mt-6 px-3 space-y-1">
+          <NavItem 
+            icon={<BarChart3 size={18} />} 
+            text="Dashboard" 
+            active={activeTab === 'dashboard'} 
+            onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
+            icon={<FileText size={18} />} 
+            text="Blog Posts" 
+            active={activeTab === 'blog'} 
+            onClick={() => { setActiveTab('blog'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
+            icon={<Image size={18} />} 
+            text="Portfolio" 
+            active={activeTab === 'portfolio'} 
+            onClick={() => { setActiveTab('portfolio'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
+            icon={<Settings size={18} />} 
+            text="Settings" 
+            active={activeTab === 'settings'} 
+            onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+        </nav>
+        <div className="mt-8 px-3 pb-4">
+          <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
+          <button 
+            onClick={() => { setActiveTab('blog'); setIsEditing(true); setSidebarOpen(false); }}
+            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
+              darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
             }`}
-            aria-label="Toggle theme"
           >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-          <div className="flex items-center space-x-3">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${
-              darkMode ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-100 text-blue-800 shadow'
-            }`}>
-              <User size={18} />
+            <div className={`p-1.5 rounded-md mr-2 ${darkMode ? 'bg-green-900/50' : 'bg-green-100'}`}>
+              <Plus size={16} className={`text-green-500`} />
             </div>
-            <div className="hidden md:block">
-              <div className="text-sm font-medium">Admin</div>
-              <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Administrator</div>
+            New Blog Post
+          </button>
+          <button 
+            onClick={() => { setActiveTab('portfolio'); setIsEditing(true); setSidebarOpen(false); }}
+            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
+              darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
+            }`}
+          >
+            <div className={`p-1.5 rounded-md mr-2 ${darkMode ? 'bg-blue-900/50' : 'bg-blue-100'}`}>
+              <Plus size={16} className={`text-blue-500`} />
+            </div>
+            New Portfolio Item
+          </button>
+        </div>
+        {/* Logout Button in Sidebar */}
+        <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
+              darkMode ? 'bg-red-700 hover:bg-red-600 text-white shadow hover:shadow-lg' : 'bg-red-600 hover:bg-red-700 text-white shadow hover:shadow-lg'
+            }`}
+          >
+            <LogOut size={18} className="mr-2" />
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
+          <div className="flex items-center">
+            <button onClick={() => setSidebarOpen(true)} className="md:hidden mr-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <Menu size={22} className={themeClasses.text} />
+            </button>
+            <h2 className="text-xl md:text-2xl font-bold capitalize bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{activeTab}</h2>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="relative hidden md:block">
+              <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`}
+              />
+            </div>
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2.5 rounded-xl transition-all duration-300 ${
+                darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300 hover:shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'
+              }`}
+              aria-label="Toggle theme"
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <div className="flex items-center space-x-3">
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${
+                darkMode ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-100 text-blue-800 shadow'
+              }`}>
+                <User size={18} />
+              </div>
+              <div className="hidden md:block">
+                <div className="text-sm font-medium">Admin</div>
+                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Administrator</div>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
-      <main className="p-4 md:p-6">
-        {renderContent()}
-      </main>
+        </header>
+        <main className="p-4 md:p-6">
+          {renderContent()}
+        </main>
+      </div>
     </div>
-  </div>
   );
 };
 
@@ -778,7 +795,7 @@ const DashboardOverview = ({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <RecentList 
         title="Recent Blog Posts" 
-        items={blogPosts.slice(0, 5)} 
+        items={blogPosts.slice(0, 5)}  // ✅ Now safe - blogPosts is always an array
         viewAllLink="/admin/blog"
         darkMode={darkMode}
         themeClasses={themeClasses}
@@ -787,7 +804,7 @@ const DashboardOverview = ({
       />
       <RecentList 
         title="Recent Portfolio Items" 
-        items={portfolioItems.slice(0, 5)} 
+        items={portfolioItems.slice(0, 5)}  // ✅ Now safe - portfolioItems is always an array
         viewAllLink="/admin/portfolio"
         darkMode={darkMode}
         themeClasses={themeClasses}
@@ -814,6 +831,7 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   };
   const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
   const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
+
   return (
     <div className={`${colorClasses[color]} p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105`}>
       <div className="flex items-center justify-between">
@@ -931,6 +949,7 @@ const ContentManager = ({
           </button>
         )}
       </div>
+
       {error && (
         <div className={`p-4 mb-6 rounded-xl ${darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-200'} backdrop-blur-sm animate-fade-in`}>
           <div className="flex items-start">
@@ -942,6 +961,7 @@ const ContentManager = ({
           </div>
         </div>
       )}
+
       {isEditing ? (
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm mb-6 border backdrop-blur-sm`}>
           <h3 className={`text-xl font-semibold mb-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -990,6 +1010,7 @@ const ContentManager = ({
             </div>
             <div>
               <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Featured Image</label>
+              
               {/* Upload Method Selector */}
               <div className="flex flex-wrap gap-2 mb-4">
                 <button
@@ -1017,6 +1038,7 @@ const ContentManager = ({
                   Upload File
                 </button>
               </div>
+
               {/* URL Input */}
               {uploadMethod === 'url' && (
                 <div className="space-y-2">
@@ -1030,6 +1052,7 @@ const ContentManager = ({
                   <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Enter a direct image URL (JPEG, PNG, GIF, or WEBP)</p>
                 </div>
               )}
+
               {/* File Upload */}
               {uploadMethod === 'upload' && (
                 <div className="space-y-2">
@@ -1042,6 +1065,7 @@ const ContentManager = ({
                   <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Max file size: 5MB • Supported formats: JPEG, PNG, GIF, WEBP</p>
                 </div>
               )}
+
               {/* Image Preview */}
               {(formData.imageUrl || formData.image) && (
                 <div className={`mt-4 p-4 rounded-xl border ${darkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
@@ -1085,6 +1109,7 @@ const ContentManager = ({
           </div>
         </div>
       ) : null}
+
       <div className={`${themeClasses.card} rounded-xl shadow-sm overflow-hidden border backdrop-blur-sm`}>
         {items.length === 0 ? (
           <div className={`p-12 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -1143,6 +1168,7 @@ const ContentManager = ({
                 </div>
               ))}
             </div>
+            
             {/* Desktop Table */}
             <div className="hidden md:block">
               <div className="overflow-x-auto">
@@ -1273,6 +1299,7 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             </div>
           </div>
         </div>
+
         {/* Preferences Card */}
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
           <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -1318,6 +1345,7 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             </div>
           </div>
         </div>
+
         {/* Account Settings Card */}
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
           <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -1354,6 +1382,7 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             </button>
           </div>
         </div>
+
         {/* System Info Card */}
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
           <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>

@@ -1,6 +1,6 @@
 // backend/src/index.js
 
-import dotenv from 'dotenv';
+import dotenv from '@dotenvx/dotenvx'; // ✅ Replaced with dotenvx for encrypted secrets
 // ✅ Load env variables FIRST — before any other logic
 dotenv.config();
 
@@ -32,13 +32,14 @@ const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI', 'FRONTEND_URL'];
 const missingEnvVars = requiredEnvVars.filter(v => !process.env[v]);
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
-  console.error('❌ Please check your .env file or Render dashboard');
+  console.error('❌ Please check your .env.keys file or Render dashboard for DOTENV_PRIVATE_KEY');
   process.exit(1);
 }
 
-// ✅ For debugging – remove later
+// ✅ For debugging
 console.log('🔧 Loaded MONGODB_URI:', process.env.MONGODB_URI ? 'Yes' : 'No');
 console.log('🌍 Loaded FRONTEND_URL:', process.env.FRONTEND_URL || 'Not set');
+console.log('🔐 JWT_SECRET length:', process.env.JWT_SECRET?.length || 0, 'characters');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,8 +64,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"], // ✅ Removed trailing spaces
+      fontSrc: ["'self'", "https://fonts.gstatic.com"], // ✅ Removed trailing spaces
       imgSrc: ["'self'", "data:", "https:"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
     },
@@ -78,8 +79,8 @@ const allowedOrigins = [
   'http://localhost:3000',      // ✅ Local dev
   'http://127.0.0.1:3000'       // ✅ Alternative local
 ]
-  .filter(Boolean)              // ✅ Remove any undefined/null values
-  .map(origin => origin.trim()); // ✅ Clean whitespace
+  .filter(Boolean)
+  .map(origin => origin.trim());
 
 console.log('✅ Allowed CORS origins:', allowedOrigins.join(', '));
 
@@ -90,7 +91,6 @@ app.use(cors({
       return callback(null, true);
     }
 
-    // Log for debugging
     console.log('🔍 CORS check for origin:', origin);
 
     if (!allowedOrigins.includes(origin)) {
@@ -108,7 +108,7 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: NODE_ENV === 'production' ? 100 : 1000, // limit each IP to 100/1000 requests per window
+  max: NODE_ENV === 'production' ? 100 : 1000,
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
@@ -167,7 +167,8 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Server is healthy',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    env: NODE_ENV
   });
 });
 
@@ -236,6 +237,7 @@ const startServer = async () => {
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`✅ Server running in ${NODE_ENV} mode on port ${PORT}`);
       console.log(`✅ Listening on all interfaces (0.0.0.0:${PORT})`);
+      console.log(`✅ Visit health check: http://localhost:${PORT}/health`);
     });
 
     const shutdown = (signal) => {

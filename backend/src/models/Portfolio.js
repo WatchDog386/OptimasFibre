@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
  * @property {string} description - Project description
  * @property {string} imageUrl - URL to project image
  * @property {string} category - Project category (e.g., 'Web Design', 'General')
- * @property {string} slug - URL-friendly unique identifier
+ * @property {string} slug - URL-friendly unique identifier (auto-generated)
  * @property {ObjectId} author - Reference to User model
  * @property {Date} uploadedAt - When project was uploaded
  * @property {Date} createdAt - Auto-generated
@@ -35,7 +35,7 @@ const portfolioSchema = new mongoose.Schema({
     default: '',
     validate: {
       validator: function(v) {
-        if (!v) return true; // allow empty
+        if (!v) return true;
         return /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg|avif))$/i.test(v);
       },
       message: props => `${props.value} is not a valid image URL! Supported formats: png, jpg, jpeg, gif, webp, svg, avif.`
@@ -49,24 +49,23 @@ const portfolioSchema = new mongoose.Schema({
   },
   slug: {
     type: String,
-    unique: true,      // ✅ Creates index automatically — no need for schema.index({ slug: 1 })
+    unique: true,
     lowercase: true,
     trim: true,
-    required: [true, 'Slug is required']
-    // ⚠️ REMOVED: index: true — redundant with unique: true
+    // ✅ REMOVED: required: true — because we generate it in pre-save hook
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Author is required'],
-    index: true // ✅ Explicit index recommended for foreign keys
+    index: true
   },
   uploadedAt: {
     type: Date,
     default: Date.now
   }
 }, {
-  timestamps: true, // ✅ Automatically manages createdAt and updatedAt
+  timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -77,9 +76,9 @@ const generateSlug = (title) => {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '')     // Remove non-word chars
-    .replace(/[\s_-]+/g, '-')     // Replace spaces/underscores/hyphens with single hyphen
-    .replace(/^-+|-+$/g, '');     // Remove leading/trailing hyphens
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 };
 
 // 🔄 Generate slug from title before saving
@@ -87,7 +86,6 @@ portfolioSchema.pre('save', async function(next) {
   if (this.isModified('title') || !this.slug) {
     let baseSlug = generateSlug(this.title);
     
-    // Fallback if title is empty or only special chars
     if (!baseSlug) {
       baseSlug = `item-${Date.now()}`;
     }
@@ -95,7 +93,6 @@ portfolioSchema.pre('save', async function(next) {
     let slug = baseSlug;
     let counter = 1;
 
-    // ✅ Use this.constructor to reference the current model (safe during model compilation)
     const PortfolioModel = this.constructor;
     while (await PortfolioModel.exists({ slug, _id: { $ne: this._id } })) {
       slug = `${baseSlug}-${counter}`;
@@ -107,11 +104,11 @@ portfolioSchema.pre('save', async function(next) {
   next();
 });
 
-// 📈 Add indexes for performance (excluding slug — handled by unique: true)
-portfolioSchema.index({ uploadedAt: -1 }); // Recent items first
-portfolioSchema.index({ author: 1 });       // Items by author
-portfolioSchema.index({ category: 1 });     // Items by category
-portfolioSchema.index({ createdAt: -1 });   // Recently created
+// 📈 Add indexes for performance
+portfolioSchema.index({ uploadedAt: -1 });
+portfolioSchema.index({ author: 1 });
+portfolioSchema.index({ category: 1 });
+portfolioSchema.index({ createdAt: -1 });
 
 // 🚀 Optional: Instance method to check if item belongs to user
 portfolioSchema.methods.isAuthor = function(userId) {

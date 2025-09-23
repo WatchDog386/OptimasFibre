@@ -55,8 +55,8 @@ const BlogList = () => {
       try {
         setLoading(true);
         setError('');
-        // ✅ FIXED: Removed extra spaces from URL
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
+        // ✅ FIXED: Removed extra spaces from URL and added proper error handling
+        const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
         const res = await fetch(`${API_BASE_URL}/api/blog`);
         
         if (!res.ok) {
@@ -64,10 +64,12 @@ const BlogList = () => {
         }
         
         const data = await res.json();
-        setBlogPosts(data);
+        // ✅ FIXED: Extract the array from response.data
+        setBlogPosts(data.data || []);
       } catch (error) {
         console.error('Error fetching blogs:', error);
         setError('Unable to load blog posts. Please check your internet connection and try again.');
+        setBlogPosts([]); // Set to empty array to prevent .slice() errors
       } finally {
         setLoading(false);
       }

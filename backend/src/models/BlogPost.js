@@ -10,7 +10,7 @@ import slugify from 'slugify';
  * @property {string} content - Main content (HTML or Markdown)
  * @property {string} imageUrl - URL to featured image
  * @property {ObjectId} author - Reference to User model
- * @property {string} slug - URL-friendly unique identifier
+ * @property {string} slug - URL-friendly unique identifier (auto-generated)
  * @property {string} category - Post category (e.g., 'Technology', 'General')
  * @property {Date} publishedAt - When post was published
  * @property {Date} createdAt - Auto-generated on creation
@@ -33,7 +33,7 @@ const blogPostSchema = new mongoose.Schema({
     default: '',
     validate: {
       validator: function (v) {
-        if (!v) return true; // Allow empty
+        if (!v) return true;
         return /^https?:\/\/.+\.(jpg|jpeg|png|webp|avif|gif|svg)$/i.test(v);
       },
       message: 'Image URL must be a valid URL ending in a common image extension'
@@ -43,14 +43,14 @@ const blogPostSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Author is required'],
-    index: true // ✅ Explicit index (recommended for foreign keys)
+    index: true
   },
   slug: {
     type: String,
-    unique: true,      // ✅ This creates the index — no need for schema.index({ slug: 1 })
+    unique: true,
     lowercase: true,
     trim: true,
-    required: [true, 'Slug is required']
+    // ✅ REMOVED: required: true — because we generate it in pre-save hook
   },
   category: {
     type: String,
@@ -61,17 +61,9 @@ const blogPostSchema = new mongoose.Schema({
   publishedAt: {
     type: Date,
     default: Date.now
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
   }
 }, {
-  timestamps: false, // We handle createdAt/updatedAt manually for control
+  timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -81,7 +73,6 @@ blogPostSchema.pre('save', async function (next) {
   if (this.isModified('title') || !this.slug) {
     let baseSlug = slugify(this.title, { lower: true, strict: true, trim: true });
     
-    // Fallback if slugify returns empty
     if (!baseSlug) {
       baseSlug = `post-${Date.now()}`;
     }
@@ -89,8 +80,8 @@ blogPostSchema.pre('save', async function (next) {
     let slug = baseSlug;
     let counter = 1;
 
-    // Ensure uniqueness by checking for existing slugs (excluding current document)
-    while (await mongoose.models.BlogPost.exists({ slug, _id: { $ne: this._id } })) {
+    const BlogPostModel = this.constructor;
+    while (await BlogPostModel.exists({ slug, _id: { $ne: this._id } })) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -98,19 +89,12 @@ blogPostSchema.pre('save', async function (next) {
     this.slug = slug;
   }
 
-  // Always update updatedAt on save
   this.updatedAt = new Date();
-
   next();
 });
 
-// 🚀 Add compound index for common queries: recent posts by author
+// 🚀 Add compound index for common queries
 blogPostSchema.index({ author: 1, createdAt: -1 });
-
-// 📈 Add index for sorting by published date
 blogPostSchema.index({ publishedAt: -1 });
-
-// ✅ REMOVED: Duplicate slug index — handled by { unique: true } in schema definition
-// blogPostSchema.index({ slug: 1 }); ←— DELETE THIS LINE
 
 export default mongoose.model('BlogPost', blogPostSchema);

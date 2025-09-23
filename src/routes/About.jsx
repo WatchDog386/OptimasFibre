@@ -82,7 +82,7 @@ const About = () => {
         setLoading(true);
         setError('');
         // ✅ FIXED: Removed extra spaces from URL
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
+        const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
         const res = await fetch(`${API_BASE_URL}/api/portfolio`);
         
         if (!res.ok) {
@@ -90,10 +90,12 @@ const About = () => {
         }
         
         const data = await res.json();
-        setPortfolioItems(data);
+        // ✅ FIXED: Extract the array from response.data
+        setPortfolioItems(data.data || []);
       } catch (error) {
         console.error('Error fetching portfolio:', error);
         setError('Unable to load portfolio items. Please check your internet connection and try again.');
+        setPortfolioItems([]); // Set to empty array to prevent .map() errors
       } finally {
         setLoading(false);
       }

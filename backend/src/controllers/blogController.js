@@ -1,16 +1,19 @@
 // backend/src/controllers/blogController.js
 
 import BlogPost from '../models/BlogPost.js';
+import mongoose from 'mongoose'; // ✅ CRITICAL FIX: Added missing import
 
 /**
  * Fetch all blog posts (published, sorted by date)
  */
 export const getAllBlogPosts = async (req, res) => {
   try {
+    console.log('📚 Fetching all blog posts...'); // ✅ Added debug log
+    
     const posts = await BlogPost.find()
-      .sort({ publishedAt: -1 }) // Sort by published date, not createdAt
-      .select('-__v') // Exclude version key
-      .populate('author', 'email publicEmail role'); // Populate author info (masked email)
+      .sort({ publishedAt: -1 })
+      .select('-__v')
+      .populate('author', 'email publicEmail role');
 
     res.status(200).json({
       success: true,
@@ -82,8 +85,8 @@ export const createBlogPost = async (req, res) => {
       content: content.trim(),
       imageUrl: imageUrl || '',
       category: category || 'General',
-      author: req.user._id, // ✅ Use authenticated user from protect middleware
-      publishedAt: req.body.publishedAt || new Date() // Allow custom publish date
+      author: req.user._id,
+      publishedAt: req.body.publishedAt || new Date()
     });
 
     res.status(201).json({
@@ -127,7 +130,7 @@ export const updateBlogPost = async (req, res) => {
       content: content.trim(),
       imageUrl: imageUrl || '',
       category: category || 'General',
-      publishedAt: publishedAt || undefined, // Only update if provided
+      publishedAt: publishedAt || undefined,
       updatedAt: new Date()
     };
 
