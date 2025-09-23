@@ -1,5 +1,7 @@
+// backend/src/index.js
+
 import dotenv from 'dotenv';
-// ✅ Load env variables first, before any other imports
+// ✅ Load env variables FIRST — before any other logic
 dotenv.config();
 
 import express from 'express';
@@ -26,22 +28,23 @@ import connectDB from './config/db.js';
 import { protect } from './middleware/authMiddleware.js';
 
 // ✅ Validate required environment variables
-const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI'];
+const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI', 'FRONTEND_URL'];
 const missingEnvVars = requiredEnvVars.filter(v => !process.env[v]);
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
-  console.error('❌ Please check your .env file');
+  console.error('❌ Please check your .env file or Render dashboard');
   process.exit(1);
 }
 
 // ✅ For debugging – remove later
 console.log('🔧 Loaded MONGODB_URI:', process.env.MONGODB_URI ? 'Yes' : 'No');
+console.log('🌍 Loaded FRONTEND_URL:', process.env.FRONTEND_URL || 'Not set');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000; // Render uses 10000
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Create log directory if it doesn't exist
@@ -69,37 +72,43 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// ✅ UPDATED: CORS configuration — Allow multiple origins
+// ✅ DYNAMIC CORS — Reads from environment variables
 const allowedOrigins = [
-  'https://optimsawifi.co.ke',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000'
-];
+  process.env.FRONTEND_URL,     // ✅ Your live frontend (e.g., https://optimaswifi.co.ke)
+  'http://localhost:3000',      // ✅ Local dev
+  'http://127.0.0.1:3000'       // ✅ Alternative local
+]
+  .filter(Boolean)              // ✅ Remove any undefined/null values
+  .map(origin => origin.trim()); // ✅ Clean whitespace
+
+console.log('✅ Allowed CORS origins:', allowedOrigins.join(', '));
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, Postman)
+    // Allow requests with no origin (mobile apps, curl, Postman, server-side)
     if (!origin) {
       return callback(null, true);
     }
-    
-    // Log the origin for debugging
+
+    // Log for debugging
     console.log('🔍 CORS check for origin:', origin);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
+
+    if (!allowedOrigins.includes(origin)) {
       const msg = `❌ The CORS policy for this site does not allow access from the specified origin: ${origin}`;
       console.warn(msg);
       return callback(new Error(msg), false);
     }
+
     return callback(null, true);
   },
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: NODE_ENV === 'production' ? 100 : 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: NODE_ENV === 'production' ? 100 : 1000, // limit each IP to 100/1000 requests per window
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
@@ -120,6 +129,7 @@ app.use((req, res, next) => {
   sanitizeObject(req.params);
   next();
 });
+
 function sanitizeObject(obj) {
   if (obj && typeof obj === 'object') {
     Object.keys(obj).forEach(key => {
@@ -226,14 +236,12 @@ const startServer = async () => {
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`✅ Server running in ${NODE_ENV} mode on port ${PORT}`);
       console.log(`✅ Listening on all interfaces (0.0.0.0:${PORT})`);
-      console.log(`✅ Allowed CORS origins: ${allowedOrigins.join(', ')}`);
     });
 
     const shutdown = (signal) => {
       console.log(`\n${signal} received. Shutting down gracefully…`);
       server.close(() => {
         console.log('✅ HTTP server closed');
-        console.log('✅ Database connection closed');
         process.exit(0);
       });
       setTimeout(() => {

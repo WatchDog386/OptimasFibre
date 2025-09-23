@@ -1,89 +1,131 @@
 // backend/src/controllers/settingController.js
+
 import Setting from '../models/Setting.js';
 
 /**
- * GET settings
+ * GET settings — returns global site configuration
  */
-export const getSettings = async () => {
+export const getSettings = async (req, res) => {
   try {
     const settings = await Setting.getSettings();
-    return settings;
+
+    // Remove internal fields from response
+    const { __v, _id, createdAt, updatedAt, ...cleanSettings } = settings.toObject();
+
+    res.status(200).json({
+      success: true,
+      message: 'Settings retrieved successfully',
+       settings: cleanSettings
+    });
   } catch (err) {
-    console.error('❌ Error fetching settings:', err);
-    const error = new Error('Unable to fetch settings');
-    error.statusCode = 500;
-    throw error;
+    console.error('⚙️ Error fetching settings:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Unable to fetch settings. Please try again later.'
+    });
   }
 };
 
 /**
- * UPDATE settings
+ * UPDATE settings — restricted to admins only (protected by middleware)
  */
-export const updateSettings = async (data = {}) => {
+export const updateSettings = async (req, res) => {
   try {
-    const { siteTitle, adminEmail, notifications, autoSave, language } = data;
+    const { siteTitle, adminEmail, notifications, autoSave, language, logoUrl, maintenanceMode } = req.body;
 
     // Validate siteTitle
     if (siteTitle !== undefined) {
       if (typeof siteTitle !== 'string' || siteTitle.trim().length < 1) {
-        const error = new Error('Site title must be a non-empty string');
-        error.statusCode = 400;
-        throw error;
+        return res.status(400).json({
+          success: false,
+          message: 'Site title must be a non-empty string'
+        });
+      }
+      if (siteTitle.trim().length > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'Site title cannot exceed 100 characters'
+        });
       }
     }
 
     // Validate adminEmail
     if (adminEmail !== undefined) {
-      if (typeof adminEmail !== 'string' || !adminEmail.includes('@')) {
-        const error = new Error('Invalid email format');
-        error.statusCode = 400;
-        throw error;
+      if (typeof adminEmail !== 'string' || !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(adminEmail)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid email format'
+        });
       }
     }
 
-    // Validate language
+    // Validate language (aligned with your Setting model)
     if (language !== undefined) {
-      const validLanguages = ['en', 'es', 'fr', 'de'];
+      const validLanguages = ['en', 'sw', 'es', 'fr']; // ✅ Added 'sw' for Swahili (Kenyan audience)
       if (!validLanguages.includes(language)) {
-        const error = new Error('Invalid language code. Supported: en, es, fr, de');
-        error.statusCode = 400;
-        throw error;
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid language code. Supported: en, sw, es, fr'
+        });
       }
     }
 
     // Validate boolean fields
-    if (notifications !== undefined && typeof notifications !== 'boolean') {
-      const error = new Error('Notifications must be true or false');
-      error.statusCode = 400;
-      throw error;
+    const validateBoolean = (value, fieldName) => {
+      if (value !== undefined && typeof value !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          message: `${fieldName} must be true or false`
+        });
+      }
+      return null;
+    };
+
+    validateBoolean(notifications, 'Notifications');
+    validateBoolean(autoSave, 'AutoSave');
+    validateBoolean(maintenanceMode, 'MaintenanceMode');
+
+    // Validate logoUrl (if provided)
+    if (logoUrl !== undefined) {
+      if (typeof logoUrl !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'Logo URL must be a string'
+        });
+      }
+      if (logoUrl && !/^https?:\/\/.+\.(png|jpg|jpeg|svg|webp)$/i.test(logoUrl)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Logo URL must be a valid image URL (png, jpg, jpeg, svg, webp)'
+        });
+      }
     }
 
-    if (autoSave !== undefined && typeof autoSave !== 'boolean') {
-      const error = new Error('AutoSave must be true or false');
-      error.statusCode = 400;
-      throw error;
-    }
+    // Use model's built-in update method for consistency
+    const updatedSettings = await Setting.updateSettings({
+      siteTitle: siteTitle?.trim(),
+      adminEmail: adminEmail?.trim(),
+      notifications,
+      autoSave,
+      language,
+      logoUrl,
+      maintenanceMode
+    });
 
-    // Get current settings
-    let settings = await Setting.getSettings();
+    // Clean response
+    const { __v, _id, createdAt, updatedAt, ...cleanSettings } = updatedSettings.toObject();
 
-    // Update only provided fields
-    if (siteTitle !== undefined) settings.siteTitle = siteTitle.trim();
-    if (adminEmail !== undefined) settings.adminEmail = adminEmail.trim();
-    if (notifications !== undefined) settings.notifications = notifications;
-    if (autoSave !== undefined) settings.autoSave = autoSave;
-    if (language !== undefined) settings.language = language;
+    res.status(200).json({
+      success: true,
+      message: 'Settings updated successfully',
+       settings: cleanSettings
+    });
 
-    // Save
-    await settings.save();
-
-    console.log('✅ Settings updated successfully');
-    return settings;
   } catch (err) {
-    console.error('❌ Error updating settings:', err);
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    throw err;
+    console.error('⚙️ Error updating settings:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Unable to update settings. Please try again later.'
+    });
   }
 };

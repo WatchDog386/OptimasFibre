@@ -95,8 +95,8 @@ const Contact = () => {
                 }`}>Call Us</h3>
               </div>
               <div className="space-y-1 pl-11">
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>0726 818 938</p>
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>0724 169 963</p>
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>074187422</p>
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>0117151741</p>
               </div>
             </motion.div>
 
@@ -118,8 +118,8 @@ const Contact = () => {
                 }`}>Email Us</h3>
               </div>
               <div className="space-y-1 pl-11">
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>info@optimafibre.com</p>
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>support@optimafibre.com</p>
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>info@optimafibre.co.ke</p>
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>support@optimafibre.co.ke</p>
               </div>
             </motion.div>
 
@@ -141,8 +141,8 @@ const Contact = () => {
                 }`}>Visit Us</h3>
               </div>
               <div className="space-y-1 pl-11">
-                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}>Lucky Summer, Ruaraka</p>
-                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}>Behind Naivas Supermarket</p>
+                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}>Kahawa West,Nairobi</p>
+                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}></p>
                 <motion.a 
                   href="#" 
                   className={`text-xs inline-flex items-center gap-1 mt-2 group ${
@@ -159,7 +159,7 @@ const Contact = () => {
             {/* Quick Actions */}
             <div className="space-y-3">
               <motion.a
-                href="https://wa.me/254726818938"
+                href="https://wa.me/254741874200"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white px-4 py-2.5 rounded-[1.25rem] hover:shadow-md transition-shadow text-xs font-medium"

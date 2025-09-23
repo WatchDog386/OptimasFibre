@@ -1,4 +1,5 @@
 // backend/src/middleware/authMiddleware.js
+
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
@@ -90,7 +91,7 @@ export const admin = (req, res, next) => {
     });
   }
 
-  // Check role
+  // Check role — also handles case where role is undefined
   if (req.user.role === 'admin') {
     next();
   } else {
@@ -116,6 +117,15 @@ export const refreshToken = async (req, res, next) => {
   }
 
   try {
+    // Validate refresh token secret exists
+    if (!process.env.JWT_REFRESH_SECRET) {
+      console.error('❌ JWT_REFRESH_SECRET is not defined');
+      return res.status(500).json({
+        success: false,
+        message: 'Server misconfiguration'
+      });
+    }
+
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(decoded.id);
 
@@ -133,7 +143,7 @@ export const refreshToken = async (req, res, next) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
     );
 
-    // Optional: Generate new refresh token (rotation)
+    // Optional: Generate new refresh token (rotation for enhanced security)
     const newRefreshToken = jwt.sign(
       { id: user._id },
       process.env.JWT_REFRESH_SECRET,
