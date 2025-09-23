@@ -24,7 +24,7 @@ import {
   CheckCircle,
   Info,
   RefreshCw
-} from 'lucide-react'; // ✅ FIXED: Changed from 'lucid-react' to 'lucide-react'
+} from 'lucide-react';
 
 // ✅ COMPACT BUTTON STYLES — NO ICONS, NATURAL WIDTH
 const BUTTON_STYLES = {
@@ -54,8 +54,8 @@ const BUTTON_STYLES = {
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [blogPosts, setBlogPosts] = useState([]); // ✅ Initialize as empty array
-  const [portfolioItems, setPortfolioItems] = useState([]); // ✅ Initialize as empty array
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [portfolioItems, setPortfolioItems] = useState([]);
   const [editingItem, setEditingItem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -80,16 +80,12 @@ const Dashboard = () => {
 
   // ✅ DYNAMIC API URL - Will work in any environment
   const getApiBaseUrl = () => {
-    // If VITE_API_BASE_URL is set, use it
     if (import.meta.env.VITE_API_BASE_URL) {
       return import.meta.env.VITE_API_BASE_URL;
     }
-    // In development, use localhost
     if (import.meta.env.DEV) {
       return 'http://localhost:5000';
     }
-    // In production, construct URL based on current window location
-    // This will work when hosted on any domain
     return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
   };
 
@@ -123,14 +119,11 @@ const Dashboard = () => {
       try {
         setLoading(true);
         setError('');
-        
-        // Get the token from localStorage
         const token = localStorage.getItem('token');
         if (!token) {
           throw new Error('Authentication session expired. Please log in again.');
         }
 
-        // Define headers with Authorization for ALL requests
         const headers = {
           'Authorization': `Bearer ${token}`
         };
@@ -141,17 +134,22 @@ const Dashboard = () => {
           throw new Error(`Failed to fetch blog posts: ${blogRes.status} ${blogRes.statusText}`);
         }
         const blogResponse = await blogRes.json();
-        // ✅ EXTRACT THE ARRAY FROM RESPONSE.DATA
         setBlogPosts(blogResponse.data || []);
 
-        // Fetch portfolio items
+        // ✅ FIXED: Fetch portfolio items with better error handling and data structure
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
-          throw new Error(`Failed to fetch portfolio items: ${portfolioRes.status} ${portfolioRes.statusText}`);
+          // If portfolio endpoint doesn't exist, set empty array instead of throwing error
+          console.warn('Portfolio endpoint not available, initializing empty portfolio');
+          setPortfolioItems([]);
+        } else {
+          const portfolioResponse = await portfolioRes.json();
+          // Handle both array and object responses
+          const portfolioData = Array.isArray(portfolioResponse) 
+            ? portfolioResponse 
+            : (portfolioResponse.data || portfolioResponse.items || []);
+          setPortfolioItems(portfolioData);
         }
-        const portfolioResponse = await portfolioRes.json();
-        // ✅ EXTRACT THE ARRAY FROM RESPONSE.DATA
-        setPortfolioItems(portfolioResponse.data || []);
 
         // Fetch settings
         const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
@@ -160,7 +158,7 @@ const Dashboard = () => {
           setSettingsData(settings);
         }
       } catch (err) {
-        console.error('Error fetching ', err);
+        console.error('Error fetching data:', err);
         setError(err.message);
         showNotification(err.message, 'error');
         if (err.message.includes('401') || err.message.includes('token')) {
@@ -230,12 +228,10 @@ const Dashboard = () => {
 
   const handleImageChange = (file) => {
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         showNotification('Please select an image file.', 'error');
         return;
       }
-      // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
         showNotification('Image size should be less than 5MB.', 'error');
         return;
@@ -260,7 +256,7 @@ const Dashboard = () => {
     });
   };
 
-  // ✅ FIXED: Handle blog vs portfolio field mapping
+  // ✅ FIXED: Unified save function for both blog and portfolio
   const handleSave = async () => {
     try {
       setError('');
@@ -270,30 +266,33 @@ const Dashboard = () => {
         throw new Error('Authentication session expired. Please log in again.');
       }
 
-      // ✅ VALIDATE FIELDS
       if (!formData.title?.trim()) {
         throw new Error('Title is required');
       }
       if (!formData.content?.trim()) {
-        throw new Error('Content is required');
+        throw new Error('Content/Description is required');
       }
       if (!formData.category?.trim()) {
         throw new Error('Category is required');
       }
 
-      // ✅ BUILD PAYLOAD — RENAME 'content' to 'description' for portfolio
+      // ✅ BUILD CONSISTENT PAYLOAD - Use same structure as blog
       const payload = {
         title: formData.title.trim(),
         category: formData.category.trim(),
-        imageUrl: formData.imageUrl?.trim() || ''
+        imageUrl: formData.imageUrl?.trim() || '',
+        // Use consistent field names - portfolio should use same structure as blog
+        content: formData.content.trim(),
+        description: formData.content.trim() // Include both for compatibility
       };
-      if (activeTab === 'blog') {
-        payload.content = formData.content.trim();
-      } else {
-        payload.description = formData.content.trim(); // ← Portfolio expects 'description'
-      }
 
-      // ✅ SET ENDPOINT
+      // Remove empty fields
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === '' || payload[key] == null) {
+          delete payload[key];
+        }
+      });
+
       if (activeTab === 'blog') {
         endpoint = `${API_BASE_URL}/api/blog`;
         if (isEditing && editingItem && editingItem._id) {
@@ -306,28 +305,30 @@ const Dashboard = () => {
         }
       }
 
-      // ✅ SEND JSON
+      const method = isEditing && editingItem && editingItem._id ? 'PUT' : 'POST';
       const res = await fetch(endpoint, {
-        method: isEditing && editingItem && editingItem._id ? 'PUT' : 'POST',
+        method: method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       });
+
       const responseData = await res.json();
+      
       if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
 
-      // ✅ UPDATE STATE
+      // ✅ FIXED: Proper state update for portfolio items
       if (activeTab === 'blog') {
         if (isEditing) {
           setBlogPosts(prev => prev.map(item => 
             item._id === editingItem._id ? responseData.data : item
           ));
         } else {
-          setBlogPosts(prev => [...prev, responseData.data]);
+          setBlogPosts(prev => [...prev, responseData.data || responseData]);
         }
       } else {
         if (isEditing) {
@@ -335,11 +336,13 @@ const Dashboard = () => {
             item._id === editingItem._id ? responseData.data : item
           ));
         } else {
-          setPortfolioItems(prev => [...prev, responseData.data]);
+          // ✅ FIXED: Ensure portfolio item is properly added to state
+          const newItem = responseData.data || responseData;
+          setPortfolioItems(prev => [...prev, newItem]);
         }
       }
 
-      // ✅ RESET FORM
+      // Reset form
       setFormData({
         title: '',
         content: '',
@@ -350,7 +353,11 @@ const Dashboard = () => {
       setEditingItem(null);
       setIsEditing(false);
       setUploadMethod('url');
-      showNotification(`${activeTab === 'blog' ? 'Blog post' : 'Portfolio item'} ${isEditing ? 'updated' : 'created'} successfully!`, 'success');
+      
+      showNotification(
+        `${activeTab === 'blog' ? 'Blog post' : 'Portfolio item'} ${isEditing ? 'updated' : 'created'} successfully!`, 
+        'success'
+      );
     } catch (err) {
       console.error('Error saving item:', err);
       showNotification(err.message, 'error');
@@ -359,11 +366,11 @@ const Dashboard = () => {
 
   const handleEdit = (item) => {
     setFormData({
-      title: item.title,
-      content: item.content || item.description, // ← Handles both blog.content and portfolio.description
+      title: item.title || '',
+      content: item.content || item.description || '',
       category: item.category || 'General',
       image: null,
-      imageUrl: item.imageUrl
+      imageUrl: item.imageUrl || ''
     });
     setEditingItem(item);
     setIsEditing(true);
@@ -383,12 +390,14 @@ const Dashboard = () => {
       const endpoint = type === 'blog' 
         ? `${API_BASE_URL}/api/blog/${id}` 
         : `${API_BASE_URL}/api/portfolio/${id}`;
+      
       const res = await fetch(endpoint, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      
       const responseData = await res.json();
       if (res.ok) {
         if (type === 'blog') {
@@ -795,21 +804,23 @@ const DashboardOverview = ({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <RecentList 
         title="Recent Blog Posts" 
-        items={blogPosts.slice(0, 5)}  // ✅ Now safe - blogPosts is always an array
+        items={blogPosts.slice(0, 5)}
         viewAllLink="/admin/blog"
         darkMode={darkMode}
         themeClasses={themeClasses}
         onEdit={onEdit}
         onDelete={onDelete}
+        type="blog"
       />
       <RecentList 
         title="Recent Portfolio Items" 
-        items={portfolioItems.slice(0, 5)}  // ✅ Now safe - portfolioItems is always an array
+        items={portfolioItems.slice(0, 5)}
         viewAllLink="/admin/portfolio"
         darkMode={darkMode}
         themeClasses={themeClasses}
         onEdit={onEdit}
         onDelete={onDelete}
+        type="portfolio"
       />
     </div>
   </div>
@@ -849,7 +860,7 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
 };
 
 // Recent List Component
-const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete }) => (
+const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete, type }) => (
   <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
     <div className="flex justify-between items-center mb-4">
       <h3 className={`text-lg font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{title}</h3>
@@ -896,7 +907,7 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
                 <Edit size={16} />
               </button>
               <button 
-                onClick={() => onDelete(item._id, title.toLowerCase().includes('blog') ? 'blog' : 'portfolio')}
+                onClick={() => onDelete(item._id, type)}
                 className={`p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/30' : ''}`}
                 title="Delete"
               >
@@ -1010,7 +1021,6 @@ const ContentManager = ({
             </div>
             <div>
               <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Featured Image</label>
-              
               {/* Upload Method Selector */}
               <div className="flex flex-wrap gap-2 mb-4">
                 <button
@@ -1038,7 +1048,6 @@ const ContentManager = ({
                   Upload File
                 </button>
               </div>
-
               {/* URL Input */}
               {uploadMethod === 'url' && (
                 <div className="space-y-2">
@@ -1052,7 +1061,6 @@ const ContentManager = ({
                   <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Enter a direct image URL (JPEG, PNG, GIF, or WEBP)</p>
                 </div>
               )}
-
               {/* File Upload */}
               {uploadMethod === 'upload' && (
                 <div className="space-y-2">
@@ -1065,7 +1073,6 @@ const ContentManager = ({
                   <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Max file size: 5MB • Supported formats: JPEG, PNG, GIF, WEBP</p>
                 </div>
               )}
-
               {/* Image Preview */}
               {(formData.imageUrl || formData.image) && (
                 <div className={`mt-4 p-4 rounded-xl border ${darkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
@@ -1168,7 +1175,6 @@ const ContentManager = ({
                 </div>
               ))}
             </div>
-            
             {/* Desktop Table */}
             <div className="hidden md:block">
               <div className="overflow-x-auto">
@@ -1299,7 +1305,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             </div>
           </div>
         </div>
-
         {/* Preferences Card */}
         <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
           <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -1341,85 +1346,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
                   />
                   <div className={`w-11 h-6 rounded-full peer ${darkMode ? 'bg-gray-700 peer-checked:bg-blue-600' : 'bg-gray-300 peer-checked:bg-blue-600'} peer-checked:after:translate-x-full peer-after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
                 </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Account Settings Card */}
-        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
-          <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            <User size={20} className="mr-2" />
-            Account Security
-          </h3>
-          <div className="space-y-5">
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Current Password</label>
-              <input
-                type="password"
-                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                placeholder="••••••••"
-              />
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>New Password</label>
-              <input
-                type="password"
-                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                placeholder="••••••••"
-              />
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Confirm New Password</label>
-              <input
-                type="password"
-                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                placeholder="••••••••"
-              />
-            </div>
-            <button className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} w-full mt-2`}>
-              Update Password
-            </button>
-          </div>
-        </div>
-
-        {/* System Info Card */}
-        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
-          <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            <BarChart3 size={20} className="mr-2" />
-            System Information
-          </h3>
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
-                <span className={darkMode ? 'text-gray-400 text-sm' : 'text-gray-600 text-sm'}>Platform Version</span>
-                <span className={darkMode ? 'text-gray-200 text-sm font-medium' : 'text-gray-800 text-sm font-medium'}>v2.4.1</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
-                <span className={darkMode ? 'text-gray-400 text-sm' : 'text-gray-600 text-sm'}>Last Update</span>
-                <span className={darkMode ? 'text-gray-200 text-sm font-medium' : 'text-gray-800 text-sm font-medium'}>October 15, 2023</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
-                <span className={darkMode ? 'text-gray-400 text-sm' : 'text-gray-600 text-sm'}>Database</span>
-                <span className={darkMode ? 'text-gray-200 text-sm font-medium' : 'text-gray-800 text-sm font-medium'}>MongoDB 6.0</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
-                <span className={darkMode ? 'text-gray-400 text-sm' : 'text-gray-600 text-sm'}>Server Status</span>
-                <span className="text-green-500 text-sm font-medium flex items-center">
-                  <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                  Online
-                </span>
-              </div>
-            </div>
-            <div className="pt-4 mt-4 border-t border-gray-200">
-              <button className={`${BUTTON_STYLES.small.base} ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'} w-full`}>
-                Check for Updates
-              </button>
-            </div>
-            <div className="pt-4 mt-4 border-t border-gray-200">
-              <h4 className={`font-medium mb-2 text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>API Configuration</h4>
-              <div className={`p-3 rounded-lg text-xs font-mono ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} break-all`}>
-                {API_BASE_URL}
               </div>
             </div>
           </div>

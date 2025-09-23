@@ -1,7 +1,6 @@
 // backend/src/index.js
 
-import dotenv from '@dotenvx/dotenvx'; // ✅ Replaced with dotenvx for encrypted secrets
-// ✅ Load env variables FIRST — before any other logic
+import dotenv from '@dotenvx/dotenvx';
 dotenv.config();
 
 import express from 'express';
@@ -14,6 +13,7 @@ import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import morgan from 'morgan';
 import fs from 'fs';
+import multer from 'multer';
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
@@ -45,7 +45,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 10000; // Render uses 10000
+const PORT = process.env.PORT || 10000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Create log directory if it doesn't exist
@@ -64,10 +64,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"], // ✅ Removed trailing spaces
-      fontSrc: ["'self'", "https://fonts.gstatic.com"], // ✅ Removed trailing spaces
-      imgSrc: ["'self'", "data:", "https:"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'", "https:", "http:"],
     },
   },
   crossOriginEmbedderPolicy: false
@@ -75,9 +76,13 @@ app.use(helmet({
 
 // ✅ DYNAMIC CORS — Reads from environment variables
 const allowedOrigins = [
-  process.env.FRONTEND_URL,     // ✅ Your live frontend (e.g., https://optimaswifi.co.ke)
-  'http://localhost:3000',      // ✅ Local dev
-  'http://127.0.0.1:3000'       // ✅ Alternative local
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5000',
+  'http://localhost:10000',
+  'https://optimaswifi.co.ke',
+  'https://optimasfibre.onrender.com'
 ]
   .filter(Boolean)
   .map(origin => origin.trim());
@@ -159,7 +164,19 @@ if (NODE_ENV === 'production') {
   app.use(morgan('dev'));
 }
 
-// Static files
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Create portfolio uploads directory
+const portfolioUploadsDir = path.join(uploadsDir, 'portfolio');
+if (!fs.existsSync(portfolioUploadsDir)) {
+  fs.mkdirSync(portfolioUploadsDir, { recursive: true });
+}
+
+// Serve static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check
@@ -168,7 +185,9 @@ app.get('/health', (req, res) => {
     success: true,
     message: 'Server is healthy',
     timestamp: new Date().toISOString(),
-    env: NODE_ENV
+    env: NODE_ENV,
+    uptime: process.uptime(),
+    memoryUsage: process.memoryUsage()
   });
 });
 
@@ -219,6 +238,14 @@ app.use((err, req, res, next) => {
     statusCode = 401;
     message = 'Token expired';
   }
+  if (err.message && err.message.includes('Only image files are allowed')) {
+    statusCode = 400;
+    message = 'Only image files are allowed';
+  }
+  if (err.message && err.message.includes('File too large')) {
+    statusCode = 400;
+    message = 'File size exceeds limit (5MB)';
+  }
 
   res.status(statusCode).json({
     success: false,
@@ -238,6 +265,11 @@ const startServer = async () => {
       console.log(`✅ Server running in ${NODE_ENV} mode on port ${PORT}`);
       console.log(`✅ Listening on all interfaces (0.0.0.0:${PORT})`);
       console.log(`✅ Visit health check: http://localhost:${PORT}/health`);
+      console.log(`✅ API endpoints:`);
+      console.log(`   - Auth: http://localhost:${PORT}/api/auth`);
+      console.log(`   - Blog: http://localhost:${PORT}/api/blog`);
+      console.log(`   - Portfolio: http://localhost:${PORT}/api/portfolio`);
+      console.log(`   - Settings: http://localhost:${PORT}/api/settings`);
     });
 
     const shutdown = (signal) => {

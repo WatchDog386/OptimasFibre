@@ -1,64 +1,60 @@
 // backend/src/models/Portfolio.js
-
 import mongoose from 'mongoose';
+import slugify from 'slugify';
 
 /**
  * Portfolio Schema
  * @typedef {Object} Portfolio
- * @property {string} title - Project title
- * @property {string} description - Project description
- * @property {string} imageUrl - URL to project image
- * @property {string} category - Project category (e.g., 'Web Design', 'General')
- * @property {string} slug - URL-friendly unique identifier (auto-generated)
+ * @property {string} title - Title of the portfolio item
+ * @property {string} description - Description or case study content
+ * @property {string} imageUrl - URL to featured image (or relative upload path)
  * @property {ObjectId} author - Reference to User model
- * @property {Date} uploadedAt - When project was uploaded
- * @property {Date} createdAt - Auto-generated
- * @property {Date} updatedAt - Auto-generated
+ * @property {string} slug - URL-friendly unique identifier (auto-generated)
+ * @property {string} category - Portfolio category (e.g., 'Web', 'Design')
+ * @property {Date} uploadedAt - When item was uploaded
+ * @property {Date} createdAt - Auto-generated on creation
+ * @property {Date} updatedAt - Auto-updated on modification
  */
 const portfolioSchema = new mongoose.Schema({
   title: {
     type: String,
     required: [true, 'Title is required'],
     trim: true,
-    minlength: [3, 'Title must be at least 3 characters'],
     maxlength: [150, 'Title cannot exceed 150 characters']
   },
   description: {
     type: String,
     required: [true, 'Description is required'],
-    trim: true,
-    minlength: [10, 'Description must be at least 10 characters'],
-    maxlength: [2000, 'Description cannot exceed 2000 characters']
+    minlength: [10, 'Description must be at least 10 characters']
   },
   imageUrl: {
     type: String,
     default: '',
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         if (!v) return true;
-        return /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg|avif))$/i.test(v);
+        return /^https?:\/\/.+\.(jpg|jpeg|png|webp|avif|gif|svg|bmp|ico)$/i.test(v);
       },
-      message: props => `${props.value} is not a valid image URL! Supported formats: png, jpg, jpeg, gif, webp, svg, avif.`
+      message: 'Image URL must be a valid URL ending in a common image extension'
     }
-  },
-  category: {
-    type: String,
-    default: 'General',
-    trim: true,
-    maxlength: [50, 'Category name too long']
-  },
-  slug: {
-    type: String,
-    unique: true,
-    lowercase: true,
-    trim: true,
-    // ✅ REMOVED: required: true — because we generate it in pre-save hook
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Author is required'],
     index: true
+  },
+  slug: {
+    type: String,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  category: {
+    type: String,
+    default: 'General',
+    trim: true,
+    maxlength: [50, 'Category name too long']
   },
   uploadedAt: {
     type: Date,
@@ -70,22 +66,11 @@ const portfolioSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// 🔁 Simple slug generator (no external dependency)
-const generateSlug = (title) => {
-  return title
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-};
-
-// 🔄 Generate slug from title before saving
-portfolioSchema.pre('save', async function(next) {
+// 🔁 Generate or update slug before saving, ensuring uniqueness
+portfolioSchema.pre('save', async function (next) {
   if (this.isModified('title') || !this.slug) {
-    let baseSlug = generateSlug(this.title);
-    
+    let baseSlug = slugify(this.title, { lower: true, strict: true, trim: true });
+
     if (!baseSlug) {
       baseSlug = `item-${Date.now()}`;
     }
@@ -101,18 +86,15 @@ portfolioSchema.pre('save', async function(next) {
 
     this.slug = slug;
   }
+
+  this.updatedAt = new Date();
   next();
 });
 
-// 📈 Add indexes for performance
+// 🚀 Add compound index for common queries
+portfolioSchema.index({ author: 1, createdAt: -1 });
 portfolioSchema.index({ uploadedAt: -1 });
-portfolioSchema.index({ author: 1 });
 portfolioSchema.index({ category: 1 });
-portfolioSchema.index({ createdAt: -1 });
-
-// 🚀 Optional: Instance method to check if item belongs to user
-portfolioSchema.methods.isAuthor = function(userId) {
-  return this.author && this.author.toString() === userId.toString();
-};
+portfolioSchema.index({ slug: 1 });
 
 export default mongoose.model('Portfolio', portfolioSchema);

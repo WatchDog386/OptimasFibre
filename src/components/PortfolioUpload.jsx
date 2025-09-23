@@ -1,53 +1,66 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const PortfolioUpload = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [image, setImage] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
+  const [uploadMethod, setUploadMethod] = useState('file'); // 'file' or 'url'
   const [preview, setPreview] = useState('');
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
   const fileInputRef = useRef(null);
 
+  // live preview
+  useEffect(() => {
+    if (uploadMethod === 'file' && image) {
+      setPreview(URL.createObjectURL(image));
+    } else if (uploadMethod === 'url' && imageUrl) {
+      setPreview(imageUrl);
+    } else {
+      setPreview('');
+    }
+  }, [image, imageUrl, uploadMethod]);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setMessage('❌ Error: Please select an image file.');
-        return;
-      }
-      
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        setMessage('❌ Error: Image size should be less than 5MB.');
-        return;
-      }
-      
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
-      setMessage('');
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setMessage('❌ Please select an image file.');
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage('❌ Image must be less than 5MB.');
+      return;
+    }
+
+    setImage(file);
+    setImageUrl('');
+    setMessage('');
+  };
+
+  const handleImageUrlChange = (e) => {
+    setImageUrl(e.target.value);
+    setImage(null);
+    setMessage('');
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    e.stopPropagation();
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
-    e.stopPropagation();
-    
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) {
       if (file.size > 5 * 1024 * 1024) {
-        setMessage('❌ Error: Image size should be less than 5MB.');
+        setMessage('❌ Image must be less than 5MB.');
         return;
       }
       setImage(file);
-      setPreview(URL.createObjectURL(file));
+      setImageUrl('');
       setMessage('');
     }
   };
@@ -61,57 +74,72 @@ const PortfolioUpload = () => {
     setUploading(true);
     setMessage('');
 
-    // Validate required fields
     if (!title.trim() || !description.trim() || !category.trim()) {
-      setMessage('❌ Error: Title, description, and category are required.');
+      setMessage('❌ Title, description and category are required.');
       setUploading(false);
       return;
     }
-
-    if (!image) {
-      setMessage('❌ Error: Please select an image.');
+    if (uploadMethod === 'file' && !image) {
+      setMessage('❌ Please select an image.');
       setUploading(false);
       return;
     }
-
-    // Create FormData and append all fields
-    const formData = new FormData();
-    formData.append('title', title.trim());
-    formData.append('description', description.trim());
-    formData.append('category', category.trim());
-    formData.append('image', image);
+    if (uploadMethod === 'url' && !imageUrl.trim()) {
+      setMessage('❌ Please enter a valid image URL.');
+      setUploading(false);
+      return;
+    }
 
     try {
       const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
       const token = localStorage.getItem('token');
-      
-      if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
+      if (!token) throw new Error('Authentication expired. Please log in again.');
+
+      let body;
+      let headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      if (uploadMethod === 'file') {
+        body = new FormData();
+        body.append('title', title.trim());
+        body.append('description', description.trim());
+        body.append('category', category.trim());
+        body.append('image', image);
+        delete headers['Content-Type']; // FormData sets its own content-type
+      } else {
+        body = JSON.stringify({
+          title: title.trim(),
+          description: description.trim(),
+          category: category.trim(),
+          imageUrl: imageUrl.trim()
+        });
       }
 
       const res = await fetch(`${API_BASE_URL}/api/portfolio`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
+        headers,
+        body
       });
 
-      const responseData = await res.json();
-
+      const data = await res.json();
       if (res.ok) {
         setMessage('✅ Portfolio item uploaded successfully!');
         setTitle('');
         setDescription('');
         setCategory('');
         setImage(null);
+        setImageUrl('');
         setPreview('');
-        fileInputRef.current.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        // optional redirect:
+        // window.location.href = '/admin/portfolio';
       } else {
-        throw new Error(responseData.message || `Server error: ${res.status}`);
+        throw new Error(data.message || 'Upload failed.');
       }
     } catch (err) {
-      setMessage(`❌ Error: ${err.message}`);
+      setMessage(`❌ ${err.message}`);
     } finally {
       setUploading(false);
     }
@@ -119,27 +147,28 @@ const PortfolioUpload = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <h2 className="text-2xl font-bold text-[#182B5C] mb-6">Upload Portfolio Item</h2>
 
         {message && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            message.includes('✅') 
-              ? 'bg-green-50 border border-green-200 text-green-800' 
-              : 'bg-red-50 border border-red-200 text-red-800'
-          }`}>
+          <div
+            className={`mb-6 p-4 rounded-lg border ${
+              message.includes('✅')
+                ? 'bg-green-50 border-green-200 text-green-800'
+                : 'bg-red-50 border-red-200 text-red-800'
+            }`}
+          >
             {message}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title Field */}
+          {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Project Title *
             </label>
             <input
-              id="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -149,13 +178,12 @@ const PortfolioUpload = () => {
             />
           </div>
 
-          {/* Category Field */}
+          {/* Category */}
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Category *
             </label>
             <input
-              id="category"
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -165,98 +193,122 @@ const PortfolioUpload = () => {
             />
           </div>
 
-          {/* Description Field */}
+          {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Description *
             </label>
             <textarea
-              id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows="6"
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#182B5C] focus:border-transparent transition-colors resize-none"
               placeholder="Describe your project..."
-            ></textarea>
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-gray-500">Minimum 50 characters</span>
-              <span className="text-xs text-gray-500">{description.length}/500 characters</span>
+            />
+          </div>
+
+          {/* Upload method */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image Upload Method
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setUploadMethod('file')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  uploadMethod === 'file'
+                    ? 'bg-[#182B5C] text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Upload File
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadMethod('url')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  uploadMethod === 'url'
+                    ? 'bg-[#182B5C] text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Image URL
+              </button>
             </div>
           </div>
 
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Project Image *
-            </label>
-            <div 
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#182B5C] hover:bg-gray-50 transition-colors cursor-pointer"
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onClick={triggerFileInput}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-                required
-              />
-              {preview ? (
-                <div className="relative">
+          {/* File upload */}
+          {uploadMethod === 'file' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Project Image *
+              </label>
+              <div
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#182B5C] hover:bg-gray-50 transition-colors cursor-pointer"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onClick={triggerFileInput}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                {preview ? (
                   <img
                     src={preview}
                     alt="Preview"
                     className="mx-auto max-h-64 rounded-lg shadow-sm"
                   />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setImage(null);
-                      setPreview('');
-                      fileInputRef.current.value = '';
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <div className="mx-auto w-12 h-12 bg-[#182B5C] bg-opacity-10 rounded-full flex items-center justify-center mb-3">
-                    <svg className="w-6 h-6 text-[#182B5C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <p className="text-gray-600 font-medium">Drag & drop your image here</p>
-                  <p className="text-sm text-gray-500 mt-1">or click to browse</p>
-                  <p className="text-xs text-gray-400 mt-2">PNG, JPG, GIF up to 5MB</p>
-                </div>
+                ) : (
+                  <p className="text-gray-500">Drag & drop or click to select</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* URL upload */}
+          {uploadMethod === 'url' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Image URL *
+              </label>
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={handleImageUrlChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#182B5C] focus:border-transparent transition-colors"
+                placeholder="https://example.com/image.jpg"
+              />
+              {preview && (
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="mt-4 max-h-64 rounded-lg shadow-sm border border-gray-200"
+                />
               )}
             </div>
-          </div>
+          )}
 
-          {/* Submit Button */}
           <div className="pt-4 border-t border-gray-200">
             <button
               type="submit"
-              disabled={uploading || !image || !title.trim() || !description.trim() || !category.trim()}
+              disabled={
+                uploading ||
+                !title.trim() ||
+                !description.trim() ||
+                !category.trim() ||
+                (uploadMethod === 'file' && !image) ||
+                (uploadMethod === 'url' && !imageUrl.trim())
+              }
               className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-[#182B5C] to-[#243C70] hover:from-[#15254a] hover:to-[#1d325d] disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-sm hover:shadow transition-all duration-200 flex items-center justify-center"
             >
-              {uploading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Uploading...
-                </span>
-              ) : (
-                'Upload Portfolio Item'
-              )}
+              {uploading ? 'Uploading…' : 'Upload Portfolio Item'}
             </button>
           </div>
         </form>

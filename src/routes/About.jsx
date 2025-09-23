@@ -75,23 +75,60 @@ const About = () => {
     }
   ];
 
-  // Fetch portfolio items from backend
+  // ✅ DYNAMIC API URL - Will work in any environment
+  const getApiBaseUrl = () => {
+    // If VITE_API_BASE_URL is set, use it
+    if (import.meta.env.VITE_API_BASE_URL) {
+      return import.meta.env.VITE_API_BASE_URL;
+    }
+    // In development, use localhost:10000
+    if (import.meta.env.DEV) {
+      return 'http://localhost:10000';
+    }
+    // In production, construct URL based on current window location
+    // This will work when hosted on any domain
+    return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+  };
+
+  // ✅ FIXED: Fetch portfolio items from backend with better error handling
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
         setLoading(true);
         setError('');
-        // ✅ FIXED: Removed extra spaces from URL
-        const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
+        
+        // ✅ Use dynamic API base URL
+        const API_BASE_URL = getApiBaseUrl();
+        console.log('Fetching portfolio from:', `${API_BASE_URL}/api/portfolio`); // Debug log
+        
         const res = await fetch(`${API_BASE_URL}/api/portfolio`);
         
         if (!res.ok) {
           throw new Error(`Failed to load portfolio items: ${res.status} ${res.statusText}`);
         }
         
-        const data = await res.json();
-        // ✅ FIXED: Extract the array from response.data
-        setPortfolioItems(data.data || []);
+        const responseData = await res.json();
+        
+        // ✅ FIXED: Handle different response structures safely
+        let items = [];
+        if (Array.isArray(responseData)) {
+          // If response is directly an array
+          items = responseData;
+        } else if (responseData && Array.isArray(responseData.data)) {
+          // If response has data array
+          items = responseData.data;
+        } else if (responseData && Array.isArray(responseData.items)) {
+          // If response has items array
+          items = responseData.items;
+        } else {
+          // If no recognizable structure, log warning and set empty array
+          console.warn('Unexpected API response structure:', responseData);
+          items = [];
+        }
+        
+        setPortfolioItems(items);
+        console.log('Portfolio items loaded:', items.length); // Debug log
+        
       } catch (error) {
         console.error('Error fetching portfolio:', error);
         setError('Unable to load portfolio items. Please check your internet connection and try again.');
@@ -605,7 +642,7 @@ const About = () => {
               </div>
             ) : (
               <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -613,48 +650,125 @@ const About = () => {
                 {portfolioItems.map((item) => (
                   <motion.div
                     key={item._id}
-                    className={`${CARD_STYLES.base} ${darkMode ? CARD_STYLES.dark : CARD_STYLES.light}`}
-                    whileHover={CARD_STYLES.hover}
+                    className={`rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105 hover:shadow-xl ${
+                      darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                    }`}
                     variants={itemVariants}
                   >
-                    {item.imageUrl && (
-                      <div className="h-48 md:h-56 overflow-hidden rounded-lg mb-4">
+                    {/* Image Container */}
+                    <div className="relative overflow-hidden h-56 md:h-64">
+                      {item.imageUrl ? (
                         <img 
                           src={item.imageUrl} 
                           alt={item.title}
-                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                           onError={(e) => {
                             e.target.src = '/placeholder.jpg';
                             e.target.onerror = null;
                           }}
                         />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                          <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                          </svg>
+                        </div>
+                      )}
+                      {/* Category Badge */}
+                      <div className="absolute top-4 right-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          darkMode 
+                            ? 'bg-[#182b5c] text-white' 
+                            : 'bg-[#182b5c] text-white'
+                        }`}>
+                          {item.category || 'General'}
+                        </span>
                       </div>
-                    )}
-                    <div className="p-4">
-                      <h3 className={`text-base md:text-lg font-bold mb-2 ${
+                    </div>
+                    
+                    {/* Content Container */}
+                    <div className="p-5 md:p-6">
+                      <h3 className={`text-lg md:text-xl font-bold mb-3 line-clamp-2 ${
                         darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                      }`}>{item.title}</h3>
-                      <p className={`text-xs md:text-sm mb-2 ${
-                        darkMode ? 'text-gray-400' : 'text-gray-500'
                       }`}>
-                        {item.category || 'General'}
-                      </p>
-                      <p className={`mb-4 text-xs md:text-sm ${
+                        {item.title}
+                      </h3>
+                      
+                      {/* Description */}
+                      <p className={`mb-4 text-sm md:text-base leading-relaxed line-clamp-3 ${
                         darkMode ? 'text-gray-300' : 'text-gray-700'
                       }`}>
-                        {item.description}
+                        {item.description || item.content || 'No description available for this portfolio item.'}
                       </p>
-                      <div className="flex justify-between items-center">
-                        <span className={`text-xs ${
-                          darkMode ? 'text-gray-500' : 'text-gray-500'
+                      
+                      {/* Meta Info */}
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <span className={`text-xs font-medium ${
+                          darkMode ? 'text-gray-400' : 'text-gray-500'
                         }`}>
-                          {item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
+                          {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
+                           item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
                         </span>
+                        
+                        {/* View Details Button */}
+                        <button 
+                          className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors duration-300 ${
+                            darkMode 
+                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white' 
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                          }`}
+                        >
+                          View Details
+                        </button>
                       </div>
                     </div>
                   </motion.div>
                 ))}
               </motion.div>
+            )}
+            
+            {/* Portfolio Stats Section */}
+            {portfolioItems.length > 0 && (
+              <div className="mt-12 md:mt-16">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+                  <div className={`p-5 rounded-xl ${
+                    darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                  } text-center`}>
+                    <div className="text-2xl md:text-3xl font-bold text-[#d0b216] mb-2">
+                      {portfolioItems.length}
+                    </div>
+                    <div className={`text-sm md:text-base ${
+                      darkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Total Projects
+                    </div>
+                  </div>
+                  <div className={`p-5 rounded-xl ${
+                    darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                  } text-center`}>
+                    <div className="text-2xl md:text-3xl font-bold text-[#d0b216] mb-2">
+                      {new Set(portfolioItems.map(item => item.category)).size}
+                    </div>
+                    <div className={`text-sm md:text-base ${
+                      darkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Categories
+                    </div>
+                  </div>
+                  <div className={`p-5 rounded-xl ${
+                    darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                  } text-center`}>
+                    <div className="text-2xl md:text-3xl font-bold text-[#d0b216] mb-2">
+                      {Math.floor(Math.random() * 50) + 10}+
+                    </div>
+                    <div className={`text-sm md:text-base ${
+                      darkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Happy Clients
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </section>

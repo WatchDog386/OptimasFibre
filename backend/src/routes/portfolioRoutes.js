@@ -1,5 +1,4 @@
 // backend/src/routes/portfolioRoutes.js
-
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
 import {
@@ -10,36 +9,68 @@ import {
   deletePortfolioItem
 } from '../controllers/portfolioController.js';
 
+import multer from 'multer';
+import path from 'path';
+
 const router = express.Router();
 
 /**
- * GET /api/portfolio
- * Public route to fetch all portfolio items
+ * Multer config for file uploads
  */
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/portfolio/'); // make sure this folder exists
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)
+    );
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter
+});
+
+/**
+ * Routes — now matches blogRoutes layout but supports image upload
+ */
+
+// @desc    Get all portfolio items
+// @route   GET /api/portfolio
+// @access  Public
 router.get('/', getAllPortfolioItems);
 
-/**
- * GET /api/portfolio/:id
- * Public route to fetch a single portfolio item by ID or slug
- */
+// @desc    Get single portfolio item by ID or slug
+// @route   GET /api/portfolio/:id
+// @access  Public
 router.get('/:id', getPortfolioItemById);
 
-/**
- * POST /api/portfolio
- * Protected route for admin to create a new portfolio item
- */
-router.post('/', protect, createPortfolioItem);
+// @desc    Create new portfolio item
+// @route   POST /api/portfolio
+// @access  Private/Admin
+router.post('/', protect, upload.single('image'), createPortfolioItem);
 
-/**
- * PUT /api/portfolio/:id
- * Protected route for admin to update a portfolio item
- */
-router.put('/:id', protect, updatePortfolioItem);
+// @desc    Update portfolio item
+// @route   PUT /api/portfolio/:id
+// @access  Private/Admin
+router.put('/:id', protect, upload.single('image'), updatePortfolioItem);
 
-/**
- * DELETE /api/portfolio/:id
- * Protected route for admin to delete a portfolio item
- */
+// @desc    Delete portfolio item
+// @route   DELETE /api/portfolio/:id
+// @access  Private/Admin
 router.delete('/:id', protect, deletePortfolioItem);
 
 export default router;
