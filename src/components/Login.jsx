@@ -238,8 +238,8 @@ const Login = () => {
       </div>
 
       <div className={`max-w-5xl w-full flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-xl z-10 border ${darkMode ? 'border-blue-700/50' : 'border-blue-700 border-opacity-30'}`}>
-        {/* Left Section */}
-        <div className={`bg-gradient-to-br from-blue-950 to-blue-800 text-white p-6 md:p-8 flex flex-col items-center justify-center md:w-2/5 relative overflow-hidden ${darkMode ? 'from-gray-900 to-blue-950' : ''}`}>
+        {/* Left Section - Hidden on mobile */}
+        <div className={`hidden md:flex bg-gradient-to-br from-blue-950 to-blue-800 text-white p-6 md:p-8 flex-col items-center justify-center md:w-2/5 relative overflow-hidden ${darkMode ? 'from-gray-900 to-blue-950' : ''}`}>
           <div className="absolute inset-0 bg-blue-900 opacity-20"></div>
           <div className="absolute top-0 left-0 w-full h-full bg-grid-pattern opacity-5"></div>
 
@@ -278,8 +278,8 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Section */}
-        <div className={`${colors.cardBg} p-6 md:p-8 md:w-3/5 flex flex-col justify-center transition-colors duration-300`}>
+        {/* Right Section - Full width on mobile */}
+        <div className={`${colors.cardBg} p-6 md:p-8 w-full md:w-3/5 flex flex-col justify-center transition-colors duration-300`}>
           <div className="mb-6">
             <h2 className={`text-xl md:text-2xl font-bold ${colors.textPrimary} mb-2`}>Admin Login</h2>
             <p className={`${colors.textSecondary} text-sm`}>Enter your credentials to access the control panel</p>
@@ -536,6 +536,38 @@ const Login = () => {
           background-size: 20px 20px;
         }
         .from-blue-950 { background-color: #0a1228; }
+        
+        /* Mobile-specific adjustments */
+        @media (max-width: 767px) {
+          .max-w-5xl {
+            max-width: 100% !important;
+          }
+          
+          .rounded-2xl {
+            border-radius: 1.5rem !important;
+          }
+          
+          .p-6 {
+            padding: 1.5rem !important;
+          }
+          
+          .text-xl {
+            font-size: 1.25rem !important;
+          }
+          
+          .text-2xl {
+            font-size: 1.5rem !important;
+          }
+          
+          .py-3 {
+            padding-top: 0.875rem !important;
+            padding-bottom: 0.875rem !important;
+          }
+          
+          .rounded-xl {
+            border-radius: 1rem !important;
+          }
+        }
       `}</style>
     </div>
   );
