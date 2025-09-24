@@ -34,12 +34,23 @@ const About = () => {
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedPortfolioItem, setSelectedPortfolioItem] = useState(null);
   const navigate = useNavigate();
   const { darkMode } = useContext(ThemeContext);
 
   // Navigation handler
   const handleServicesClick = () => {
     navigate('/services');
+  };
+
+  // Portfolio item click handler
+  const handlePortfolioClick = (item) => {
+    setSelectedPortfolioItem(item);
+  };
+
+  // Close portfolio modal
+  const handleCloseModal = () => {
+    setSelectedPortfolioItem(null);
   };
 
   // Image gallery data
@@ -165,6 +176,20 @@ const About = () => {
     }
   };
 
+  // Portfolio card variants for alternating layout
+  const portfolioCardVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: (index) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: index * 0.1,
+        duration: 0.6,
+        ease: "easeOut"
+      }
+    })
+  };
+
   return (
     <div 
       className={`about-page min-h-screen py-6 md:py-8 overflow-hidden transition-colors duration-300 ${
@@ -232,8 +257,10 @@ const About = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-16 md:pb-20 bg-white relative overflow-hidden">
+      {/* Hero Section - Updated for Dark/Light Mode */}
+      <section className={`pt-32 pb-16 md:pb-20 relative overflow-hidden transition-colors duration-300 ${
+        darkMode ? 'bg-gray-900' : 'bg-white'
+      }`}>
         <div 
           className="absolute inset-0 z-0 opacity-5"
           style={{
@@ -244,7 +271,9 @@ const About = () => {
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
             <motion.h1 
-              className="text-3xl md:text-4xl font-bold text-[#182B5C] mb-6"
+              className={`text-3xl md:text-4xl font-bold mb-6 ${
+                darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
+              }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -252,36 +281,16 @@ const About = () => {
               About Optimas Fibre
             </motion.h1>
             <motion.p 
-              className="text-lg md:text-xl text-gray-700 mb-10 font-light"
+              className={`text-lg md:text-xl mb-10 font-light ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               Leading Kenya's digital transformation with cutting-edge fibre solutions
             </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4"
-            >
-              <motion.a 
-                href="#contact" 
-                className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light}`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Contact Us
-              </motion.a>
-              <motion.button 
-                onClick={handleServicesClick}
-                className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light}`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Our Services
-              </motion.button>
-            </motion.div>
+            {/* Removed Contact Us and Services buttons as requested */}
           </div>
         </div>
       </section>
@@ -586,7 +595,7 @@ const About = () => {
         </section>
       )}
 
-      {/* Portfolio Section */}
+      {/* Portfolio Section - Completely Redesigned */}
       {activeTab === 'portfolio' && (
         <section className={`py-12 md:py-16 transition-colors duration-300 ${
           darkMode ? 'bg-gray-900' : 'bg-white'
@@ -642,31 +651,42 @@ const About = () => {
               </div>
             ) : (
               <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
               >
-                {portfolioItems.map((item) => (
+                {portfolioItems.map((item, index) => (
                   <motion.div
                     key={item._id}
-                    className={`rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-105 hover:shadow-xl ${
-                      darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                    }`}
-                    variants={itemVariants}
+                    className={`group relative overflow-hidden rounded-2xl transition-all duration-500 transform hover:scale-105 ${
+                      darkMode 
+                        ? 'bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700' 
+                        : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200'
+                    } shadow-lg hover:shadow-2xl`}
+                    variants={portfolioCardVariants}
+                    custom={index}
+                    whileHover={{ 
+                      y: -8,
+                      transition: { duration: 0.3 }
+                    }}
+                    onClick={() => handlePortfolioClick(item)}
                   >
-                    {/* Image Container */}
-                    <div className="relative overflow-hidden h-56 md:h-64">
+                    {/* Image Container with Overlay */}
+                    <div className="relative overflow-hidden h-64">
                       {item.imageUrl ? (
-                        <img 
-                          src={item.imageUrl} 
-                          alt={item.title}
-                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                          onError={(e) => {
-                            e.target.src = '/placeholder.jpg';
-                            e.target.onerror = null;
-                          }}
-                        />
+                        <>
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            onError={(e) => {
+                              e.target.src = '/placeholder.jpg';
+                              e.target.onerror = null;
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </>
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
                           <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -674,54 +694,80 @@ const About = () => {
                           </svg>
                         </div>
                       )}
+                      
+                      {/* Hover Overlay Content */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="text-center p-4">
+                          <motion.button 
+                            className="bg-[#d0b216] text-white px-6 py-2 rounded-full font-semibold shadow-lg transform hover:scale-110 transition-transform duration-200"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            View Project
+                          </motion.button>
+                        </div>
+                      </div>
+
                       {/* Category Badge */}
                       <div className="absolute top-4 right-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
                           darkMode 
-                            ? 'bg-[#182b5c] text-white' 
-                            : 'bg-[#182b5c] text-white'
+                            ? 'bg-black/50 text-[#d0b216]' 
+                            : 'bg-white/90 text-[#182b5c]'
                         }`}>
                           {item.category || 'General'}
                         </span>
                       </div>
+
+                      {/* Alternating Layout Indicator */}
+                      <div className={`absolute bottom-4 left-4 w-8 h-1 rounded-full ${
+                        index % 3 === 0 ? 'bg-[#d0b216]' : 
+                        index % 3 === 1 ? 'bg-[#182b5c]' : 
+                        'bg-gradient-to-r from-[#d0b216] to-[#182b5c]'
+                      }`}></div>
                     </div>
                     
                     {/* Content Container */}
-                    <div className="p-5 md:p-6">
-                      <h3 className={`text-lg md:text-xl font-bold mb-3 line-clamp-2 ${
-                        darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
+                    <div className="p-6">
+                      <h3 className={`text-lg font-bold mb-3 line-clamp-2 group-hover:text-[#d0b216] transition-colors duration-300 ${
+                        darkMode ? 'text-white' : 'text-gray-900'
                       }`}>
                         {item.title}
                       </h3>
                       
                       {/* Description */}
-                      <p className={`mb-4 text-sm md:text-base leading-relaxed line-clamp-3 ${
-                        darkMode ? 'text-gray-300' : 'text-gray-700'
+                      <p className={`mb-4 text-sm leading-relaxed line-clamp-3 ${
+                        darkMode ? 'text-gray-400' : 'text-gray-600'
                       }`}>
                         {item.description || item.content || 'No description available for this portfolio item.'}
                       </p>
                       
                       {/* Meta Info */}
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                         <span className={`text-xs font-medium ${
-                          darkMode ? 'text-gray-400' : 'text-gray-500'
+                          darkMode ? 'text-gray-500' : 'text-gray-400'
                         }`}>
                           {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
                            item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
                         </span>
                         
                         {/* View Details Button */}
-                        <button 
-                          className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors duration-300 ${
+                        <motion.button 
+                          className={`text-xs font-medium px-4 py-2 rounded-full transition-all duration-300 ${
                             darkMode 
-                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white' 
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                              ? 'bg-gray-700 text-gray-300 hover:bg-[#d0b216] hover:text-white' 
+                              : 'bg-gray-100 text-gray-700 hover:bg-[#182b5c] hover:text-white'
                           }`}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          View Details
-                        </button>
+                          Learn More
+                        </motion.button>
                       </div>
                     </div>
+
+                    {/* Gradient Border Effect on Hover */}
+                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r from-[#d0b216] to-[#182b5c] opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none`}></div>
                   </motion.div>
                 ))}
               </motion.div>
@@ -729,49 +775,160 @@ const About = () => {
             
             {/* Portfolio Stats Section */}
             {portfolioItems.length > 0 && (
-              <div className="mt-12 md:mt-16">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-                  <div className={`p-5 rounded-xl ${
-                    darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                  } text-center`}>
-                    <div className="text-2xl md:text-3xl font-bold text-[#d0b216] mb-2">
+              <div className="mt-16 md:mt-20">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
+                  <motion.div 
+                    className={`p-6 rounded-2xl text-center backdrop-blur-sm ${
+                      darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/80 border border-gray-200'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="text-3xl md:text-4xl font-bold text-[#d0b216] mb-2">
                       {portfolioItems.length}
                     </div>
-                    <div className={`text-sm md:text-base ${
+                    <div className={`text-sm md:text-base font-medium ${
                       darkMode ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       Total Projects
                     </div>
-                  </div>
-                  <div className={`p-5 rounded-xl ${
-                    darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                  } text-center`}>
-                    <div className="text-2xl md:text-3xl font-bold text-[#d0b216] mb-2">
+                  </motion.div>
+                  <motion.div 
+                    className={`p-6 rounded-2xl text-center backdrop-blur-sm ${
+                      darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/80 border border-gray-200'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
+                  >
+                    <div className="text-3xl md:text-4xl font-bold text-[#d0b216] mb-2">
                       {new Set(portfolioItems.map(item => item.category)).size}
                     </div>
-                    <div className={`text-sm md:text-base ${
+                    <div className={`text-sm md:text-base font-medium ${
                       darkMode ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       Categories
                     </div>
-                  </div>
-                  <div className={`p-5 rounded-xl ${
-                    darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                  } text-center`}>
-                    <div className="text-2xl md:text-3xl font-bold text-[#d0b216] mb-2">
+                  </motion.div>
+                  <motion.div 
+                    className={`p-6 rounded-2xl text-center backdrop-blur-sm ${
+                      darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/80 border border-gray-200'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 300, delay: 0.2 }}
+                  >
+                    <div className="text-3xl md:text-4xl font-bold text-[#d0b216] mb-2">
                       {Math.floor(Math.random() * 50) + 10}+
                     </div>
-                    <div className={`text-sm md:text-base ${
+                    <div className={`text-sm md:text-base font-medium ${
                       darkMode ? 'text-gray-300' : 'text-gray-700'
                     }`}>
                       Happy Clients
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </div>
             )}
           </div>
         </section>
+      )}
+
+      {/* Portfolio Modal */}
+      {selectedPortfolioItem && (
+        <motion.div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={handleCloseModal}
+        >
+          <motion.div 
+            className={`max-w-2xl w-full rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto ${
+              darkMode ? 'bg-gray-900' : 'bg-white'
+            }`}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="relative h-64 md:h-80">
+              {selectedPortfolioItem.imageUrl ? (
+                <img 
+                  src={selectedPortfolioItem.imageUrl} 
+                  alt={selectedPortfolioItem.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                  <svg className="w-20 h-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+              )}
+              <button 
+                onClick={handleCloseModal}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-6 md:p-8">
+              <h3 className={`text-2xl font-bold mb-4 ${
+                darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
+              }`}>
+                {selectedPortfolioItem.title}
+              </h3>
+              
+              <div className="flex items-center gap-4 mb-6">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  darkMode ? 'bg-gray-800 text-[#d0b216]' : 'bg-gray-100 text-[#182b5c]'
+                }`}>
+                  {selectedPortfolioItem.category || 'General'}
+                </span>
+                <span className={`text-sm ${
+                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  {selectedPortfolioItem.publishedAt ? new Date(selectedPortfolioItem.publishedAt).toLocaleDateString() : 
+                   selectedPortfolioItem.uploadedAt ? new Date(selectedPortfolioItem.uploadedAt).toLocaleDateString() : 'Date not available'}
+                </span>
+              </div>
+              
+              <p className={`leading-relaxed ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {selectedPortfolioItem.description || selectedPortfolioItem.content || 'No description available for this portfolio item.'}
+              </p>
+              
+              <div className="mt-8 flex gap-4">
+                <motion.button 
+                  className={`flex-1 py-3 rounded-full font-semibold transition-colors ${
+                    darkMode 
+                      ? 'bg-[#182b5c] text-white hover:bg-[#0f1f45]' 
+                      : 'bg-[#182b5c] text-white hover:bg-[#0f1f45]'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Contact About Project
+                </motion.button>
+                <motion.button 
+                  onClick={handleCloseModal}
+                  className={`px-6 py-3 rounded-full font-semibold border transition-colors ${
+                    darkMode 
+                      ? 'border-gray-600 text-gray-300 hover:border-[#d0b216] hover:text-[#d0b216]' 
+                      : 'border-gray-300 text-gray-700 hover:border-[#182b5c] hover:text-[#182b5c]'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Close
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );

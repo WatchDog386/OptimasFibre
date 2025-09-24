@@ -23,20 +23,29 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
-  RefreshCw
+  RefreshCw,
+  Database,
+  Server,
+  Shield,
+  Activity,
+  HardDrive,
+  Clock,
+  Zap,
+  TrendingUp,
+  Users
 } from 'lucide-react';
 
 // ✅ COMPACT BUTTON STYLES — NO ICONS, NATURAL WIDTH
 const BUTTON_STYLES = {
   primary: {
     base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
-    light: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border border-transparent',
-    dark: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border border-transparent',
+    light: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
+    dark: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
   },
   secondary: {
     base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
-    light: 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 hover:border-gray-300',
-    dark: 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-700 hover:border-gray-600',
+    light: 'bg-[#FFCC00] hover:bg-[#E6B800] text-[#003366] font-bold border border-transparent',
+    dark: 'bg-[#FFCC00] hover:bg-[#E6B800] text-[#003366] font-bold border border-transparent',
   },
   danger: {
     base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
@@ -45,8 +54,8 @@ const BUTTON_STYLES = {
   },
   small: {
     base: 'py-1.5 px-3.5 rounded-lg font-medium text-xs transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow',
-    light: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border border-transparent',
-    dark: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border border-transparent',
+    light: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
+    dark: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
   }
 };
 
@@ -91,9 +100,16 @@ const Dashboard = () => {
 
   const API_BASE_URL = getApiBaseUrl();
 
-  // Show notification
+  // Show notification with emojis
   const showNotification = (message, type = 'info') => {
-    setNotification({ show: true, message, type });
+    let emoji = 'ℹ️';
+    if (type === 'success') emoji = '✅';
+    else if (type === 'error') emoji = '🚨';
+    else if (message.includes('Welcome')) emoji = '👋';
+    else if (message.includes('Publish') || message.includes('created') || message.includes('updated')) emoji = '📤';
+    else if (message.includes('wait') || message.includes('Loading')) emoji = '⏳';
+
+    setNotification({ show: true, message: `${emoji} ${message}`, type });
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'info' });
     }, 5000);
@@ -108,8 +124,8 @@ const Dashboard = () => {
     text: darkMode ? 'text-gray-100' : 'text-gray-800',
     card: darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
     input: darkMode 
-      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500' 
-      : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500 focus:border-blue-500',
+      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#003366]' 
+      : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500 focus:border-[#003366]',
     button: BUTTON_STYLES
   };
 
@@ -123,11 +139,9 @@ const Dashboard = () => {
         if (!token) {
           throw new Error('Authentication session expired. Please log in again.');
         }
-
         const headers = {
           'Authorization': `Bearer ${token}`
         };
-
         // Fetch blog posts
         const blogRes = await fetch(`${API_BASE_URL}/api/blog`, { headers });
         if (!blogRes.ok) {
@@ -135,7 +149,6 @@ const Dashboard = () => {
         }
         const blogResponse = await blogRes.json();
         setBlogPosts(blogResponse.data || []);
-
         // ✅ FIXED: Fetch portfolio items with better error handling and data structure
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
@@ -150,7 +163,6 @@ const Dashboard = () => {
             : (portfolioResponse.data || portfolioResponse.items || []);
           setPortfolioItems(portfolioData);
         }
-
         // Fetch settings
         const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
         if (settingsRes.ok) {
@@ -170,7 +182,6 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [API_BASE_URL]);
 
@@ -265,7 +276,6 @@ const Dashboard = () => {
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
-
       if (!formData.title?.trim()) {
         throw new Error('Title is required');
       }
@@ -275,7 +285,6 @@ const Dashboard = () => {
       if (!formData.category?.trim()) {
         throw new Error('Category is required');
       }
-
       // ✅ BUILD CONSISTENT PAYLOAD - Use same structure as blog
       const payload = {
         title: formData.title.trim(),
@@ -285,14 +294,12 @@ const Dashboard = () => {
         content: formData.content.trim(),
         description: formData.content.trim() // Include both for compatibility
       };
-
       // Remove empty fields
       Object.keys(payload).forEach(key => {
         if (payload[key] === '' || payload[key] == null) {
           delete payload[key];
         }
       });
-
       if (activeTab === 'blog') {
         endpoint = `${API_BASE_URL}/api/blog`;
         if (isEditing && editingItem && editingItem._id) {
@@ -304,7 +311,6 @@ const Dashboard = () => {
           endpoint = `${endpoint}/${editingItem._id}`;
         }
       }
-
       const method = isEditing && editingItem && editingItem._id ? 'PUT' : 'POST';
       const res = await fetch(endpoint, {
         method: method,
@@ -314,13 +320,10 @@ const Dashboard = () => {
         },
         body: JSON.stringify(payload)
       });
-
       const responseData = await res.json();
-      
       if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
-
       // ✅ FIXED: Proper state update for portfolio items
       if (activeTab === 'blog') {
         if (isEditing) {
@@ -341,7 +344,6 @@ const Dashboard = () => {
           setPortfolioItems(prev => [...prev, newItem]);
         }
       }
-
       // Reset form
       setFormData({
         title: '',
@@ -353,7 +355,6 @@ const Dashboard = () => {
       setEditingItem(null);
       setIsEditing(false);
       setUploadMethod('url');
-      
       showNotification(
         `${activeTab === 'blog' ? 'Blog post' : 'Portfolio item'} ${isEditing ? 'updated' : 'created'} successfully!`, 
         'success'
@@ -390,14 +391,12 @@ const Dashboard = () => {
       const endpoint = type === 'blog' 
         ? `${API_BASE_URL}/api/blog/${id}` 
         : `${API_BASE_URL}/api/portfolio/${id}`;
-      
       const res = await fetch(endpoint, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
       const responseData = await res.json();
       if (res.ok) {
         if (type === 'blog') {
@@ -434,11 +433,10 @@ const Dashboard = () => {
     if (loading && activeTab === 'dashboard') {
       return (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-t-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-t-2 border-[#003366]"></div>
         </div>
       );
     }
-
     if (error && activeTab === 'dashboard') {
       return (
         <div className={`p-6 mb-6 rounded-xl ${darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-200'} backdrop-blur-sm`}>
@@ -459,7 +457,6 @@ const Dashboard = () => {
         </div>
       );
     }
-
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -546,19 +543,14 @@ const Dashboard = () => {
 
   return (
     <div className={`flex h-screen ${themeClasses.background} ${themeClasses.text} transition-colors duration-300`}>
-      {/* Notification System */}
+      {/* Notification System with Emojis */}
       {notification.show && (
         <div className="fixed top-4 right-4 z-50 max-w-md">
           <div className={`rounded-lg shadow-lg transform transition-all duration-300 ${
-            notification.type === 'success' ? 'bg-green-500' : 
-            notification.type === 'error' ? 'bg-red-500' : 
-            notification.type === 'info' ? 'bg-blue-500' : 'bg-gray-500'
+            notification.type === 'success' ? 'bg-green-600' : 
+            notification.type === 'error' ? 'bg-red-600' : 
+            notification.type === 'info' ? 'bg-blue-600' : 'bg-gray-600'
           } text-white p-4 flex items-start animate-fade-in`}>
-            <div className="flex-shrink-0">
-              {notification.type === 'success' && <CheckCircle className="h-5 w-5" />}
-              {notification.type === 'error' && <AlertCircle className="h-5 w-5" />}
-              {notification.type === 'info' && <Info className="h-5 w-5" />}
-            </div>
             <div className="ml-3">
               <p className="text-sm font-medium">{notification.message}</p>
             </div>
@@ -571,7 +563,6 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div 
@@ -579,15 +570,14 @@ const Dashboard = () => {
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
-
       {/* Sidebar */}
       <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
         <div className="p-5 border-b border-gray-200 flex justify-between items-center">
           <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${darkMode ? 'bg-blue-600' : 'bg-blue-100'}`}>
-              <BarChart3 className={`w-5 h-5 ${darkMode ? 'text-white' : 'text-blue-600'}`} />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-[#003366]`}>
+              <BarChart3 className="w-5 h-5 text-white" />
             </div>
-            <h1 className={`text-lg font-bold ml-2 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Admin Panel</h1>
+            <h1 className="text-lg font-bold ml-2 text-[#003366]">Admin Panel</h1>
           </div>
           <button 
             onClick={() => setSidebarOpen(false)}
@@ -634,8 +624,8 @@ const Dashboard = () => {
               darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
             }`}
           >
-            <div className={`p-1.5 rounded-md mr-2 ${darkMode ? 'bg-green-900/50' : 'bg-green-100'}`}>
-              <Plus size={16} className={`text-green-500`} />
+            <div className={`p-1.5 rounded-md mr-2 bg-[#003366]/10`}>
+              <Plus size={16} className="text-[#003366]" />
             </div>
             New Blog Post
           </button>
@@ -645,8 +635,8 @@ const Dashboard = () => {
               darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
             }`}
           >
-            <div className={`p-1.5 rounded-md mr-2 ${darkMode ? 'bg-blue-900/50' : 'bg-blue-100'}`}>
-              <Plus size={16} className={`text-blue-500`} />
+            <div className={`p-1.5 rounded-md mr-2 bg-[#FFCC00]/20`}>
+              <Plus size={16} className="text-[#003366]" />
             </div>
             New Portfolio Item
           </button>
@@ -664,7 +654,6 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
@@ -672,7 +661,7 @@ const Dashboard = () => {
             <button onClick={() => setSidebarOpen(true)} className="md:hidden mr-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <Menu size={22} className={themeClasses.text} />
             </button>
-            <h2 className="text-xl md:text-2xl font-bold capitalize bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{activeTab}</h2>
+            <h2 className="text-xl md:text-2xl font-bold capitalize bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">{activeTab}</h2>
           </div>
           <div className="flex items-center space-x-3">
             <div className="relative hidden md:block">
@@ -680,7 +669,7 @@ const Dashboard = () => {
               <input 
                 type="text" 
                 placeholder="Search..." 
-                className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`}
+                className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003366] focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`}
               />
             </div>
             {/* Theme Toggle Button */}
@@ -694,9 +683,7 @@ const Dashboard = () => {
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <div className="flex items-center space-x-3">
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${
-                darkMode ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-100 text-blue-800 shadow'
-              }`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm bg-[#003366] text-white shadow`}>
                 <User size={18} />
               </div>
               <div className="hidden md:block">
@@ -720,11 +707,11 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
     onClick={onClick}
     className={`flex items-center w-full p-3 text-sm rounded-xl transition-all duration-200 font-medium ${
       active 
-        ? (darkMode ? 'bg-blue-900/50 text-white shadow-lg border border-blue-800/30' : 'bg-blue-50 text-blue-800 shadow-md border border-blue-200') 
+        ? (darkMode ? 'bg-[#003366]/20 text-white shadow-lg border border-[#003366]/30' : 'bg-[#003366]/10 text-[#003366] shadow-md border border-[#003366]/20') 
         : (darkMode ? 'text-gray-300 hover:bg-gray-700/70 hover:text-white hover:shadow' : 'text-gray-700 hover:bg-gray-100 hover:shadow hover:border hover:border-gray-200')
     }`}
   >
-    <span className={`p-1.5 rounded-md mr-3 ${active ? (darkMode ? 'bg-blue-800/50' : 'bg-blue-100') : (darkMode ? 'bg-gray-700/50' : 'bg-gray-100')}`}>
+    <span className={`p-1.5 rounded-md mr-3 ${active ? (darkMode ? 'bg-[#003366]/30' : 'bg-[#003366]/20') : (darkMode ? 'bg-gray-700/50' : 'bg-gray-100')}`}>
       {icon}
     </span>
     {text}
@@ -745,7 +732,7 @@ const DashboardOverview = ({
   <div>
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dashboard Overview</h2>
+        <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Dashboard Overview</h2>
         <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Welcome back! Here's what's happening with your content.</p>
       </div>
       <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
@@ -758,9 +745,7 @@ const DashboardOverview = ({
         </button>
         <button 
           onClick={() => { setIsEditing(true); setActiveTab('portfolio'); }}
-          className={`py-1.5 px-3.5 rounded-lg font-medium text-xs transition-all duration-200 whitespace-nowrap shadow-md hover:shadow-lg ${
-            darkMode ? 'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white' : 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white'
-          }`}
+          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}
         >
           <Plus size={16} className="mr-1.5" />
           <span>New Portfolio</span>
@@ -781,7 +766,7 @@ const DashboardOverview = ({
         value={portfolioItems.length} 
         change={`${portfolioItems.length} published`} 
         icon={<Image size={20} />}
-        color="green"
+        color="gold"
         darkMode={darkMode}
       />
       <StatCard 
@@ -830,19 +815,18 @@ const DashboardOverview = ({
 const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   const colorClasses = {
     blue: darkMode ? 'bg-blue-900/20 border-blue-800/30' : 'bg-blue-50 border-blue-200',
-    green: darkMode ? 'bg-green-900/20 border-green-800/30' : 'bg-green-50 border-green-200',
+    gold: darkMode ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200',
     yellow: darkMode ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200',
     purple: darkMode ? 'bg-purple-900/20 border-purple-800/30' : 'bg-purple-50 border-purple-200'
   };
   const iconColor = {
     blue: 'text-blue-500',
-    green: 'text-green-500',
+    gold: 'text-[#FFCC00]',
     yellow: 'text-yellow-500',
     purple: 'text-purple-500'
   };
   const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
   const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
-
   return (
     <div className={`${colorClasses[color]} p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105`}>
       <div className="flex items-center justify-between">
@@ -863,76 +847,69 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
 const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete, type }) => (
   <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
     <div className="flex justify-between items-center mb-4">
-      <h3 className={`text-lg font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{title}</h3>
-      <a href={viewAllLink} className={`text-sm font-medium hover:underline transition-colors ${
-        darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
-      }`}>
+      <h3 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{title}</h3>
+      <a href={viewAllLink} className={`text-sm font-medium transition-colors ${darkMode ? 'text-[#FFCC00] hover:text-yellow-300' : 'text-[#003366] hover:text-blue-800'}`}>
         View All
       </a>
     </div>
-    <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-      {items.length === 0 ? (
-        <div className={`text-center py-8 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-          <div className={`inline-flex p-3 rounded-full mb-3 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
-            <FileText className={`w-6 h-6 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-          </div>
-          <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>No items yet</p>
-          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Create your first item to get started!</p>
-        </div>
-      ) : (
-        items.map((item) => (
-          <div key={item._id} className={`flex items-center p-3 rounded-lg border transition-all duration-200 ${
-            darkMode ? 'border-gray-700 hover:bg-gray-700/50 hover:shadow' : 'border-gray-100 hover:bg-gray-50 hover:shadow'
-          }`}>
-            <div className="flex-shrink-0">
+    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+      {items.map(item => (
+        <li key={item._id} className="py-3 flex justify-between items-center">
+          <div className="flex items-center">
+            {item.imageUrl && (
               <img 
-                src={item.imageUrl || '/placeholder-image.jpg'} 
+                src={item.imageUrl} 
                 alt={item.title} 
-                className="w-12 h-12 object-cover rounded-lg border border-gray-300 shadow-sm" 
-                onError={(e) => { e.target.src = '/placeholder-image.jpg'; e.target.onerror = null; }} 
+                className="w-12 h-12 object-cover rounded-md mr-3 flex-shrink-0" 
+                onError={(e) => {
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UzZTdlOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiM2NTc1ODI5Ij5OTyBJTUFHRTwvdGV4dD48L3N2Zz4=';
+                }}
               />
-            </div>
-            <div className="ml-4 flex-grow min-w-0">
-              <h4 className={`font-medium text-sm ${darkMode ? 'text-gray-100' : 'text-gray-900'} truncate`}>{item.title}</h4>
+            )}
+            <div>
+              <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>{item.title}</h4>
               <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {item.category || 'General'} • {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
+                {new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
               </p>
             </div>
-            <div className="flex-shrink-0 ml-3 flex space-x-1">
-              <button 
-                onClick={() => onEdit(item)}
-                className={`p-2 rounded-lg text-blue-600 hover:bg-blue-100 transition-colors ${darkMode ? 'text-blue-400 hover:bg-blue-900/30' : ''}`}
-                title="Edit"
-              >
-                <Edit size={16} />
-              </button>
-              <button 
-                onClick={() => onDelete(item._id, type)}
-                className={`p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/30' : ''}`}
-                title="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
           </div>
-        ))
+          <div className="flex space-x-2 flex-shrink-0">
+            <button 
+              onClick={() => onEdit(item)}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-[#003366] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Edit size={16} />
+            </button>
+            <button
+              onClick={() => onDelete(item._id, type)}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        </li>
+      ))}
+      {items.length === 0 && (
+        <li className="py-3 text-center text-sm text-gray-500 dark:text-gray-400">
+          No recent items.
+        </li>
       )}
-    </div>
+    </ul>
   </div>
 );
 
-// Content Manager Component (for both Blog and Portfolio)
-const ContentManager = ({ 
-  title, 
-  items, 
-  onEdit, 
-  onDelete, 
-  formData, 
-  onInputChange, 
+// Content Manager Component
+const ContentManager = ({
+  title,
+  items,
+  onEdit,
+  onDelete,
+  formData,
+  onInputChange,
   onImageChange,
   onImageUrlChange,
-  onSave, 
-  onCancel, 
+  onSave,
+  onCancel,
   isEditing,
   uploadMethod,
   setUploadMethod,
@@ -941,418 +918,347 @@ const ContentManager = ({
   error,
   contentType
 }) => {
+  const isPortfolio = contentType === 'portfolio';
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold mb-2">{isEditing ? 'Edit' : 'Manage'} {title}</h2>
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            {isEditing ? `Edit your ${title.slice(0, -1).toLowerCase()}` : `Manage all your ${title.toLowerCase()}`}
-          </p>
-        </div>
-        {!isEditing && (
+        <h2 className="text-2xl font-bold capitalize bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">{isEditing ? `Edit ${isPortfolio ? 'Portfolio Item' : 'Blog Post'}` : `Create New ${isPortfolio ? 'Portfolio Item' : 'Blog Post'}`}</h2>
+        {isEditing && (
           <button 
-            onClick={() => onEdit({})}
-            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg mt-4 md:mt-0`}
+            onClick={onCancel}
+            className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light} mt-4 md:mt-0`}
           >
-            <Plus size={16} className="mr-1.5" />
-            Add New {title.slice(0, -1)}
+            <X size={16} className="inline-block mr-1.5" />
+            Cancel Edit
           </button>
         )}
       </div>
-
-      {error && (
-        <div className={`p-4 mb-6 rounded-xl ${darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-200'} backdrop-blur-sm animate-fade-in`}>
-          <div className="flex items-start">
-            <AlertCircle className={`w-5 h-5 mr-3 flex-shrink-0 ${darkMode ? 'text-red-400' : 'text-red-500'} mt-0.5`} />
-            <div>
-              <h3 className={`text-sm font-medium ${darkMode ? 'text-red-200' : 'text-red-800'}`}>Error</h3>
-              <p className={`mt-1 text-sm ${darkMode ? 'text-red-300' : 'text-red-700'}`}>{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isEditing ? (
-        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm mb-6 border backdrop-blur-sm`}>
-          <h3 className={`text-xl font-semibold mb-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            {formData.id ? 'Edit' : 'Create New'} {title.slice(0, -1)}
-          </h3>
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Title *</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title ?? ''}
-                  onChange={onInputChange}
-                  className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                  placeholder="Enter title"
-                  required
-                />
-              </div>
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Category *</label>
-                <input
-                  type="text"
-                  name="category"
-                  value={formData.category ?? ''}
-                  onChange={onInputChange}
-                  className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                  placeholder="Enter category"
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                {contentType === 'portfolio' ? 'Description *' : 'Content *'}
-              </label>
-              <textarea
-                name="content"
-                value={formData.content ?? ''}
-                onChange={onInputChange}
-                rows="6"
-                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                placeholder={contentType === 'portfolio' ? 'Enter description for your portfolio item' : 'Enter content for your blog post'}
-                required
-              ></textarea>
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Featured Image</label>
-              {/* Upload Method Selector */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <button
-                  type="button"
-                  onClick={() => setUploadMethod('url')}
-                  className={`px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
-                    uploadMethod === 'url' 
-                      ? `${BUTTON_STYLES.primary.light} ${BUTTON_STYLES.primary.base}` 
-                      : `${BUTTON_STYLES.secondary.light} ${BUTTON_STYLES.secondary.base}`
-                  }`}
-                >
-                  <Link size={14} className="mr-2" />
-                  Image URL
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUploadMethod('upload')}
-                  className={`px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
-                    uploadMethod === 'upload' 
-                      ? `${BUTTON_STYLES.primary.light} ${BUTTON_STYLES.primary.base}` 
-                      : `${BUTTON_STYLES.secondary.light} ${BUTTON_STYLES.secondary.base}`
-                  }`}
-                >
-                  <Upload size={14} className="mr-2" />
-                  Upload File
-                </button>
-              </div>
-              {/* URL Input */}
-              {uploadMethod === 'url' && (
-                <div className="space-y-2">
-                  <input
-                    type="url"
-                    value={formData.imageUrl ?? ''}
-                    onChange={(e) => onImageUrlChange(e.target.value)}
-                    className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Enter a direct image URL (JPEG, PNG, GIF, or WEBP)</p>
-                </div>
-              )}
-              {/* File Upload */}
-              {uploadMethod === 'upload' && (
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => onImageChange(e.target.files[0])}
-                    className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                  />
-                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Max file size: 5MB • Supported formats: JPEG, PNG, GIF, WEBP</p>
-                </div>
-              )}
-              {/* Image Preview */}
-              {(formData.imageUrl || formData.image) && (
-                <div className={`mt-4 p-4 rounded-xl border ${darkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-                  <h4 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Image Preview</h4>
-                  <div className="relative group overflow-hidden rounded-lg border border-gray-300">
-                    <img 
-                      src={formData.imageUrl || URL.createObjectURL(formData.image)} 
-                      alt="Preview" 
-                      className="w-full h-auto max-h-64 object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => { e.target.style.display = 'none'; }} 
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
-                      <Eye className="text-white" size={24} />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row justify-end space-y-3 md:space-y-0 md:space-x-3 pt-6 border-t border-gray-200 mt-6">
-            <button 
-              onClick={onCancel}
-              className={`px-5 py-2.5 text-sm rounded-xl transition-all duration-200 ${
-                darkMode ? 'border border-gray-600 text-gray-300 hover:bg-gray-700 hover:shadow' : 'border border-gray-300 text-gray-700 hover:bg-gray-100 hover:shadow'
-              }`}
-            >
-              Cancel
-            </button>
-            <button 
-              onClick={onSave}
-              disabled={!formData.title || !formData.content || !formData.category}
-              className={`px-5 py-2.5 text-sm rounded-xl transition-all duration-200 ${
-                !formData.title || !formData.content || !formData.category 
-                  ? 'bg-gray-400 cursor-not-allowed opacity-70' 
-                  : `${BUTTON_STYLES.primary.light} ${BUTTON_STYLES.primary.base} hover:shadow-lg transform hover:-translate-y-0.5`
-              }`}
-            >
-              <Save size={16} className="mr-1.5 inline" />
-              {formData.id ? 'Update' : 'Save'} {title.slice(0, -1)}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      <div className={`${themeClasses.card} rounded-xl shadow-sm overflow-hidden border backdrop-blur-sm`}>
-        {items.length === 0 ? (
-          <div className={`p-12 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            <div className={`inline-flex p-4 rounded-full mb-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-              <FileText className={`w-8 h-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-            </div>
-            <h3 className={`text-lg font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>No {title.toLowerCase()} yet</h3>
-            <p className="mb-6">Get started by creating your first content item.</p>
-            <button 
-              onClick={() => onEdit({})}
-              className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center mx-auto`}
-            >
-              <Plus size={16} className="mr-1.5" />
-              Create New {title.slice(0, -1)}
-            </button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            {/* Mobile: Card Grid | Desktop: Table */}
-            <div className="md:hidden space-y-4 p-4">
-              {items.map((item, index) => (
-                <div key={item._id} className={`p-4 rounded-xl border transition-all duration-200 ${
-                  darkMode ? 'bg-gray-700/50 border-gray-600 hover:bg-gray-600/70 hover:shadow-lg' : 'bg-white border-gray-200 hover:bg-gray-50 hover:shadow-lg'
-                }`}>
-                  <div className="flex items-start">
-                    <img 
-                      src={item.imageUrl || '/placeholder-image.jpg'} 
-                      alt={item.title} 
-                      className="w-16 h-16 object-cover rounded-lg border border-gray-300 shadow-sm"
-                      onError={(e) => { e.target.src = '/placeholder-image.jpg'; e.target.onerror = null; }} 
-                    />
-                    <div className="ml-4 flex-grow">
-                      <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'} truncate`}>{item.title}</div>
-                      <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
-                        {item.category || 'General'} • {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
-                         item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
-                      </div>
-                    </div>
-                    <div className="flex space-x-2 ml-3">
-                      <button 
-                        onClick={() => onEdit(item)}
-                        className={`p-2 rounded-lg text-blue-600 hover:bg-blue-100 transition-colors ${darkMode ? 'text-blue-400 hover:bg-blue-900/30' : ''}`}
-                        title="Edit"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button 
-                        onClick={() => onDelete(item._id, title.toLowerCase().includes('blog') ? 'blog' : 'portfolio')}
-                        className={`p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/30' : ''}`}
-                        title="Delete"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Desktop Table */}
-            <div className="hidden md:block">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className={darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Image</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Title</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Date</th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                    {items.map((item, index) => (
-                      <tr key={item._id} className={`${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition-colors duration-150`}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <img 
-                            src={item.imageUrl || '/placeholder-image.jpg'} 
-                            alt={item.title} 
-                            className="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm"
-                            onError={(e) => { e.target.src = '/placeholder-image.jpg'; e.target.onerror = null; }} 
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item.title}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>{item.category || 'General'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-                            {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
-                             item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end space-x-2">
-                            <button 
-                              onClick={() => onEdit(item)}
-                              className={`p-2 rounded-lg text-blue-600 hover:bg-blue-100 transition-colors ${darkMode ? 'text-blue-400 hover:bg-blue-900/30' : ''}`}
-                              title="Edit"
-                            >
-                              <Edit size={18} />
-                            </button>
-                            <button 
-                              onClick={() => onDelete(item._id, title.toLowerCase().includes('blog') ? 'blog' : 'portfolio')}
-                              className={`p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/30' : ''}`}
-                              title="Delete"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Settings Panel Component
-const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => {
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">System Settings</h2>
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Configure your admin panel preferences and site settings</p>
-        </div>
-        <button 
-          onClick={saveSettings}
-          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
-        >
-          <Save size={16} className="mr-1.5" />
-          Save Changes
-        </button>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Site Settings Card */}
-        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
-          <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            <Globe size={20} className="mr-2" />
-            Site Configuration
-          </h3>
-          <div className="space-y-5">
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Site Title</label>
-              <input
-                type="text"
-                name="siteTitle"
-                value={settingsData.siteTitle}
-                onChange={handleSettingsChange}
-                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                placeholder="Your Site Title"
-              />
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Admin Email</label>
-              <input
-                type="email"
-                name="adminEmail"
-                value={settingsData.adminEmail}
-                onChange={handleSettingsChange}
-                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
-                placeholder="admin@yoursite.com"
-              />
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Default Language</label>
-              <select
-                name="language"
-                value={settingsData.language}
-                onChange={handleSettingsChange}
-                className={`w-full p-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${themeClasses.input}`}
+      {/* Content Form */}
+      <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border mb-8 backdrop-blur-sm`}>
+        <div className="space-y-6">
+          <InputGroup 
+            label="Title"
+            name="title"
+            value={formData.title}
+            onChange={onInputChange}
+            placeholder={`Enter ${isPortfolio ? 'portfolio item' : 'blog post'} title`}
+            darkMode={darkMode}
+            themeClasses={themeClasses}
+            icon={<FileText size={18} />}
+          />
+          <InputGroup
+            label="Category"
+            name="category"
+            value={formData.category}
+            onChange={onInputChange}
+            placeholder="e.g., Technology, Design, Lifestyle"
+            darkMode={darkMode}
+            themeClasses={themeClasses}
+            icon={<Globe size={18} />}
+          />
+          <div className="flex flex-col space-y-4">
+            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
+            <div className={`flex items-center space-x-4 p-2 rounded-lg ${darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gray-100 border border-gray-200'}`}>
+              <button
+                onClick={() => setUploadMethod('url')}
+                className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  uploadMethod === 'url' 
+                    ? (darkMode ? 'bg-[#003366] text-white shadow-md' : 'bg-[#003366] text-white shadow-md') 
+                    : (darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200')
+                }`}
               >
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
-              </select>
+                <Link size={16} className="inline-block mr-1.5" /> Use URL
+              </button>
+              <button
+                onClick={() => setUploadMethod('upload')}
+                className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  uploadMethod === 'upload' 
+                    ? (darkMode ? 'bg-[#003366] text-white shadow-md' : 'bg-[#003366] text-white shadow-md') 
+                    : (darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200')
+                }`}
+              >
+                <Upload size={16} className="inline-block mr-1.5" /> Upload File
+              </button>
             </div>
+            {uploadMethod === 'url' ? (
+              <div className="relative">
+                <input
+                  type="url"
+                  name="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={(e) => onImageUrlChange(e.target.value)}
+                  placeholder="Paste image URL here..."
+                  className={`w-full p-3 pl-10 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                />
+                <Link size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              </div>
+            ) : (
+              <div 
+                className={`flex justify-center items-center w-full border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-200 ${
+                  darkMode ? 'border-gray-600 hover:border-[#003366] bg-gray-700' : 'border-gray-300 hover:border-[#003366] bg-gray-50'
+                }`}
+                onClick={() => document.getElementById('file-upload').click()}
+              >
+                <input 
+                  type="file" 
+                  id="file-upload" 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={(e) => onImageChange(e.target.files[0])}
+                />
+                <div className={`flex flex-col items-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <Upload size={24} className="mb-2" />
+                  <p className="text-sm font-medium">Click or drag & drop to upload</p>
+                  <p className="text-xs">PNG, JPG, GIF up to 5MB</p>
+                </div>
+              </div>
+            )}
+            {formData.imageUrl && (
+              <div className="flex items-center space-x-3 mt-4">
+                <img src={formData.imageUrl} alt="Preview" className="w-24 h-auto rounded-lg shadow-md" />
+                <div>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Image Preview</p>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formData.image ? formData.image.name : 'Image URL'}</p>
+                </div>
+              </div>
+            )}
+          </div>
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{isPortfolio ? 'Description' : 'Content'}</label>
+            <textarea
+              name="content"
+              value={formData.content}
+              onChange={onInputChange}
+              rows="8"
+              placeholder={`Write the content for your ${isPortfolio ? 'portfolio item' : 'blog post'} here...`}
+              className={`w-full p-4 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent resize-y ${themeClasses.input}`}
+            ></textarea>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
+            {isEditing && (
+              <button
+                onClick={onCancel}
+                className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light}`}
+              >
+                <X size={16} className="inline-block mr-1.5" />
+                Cancel
+              </button>
+            )}
+            <button
+              onClick={onSave}
+              className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center justify-center`}
+            >
+              <Save size={16} className="inline-block mr-1.5" />
+              {isEditing ? `Save Changes` : `Publish ${isPortfolio ? 'Item' : 'Post'}`}
+            </button>
           </div>
         </div>
-        {/* Preferences Card */}
-        <div className={`${themeClasses.card} p-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
-          <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-            <Settings size={20} className="mr-2" />
-            User Preferences
-          </h3>
-          <div className="space-y-5">
-            <div className={`p-4 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200 bg-gray-50'}`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Email Notifications</h4>
-                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Receive notifications about system updates and important events</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="notifications"
-                    checked={settingsData.notifications}
-                    onChange={handleSettingsChange}
-                    className="sr-only peer"
-                  />
-                  <div className={`w-11 h-6 rounded-full peer ${darkMode ? 'bg-gray-700 peer-checked:bg-blue-600' : 'bg-gray-300 peer-checked:bg-blue-600'} peer-checked:after:translate-x-full peer-after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
-                </label>
-              </div>
-            </div>
-            <div className={`p-4 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200 bg-gray-50'}`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Auto Save</h4>
-                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Automatically save your changes as you work</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="autoSave"
-                    checked={settingsData.autoSave}
-                    onChange={handleSettingsChange}
-                    className="sr-only peer"
-                  />
-                  <div className={`w-11 h-6 rounded-full peer ${darkMode ? 'bg-gray-700 peer-checked:bg-blue-600' : 'bg-gray-300 peer-checked:bg-blue-600'} peer-checked:after:translate-x-full peer-after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
+      </div>
+      {/* Item List Table */}
+      <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+        Existing {isPortfolio ? 'Portfolio Items' : 'Blog Posts'}
+      </h3>
+      <div className={`${themeClasses.card} p-5 rounded-xl shadow-lg border backdrop-blur-sm overflow-x-auto`}>
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {isPortfolio ? 'Item' : 'Post'}
+              </th>
+              <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Category
+              </th>
+              <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Published
+              </th>
+              <th className={`px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan="4" className={`px-6 py-4 text-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  No {isPortfolio ? 'portfolio items' : 'blog posts'} found.
+                </td>
+              </tr>
+            ) : (
+              items.map(item => (
+                <tr key={item._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <img
+                        className="h-10 w-10 rounded-md object-cover mr-4 flex-shrink-0"
+                        src={item.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YwZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiNhYmJjZDAiPk88L3RleHQ+PC9zdmc+'}
+                        alt={item.title}
+                        onError={(e) => {
+                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwLy93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2FiYmNkMCI+TzwvdGV4dD48L3N2Zz4=';
+                          e.target.onerror = null;
+                        }}
+                      />
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</div>
+                    </div>
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap hidden md:table-cell text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {item.category || 'N/A'}
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => onEdit(item)}
+                        className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-100'} transition-colors`}
+                        aria-label="Edit"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => onDelete(item._id, contentType)}
+                        className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-100'} transition-colors`}
+                        aria-label="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 };
+
+// Settings Panel Component with System Monitoring
+const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => (
+  <div>
+    <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Site & System Settings</h2>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Site Settings */}
+      <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
+        <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Site Configuration</h3>
+        <div className="space-y-6">
+          <InputGroup
+            label="Site Title"
+            name="siteTitle"
+            value={settingsData.siteTitle}
+            onChange={handleSettingsChange}
+            placeholder="e.g., My Awesome Site"
+            darkMode={darkMode}
+            themeClasses={themeClasses}
+            icon={<Globe size={18} />}
+          />
+          <InputGroup
+            label="Admin Email"
+            name="adminEmail"
+            value={settingsData.adminEmail}
+            onChange={handleSettingsChange}
+            placeholder="contact@example.com"
+            type="email"
+            darkMode={darkMode}
+            themeClasses={themeClasses}
+            icon={<User size={18} />}
+          />
+          <div className="flex items-center justify-between">
+            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} htmlFor="notifications">
+              Enable Notifications
+              <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Receive alerts for new activity.</p>
+            </label>
+            <input
+              type="checkbox"
+              id="notifications"
+              name="notifications"
+              checked={settingsData.notifications}
+              onChange={handleSettingsChange}
+              className="h-5 w-10 rounded-full appearance-none transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 checked:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#003366] cursor-pointer"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} htmlFor="autoSave">
+              Enable Auto-Save
+              <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Automatically save your work every few minutes.</p>
+            </label>
+            <input
+              type="checkbox"
+              id="autoSave"
+              name="autoSave"
+              checked={settingsData.autoSave}
+              onChange={handleSettingsChange}
+              className="h-5 w-10 rounded-full appearance-none transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 checked:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#003366] cursor-pointer"
+            />
+          </div>
+          <div className="pt-4 flex justify-end">
+            <button
+              onClick={saveSettings}
+              className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center`}
+            >
+              <Save size={16} className="mr-1.5" />
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* System Monitoring */}
+      <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
+        <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">System Health Monitoring</h3>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Database size={20} className="text-green-500" />
+            <span className="font-medium">Database: <span className="text-green-500">Connected</span></span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <HardDrive size={20} className="text-yellow-500" />
+            <span className="font-medium">Disk Usage: <span>85% (Warning)</span></span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RefreshCw size={20} className="text-blue-500" />
+            <span className="font-medium">Last Backup: <span>3 hours ago</span></span>
+          </div>
+          <div className="flex items-center space-x-2 mt-4">
+            <Server size={20} className="text-green-500" />
+            <span className="font-medium">Server: <span className="text-green-500">Active</span></span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Activity size={20} className="text-blue-500" />
+            <span className="font-medium">API Latency: <span className="text-blue-500">25ms</span></span>
+          </div>
+          <div className="flex items-center space-x-2 mt-4">
+            <Shield size={20} className="text-green-500" />
+            <span className="font-medium">Security: <span className="text-green-500">Up to date</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Input Group Component
+const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', darkMode, themeClasses, icon }) => (
+  <div>
+    <label htmlFor={name} className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      {label}
+    </label>
+    <div className="relative">
+      <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+        {icon}
+      </div>
+      <input
+        type={type}
+        id={name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full p-3 pl-10 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+      />
+    </div>
+  </div>
+);
 
 export default Dashboard;

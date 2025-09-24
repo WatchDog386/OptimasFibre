@@ -183,7 +183,7 @@ const BlogList = () => {
               </div>
             )}
 
-            {/* Blog Posts Grid */}
+            {/* Blog Posts - Alternating Layout */}
             {loading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#182B5C]"></div>
@@ -201,11 +201,16 @@ const BlogList = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {currentPosts.map((post) => (
-                  <article key={post._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-200 dark:border-gray-700">
+              <div className="space-y-6">
+                {currentPosts.map((post, index) => (
+                  <article 
+                    key={post._id} 
+                    className={`bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-200 dark:border-gray-700 ${
+                      index % 2 === 0 ? 'flex flex-col md:flex-row' : 'flex flex-col md:flex-row-reverse'
+                    }`}
+                  >
                     {post.imageUrl && (
-                      <div className="h-36 md:h-40 overflow-hidden">
+                      <div className="md:w-2/5 h-48 md:h-auto overflow-hidden">
                         <img
                           src={post.imageUrl}
                           alt={post.title}
@@ -217,7 +222,7 @@ const BlogList = () => {
                         />
                       </div>
                     )}
-                    <div className="p-4">
+                    <div className="p-4 md:p-6 flex-1">
                       <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
                         <span className="bg-[#d0b216] text-[#182B5C] px-2 py-0.5 rounded-full text-xs font-medium">
                           {post.category || 'General'}
@@ -230,8 +235,8 @@ const BlogList = () => {
                           {post.title}
                         </Link>
                       </h2>
-                      <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-3 text-xs">
-                        {post.content.length > 120 ? post.content.substring(0, 120) + '...' : post.content}
+                      <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+                        {post.content.length > 150 ? post.content.substring(0, 150) + '...' : post.content}
                       </p>
                       <Link
                         to={`/articles/${post.slug || post._id}`}
@@ -328,7 +333,7 @@ const BlogList = () => {
               </ul>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4 border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
               <h3 className={`${RISA_STYLES.typography.h3} text-gray-800 dark:text-white mb-3`}>Recent Posts</h3>
               <ul className="space-y-3">
                 {blogPosts.slice(0, 3).map(post => (
@@ -359,23 +364,6 @@ const BlogList = () => {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-              <h3 className={`${RISA_STYLES.typography.h3} text-gray-800 dark:text-white mb-3`}>Subscribe</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-3 text-xs">
-                Stay updated with our latest articles and news.
-              </p>
-              <div className="space-y-2">
-                <input
-                  type="email"
-                  placeholder="Your email address"
-                  className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-[#d0b216] focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                />
-                <button className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light} w-full`}>
-                  Subscribe
-                </button>
-              </div>
             </div>
           </div>
         </div>
