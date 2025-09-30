@@ -83,19 +83,16 @@ export default function Navbar() {
     () => [
       { label: "Home", route: "/", id: "home" },
       { label: "About Us", route: "/about", id: "about" },
-      { label: "Services", route: "/services", id: "services" },
       { label: "Blog", route: "/blog", id: "blog" },
       { label: "WiFi Plans", route: "/wifi-plans", id: "wifi-plans" },
       { label: "Coverage", route: "/coverage", id: "coverage" },
-      { label: "FAQs", route: "/faqs", id: "faqs" },
-      { label: "Contact", route: "/contact", id: "contact" },
     ],
     []
   );
 
   const NavItem = ({ item }) => {
     return (
-      <div className="relative group mx-1">
+      <div className="relative group">
         <NavLink
           to={item.route}
           className={({ isActive }) =>
@@ -150,7 +147,7 @@ export default function Navbar() {
       } ${scrolled && "shadow-md"}`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo - PUSHED TO LEFT CORNER, NO CENTERING */}
+        {/* Logo - Left aligned */}
         <NavLink to="/" className={`${RISA_STYLES.typography.logo.container} flex-shrink-0`}>
           <img
             src="/oppo.jpg"
@@ -173,16 +170,14 @@ export default function Navbar() {
           </div>
         </NavLink>
 
-        {/* Desktop Navigation — FULL-WIDTH, SPREAD OUT */}
-        <div className="hidden lg:flex items-center justify-center flex-1 mx-6">
-          <div className="flex items-center justify-between w-full max-w-4xl">
-            {menuItems.map((item) => (
-              <NavItem key={item.id} item={item} />
-            ))}
-          </div>
+        {/* Desktop Navigation - Right aligned and closer together */}
+        <div className="hidden lg:flex items-center gap-6">
+          {menuItems.map((item) => (
+            <NavItem key={item.id} item={item} />
+          ))}
         </div>
 
-        {/* Theme Toggle + Login/Admin + Mobile Menu Button */}
+        {/* Theme Toggle + Login/Admin + Mobile Menu Button - Right aligned */}
         <div className="flex items-center gap-3 flex-shrink-0">
           {/* Login / Admin Dashboard Link */}
           {!isAdmin ? (

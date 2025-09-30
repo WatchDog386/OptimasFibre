@@ -1,133 +1,121 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView, useAnimation } from "framer-motion";
+import { useNavigate } from 'react-router-dom';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 // Animal name mappings (English to Swahili)
 const animalNames = {
-  "Jumbo": "Ndovu", // Elephant
-  "Buffalo": "Nyati", // Buffalo
-  "Ndovu": "Ndovu", // Elephant
-  "Gazzelle": "Swala", // Gazelle
-  "Tiger": "Tiger", // Tiger (kept as Tiger since it's already English)
-  "Chui": "Chui", // Leopard
+  "Jumbo": "Ndovu",
+  "Buffalo": "Nyati", 
+  "Ndovu": "Ndovu",
+  "Gazzelle": "Swala",
+  "Tiger": "Tiger",
+  "Chui": "Chui",
 };
 
 // Unsplash image URLs for each animal
 const animalImages = {
-  "Jumbo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFr-Advkxc3Hmjylf99Lscbr31AYXnazFG5HuTexJoyGcImkelkJ2UKCPzAzWu9copzjQ&usqp=CAU", // Elephant
-  "Buffalo": "https://media.istockphoto.com/id/1870310423/photo/portrait-of-a-buffalo-in-kruger-national-park.jpg?s=612x612&w=0&k=20&c=uZktgvgIZd5fpjhB8QpsZdBTzLeH8MbJe6-9SIf7fck=", // Buffalo
-  "Ndovu": "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Elephant (different angle)
-  "Gazzelle": "https://www.nczoo.org/sites/default/files/styles/max_650x650/public/2024-07/thomsons-gazelle-2.jpg.webp?itok=IgdtfgBb", // Gazelle
-  "Tiger": "https://t4.ftcdn.net/jpg/02/17/63/97/360_F_217639719_SxjxC4qyRoJQJdwmWtgQrvzTUX0SF3HY.jpg", // Tiger/Leopard
-  "Chui": "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA3L3JvYl9yYXdwaXhlbF9hX3Bob3RvX29mX2FfY2hlZXRhaF9ydW5uaW5nX2FmdGVyX2FfZ2F6ZWxsZV9zaWRlX183Mjk5Y2E5My01ZWI0LTQ2NDAtOTgzNy00NWVlMDI0ZGU0ZTctNXgtaHEtc2NhbGUtNV8wMHguanBn.jpg", // Cheetah
+  "Jumbo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFr-Advkxc3Hmjylf99Lscbr31AYXnazFG5HuTexJoyGcImkelkJ2UKCPzAzWu9copzjQ&usqp=CAU",
+  "Buffalo": "https://media.istockphoto.com/id/1870310423/photo/portrait-of-a-buffalo-in-kruger-national-park.jpg?s=612x612&w=0&k=20&c=uZktgvgIZd5fpjhB8QpsZdBTzLeH8MbJe6-9SIf7fck=",
+  "Ndovu": "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Gazzelle": "https://www.nczoo.org/sites/default/files/styles/max_650x650/public/2024-07/thomsons-gazelle-2.jpg.webp?itok=IgdtfgBb",
+  "Tiger": "https://t4.ftcdn.net/jpg/02/17/63/97/360_F_217639719_SxjxC4qyRoJQJdwmWtgQrvzTUX0SF3HY.jpg",
+  "Chui": "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA3L3JvYl9yYXdwaXhlbF9hX3Bob3RvX29mX2FfY2hlZXRhaF9ydW5uaW5nX2FmdGVyX2FfZ2F6ZWxsZV9zaWRlX183Mjk5Y2E5My01ZWI0LTQ2NDAtOTgzNy00NWVlMDI0ZGU0ZTctNXgtaHEtc2NhbGUtNV8wMHguanBn.jpg",
 };
 
-// ✅ COMPACT BUTTON STYLES — NO ICONS, NATURAL WIDTH
+// ✅ UPDATED BUTTON STYLES — MATCHES SERVICES.JSX
 const BUTTON_STYLES = {
   primary: {
-    base: 'py-2 px-6 rounded-xl font-semibold transition-all text-sm whitespace-nowrap',
-    light: 'bg-[#015B97] hover:bg-[#014a7a] text-white shadow-md hover:shadow-lg',
-    dark: 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg',
+    base: 'py-2 px-6 rounded-full transition-colors duration-300 font-medium text-sm whitespace-nowrap',
+    dark: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
+    light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
   },
   secondary: {
-    base: 'py-2 px-6 rounded-xl font-semibold transition-all text-sm whitespace-nowrap',
-    light: 'bg-white hover:bg-gray-100 text-[#015B97] border border-[#015B97]',
-    dark: 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600',
+    base: 'py-2 px-6 rounded-full transition-colors duration-300 font-medium text-sm whitespace-nowrap',
+    dark: 'border border-gray-600 text-gray-300 hover:border-[#182b5c] hover:text-[#182b5c]',
+    light: 'border border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white',
   },
   small: {
-    base: 'py-1.5 px-4 rounded-xl font-medium transition-all text-xs whitespace-nowrap',
-    light: 'bg-[#015B97] hover:bg-[#014a7a] text-white',
-    dark: 'bg-blue-600 hover:bg-blue-700 text-white',
+    base: 'py-1.5 px-4 rounded-full font-medium transition-all text-xs whitespace-nowrap',
+    light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
+    dark: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
   }
 };
 
-const DomeCard = ({ plan, color, index, onSelect }) => {
+// ✅ Updated DomeCard to match Services.jsx styling
+const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
   const colorMap = {
     blue: {
-      bg: "linear-gradient(135deg, #015B97 0%, #014a7a 100%)",
-      button: BUTTON_STYLES.small.light,
-      gradientStart: "#015B97",
-      gradientEnd: "#014a7a"
+      bg: darkMode ? "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)" : "linear-gradient(135deg, #182b5c 0%, #0f1f45 100%)",
+      button: darkMode ? BUTTON_STYLES.small.dark : BUTTON_STYLES.small.light,
+      gradientStart: darkMode ? "#1e3a8a" : "#182b5c",
+      gradientEnd: darkMode ? "#1e40af" : "#0f1f45"
     },
     red: {
-      bg: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)" : "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
       button: "bg-red-600 hover:bg-red-700 text-white",
-      gradientStart: "#dc2626",
-      gradientEnd: "#b91c1c"
+      gradientStart: darkMode ? "#991b1b" : "#dc2626",
+      gradientEnd: darkMode ? "#dc2626" : "#b91c1c"
     },
     goldenYellow: {
-      bg: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #92400e 0%, #d97706 100%)" : "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
       button: "bg-yellow-600 hover:bg-yellow-700 text-white",
-      gradientStart: "#d97706",
-      gradientEnd: "#b45309"
+      gradientStart: darkMode ? "#92400e" : "#d97706",
+      gradientEnd: darkMode ? "#d97706" : "#b45309"
     },
     goldenGreen: {
-      bg: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #047857 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)",
       button: "bg-green-600 hover:bg-green-700 text-white",
-      gradientStart: "#059669",
-      gradientEnd: "#047857"
+      gradientStart: darkMode ? "#047857" : "#059669",
+      gradientEnd: darkMode ? "#059669" : "#047857"
     },
     purple: {
-      bg: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)" : "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
       button: "bg-purple-600 hover:bg-purple-700 text-white",
-      gradientStart: "#7c3aed",
-      gradientEnd: "#6d28d9"
+      gradientStart: darkMode ? "#6d28d9" : "#7c3aed",
+      gradientEnd: darkMode ? "#7c3aed" : "#6d28d9"
     },
     pink: {
-      bg: "linear-gradient(135deg, #db2777 0%, #be185d 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #be185d 0%, #db2777 100%)" : "linear-gradient(135deg, #db2777 0%, #be185d 100%)",
       button: "bg-pink-600 hover:bg-pink-700 text-white",
-      gradientStart: "#db2777",
-      gradientEnd: "#be185d"
+      gradientStart: darkMode ? "#be185d" : "#db2777",
+      gradientEnd: darkMode ? "#db2777" : "#be185d"
     }
   };
 
   const currentColor = colorMap[color];
   const gradientId = `gradient-${plan.id}`;
-  const [isHovered, setIsHovered] = useState(false);
+  const controls = useAnimation();
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    if (inView) {
+      controls.start({ opacity: 1, y: 0, transition: { duration: 0.6, delay: index * 0.1 } });
+    }
+  }, [controls, inView, index]);
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 100, scale: 0.9 }}
-      animate={{ 
-        opacity: 1, 
-        y: 0, 
-        scale: 1,
-        transition: {
-          type: "spring",
-          stiffness: 300,
-          damping: 15,
-          delay: index * 0.1
-        }
-      }}
-      whileHover={{ y: -10, transition: { duration: 0.2 } }}
-      className="rounded-2xl shadow-xl overflow-hidden relative h-full flex flex-col group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={controls}
+      className={`rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden relative h-full flex flex-col group ${
+        darkMode ? 'border border-gray-700' : 'border border-gray-200'
+      }`}
+      whileHover={{ y: -3 }}
     >
       {plan.popular && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: index * 0.1 + 0.3 }}
-          className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md"
-        >
+        <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md">
           <Star size={12} className="mr-1 fill-current" />
           Popular
-        </motion.div>
+        </div>
       )}
 
       {/* Image Top Section */}
-      <motion.div 
-        className="h-40 md:h-48 relative overflow-hidden"
-        whileHover={{ scale: 1.05 }}
-        transition={{ duration: 0.3 }}
-      >
-        <motion.div 
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: index * 0.1 + 0.3, duration: 0.5 }}
-          className="w-full h-full relative"
-        >
+      <div className="h-32 md:h-36 relative overflow-hidden">
+        <div className="w-full h-full relative">
           <img 
             src={animalImages[plan.name]}
             alt={plan.name}
@@ -139,232 +127,155 @@ const DomeCard = ({ plan, color, index, onSelect }) => {
               margin: 0
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
             <div className="text-white">
-              <h3 className="text-lg md:text-xl font-bold mb-1">{plan.name}</h3>
+              <h3 className="text-sm md:text-base font-semibold mb-1">{plan.name}</h3>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <Wifi size={14} className="mr-2" />
+                  <Wifi size={12} className="mr-1" />
                   <span className="text-xs opacity-90">{plan.speed}</span>
                 </div>
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
                   {animalNames[plan.name]}
                 </span>
               </div>
             </div>
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       {/* Card Content with Color Background */}
       <div className="flex-grow flex flex-col" style={{ background: currentColor.bg }}>
-        <div className="p-4 md:p-6 flex-grow">
-          <ul className="mb-6 flex-grow">
+        <div className="p-3 md:p-4 flex-grow">
+          <ul className="mb-4 flex-grow">
             {plan.features.map((feature, idx) => (
-              <motion.li 
-                key={idx} 
-                className="flex items-center mb-3"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 + 0.4 + (idx * 0.1) }}
-              >
-                <CheckCircle className="w-4 h-4 text-white mr-2 flex-shrink-0" />
-                <span className="text-white text-sm">{feature}</span>
-              </motion.li>
+              <li key={idx} className="flex items-center mb-2">
+                <CheckCircle className="w-3 h-3 text-white mr-2 flex-shrink-0" />
+                <span className="text-white text-xs">{feature}</span>
+              </li>
             ))}
           </ul>
         </div>
 
-        {/* Dome-shaped Bottom Section */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: index * 0.1 + 0.8 }}
-          className="relative pt-8 pb-4 px-4 md:px-6"
-        >
-          {/* Dome shape */}
-          <div className="absolute -top-12 left-0 w-full h-16 flex justify-center">
-            <svg viewBox="0 0 100 16" className="w-full h-full" preserveAspectRatio="none">
-              <path 
-                d="M 0,0 C 25,16 75,16 100,0 L 100,16 L 0,16 Z" 
-                fill={`url(#${gradientId})`}
-              />
-              <defs>
-                <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor={currentColor.gradientStart} />
-                  <stop offset="100%" stopColor={currentColor.gradientEnd} />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-          <div className="text-center mb-3 relative z-10">
-            <span className="text-xl md:text-2xl font-bold text-white">Ksh {plan.price}</span>
-            <span className="text-white opacity-80 text-sm"> /month</span>
+        {/* Bottom Section */}
+        <div className="relative pt-4 pb-3 px-3 md:px-4">
+          <div className="text-center mb-2 relative z-10">
+            <span className="text-base md:text-lg font-bold text-white">Ksh {plan.price}</span>
+            <span className="text-white opacity-80 text-xs"> /month</span>
           </div>
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
             onClick={() => onSelect(plan)}
             className={`${BUTTON_STYLES.small.base} ${currentColor.button} w-full`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             BOOK NOW
           </motion.button>
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   );
 };
 
-const MobileHotspotCard = ({ plan, color, index, onSelect }) => {
+// ✅ Updated MobileHotspotCard to match Services.jsx styling
+const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
   const colorMap = {
     teal: {
-      bg: "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
-      button: BUTTON_STYLES.small.light,
-      gradientStart: "#0d9488",
-      gradientEnd: "#0f766e"
+      bg: darkMode ? "linear-gradient(135deg, #0f766e 0%, #0d9488 100%)" : "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
+      button: darkMode ? BUTTON_STYLES.small.dark : BUTTON_STYLES.small.light,
     },
     amber: {
-      bg: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #b45309 0%, #d97706 100%)" : "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
       button: "bg-amber-600 hover:bg-amber-700 text-white",
-      gradientStart: "#d97706",
-      gradientEnd: "#b45309"
     },
     violet: {
-      bg: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)" : "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
       button: "bg-violet-600 hover:bg-violet-700 text-white",
-      gradientStart: "#7c3aed",
-      gradientEnd: "#6d28d9"
     },
     rose: {
-      bg: "linear-gradient(135deg, #e11d48 0%, #be123c 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #be123c 0%, #e11d48 100%)" : "linear-gradient(135deg, #e11d48 0%, #be123c 100%)",
       button: "bg-rose-600 hover:bg-rose-700 text-white",
-      gradientStart: "#e11d48",
-      gradientEnd: "#be123c"
     },
     emerald: {
-      bg: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #047857 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)",
       button: "bg-emerald-600 hover:bg-emerald-700 text-white",
-      gradientStart: "#059669",
-      gradientEnd: "#047857"
     },
     blue: {
-      bg: "linear-gradient(135deg, #2563eb 0%, #1e40af 100%)",
+      bg: darkMode ? "linear-gradient(135deg, #1e40af 0%, #2563eb 100%)" : "linear-gradient(135deg, #2563eb 0%, #1e40af 100%)",
       button: "bg-blue-600 hover:bg-blue-700 text-white",
-      gradientStart: "#2563eb",
-      gradientEnd: "#1e40af"
     }
   };
 
   const currentColor = colorMap[color];
-  const [isHovered, setIsHovered] = useState(false);
+  const controls = useAnimation();
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    if (inView) {
+      controls.start({ opacity: 1, y: 0, transition: { duration: 0.6, delay: index * 0.1 } });
+    }
+  }, [controls, inView, index]);
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 100, scale: 0.9 }}
-      animate={{ 
-        opacity: 1, 
-        y: 0, 
-        scale: 1,
-        transition: {
-          type: "spring",
-          stiffness: 300,
-          damping: 15,
-          delay: index * 0.1
-        }
-      }}
-      whileHover={{ 
-        y: -10, 
-        transition: { duration: 0.2 }
-      }}
-      className="rounded-2xl shadow-xl overflow-hidden relative h-full flex flex-col group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={controls}
+      className={`rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden relative h-full flex flex-col group ${
+        darkMode ? 'border border-gray-700' : 'border border-gray-200'
+      }`}
+      whileHover={{ y: -3 }}
     >
       {plan.popular && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: index * 0.1 + 0.3 }}
-          className="absolute top-3 right-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-2 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md"
-        >
+        <div className="absolute top-3 right-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-2 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md">
           <Star size={12} className="mr-1 fill-current" />
           Popular
-        </motion.div>
+        </div>
       )}
 
-      {/* Wide color header instead of image */}
-      <motion.div 
-        className="h-20 md:h-24 relative overflow-hidden"
-        initial={{ scale: 1 }}
-        whileHover={{ scale: 1.05 }}
-        transition={{ duration: 0.3 }}
-        style={{ background: currentColor.bg }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent flex items-end p-3">
+      {/* Wide color header */}
+      <div className="h-16 md:h-20 relative overflow-hidden" style={{ background: currentColor.bg }}>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent flex items-end p-2">
           <div className="text-white w-full">
-            <h3 className="text-base md:text-lg font-bold mb-1">{plan.name}</h3>
+            <h3 className="text-sm font-semibold mb-1">{plan.name}</h3>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <Smartphone size={12} className="mr-2" />
+                <Smartphone size={10} className="mr-1" />
                 <span className="text-xs opacity-90">{plan.devices}</span>
               </div>
               <span className="text-xs font-bold">{plan.duration}</span>
             </div>
           </div>
         </div>
-        {/* Animated elements */}
-        <motion.div 
-          className="absolute top-0 left-0 w-full h-full"
-          initial={{ opacity: 0 }}
-          whileHover={{ opacity: 1 }}
-        >
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <pattern id="circles" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-              <circle cx="10" cy="10" r="2" fill="white" opacity="0.1" />
-            </pattern>
-            <rect x="0" y="0" width="100" height="100" fill="url(#circles)" />
-          </svg>
-        </motion.div>
-      </motion.div>
+      </div>
 
-      {/* Card Content with Color Background */}
+      {/* Card Content */}
       <div className="flex-grow flex flex-col" style={{ background: currentColor.bg }}>
-        <div className="p-3 md:p-4 flex-grow">
-          <div className="text-center mb-3">
-            <span className="text-xl md:text-2xl font-bold text-white">Ksh {plan.price}</span>
+        <div className="p-3 flex-grow">
+          <div className="text-center mb-2">
+            <span className="text-base md:text-lg font-bold text-white">Ksh {plan.price}</span>
           </div>
-          <ul className="mb-4 flex-grow">
+          <ul className="mb-3 flex-grow">
             {plan.features.map((feature, idx) => (
-              <motion.li 
-                key={idx} 
-                className="flex items-center mb-2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 + 0.4 + (idx * 0.1) }}
-              >
+              <li key={idx} className="flex items-center mb-1">
                 <CheckCircle className="w-3 h-3 text-white mr-2 flex-shrink-0" />
                 <span className="text-white text-xs">{feature}</span>
-              </motion.li>
+              </li>
             ))}
           </ul>
         </div>
 
-        {/* Bottom Section */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: index * 0.1 + 0.8 }}
-          className="relative pb-3 px-3 md:px-4"
-        >
+        <div className="relative pb-3 px-3">
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
             onClick={() => onSelect(plan)}
-            className={`${BUTTON_STYLES.small.base} ${currentColor.button} w-full text-xs md:text-sm`}
+            className={`${BUTTON_STYLES.small.base} ${currentColor.button} w-full text-xs`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             BUY NOW
           </motion.button>
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   );
@@ -382,8 +293,14 @@ const WifiPlans = () => {
   });
   const [messageStatus, setMessageStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
+  const navigate = useNavigate();
+  const { darkMode } = useContext(ThemeContext);
+
+  // Navigation handlers
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
 
   const mobilePlans = [
     {
@@ -513,28 +430,26 @@ const WifiPlans = () => {
     {
       title: "Lightning Fast Speeds",
       description: "Experience blazing fast internet with our fiber optic technology",
-      icon: <Wifi size={28} />
+      icon: <Wifi size={24} />
     },
     {
       title: "24/7 Support",
       description: "Our technical team is available round the clock to assist you",
-      icon: <Phone size={28} />
+      icon: <Phone size={24} />
     },
     {
       title: "Free Installation",
       description: "Get connected without any setup fees or hidden charges",
-      icon: <MapPin size={28} />
+      icon: <MapPin size={24} />
     },
     {
       title: "Reliable Connection",
       description: "99.9% uptime guarantee for uninterrupted browsing and streaming",
-      icon: <CheckCircle size={28} />
+      icon: <CheckCircle size={24} />
     }
   ];
 
   useEffect(() => {
-    setIsVisible(true);
-    // Auto-rotate features
     const interval = setInterval(() => {
       setActiveFeature((prev) => (prev + 1) % features.length);
     }, 4000);
@@ -552,7 +467,6 @@ const WifiPlans = () => {
   };
 
   const handleMobilePlanSelect = (plan) => {
-    // Redirect to the specific package page
     window.open(plan.link, '_blank');
   };
 
@@ -568,17 +482,13 @@ const WifiPlans = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Format the WhatsApp message
       const message = `Hello! I'm interested in the ${formData.connectionType} plan.
 Name: ${formData.name}
 Phone: ${formData.phone}
 Email: ${formData.email}
 Location: ${formData.location}`;
-      // Encode the message for URL
       const encodedMessage = encodeURIComponent(message);
-      // Create WhatsApp URL
       const whatsappUrl = `https://wa.me/254741874200?text=${encodedMessage}`;
-      // Redirect to WhatsApp
       window.open(whatsappUrl, '_blank');
       setMessageStatus("success");
       setTimeout(() => {
@@ -599,233 +509,345 @@ Location: ${formData.location}`;
     }
   };
 
+  // Animation variants matching Services.jsx
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 12
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(5)].map((_, i) => (
+    <motion.div 
+      className={`min-h-screen overflow-hidden transition-colors duration-300 ${
+        darkMode ? 'bg-gray-900' : 'bg-gray-50'
+      }`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.7 }}
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
+      {/* Hero Section - Updated with GGCC-style hero integration */}
+      <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#182b5c] to-[#0f1f45] z-0">
+          <div className="absolute inset-0 bg-black/40 z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 z-20"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-30 text-center text-white">
           <motion.div
-            key={i}
-            className="absolute rounded-full bg-blue-200 dark:bg-blue-800 opacity-20"
-            style={{
-              width: Math.random() * 200 + 100,
-              height: Math.random() * 200 + 100,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, Math.random() * 20 - 10, 0],
-              x: [0, Math.random() * 20 - 10, 0],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative pt-12 md:pt-16 pb-16 md:pb-20 overflow-hidden">
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="max-w-3xl mx-auto"
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="max-w-4xl mx-auto"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6 text-gray-800 dark:text-gray-200">
-              Connect To The World With Optimas Fiber
-            </h2>
-            <p className="text-base md:text-lg mb-6 md:mb-8 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Experience lightning-fast internet with our reliable fiber connections. Perfect for streaming, gaming, and working from home.
-            </p>
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => document.getElementById("mobile-hotspot").scrollIntoView({ behavior: "smooth" })}
-              className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
+            <motion.h1 
+              className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.8 }}
             >
-              View Our Plans
-            </motion.button>
+              Experience <span className="text-[#d0b216]">Blazing Fast</span>
+              <br />
+              Internet
+            </motion.h1>
+            
+            <motion.p 
+              className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 max-w-2xl mx-auto text-gray-200 leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.8 }}
+            >
+              Join thousands of satisfied customers with our reliable, high-speed fiber internet
+            </motion.p>
+
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.8 }}
+            >
+              <motion.button 
+                onClick={() => document.getElementById("plans").scrollIntoView({ behavior: "smooth" })}
+                className={`${BUTTON_STYLES.primary.base} bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220] text-base px-8 py-3`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                View All Plans
+              </motion.button>
+              <motion.button 
+                className={`${BUTTON_STYLES.secondary.base} border-white text-white hover:bg-white hover:text-[#182b5c] text-base px-8 py-3`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleContactClick}
+              >
+                Get Started Today
+              </motion.button>
+            </motion.div>
           </motion.div>
         </div>
-        {/* Animated circles in hero */}
-        <motion.div 
-          className="absolute top-1/4 left-1/4 w-48 h-48 rounded-full bg-blue-200 dark:bg-blue-800 opacity-10"
-          animate={{
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-          }}
-        />
-        <motion.div 
-          className="absolute bottom-1/4 right-1/4 w-32 h-32 rounded-full bg-blue-300 dark:bg-blue-700 opacity-10"
-          animate={{
-            scale: [1.2, 1, 1.2],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-          }}
-        />
-      </section>
 
-      {/* Mobile Hotspot Section */}
-      <section id="mobile-hotspot" className="py-12 md:py-16 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 relative overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(8)].map((_, i) => (
+        {/* Scroll indicator */}
+        <motion.div 
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2, duration: 0.8 }}
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-6 h-10 border-2 border-white rounded-full flex justify-center"
+          >
             <motion.div
-              key={i}
-              className="absolute rounded-full opacity-10"
-              style={{
-                width: Math.random() * 100 + 50,
-                height: Math.random() * 100 + 50,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                background: `linear-gradient(135deg, ${mobileColors[i % mobileColors.length] === 'teal' ? '#0d9488' : 
-                  mobileColors[i % mobileColors.length] === 'amber' ? '#d97706' :
-                  mobileColors[i % mobileColors.length] === 'violet' ? '#7c3aed' :
-                  mobileColors[i % mobileColors.length] === 'rose' ? '#e11d48' :
-                  mobileColors[i % mobileColors.length] === 'emerald' ? '#059669' : '#2563eb'} 0%, 
-                  ${mobileColors[i % mobileColors.length] === 'teal' ? '#0f766e' : 
-                  mobileColors[i % mobileColors.length] === 'amber' ? '#b45309' :
-                  mobileColors[i % mobileColors.length] === 'violet' ? '#6d28d9' :
-                  mobileColors[i % mobileColors.length] === 'rose' ? '#be123c' :
-                  mobileColors[i % mobileColors.length] === 'emerald' ? '#047857' : '#1e40af'} 100%)`
-              }}
-              animate={{
-                y: [0, Math.random() * 20 - 10, 0],
-                x: [0, Math.random() * 20 - 10, 0],
-                rotate: [0, Math.random() * 360],
-              }}
-              transition={{
-                duration: Math.random() * 15 + 15,
-                repeat: Infinity,
-              }}
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-1 h-3 bg-white rounded-full mt-2"
             />
-          ))}
-        </div>
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <div className="inline-flex items-center justify-center p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-3">
-              <Zap className="w-6 h-6 text-[#015B97] dark:text-blue-400" />
-            </div>
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-200 mb-3">Mobile Hotspot Packages</h3>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-sm md:text-base">
-              Stay connected on the go with our affordable and flexible mobile data packages.
-            </p>
           </motion.div>
-          {/* Mobile Plans Grid — 2 columns on mobile, 3 on tablet, 6 on desktop */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            viewport={{ once: true }}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6"
-          >
-            {mobilePlans.map((plan, index) => (
-              <MobileHotspotCard 
-                key={plan.id} 
-                plan={plan} 
-                color={mobileColors[index]}
-                index={index}
-                onSelect={handleMobilePlanSelect}
-              />
-            ))}
-          </motion.div>
-          {/* Additional Info */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-            viewport={{ once: true }}
-            className="mt-8 md:mt-12 text-center bg-white dark:bg-gray-800/50 backdrop-blur-sm p-4 md:p-6 rounded-xl shadow-lg"
-          >
-            <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base">
-              <strong>Note:</strong> All packages redirect to our secure payment portal. You'll receive access credentials via SMS.
-            </p>
-          </motion.div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-12 md:py-16 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+      {/* Main Content */}
+      <div className="relative -mt-20 md:-mt-32 z-20">
         <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-200 mb-3">Why Choose Optimas Fiber?</h3>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-sm md:text-base">
-              We provide the best internet experience with cutting-edge technology and exceptional customer service.
-            </p>
-          </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
+          {/* Mobile Hotspot Section */}
+          <section id="mobile-hotspot" className="mb-12 md:mb-16 relative z-10">
+            <motion.div 
+              className={`rounded-2xl shadow-xl p-6 md:p-8 ${
+                darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <motion.h2 
+                className={`text-xl md:text-3xl font-semibold text-center mb-6 md:mb-8 ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                }`}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                viewport={{ once: true }}
+              >
+                Mobile Hotspot Packages
+              </motion.h2>
+
+              <motion.div 
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6"
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+              >
+                {mobilePlans.map((plan, index) => (
+                  <MobileHotspotCard 
+                    key={plan.id} 
+                    plan={plan} 
+                    color={mobileColors[index]}
+                    index={index}
+                    onSelect={handleMobilePlanSelect}
+                    darkMode={darkMode}
+                  />
+                ))}
+              </motion.div>
+
+              <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{ duration: 0.7, delay: 0.4 }}
                 viewport={{ once: true }}
-                className={`bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-4 md:p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-300 ${activeFeature === index ? 'ring-2 ring-[#015B97] scale-105' : 'hover:shadow-xl'}`}
-                onMouseEnter={() => setActiveFeature(index)}
+                className={`mt-6 p-4 rounded-xl text-center ${
+                  darkMode ? 'bg-gray-700' : 'bg-gray-50'
+                }`}
               >
-                <div className="text-[#015B97] dark:text-blue-400 mb-3">{feature.icon}</div>
-                <h4 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">{feature.title}</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">{feature.description}</p>
+                <p className={`text-sm ${
+                  darkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  <strong>Note:</strong> All packages redirect to our secure payment portal. You'll receive access credentials via SMS.
+                </p>
               </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </motion.div>
+          </section>
 
-      {/* Fiber Plans Section */}
-      <section id="plans" className="py-12 md:py-16 relative">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-200 mb-3">Optimas Fiber Packages</h3>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-sm md:text-base">
-              Check out our speeds and plans to suit every need and budget. Installs take just 1 hour.
-            </p>
-          </motion.div>
-          {/* Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plans.map((plan, index) => (
-              <DomeCard 
-                key={plan.id} 
-                plan={plan} 
-                color={colors[index]}
-                index={index}
-                onSelect={handlePlanSelect}
-              />
-            ))}
-          </div>
+          {/* Features Section */}
+          <section id="features" className="mb-12 md:mb-16 relative z-10">
+            <motion.div 
+              className={`rounded-2xl p-6 md:p-8 ${
+                darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-[#182b5c] to-[#0f1f45]'
+              }`}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <div className="text-center mb-8">
+                <motion.h2 
+                  className="text-xl md:text-3xl font-semibold mb-4 text-white"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  viewport={{ once: true }}
+                >
+                  Why Choose Optimas Fiber?
+                </motion.h2>
+                <motion.p 
+                  className="text-lg text-blue-200 max-w-2xl mx-auto"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  viewport={{ once: true }}
+                >
+                  We provide the best internet experience with cutting-edge technology
+                </motion.p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className={`text-center p-6 rounded-xl backdrop-blur-sm border hover:bg-opacity-20 transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-gray-700 bg-opacity-50 border-gray-600 hover:bg-gray-600' 
+                        : 'bg-white bg-opacity-10 border-white border-opacity-20'
+                    }`}
+                    whileHover={{ y: -5, scale: 1.02 }}
+                  >
+                    <div className="text-[#d0b216] mb-4 flex justify-center">
+                      {feature.icon}
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2 text-white">
+                      {feature.title}
+                    </h3>
+                    <p className="text-blue-100 text-sm leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </section>
+
+          {/* Fiber Plans Section */}
+          <section id="plans" className="mb-12 md:mb-16 relative z-10">
+            <motion.div 
+              className={`rounded-2xl p-6 md:p-8 ${
+                darkMode ? 'bg-gray-800' : 'bg-white shadow-xl'
+              }`}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <motion.h2 
+                className={`text-xl md:text-3xl font-semibold text-center mb-6 md:mb-8 ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                }`}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                viewport={{ once: true }}
+              >
+                Optimas Fiber Packages
+              </motion.h2>
+
+              <motion.div 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+              >
+                {plans.map((plan, index) => (
+                  <DomeCard 
+                    key={plan.id} 
+                    plan={plan} 
+                    color={colors[index]}
+                    index={index}
+                    onSelect={handlePlanSelect}
+                    darkMode={darkMode}
+                  />
+                ))}
+              </motion.div>
+            </motion.div>
+          </section>
+
+          {/* Final CTA Section */}
+          <section className="text-center relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className={`rounded-2xl p-8 md:p-12 ${
+                darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-[#182b5c] to-[#0f1f45] text-white'
+              }`}
+            >
+              <motion.h2 
+                className="text-2xl md:text-4xl font-semibold mb-4"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                viewport={{ once: true }}
+              >
+                Ready to Get Connected?
+              </motion.h2>
+              <motion.p 
+                className="text-lg mb-8 max-w-2xl mx-auto text-blue-100"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                viewport={{ once: true }}
+              >
+                Join thousands of satisfied customers enjoying reliable, high-speed internet.
+              </motion.p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <motion.button 
+                  className={`${BUTTON_STYLES.primary.base} bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220] px-8 py-3 text-base`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => document.getElementById("plans").scrollIntoView({ behavior: "smooth" })}
+                >
+                  View All Plans
+                </motion.button>
+                <motion.button 
+                  className={`${BUTTON_STYLES.secondary.base} border-white text-white hover:bg-white hover:text-[#182b5c] px-8 py-3 text-base`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleContactClick}
+                >
+                  Speak to an Expert
+                </motion.button>
+              </div>
+            </motion.div>
+          </section>
         </div>
-      </section>
+      </div>
 
       {/* Contact Form Modal */}
       <AnimatePresence>
-        {showForm && (
+        {showForm && selectedPlan && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -838,69 +860,99 @@ Location: ${formData.location}`;
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="rounded-xl shadow-xl w-full max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className={`rounded-xl shadow-xl w-full max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto ${
+                darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+              }`}
               onClick={(e) => e.stopPropagation()}
               style={{ fontFamily: "'Poppins', sans-serif" }}
             >
-              <div className="p-4 md:p-6">
-                <div className="flex justify-between items-start mb-4">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center">
-                    <div className="mr-3 text-[#015B97] dark:text-blue-400">
-                      <Wifi className="w-5 h-5" />
+                    <div className={`mr-3 text-lg ${
+                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                    }`}>
+                      <Wifi className="w-6 h-6" />
                     </div>
-                    <h2 className="text-base md:text-xl font-semibold text-[#015B97] dark:text-blue-400">
-                      {selectedPlan?.name}
+                    <h2 className={`text-xl font-semibold ${
+                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                    }`}>
+                      {selectedPlan.name}
                     </h2>
                   </div>
                   <motion.button 
                     onClick={() => setShowForm(false)}
-                    className="transition-colors duration-300 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    className={`transition-colors duration-300 p-2 rounded-full hover:bg-gray-200 ${
+                      darkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'
+                    }`}
                     whileHover={{ rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
                   >
-                    <X className="text-lg" />
+                    <X className="text-xl" />
                   </motion.button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+                <p className={`text-sm mb-6 ${
+                  darkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Complete the form below and we'll contact you to set up your {selectedPlan.name} plan.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <div>
-                    <h3 className="text-sm md:text-base font-medium mb-2 text-[#015B97] dark:text-blue-400 flex items-center">
-                      <CheckCircle className="text-green-500 mr-2 w-4 h-4" />
+                    <h3 className={`text-lg font-medium mb-4 flex items-center ${
+                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                    }`}>
+                      <CheckCircle className="text-green-500 mr-2 w-5 h-5" />
                       Key Features
                     </h3>
-                    <ul className="space-y-1">
-                      {selectedPlan?.features.map((feature, index) => (
+                    <ul className="space-y-3">
+                      {selectedPlan.features.map((feature, index) => (
                         <motion.li 
                           key={index} 
-                          className="flex items-start text-xs md:text-sm"
+                          className="flex items-start"
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <span className="w-2 h-2 rounded-full mt-1.5 mr-2 bg-[#015B97] dark:bg-blue-400 flex-shrink-0"></span>
-                          <span className="dark:text-gray-300">{feature}</span>
+                          <span className={`w-3 h-3 rounded-full mt-1.5 mr-3 flex-shrink-0 ${
+                            darkMode ? 'bg-[#d0b216]' : 'bg-[#182b5c]'
+                          }`}></span>
+                          <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{feature}</span>
                         </motion.li>
                       ))}
                     </ul>
                   </div>
 
                   <div>
-                    <h3 className="text-sm md:text-base font-medium mb-2 text-[#015B97] dark:text-blue-400 flex items-center">
-                      <Star className="mr-2 w-4 h-4" />
+                    <h3 className={`text-lg font-medium mb-4 flex items-center ${
+                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                    }`}>
+                      <Star className="mr-2 w-5 h-5" />
                       Plan Details
                     </h3>
-                    <div className="rounded-lg p-3 bg-gray-50 dark:bg-gray-700">
-                      <div className="mb-2">
-                        <h4 className="font-medium text-xs md:text-sm text-[#015B97] dark:text-blue-400">Price</h4>
-                        <p className="dark:text-gray-300 text-xs md:text-sm">Ksh {selectedPlan?.price}/month</p>
+                    <div className={`rounded-lg p-4 ${
+                      darkMode ? 'bg-gray-700' : 'bg-gray-50'
+                    }`}>
+                      <div className="mb-3">
+                        <h4 className={`font-medium ${
+                          darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                        }`}>Price</h4>
+                        <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Ksh {selectedPlan.price}/month</p>
                       </div>
-                      <div className="mb-2">
-                        <h4 className="font-medium text-xs md:text-sm text-[#015B97] dark:text-blue-400">Speed</h4>
-                        <p className="dark:text-gray-300 text-xs md:text-sm">{selectedPlan?.speed}</p>
+                      
+                      <div className="mb-3">
+                        <h4 className={`font-medium ${
+                          darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                        }`}>Speed</h4>
+                        <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{selectedPlan.speed}</p>
                       </div>
-                      <div className="mb-2">
-                        <h4 className="font-medium text-xs md:text-sm text-[#015B97] dark:text-blue-400">Swahili Name</h4>
-                        <p className="dark:text-gray-300 text-xs md:text-sm">{animalNames[selectedPlan?.name]}</p>
+                      
+                      <div>
+                        <h4 className={`font-medium ${
+                          darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                        }`}>Swahili Name</h4>
+                        <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{animalNames[selectedPlan.name]}</p>
                       </div>
                     </div>
                   </div>
@@ -910,7 +962,7 @@ Location: ${formData.location}`;
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-4 text-sm"
+                    className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-6"
                   >
                     <p>Message sent successfully! We'll contact you shortly.</p>
                   </motion.div>
@@ -919,7 +971,7 @@ Location: ${formData.location}`;
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-4 text-sm"
+                    className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6"
                   >
                     <p>Failed to send message. Please try again or contact us directly.</p>
                   </motion.div>
@@ -928,86 +980,76 @@ Location: ${formData.location}`;
                 <form onSubmit={handleSubmit}>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name *</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name *</label>
                       <input
                         type="text"
                         name="name"
                         required
-                        className="w-full px-3 py-2 md:px-4 md:py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#015B97] focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#182b5c] focus:border-transparent dark:bg-gray-700 dark:text-white"
                         value={formData.name}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number *</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number *</label>
                       <input
                         type="tel"
                         name="phone"
                         required
-                        className="w-full px-3 py-2 md:px-4 md:py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#015B97] focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#182b5c] focus:border-transparent dark:bg-gray-700 dark:text-white"
                         value={formData.phone}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
                       <input
                         type="email"
                         name="email"
-                        className="w-full px-3 py-2 md:px-4 md:py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#015B97] focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#182b5c] focus:border-transparent dark:bg-gray-700 dark:text-white"
                         value={formData.email}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location *</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location *</label>
                       <input
                         type="text"
                         name="location"
                         required
-                        className="w-full px-3 py-2 md:px-4 md:py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#015B97] focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#182b5c] focus:border-transparent dark:bg-gray-700 dark:text-white"
                         value={formData.location}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Package</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Package</label>
                       <input
                         type="text"
-                        className="w-full px-3 py-2 md:px-4 md:py-3 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-xl cursor-not-allowed dark:text-white text-sm"
+                        className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-xl cursor-not-allowed dark:text-white"
                         value={formData.connectionType}
                         readOnly
                       />
                     </div>
                   </div>
-                  <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      type="button"
-                      onClick={() => setShowForm(false)}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-sm"
-                    >
-                      Cancel
-                    </motion.button>
-                    <motion.button
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                    <motion.button 
+                      className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} px-8 py-3`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       type="submit"
                       disabled={isLoading}
-                      className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center justify-center`}
                     >
-                      {isLoading ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Processing...
-                        </>
-                      ) : (
-                        "Send via WhatsApp"
-                      )}
+                      {isLoading ? "Processing..." : "Send via WhatsApp"}
+                    </motion.button>
+                    <motion.button 
+                      className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light} px-8 py-3`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={handleContactClick}
+                    >
+                      Contact Sales
                     </motion.button>
                   </div>
                 </form>
@@ -1016,7 +1058,7 @@ Location: ${formData.location}`;
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 

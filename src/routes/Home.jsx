@@ -2,8 +2,8 @@ import React from "react";
 import { Helmet } from "react-helmet-async";
 
 import Hero from "../components/Hero";
-import WifiPlans from "./WifiPlans";
-import About from "./About"; // Re-added About
+
+
 import Services from "./Services";
 import Faqs from "./faqs";
 import Contact from "./Contact";
@@ -33,13 +33,11 @@ export default function Home() {
       <section id="hero">
         <Hero />
       </section>
-      <section id="WifiPlans">
-        <WifiPlans />
-      </section>
+      
+        
+      
 
-      <section id="about">
-        <About />
-      </section>
+      
 
       <section id="services">
         <Services />
