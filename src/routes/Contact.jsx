@@ -95,7 +95,7 @@ const Contact = () => {
                 }`}>Call Us</h3>
               </div>
               <div className="space-y-1 pl-11">
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>074187422</p>
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>0741874200</p>
                 <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>0117151741</p>
               </div>
             </motion.div>
