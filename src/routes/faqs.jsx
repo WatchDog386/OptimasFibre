@@ -650,7 +650,7 @@ export default function Faqs() {
               whileTap={{ scale: 0.95 }}
             >
               <Phone className="w-4 h-4" />
-              Call Support: 0726 896 562
+              Call Support: 0741874200
             </motion.a>
             <motion.a 
               href="mailto:support@knoxvilletechnologies.com" 
