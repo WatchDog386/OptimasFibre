@@ -378,8 +378,8 @@ const CoveragePage = () => {
           </div>
           
           <p className="text-lg">
-            📲 Call us: <a href="tel:+254709517917" className="underline font-semibold">0709517917</a> | 
-            <a href="tel:+254709517918" className="underline font-semibold ml-2">0709517918</a>
+            📲 Call us: <a href="tel:+254709517917" className="underline font-semibold">0741874200</a> | 
+            <a href="tel:+254709517918" className="underline font-semibold ml-2">0715827905</a>
           </p>
         </div>
       </section>
