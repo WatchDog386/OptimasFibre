@@ -5,52 +5,44 @@ import { motion } from "framer-motion";
 const RISA_STYLES = {
   primaryColor: '#015B97',
   button: {
-    // Primary Button: White bg, blue border/text -> Inverts on hover
     primary: {
       base: 'px-4 py-2 bg-white text-[#015B97] border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm',
       hover: 'hover:bg-[#015B97] hover:text-white hover:border-[#015B97]',
     },
-    // Secondary Button: Blue bg, white text -> Inverts on hover
     secondary: {
       base: 'px-4 py-2 bg-[#015B97] text-white border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm',
       hover: 'hover:bg-white hover:text-[#015B97] hover:border-white',
     },
-    // Small Button (e.g., for tabs)
     small: {
       base: 'px-3 py-1.5 text-sm font-medium border rounded-[50px] transition-colors',
       active: 'bg-[#182B5C] text-white shadow-md',
       light: 'text-gray-600 hover:text-[#182B5C] hover:bg-gray-50',
       dark: 'text-gray-400 hover:text-[#d0b216] hover:bg-gray-800',
-    }
+    },
   },
   typography: {
-    // Base text styles
     body: 'text-base',
-    // Headings
     h3: 'text-xl font-bold',
-    // Link styles
     link: 'text-sm font-medium transition-colors',
-    // Special text
     highlight: {
       yellow: 'text-[#d0b216]',
       blue: 'text-[#182B5C]',
     },
-  }
+  },
 };
 
 export default function Footer({ darkMode = false }) {
-  // Define theme-based colors
   const colors = {
-    bg: darkMode ? '#111827' : '#182B5C', // dark gray-900 vs original blue
+    bg: darkMode ? '#111827' : '#182B5C',
     textPrimary: darkMode ? '#f9fafb' : '#ffffff',
-    textSecondary: darkMode ? '#d1d5db' : '#9ca3af', // gray-300 → gray-400 in dark
-    textHover: darkMode ? '#fbbf24' : '#d0b216', // yellow-300 → brand yellow
-    border: darkMode ? '#374151' : '#374151', // gray-700 for both (subtle)
+    textSecondary: darkMode ? '#d1d5db' : '#9ca3af',
+    textHover: darkMode ? '#fbbf24' : '#d0b216',
+    border: '#374151',
     linkHover: darkMode ? '#fbbf24' : '#d0b216',
   };
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -62,16 +54,16 @@ export default function Footer({ darkMode = false }) {
       className="relative pt-12 pb-8 px-4 md:px-6 transition-colors duration-300"
       style={{ backgroundColor: colors.bg }}
     >
-      {/* Footer content */}
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
+          
           {/* Company Info */}
           <div className="space-y-4">
             <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
-              Optimas Fibre
+              Optimas Connect
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: colors.textSecondary }}>
-              Leading the future of internet connectivity with cutting-edge fibre solutions across Kenya.
+              Empowering digital connectivity across Kenya with reliable network solutions.
             </p>
             <div className="flex space-x-4 pt-2">
               {[
@@ -95,7 +87,7 @@ export default function Footer({ darkMode = false }) {
               ))}
             </div>
           </div>
-          
+
           {/* Quick Links */}
           <div className="space-y-4">
             <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
@@ -117,14 +109,14 @@ export default function Footer({ darkMode = false }) {
               ))}
             </ul>
           </div>
-          
+
           {/* Services */}
           <div className="space-y-4">
             <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
               Services
             </h3>
             <ul className="space-y-2">
-              {['Fibre Internet', 'Network Design', 'Installation', 'Maintenance', 'Consultation'].map((service, idx) => (
+              {['Internet Solutions', 'Network Design', 'Installation', 'Maintenance', 'Consultation'].map((service, idx) => (
                 <li key={idx}>
                   <a
                     href="#"
@@ -139,7 +131,7 @@ export default function Footer({ darkMode = false }) {
               ))}
             </ul>
           </div>
-          
+
           {/* Contact Info */}
           <div className="space-y-4">
             <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
@@ -163,19 +155,18 @@ export default function Footer({ darkMode = false }) {
                 <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                 </svg>
-                <span>info@optimasfibre.com</span>
+                <span>info@optimasconnect.com</span>
               </p>
             </div>
           </div>
         </div>
-        
+
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center border-t mt-10 pt-6" style={{ borderColor: colors.border }}>
           <p className="text-center md:text-left mb-4 md:mb-0 text-xs md:text-sm" style={{ color: colors.textSecondary }}>
-            &copy; {new Date().getFullYear()} Optimas Fibre. All rights reserved.
+            &copy; {new Date().getFullYear()} Optimas Connect. All rights reserved.
           </p>
-          
-          {/* Back to Top - Desktop Only */}
+
           <motion.button
             onClick={scrollToTop}
             className={`${RISA_STYLES.button.primary.base} ${RISA_STYLES.button.primary.hover} hidden md:inline-flex items-center`}

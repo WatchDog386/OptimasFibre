@@ -70,7 +70,7 @@ const Contact = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            Get in touch for inquiries, support, or to learn more about our fibre internet services
+            Get in touch for inquiries, support, or to learn more about our Fiber internet services
           </motion.p>
         </div>
 
@@ -118,8 +118,8 @@ const Contact = () => {
                 }`}>Email Us</h3>
               </div>
               <div className="space-y-1 pl-11">
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>info@optimafibre.co.ke</p>
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>support@optimafibre.co.ke</p>
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>info@optimafiber.co.ke</p>
+                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>support@optimafiber.co.ke</p>
               </div>
             </motion.div>
 

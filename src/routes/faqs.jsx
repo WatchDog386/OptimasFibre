@@ -62,7 +62,7 @@ const faqsData = {
           <div className="space-y-3">
             <p>To create your self-care account:</p>
             <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm">
-              <li>Visit our self-care portal at knoxvilletechnologies.com</li>
+              <li>Visit our self-care portal at optimaswifi.co.ke</li>
               <li>Click on 'Get Started'</li>
               <li>Enter your details as prompted</li>
               <li>Create a password and verify your identity via SMS</li>
@@ -436,7 +436,7 @@ export default function Faqs() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            Optimas Fibre - Self-Care Portal
+            Optimas Fiber - Self-Care Portal
           </motion.h2>
           <motion.p 
             className={darkMode ? 'text-gray-300 text-sm md:text-base' : 'text-gray-600 text-sm md:text-base'}
