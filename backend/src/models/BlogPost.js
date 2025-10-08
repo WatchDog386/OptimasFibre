@@ -50,7 +50,6 @@ const blogPostSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    // ✅ REMOVED: required: true — because we generate it in pre-save hook
   },
   category: {
     type: String,

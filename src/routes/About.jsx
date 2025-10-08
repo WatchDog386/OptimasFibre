@@ -38,6 +38,11 @@ const About = () => {
   const navigate = useNavigate();
   const { darkMode } = useContext(ThemeContext);
 
+  // ✅ ADDED: Handle Add Portfolio redirect
+  const handleAddPortfolio = () => {
+    navigate('/admin/login');
+  };
+
   // Navigation handler
   const handleServicesClick = () => {
     navigate('/services');
@@ -53,14 +58,24 @@ const About = () => {
     setSelectedPortfolioItem(null);
   };
 
-  // Image gallery data
-  const galleryImages = [
-    "/connection.jpg",
-    "/world.jpg",
-    "/fibre3.webp",
-    "/city2.jpg",
-    "/pipe.webp",
-  ];
+  // ✅ UPDATED: Use portfolio items for the carousel instead of static images
+  const getCarouselImages = () => {
+    // If we have portfolio items with images, use them
+    if (portfolioItems && portfolioItems.length > 0) {
+      const itemsWithImages = portfolioItems.filter(item => item.imageUrl);
+      if (itemsWithImages.length > 0) {
+        return itemsWithImages.slice(0, 5).map(item => item.imageUrl);
+      }
+    }
+    // Fallback to default images if no portfolio items
+    return [
+      "/connection.jpg",
+      "/world.jpg", 
+      "/fibre3.webp",
+      "/city2.jpg",
+      "/pipe.webp",
+    ];
+  };
 
   // Services data
   const services = [
@@ -70,13 +85,13 @@ const About = () => {
       icon: "📡"
     },
     {
-      title: "Network Design",
+      title: "Network Design", 
       description: "Custom network architecture tailored to your needs",
       icon: "🔧"
     },
     {
       title: "Installation",
-      description: "Professional implementation of fibre infrastructure",
+      description: "Professional implementation of fibre infrastructure", 
       icon: "⚡"
     },
     {
@@ -169,7 +184,7 @@ const About = () => {
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring", 
         stiffness: 100,
         damping: 12
       }
@@ -213,7 +228,7 @@ const About = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 whileHover={{ 
                   scale: 1.05,
-                  rotate: 2,
+                  rotate: 2, 
                   transition: { duration: 0.2 }
                 }}
               />
@@ -415,7 +430,8 @@ const About = () => {
                     loop={true}
                     className="rounded-xl overflow-hidden shadow-xl"
                   >
-                    {galleryImages.map((image, index) => (
+                    {/* ✅ UPDATED: Use dynamic portfolio images for carousel */}
+                    {getCarouselImages().map((image, index) => (
                       <SwiperSlide key={index}>
                         <motion.div 
                           className="h-64 md:h-80 lg:h-96 w-full relative"
@@ -427,6 +443,11 @@ const About = () => {
                             src={image} 
                             alt={`Optimas Fibre project ${index + 1}`}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback to placeholder if image fails to load
+                              e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzljYTBiZCI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+';
+                              e.target.onerror = null;
+                            }}
                           />
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6">
                             <h4 className="text-white text-base md:text-lg font-semibold">Project {index + 1}</h4>
@@ -601,21 +622,38 @@ const About = () => {
           darkMode ? 'bg-gray-900' : 'bg-white'
         }`}>
           <div className="container mx-auto px-4">
-            <motion.h2 
-              className={`text-2xl md:text-3xl font-bold mb-4 text-center ${
-                darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-              }`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Our Portfolio
-            </motion.h2>
-            <p className={`text-center mb-8 md:mb-12 max-w-2xl mx-auto ${
-              darkMode ? 'text-gray-400' : 'text-gray-600'
-            } text-sm md:text-base`}>
-              Explore our successful projects and see how we've helped businesses and communities with our fibre solutions.
-            </p>
+            <div className="flex justify-between items-center mb-8 md:mb-12">
+              <div>
+                <motion.h2 
+                  className={`text-2xl md:text-3xl font-bold mb-2 ${
+                    darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
+                  }`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  Our Portfolio
+                </motion.h2>
+                <p className={`max-w-2xl ${
+                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                } text-sm md:text-base`}>
+                  Explore our successful projects and see how we've helped businesses and communities with our fibre solutions.
+                </p>
+              </div>
+              
+              {/* ✅ ADDED: Add Portfolio Button */}
+              <motion.button 
+                onClick={handleAddPortfolio}
+                className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center gap-2`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Portfolio
+              </motion.button>
+            </div>
             
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg mb-6 text-center">
@@ -647,7 +685,7 @@ const About = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
                 <p className="text-lg font-medium">No portfolio items yet.</p>
-                <p className="mt-2">Admin can add portfolio items via the dashboard.</p>
+                <p className="mt-2">Click "Add Portfolio" to upload your first project.</p>
               </div>
             ) : (
               <motion.div 
@@ -681,7 +719,7 @@ const About = () => {
                             alt={item.title}
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             onError={(e) => {
-                              e.target.src = '/placeholder.jpg';
+                              e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzljYTBiZCI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+';
                               e.target.onerror = null;
                             }}
                           />

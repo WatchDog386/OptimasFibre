@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
 
 // ✅ UPDATED BUTTON STYLES — SHORTER, NO ICONS, NATURAL WIDTH
 const BUTTON_STYLES = {
@@ -41,21 +42,168 @@ const RISA_STYLES = {
   }
 };
 
+// Blog Detail Viewer Component - matches Jimmy Alex story layout
+const BlogDetailViewer = ({ blogPost, onClose }) => {
+  const blogImages = useMemo(() => {
+    if (blogPost.imageUrl) {
+      return [{
+        id: 0,
+        url: blogPost.imageUrl,
+        alt: blogPost.title || "Blog post"
+      }];
+    }
+    return [{
+      id: 0,
+      url: "/default-blog.jpg",
+      alt: "Blog post"
+    }];
+  }, [blogPost]);
+
+  const currentImage = blogImages[0];
+
+  return (
+    <section className="py-12 bg-gradient-to-br from-[#f9f8f5] to-[#e9ecef] min-h-screen">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+        
+        {/* Back Button */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-6"
+        >
+          <button
+            onClick={onClose}
+            className="inline-flex items-center text-sm text-[#2b473f] hover:text-[#015B97] transition-colors duration-300 font-semibold"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Blog
+          </button>
+        </motion.div>
+
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-10"
+        >
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 text-[#182B5C] font-montserrat">
+            {blogPost.title}
+          </h1>
+          <div className="flex justify-center items-center text-sm md:text-base text-gray-600 max-w-3xl mx-auto font-poppins">
+            <span className="bg-[#d0b216] text-[#182B5C] px-2 py-0.5 rounded-full text-xs font-medium mr-2">
+              {blogPost.category || 'General'}
+            </span>
+            <span>{new Date(blogPost.publishedAt || blogPost.createdAt).toLocaleDateString()}</span>
+          </div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          
+          {/* Image Section */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="relative"
+          >
+            <div className="rounded-xl overflow-hidden shadow-lg bg-white p-4">
+              <img
+                src={currentImage.url}
+                alt={currentImage.alt}
+                className="w-full h-64 md:h-80 object-contain mx-auto"
+                onError={(e) => {
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzljYTBiZCI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+';
+                  e.target.onerror = null;
+                }}
+              />
+            </div>
+          </motion.div>
+
+          {/* Content Section */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="space-y-6"
+          >
+            {/* Blog Content */}
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200/50">
+              <div className="prose prose-sm max-w-none text-gray-700 font-poppins">
+                {blogPost.content.split('\n').map((paragraph, i) => (
+                  <p key={i} className="mb-3">{paragraph}</p>
+                ))}
+              </div>
+            </div>
+
+            {/* Author Info */}
+            {(blogPost.author || blogPost.authorInfo) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                className="bg-[#f6f4ee] rounded-xl p-5 shadow-sm border border-[#e9ecef]"
+              >
+                <h3 className="text-lg font-bold mb-2 text-[#182B5C] font-montserrat">Author</h3>
+                <p className="text-gray-700 text-sm font-poppins">
+                  {blogPost.author?.email || blogPost.authorInfo || 'Optimas Team'}
+                </p>
+              </motion.div>
+            )}
+
+            {/* REMOVED: Download PDF Section */}
+
+            {/* Back to Blog */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+              className="text-center"
+            >
+              <button
+                onClick={onClose}
+                className="inline-block bg-[#182B5C] hover:bg-[#0f1e42] text-white font-semibold py-2.5 px-6 rounded-lg transition-colors duration-300 text-sm font-montserrat"
+              >
+                Back to Blog List
+              </button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const BlogList = () => {
+  const navigate = useNavigate();
   const [blogPosts, setBlogPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [viewingBlog, setViewingBlog] = useState(null); // Track which blog is being viewed in detail
   const postsPerPage = 6;
+
+  // ✅ ADDED: Function to handle Add Blog redirect
+  const handleAddBlog = () => {
+    navigate('/admin/login');
+  };
+
+  // ✅ Handle Learn More click - show detailed view
+  const handleLearnMore = (post) => {
+    setViewingBlog(post);
+    window.scrollTo(0, 0);
+  };
 
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
         setLoading(true);
         setError('');
-        // ✅ FIXED: Removed extra spaces from URL and added proper error handling
         const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
         const res = await fetch(`${API_BASE_URL}/api/blog`);
         
@@ -64,12 +212,11 @@ const BlogList = () => {
         }
         
         const data = await res.json();
-        // ✅ FIXED: Extract the array from response.data
         setBlogPosts(data.data || []);
       } catch (error) {
         console.error('Error fetching blogs:', error);
         setError('Unable to load blog posts. Please check your internet connection and try again.');
-        setBlogPosts([]); // Set to empty array to prevent .slice() errors
+        setBlogPosts([]);
       } finally {
         setLoading(false);
       }
@@ -110,6 +257,11 @@ const BlogList = () => {
     setCurrentPage(1);
   };
 
+  // If we have a blog being viewed in detail, show that view
+  if (viewingBlog) {
+    return <BlogDetailViewer blogPost={viewingBlog} onClose={() => setViewingBlog(null)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section — COMPACT FOR MOBILE */}
@@ -145,21 +297,34 @@ const BlogList = () => {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Blog Content */}
           <div className="w-full lg:w-8/12">
-            {/* Category Filters — COMPACT BUTTONS */}
-            <div className="mb-6 flex flex-wrap gap-2">
-              {categories.map(category => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryChange(category)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    selectedCategory === category
-                      ? 'bg-[#015B97] text-white border-[#015B97]'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </button>
-              ))}
+            {/* ✅ ADDED: Add Blog Button - Positioned with category filters */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-wrap gap-2">
+                {categories.map(category => (
+                  <button
+                    key={category}
+                    onClick={() => handleCategoryChange(category)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      selectedCategory === category
+                        ? 'bg-[#015B97] text-white border-[#015B97]'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Add Blog Button */}
+              <button
+                onClick={handleAddBlog}
+                className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light} dark:${BUTTON_STYLES.primary.dark} flex items-center gap-2 hover:scale-105 transform transition-all duration-200`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Blog
+              </button>
             </div>
 
             {/* Error Message */}
@@ -231,19 +396,20 @@ const BlogList = () => {
                         <span>{new Date(post.publishedAt || post.createdAt).toLocaleDateString()}</span>
                       </div>
                       <h2 className={`${RISA_STYLES.typography.cardTitle} mb-2 text-gray-800 dark:text-white hover:text-[#015B97] transition-colors`}>
-                        <Link to={`/articles/${post.slug || post._id}`}>
-                          {post.title}
-                        </Link>
+                        {post.title}
                       </h2>
                       <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
                         {post.content.length > 150 ? post.content.substring(0, 150) + '...' : post.content}
                       </p>
-                      <Link
-                        to={`/articles/${post.slug || post._id}`}
-                        className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
-                      >
-                        Read More
-                      </Link>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleLearnMore(post)}
+                          className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
+                        >
+                          Learn More
+                        </button>
+                        {/* REMOVED: Download PDF Button from blog list cards */}
+                      </div>
                     </div>
                   </article>
                 ))}
@@ -265,7 +431,6 @@ const BlogList = () => {
                   </button>
 
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    // Show pages around current page
                     let pageNum;
                     if (totalPages <= 5) {
                       pageNum = i + 1;
@@ -353,9 +518,7 @@ const BlogList = () => {
                     )}
                     <div>
                       <h4 className="font-medium text-gray-800 dark:text-white text-xs hover:text-[#015B97] transition-colors">
-                        <Link to={`/articles/${post.slug || post._id}`}>
-                          {post.title}
-                        </Link>
+                        {post.title}
                       </h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}

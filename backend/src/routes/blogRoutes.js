@@ -7,7 +7,8 @@ import {
   getBlogPostById,
   createBlogPost, 
   updateBlogPost, 
-  deleteBlogPost 
+  deleteBlogPost,
+  generateBlogPDF
 } from '../controllers/blogController.js';
 
 const router = express.Router();
@@ -23,6 +24,12 @@ router.get('/', getAllBlogPosts);
  * Public route to fetch a single blog post by ID or slug
  */
 router.get('/:id', getBlogPostById);
+
+/**
+ * GET /api/blog/:id/pdf
+ * Public route to generate and download PDF of a blog post
+ */
+router.get('/:id/pdf', generateBlogPDF);
 
 /**
  * POST /api/blog

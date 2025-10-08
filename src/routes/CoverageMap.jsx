@@ -328,7 +328,7 @@ const CoveragePage = () => {
                 }`}
               >
                 <Phone className="w-4 h-4" />
-                Call Support: 0726 896 562
+                Call Support: 0741874200
               </a>
               <a 
                 href="mailto:support@knoxvilletechnologies.com" 
@@ -349,7 +349,7 @@ const CoveragePage = () => {
       {/* CTA Section */}
       <section className={`py-16 bg-gradient-to-br ${darkMode ? 'from-blue-900 to-blue-800' : 'from-[#182B5C] to-[#0f1e42]'} text-white`}>
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Get Blazing-Fast Internet with Optimas Fibre!</h2>
+          <h2 className="text-3xl font-bold mb-4">Get Blazing-Fast Internet with Optimas Fiber!</h2>
           <p className="text-xl mb-8 max-w-3xl mx-auto opacity-90">
             Reliable, high-speed internet for your home or business. Connect with us today!
           </p>
