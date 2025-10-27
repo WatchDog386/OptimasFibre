@@ -108,7 +108,6 @@ const Dashboard = () => {
     else if (message.includes('Welcome')) emoji = '👋';
     else if (message.includes('Publish') || message.includes('created') || message.includes('updated')) emoji = '📤';
     else if (message.includes('wait') || message.includes('Loading')) emoji = '⏳';
-
     setNotification({ show: true, message: `${emoji} ${message}`, type });
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'info' });
@@ -237,32 +236,59 @@ const Dashboard = () => {
     }
   };
 
-  const handleImageChange = (file) => {
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        showNotification('Please select an image file.', 'error');
-        return;
+  // ✅ UPDATED: Upload file directly to Cloudinary
+  const handleImageChange = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showNotification('Please select an image file.', 'error');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('Image size should be less than 5MB.', 'error');
+      return;
+    }
+
+    try {
+      showNotification('Uploading image...', 'info');
+      const formDataCloud = new FormData();
+      formDataCloud.append('file', file);
+      formDataCloud.append('upload_preset', 'admin_dashboard_upload'); // 👈 Dedicated preset
+
+      const res = await fetch(
+        'https://api.cloudinary.com/v1_1/dsfwavo7x/image/upload',
+        {
+          method: 'POST',
+          body: formDataCloud,
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || 'Upload failed');
       }
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification('Image size should be less than 5MB.', 'error');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setFormData({
-          ...formData,
-          image: file,
-          imageUrl: event.target.result
-        });
-      };
-      reader.readAsDataURL(file);
+
+      // ✅ Set the public Cloudinary URL
+      setFormData((prev) => ({
+        ...prev,
+        image: file,
+        imageUrl: data.secure_url,
+      }));
+      showNotification('Image uploaded successfully!', 'success');
+    } catch (err) {
+      console.error('Cloudinary upload error:', err);
+      showNotification(`Upload failed: ${err.message}`, 'error');
+      setFormData((prev) => ({
+        ...prev,
+        image: null,
+        imageUrl: '',
+      }));
     }
   };
 
   const handleImageUrlChange = (url) => {
     setFormData({
       ...formData,
-      imageUrl: url,
+      imageUrl: url || '', // ✅ Ensure string to avoid controlled/uncontrolled warning
       image: null
     });
   };
@@ -985,7 +1011,7 @@ const ContentManager = ({
                 <input
                   type="url"
                   name="imageUrl"
-                  value={formData.imageUrl}
+                  value={formData.imageUrl || ''} // ✅ Always a string
                   onChange={(e) => onImageUrlChange(e.target.value)}
                   placeholder="Paste image URL here..."
                   className={`w-full p-3 pl-10 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
@@ -1203,7 +1229,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
           </div>
         </div>
       </div>
-
       {/* System Monitoring */}
       <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
         <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">System Health Monitoring</h3>
