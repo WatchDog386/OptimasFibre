@@ -413,8 +413,8 @@ const Hero = () => {
     {
       id: 1,
       name: "Jumbo",
-      price: "1,500",
-      speed: "6Mbps",
+      price: "1,499",
+      speed: "8Mbps",
       features: ["Great for browsing", "24/7 Support", "Free Installation"],
       type: "home",
       popular: false,
@@ -422,8 +422,8 @@ const Hero = () => {
     {
       id: 2,
       name: "Buffalo",
-      price: "2,000",
-      speed: "12Mbps",
+      price: "1,999",
+      speed: "15Mbps",
       features: ["Streaming & Social Media", "24/7 Support", "Free Installation"],
       type: "home",
       popular: false,
@@ -431,8 +431,8 @@ const Hero = () => {
     {
       id: 3,
       name: "Ndovu",
-      price: "2,500",
-      speed: "20Mbps",
+      price: "2,499",
+      speed: "25Mbps",
       features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"],
       type: "home",
       popular: false,
@@ -440,7 +440,7 @@ const Hero = () => {
     {
       id: 4,
       name: "Gazzelle",
-      price: "3,000",
+      price: "2,999",
       speed: "30Mbps",
       features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"],
       type: "home",
@@ -449,7 +449,7 @@ const Hero = () => {
     {
       id: 5,
       name: "Tiger",
-      price: "4,000",
+      price: "3,999",
       speed: "40Mbps",
       features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"],
       type: "home",
@@ -458,7 +458,7 @@ const Hero = () => {
     {
       id: 6,
       name: "Chui",
-      price: "6,000",
+      price: "4,999",
       speed: "60Mbps",
       features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"],
       type: "home",
