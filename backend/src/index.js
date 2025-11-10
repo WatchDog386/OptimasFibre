@@ -13,13 +13,13 @@ import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import morgan from 'morgan';
 import fs from 'fs';
-import multer from 'multer';
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
 import portfolioRoutes from './routes/portfolioRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
+import invoiceRoutes from './routes/invoiceRoutes.js'; // ✅ NEW: Invoice routes
 
 // Import DB connection function
 import connectDB from './config/db.js';
@@ -74,39 +74,53 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// ✅ DYNAMIC CORS — Reads from environment variables
+// ✅ IMPROVED CORS CONFIGURATION
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
+  'https://optimaswifi.co.ke',
+  'https://www.optimaswifi.co.ke', // Add www subdomain
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:5000',
   'http://localhost:10000',
-  'https://optimaswifi.co.ke',
   'https://optimasfibre.onrender.com'
-]
-  .filter(Boolean)
-  .map(origin => origin.trim());
+].filter(Boolean);
 
-console.log('✅ Allowed CORS origins:', allowedOrigins.join(', '));
+console.log('✅ Allowed CORS origins:', allowedOrigins);
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, Postman, server-side)
     if (!origin) {
+      console.log('🔍 No origin - allowing request (mobile app, server-side, etc.)');
       return callback(null, true);
     }
 
     console.log('🔍 CORS check for origin:', origin);
 
-    if (!allowedOrigins.includes(origin)) {
-      const msg = `❌ The CORS policy for this site does not allow access from the specified origin: ${origin}`;
-      console.warn(msg);
-      return callback(new Error(msg), false);
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
 
-    return callback(null, true);
+    // Also check if origin matches any of our domains without protocol
+    const originWithoutProtocol = origin.replace(/^https?:\/\//, '');
+    const isAllowed = allowedOrigins.some(allowed => {
+      const allowedWithoutProtocol = allowed.replace(/^https?:\/\//, '');
+      return allowedWithoutProtocol === originWithoutProtocol;
+    });
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+
+    const msg = `❌ CORS blocked: ${origin} not in allowed origins`;
+    console.warn(msg);
+    console.warn('Allowed origins:', allowedOrigins);
+    return callback(new Error(msg), false);
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   optionsSuccessStatus: 200
 }));
 
@@ -117,7 +131,9 @@ const limiter = rateLimit({
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
-  }
+  },
+  standardHeaders: true,
+  legacyHeaders: false
 });
 app.use('/api/', limiter);
 
@@ -187,13 +203,28 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     env: NODE_ENV,
     uptime: process.uptime(),
-    memoryUsage: process.memoryUsage()
+    memoryUsage: process.memoryUsage(),
+    nodeVersion: process.version,
+    platform: process.platform
   });
 });
 
 // Test route
 app.get('/', (req, res) => {
-  res.send('🚀 Backend is running!');
+  res.json({
+    success: true,
+    message: '🚀 Optimas Fiber Backend is running!',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      auth: '/api/auth',
+      blog: '/api/blog',
+      portfolio: '/api/portfolio',
+      settings: '/api/settings',
+      invoices: '/api/invoices',
+      health: '/health'
+    }
+  });
 });
 
 // API routes
@@ -201,12 +232,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/settings', protect, settingRoutes);
+app.use('/api/invoices', invoiceRoutes); // ✅ NEW: Invoice routes
 
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'API endpoint not found'
+    message: 'API endpoint not found',
+    path: req.path,
+    method: req.method
   });
 });
 
@@ -217,6 +251,12 @@ app.use((err, req, res, next) => {
 
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
+
+  // CORS errors
+  if (err.message && err.message.includes('CORS')) {
+    statusCode = 403;
+    message = 'Cross-Origin Request Blocked';
+  }
 
   if (err.name === 'ValidationError') {
     statusCode = 400;
@@ -247,12 +287,16 @@ app.use((err, req, res, next) => {
     message = 'File size exceeds limit (5MB)';
   }
 
+  // Set CORS headers for error responses
+  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
   res.status(statusCode).json({
     success: false,
     message,
     ...(NODE_ENV === 'development' && { 
       stack: err.stack,
-      fullError: err 
+      fullError: err.message
     })
   });
 });
@@ -260,16 +304,20 @@ app.use((err, req, res, next) => {
 // Start server only after DB connects
 const startServer = async () => {
   try {
+    console.log('🔄 Connecting to database...');
     await connectDB();
+    
     const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`✅ Server running in ${NODE_ENV} mode on port ${PORT}`);
-      console.log(`✅ Listening on all interfaces (0.0.0.0:${PORT})`);
-      console.log(`✅ Visit health check: http://localhost:${PORT}/health`);
-      console.log(`✅ API endpoints:`);
+      console.log(`\n🎉 Server running in ${NODE_ENV} mode on port ${PORT}`);
+      console.log(`🌐 Listening on all interfaces (0.0.0.0:${PORT})`);
+      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+      console.log(`📊 API endpoints:`);
       console.log(`   - Auth: http://localhost:${PORT}/api/auth`);
       console.log(`   - Blog: http://localhost:${PORT}/api/blog`);
       console.log(`   - Portfolio: http://localhost:${PORT}/api/portfolio`);
       console.log(`   - Settings: http://localhost:${PORT}/api/settings`);
+      console.log(`   - Invoices: http://localhost:${PORT}/api/invoices`);
+      console.log(`\n✅ Server started successfully at ${new Date().toISOString()}`);
     });
 
     const shutdown = (signal) => {

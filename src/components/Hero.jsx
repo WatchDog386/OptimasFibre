@@ -4,7 +4,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade } from 'swiper/modules';
 import { useNavigate } from 'react-router-dom';
 import { FaWhatsapp } from 'react-icons/fa';
-import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone } from 'lucide-react';
+import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone, Download, Send } from 'lucide-react';
 import { ThemeContext } from '../contexts/ThemeContext';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
@@ -300,6 +300,9 @@ const Hero = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
+  const [invoiceData, setInvoiceData] = useState(null);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [errorDetails, setErrorDetails] = useState("");
 
   // Minimum swipe distance required
   const minSwipeDistance = 50;
@@ -504,6 +507,7 @@ const Hero = () => {
     }));
     setShowForm(true);
     setMessageStatus(null);
+    setErrorDetails("");
   };
 
   const handleMobilePlanSelect = (plan) => {
@@ -521,29 +525,66 @@ const Hero = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setMessageStatus(null);
+    setErrorDetails("");
+    
     try {
-      const message = `Hello! I'm interested in the ${formData.connectionType} plan.
-Name: ${formData.name}
-Phone: ${formData.phone}
-Email: ${formData.email}
-Location: ${formData.location}`;
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/254741874200?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank');
-      setMessageStatus("success");
-      setTimeout(() => {
-        setShowForm(false);
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          location: "",
-          connectionType: "",
-        });
-        setSelectedPlan(null);
-      }, 2000);
+      // Create invoice data
+      const invoicePayload = {
+        customerName: formData.name,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        customerLocation: formData.location,
+        planName: selectedPlan.name,
+        planPrice: selectedPlan.price.replace(/,/g, ''),
+        planSpeed: selectedPlan.speed,
+        features: selectedPlan.features,
+        connectionType: formData.connectionType
+      };
+
+      console.log('📤 Sending invoice data:', invoicePayload);
+
+      // FIXED: Use Vite environment variable or direct URL
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
+      
+      console.log('🌐 API URL:', API_URL);
+      
+      const response = await fetch(`${API_URL}/api/invoices`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(invoicePayload),
+      });
+
+      console.log('📥 Response status:', response.status);
+      
+      // Check if response is OK before parsing JSON
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('📥 Response data:', result);
+
+      if (result.success) {
+        setInvoiceData(result.invoice);
+        setMessageStatus("success");
+        
+        // Show invoice preview after successful creation
+        setTimeout(() => {
+          setShowInvoice(true);
+          setShowForm(false);
+        }, 2000);
+      } else {
+        setMessageStatus("error");
+        setErrorDetails(result.message || 'Unknown error occurred');
+        console.error('❌ Backend error:', result);
+      }
     } catch (err) {
+      console.error('❌ Network error creating invoice:', err);
       setMessageStatus("error");
+      setErrorDetails(err.message || 'Network error - please check your connection');
     } finally {
       setIsLoading(false);
     }
@@ -555,6 +596,351 @@ Location: ${formData.location}`;
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  // Invoice Preview Component
+  const InvoicePreview = () => {
+    if (!invoiceData) return null;
+
+    const handlePrint = () => {
+      const invoiceContent = document.getElementById('invoice-content');
+      const originalContents = document.body.innerHTML;
+      
+      document.body.innerHTML = invoiceContent.innerHTML;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload();
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+        onClick={() => setShowInvoice(false)}
+      >
+        <motion.div
+          className={`rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto ${
+            darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Invoice Content for Print */}
+          <div id="invoice-content" className="hidden">
+            <div className="p-8 bg-white text-gray-900">
+              <div className="flex justify-between items-start mb-8">
+                <div className="flex items-center">
+                  <img 
+                    src="/oppo.jpg" 
+                    alt="Optimas Fiber" 
+                    className="h-16 w-16 mr-4 rounded-lg"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                  <div>
+                    <h1 className="text-3xl font-bold text-[#182b5c]">OPTIMAS FIBER</h1>
+                    <p className="text-gray-600 text-lg">
+                      High-Speed Internet Solutions
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <h2 className="text-4xl font-bold text-[#d0b216]">INVOICE</h2>
+                  <p className="text-gray-600 text-lg">
+                    #{invoiceData.invoiceNumber}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8 mb-8">
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">
+                    Bill To:
+                  </h3>
+                  <p className="font-medium text-lg">{invoiceData.customerName}</p>
+                  <p className="text-gray-700">{invoiceData.customerEmail}</p>
+                  <p className="text-gray-700">{invoiceData.customerPhone}</p>
+                  <p className="text-gray-700">{invoiceData.customerLocation}</p>
+                </div>
+                
+                <div className="text-right">
+                  <div className="mb-4">
+                    <p className="text-lg"><strong>Invoice Date:</strong> {new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
+                    <p className="text-lg"><strong>Due Date:</strong> {new Date(invoiceData.dueDate).toLocaleDateString()}</p>
+                  </div>
+                  <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-800 text-lg">
+                    <CheckCircle size={20} className="mr-2" />
+                    {invoiceData.status}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-gray-300 mb-6">
+                <table className="w-full">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="text-left p-4 font-semibold text-lg">Description</th>
+                      <th className="text-left p-4 font-semibold text-lg">Details</th>
+                      <th className="text-right p-4 font-semibold text-lg">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-gray-300">
+                      <td className="p-4">
+                        <div>
+                          <p className="font-semibold text-lg">{invoiceData.planName} Plan</p>
+                          <p className="text-gray-700">{invoiceData.connectionType}</p>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-lg">Speed: {invoiceData.planSpeed}</p>
+                        <p className="text-gray-700">Monthly Subscription</p>
+                      </td>
+                      <td className="p-4 text-right font-semibold text-lg">
+                        Ksh {parseInt(invoiceData.planPrice).toLocaleString()}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex justify-end mb-8">
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-[#182b5c]">
+                    Total: Ksh {parseInt(invoiceData.planPrice).toLocaleString()}
+                  </div>
+                  <p className="text-gray-700 text-lg">Per month</p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">
+                  Features Included:
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {invoiceData.features && invoiceData.features.map((feature, index) => (
+                    <div key={index} className="flex items-center">
+                      <CheckCircle size={20} className="text-green-500 mr-3 flex-shrink-0" />
+                      <span className="text-lg">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-6 rounded-lg bg-blue-50 border border-blue-200">
+                <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">
+                  Payment Instructions:
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-lg font-semibold">Bank Transfer:</p>
+                    <p className="text-gray-700 text-lg">Bank: Equity Bank</p>
+                    <p className="text-gray-700 text-lg">Account Name: Optimas Fiber Ltd</p>
+                    <p className="text-gray-700 text-lg">Account Number: 1234567890</p>
+                    <p className="text-gray-700 text-lg">Branch: Nairobi Main</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold">Mobile Money:</p>
+                    <p className="text-gray-700 text-lg">Paybill: 123456</p>
+                    <p className="text-gray-700 text-lg">Account: {invoiceData.invoiceNumber}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center mt-8 pt-6 border-t border-gray-300 text-gray-600">
+                <p className="text-lg">Thank you for choosing Optimas Fiber!</p>
+                <p className="text-lg">For any queries, contact us at: support@optimasfiber.co.ke | +254 741 874 200</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Invoice Header */}
+          <div className={`p-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-t-xl`}>
+            <div className="flex justify-between items-start">
+              <div className="flex items-center">
+                <img 
+                  src="/oppo.jpg" 
+                  alt="Optimas Fiber" 
+                  className="h-12 w-12 mr-4 rounded-lg"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <div>
+                  <h1 className="text-2xl font-bold text-[#182b5c]">OPTIMAS FIBER</h1>
+                  <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
+                    High-Speed Internet Solutions
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <h2 className="text-3xl font-bold text-[#d0b216]">INVOICE</h2>
+                <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
+                  #{invoiceData.invoiceNumber}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Invoice Details */}
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 className={`text-lg font-semibold mb-4 ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                }`}>
+                  Bill To:
+                </h3>
+                <p className="font-medium">{invoiceData.customerName}</p>
+                <p>{invoiceData.customerEmail}</p>
+                <p>{invoiceData.customerPhone}</p>
+                <p>{invoiceData.customerLocation}</p>
+              </div>
+              
+              <div className="text-right">
+                <div className="mb-4">
+                  <p><strong>Invoice Date:</strong> {new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
+                  <p><strong>Due Date:</strong> {new Date(invoiceData.dueDate).toLocaleDateString()}</p>
+                </div>
+                <div className={`inline-flex items-center px-4 py-2 rounded-full ${
+                  darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
+                }`}>
+                  <CheckCircle size={16} className="mr-2" />
+                  {invoiceData.status}
+                </div>
+              </div>
+            </div>
+
+            {/* Service Details */}
+            <div className={`rounded-lg border ${
+              darkMode ? 'border-gray-600' : 'border-gray-200'
+            } mb-6`}>
+              <table className="w-full">
+                <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
+                  <tr>
+                    <th className="text-left p-4 font-semibold">Description</th>
+                    <th className="text-left p-4 font-semibold">Details</th>
+                    <th className="text-right p-4 font-semibold">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className={darkMode ? 'border-gray-600' : 'border-gray-200'}>
+                    <td className="p-4">
+                      <div>
+                        <p className="font-semibold">{invoiceData.planName} Plan</p>
+                        <p className="text-sm opacity-75">{invoiceData.connectionType}</p>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <p>Speed: {invoiceData.planSpeed}</p>
+                      <p className="text-sm opacity-75">Monthly Subscription</p>
+                    </td>
+                    <td className="p-4 text-right font-semibold">
+                      Ksh {parseInt(invoiceData.planPrice).toLocaleString()}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Total */}
+            <div className="flex justify-end mb-8">
+              <div className="text-right">
+                <div className={`text-2xl font-bold ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                }`}>
+                  Total: Ksh {parseInt(invoiceData.planPrice).toLocaleString()}
+                </div>
+                <p className="text-sm opacity-75">Per month</p>
+              </div>
+            </div>
+
+            {/* Features Included */}
+            <div className="mb-8">
+              <h3 className={`text-lg font-semibold mb-4 ${
+                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+              }`}>
+                Features Included:
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {invoiceData.features && invoiceData.features.map((feature, index) => (
+                  <div key={index} className="flex items-center">
+                    <CheckCircle size={16} className="text-green-500 mr-2 flex-shrink-0" />
+                    <span className="text-sm">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Payment Instructions */}
+            <div className={`p-6 rounded-lg ${
+              darkMode ? 'bg-gray-700' : 'bg-blue-50'
+            }`}>
+              <h3 className={`text-lg font-semibold mb-4 ${
+                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+              }`}>
+                Payment Instructions:
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p><strong>Bank Transfer:</strong></p>
+                  <p>Bank: Equity Bank</p>
+                  <p>Account Name: Optimas Fiber Ltd</p>
+                  <p>Account Number: 1234567890</p>
+                  <p>Branch: Nairobi Main</p>
+                </div>
+                <div>
+                  <p><strong>Mobile Money:</strong></p>
+                  <p>Paybill: 123456</p>
+                  <p>Account: {invoiceData.invoiceNumber}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-4 justify-center mt-8">
+              <motion.button
+                className={`flex items-center px-6 py-3 rounded-full transition-colors ${
+                  darkMode 
+                    ? 'bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220]' 
+                    : 'bg-[#182b5c] text-white hover:bg-[#0f1f45]'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handlePrint}
+              >
+                <Download size={18} className="mr-2" />
+                Download PDF
+              </motion.button>
+              
+              <motion.button
+                className={`flex items-center px-6 py-3 rounded-full border transition-colors ${
+                  darkMode 
+                    ? 'border-gray-600 text-gray-300 hover:border-[#d0b216] hover:text-[#d0b216]' 
+                    : 'border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowInvoice(false)}
+              >
+                <Send size={18} className="mr-2" />
+                Close Invoice
+              </motion.button>
+            </div>
+
+            {/* Footer */}
+            <div className={`text-center mt-8 pt-6 border-t ${
+              darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-600'
+            }`}>
+              <p>Thank you for choosing Optimas Fiber!</p>
+              <p>For any queries, contact us at: support@optimasfiber.co.ke | +254 741 874 200</p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
 
   // Animation variants matching Services.jsx
   const containerVariants = {
@@ -1253,7 +1639,7 @@ Location: ${formData.location}`;
                     <h2 className={`text-xl font-semibold ${
                       darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
                     }`}>
-                      {selectedPlan.name}
+                      {selectedPlan.name} - Get Connected
                     </h2>
                   </div>
                   <motion.button 
@@ -1271,7 +1657,7 @@ Location: ${formData.location}`;
                 <p className={`text-sm mb-6 ${
                   darkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}>
-                  Complete the form below and we'll contact you to set up your {selectedPlan.name} plan.
+                  Complete the form below and we'll send your professional invoice via WhatsApp and Email.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -1340,7 +1726,7 @@ Location: ${formData.location}`;
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-6"
                   >
-                    <p>Message sent successfully! We'll contact you shortly.</p>
+                    <p>Invoice created successfully! Sending to your WhatsApp and Email...</p>
                   </motion.div>
                 )}
                 {messageStatus === "error" && (
@@ -1349,7 +1735,8 @@ Location: ${formData.location}`;
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6"
                   >
-                    <p>Failed to send message. Please try again or contact us directly.</p>
+                    <p>Failed to create invoice. {errorDetails && `Error: ${errorDetails}`}</p>
+                    <p className="text-sm mt-1">Please try again or contact us directly.</p>
                   </motion.div>
                 )}
 
@@ -1364,6 +1751,7 @@ Location: ${formData.location}`;
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#182b5c] focus:border-transparent dark:bg-gray-700 dark:text-white"
                         value={formData.name}
                         onChange={handleInputChange}
+                        placeholder="Enter your full name"
                       />
                     </div>
                     <div>
@@ -1375,16 +1763,19 @@ Location: ${formData.location}`;
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#182b5c] focus:border-transparent dark:bg-gray-700 dark:text-white"
                         value={formData.phone}
                         onChange={handleInputChange}
+                        placeholder="Enter your WhatsApp number"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address *</label>
                       <input
                         type="email"
                         name="email"
+                        required
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#182b5c] focus:border-transparent dark:bg-gray-700 dark:text-white"
                         value={formData.email}
                         onChange={handleInputChange}
+                        placeholder="Enter your email address"
                       />
                     </div>
                     <div>
@@ -1396,10 +1787,11 @@ Location: ${formData.location}`;
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#182b5c] focus:border-transparent dark:bg-gray-700 dark:text-white"
                         value={formData.location}
                         onChange={handleInputChange}
+                        placeholder="Enter your location"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Package</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selected Package</label>
                       <input
                         type="text"
                         className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-xl cursor-not-allowed dark:text-white"
@@ -1410,13 +1802,23 @@ Location: ${formData.location}`;
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
                     <motion.button 
-                      className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} px-8 py-3`}
+                      className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} px-8 py-3 flex items-center justify-center`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       type="submit"
                       disabled={isLoading}
                     >
-                      {isLoading ? "Processing..." : "Send via WhatsApp"}
+                      {isLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Creating Invoice...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={18} className="mr-2" />
+                          Generate & Send Invoice
+                        </>
+                      )}
                     </motion.button>
                     <motion.button 
                       className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light} px-8 py-3`}
@@ -1433,6 +1835,11 @@ Location: ${formData.location}`;
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Invoice Preview Modal */}
+      <AnimatePresence>
+        {showInvoice && <InvoicePreview />}
       </AnimatePresence>
     </motion.div>
   );
