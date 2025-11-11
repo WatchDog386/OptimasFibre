@@ -24,7 +24,7 @@ const animalImages = {
   "Chui": "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA3L3JvYl9yYXdwaXhlbF9hX3Bob3RvX29mX2FfY2hlZXRhaF9ydW5uaW5nX2FmdGVyX2FfZ2F6ZWxsZV9zaWRlX183Mjk5Y2E5My01ZWI0LTQ2NDAtOTgzNy00NWVlMDI0ZGU0ZTctNXgtaHEtc2NhbGUtNV8wMHguanBn.jpg",
 };
 
-// ✅ UPDATED BUTTON STYLES — MATCHES SERVICES.JSX
+// ✅ BUTTON STYLES — MATCHES SERVICES.JSX
 const BUTTON_STYLES = {
   primary: {
     base: 'py-2 px-6 rounded-full transition-colors duration-300 font-medium text-sm whitespace-nowrap',
@@ -85,7 +85,6 @@ const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
   };
 
   const currentColor = colorMap[color];
-  const gradientId = `gradient-${plan.id}`;
   const controls = useAnimation();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
@@ -112,7 +111,6 @@ const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
           Popular
         </div>
       )}
-
       {/* Image Top Section */}
       <div className="h-32 md:h-36 relative overflow-hidden">
         <div className="w-full h-full relative">
@@ -143,7 +141,6 @@ const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
           </div>
         </div>
       </div>
-
       {/* Card Content with Color Background */}
       <div className="flex-grow flex flex-col" style={{ background: currentColor.bg }}>
         <div className="p-3 md:p-4 flex-grow">
@@ -156,7 +153,6 @@ const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
             ))}
           </ul>
         </div>
-
         {/* Bottom Section */}
         <div className="relative pt-4 pb-3 px-3 md:px-4">
           <div className="text-center mb-2 relative z-10">
@@ -233,7 +229,6 @@ const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
           Popular
         </div>
       )}
-
       {/* Wide color header */}
       <div className="h-16 md:h-20 relative overflow-hidden" style={{ background: currentColor.bg }}>
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent flex items-end p-2">
@@ -249,7 +244,6 @@ const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
           </div>
         </div>
       </div>
-
       {/* Card Content */}
       <div className="flex-grow flex flex-col" style={{ background: currentColor.bg }}>
         <div className="p-3 flex-grow">
@@ -265,7 +259,6 @@ const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
             ))}
           </ul>
         </div>
-
         <div className="relative pb-3 px-3">
           <motion.button
             onClick={() => onSelect(plan)}
@@ -482,14 +475,20 @@ const WifiPlans = () => {
     }));
   };
 
+  // ✅ UPDATED handleSubmit with proper env usage and error diagnostics
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessageStatus(null);
     setErrorDetails("");
-    
+
     try {
-      // Create invoice data
+      // 🔧 Use VITE_API_BASE_URL from .env — fallback only for safety
+      const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
+      if (!API_BASE_URL) {
+        throw new Error('API base URL is not configured. Check VITE_API_BASE_URL in .env');
+      }
+
       const invoicePayload = {
         customerName: formData.name,
         customerEmail: formData.email,
@@ -499,17 +498,11 @@ const WifiPlans = () => {
         planPrice: selectedPlan.price.replace(/,/g, ''),
         planSpeed: selectedPlan.speed,
         features: selectedPlan.features,
-        connectionType: formData.connectionType
+        connectionType: formData.connectionType,
       };
 
-      console.log('📤 Sending invoice data:', invoicePayload);
-
-      // FIXED: Use Vite environment variable or direct URL
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
-      
-      console.log('🌐 API URL:', API_URL);
-      
-      const response = await fetch(`${API_URL}/api/invoices`, {
+      console.log('📤 Sending to:', `${API_BASE_URL}/api/invoices`);
+      const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -517,47 +510,58 @@ const WifiPlans = () => {
         body: JSON.stringify(invoicePayload),
       });
 
-      console.log('📥 Response status:', response.status);
-      
-      // Check if response is OK before parsing JSON
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to extract meaningful error
+        let errorMsg = `Server error: ${response.status} ${response.statusText}`;
+        try {
+          const errJson = await response.json();
+          errorMsg = errJson.message || errJson.error || errorMsg;
+        } catch {
+          const text = await response.text();
+          if (text) errorMsg = text;
+        }
+        throw new Error(errorMsg);
       }
-      
+
       const result = await response.json();
-      console.log('📥 Response data:', result);
 
       if (result.success) {
         setInvoiceData(result.invoice);
         setMessageStatus("success");
-        
-        // Show invoice preview after successful creation
         setTimeout(() => {
           setShowInvoice(true);
           setShowForm(false);
         }, 2000);
       } else {
         setMessageStatus("error");
-        setErrorDetails(result.message || 'Unknown error occurred');
-        console.error('❌ Backend error:', result);
+        setErrorDetails(result.message || 'Unknown server error');
       }
     } catch (err) {
-      console.error('❌ Network error creating invoice:', err);
+      console.error('❌ Invoice creation failed:', err);
       setMessageStatus("error");
-      setErrorDetails(err.message || 'Network error - please check your connection');
+
+      let message = err.message || 'Network error';
+
+      // 🔍 Improve user-facing error for common issues
+      if (err.message?.includes('CORS') || err.message?.includes('fetch')) {
+        message = 'CORS error: Backend does not allow requests from localhost. Add http://localhost:3000 to allowed origins on the server.';
+      } else if (err.message?.includes('NetworkError') || err.message?.includes('load')) {
+        message = 'Cannot reach the server. Check your internet or if the backend is running.';
+      }
+
+      setErrorDetails(message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Invoice Preview Component
+  // Invoice Preview Component (unchanged from your original)
   const InvoicePreview = () => {
     if (!invoiceData) return null;
 
     const handlePrint = () => {
       const invoiceContent = document.getElementById('invoice-content');
       const originalContents = document.body.innerHTML;
-      
       document.body.innerHTML = invoiceContent.innerHTML;
       window.print();
       document.body.innerHTML = originalContents;
@@ -605,7 +609,6 @@ const WifiPlans = () => {
                   </p>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-8 mb-8">
                 <div>
                   <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">
@@ -616,7 +619,6 @@ const WifiPlans = () => {
                   <p className="text-gray-700">{invoiceData.customerPhone}</p>
                   <p className="text-gray-700">{invoiceData.customerLocation}</p>
                 </div>
-                
                 <div className="text-right">
                   <div className="mb-4">
                     <p className="text-lg"><strong>Invoice Date:</strong> {new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
@@ -628,7 +630,6 @@ const WifiPlans = () => {
                   </div>
                 </div>
               </div>
-
               <div className="rounded-lg border border-gray-300 mb-6">
                 <table className="w-full">
                   <thead className="bg-gray-100">
@@ -657,7 +658,6 @@ const WifiPlans = () => {
                   </tbody>
                 </table>
               </div>
-
               <div className="flex justify-end mb-8">
                 <div className="text-right">
                   <div className="text-3xl font-bold text-[#182b5c]">
@@ -666,7 +666,6 @@ const WifiPlans = () => {
                   <p className="text-gray-700 text-lg">Per month</p>
                 </div>
               </div>
-
               <div className="mb-8">
                 <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">
                   Features Included:
@@ -680,7 +679,6 @@ const WifiPlans = () => {
                   ))}
                 </div>
               </div>
-
               <div className="p-6 rounded-lg bg-blue-50 border border-blue-200">
                 <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">
                   Payment Instructions:
@@ -700,7 +698,6 @@ const WifiPlans = () => {
                   </div>
                 </div>
               </div>
-
               <div className="text-center mt-8 pt-6 border-t border-gray-300 text-gray-600">
                 <p className="text-lg">Thank you for choosing Optimas Fiber!</p>
                 <p className="text-lg">For any queries, contact us at: support@optimasfiber.co.ke | +254 741 874 200</p>
@@ -708,7 +705,7 @@ const WifiPlans = () => {
             </div>
           </div>
 
-          {/* Invoice Header */}
+          {/* Visible Invoice UI */}
           <div className={`p-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-t-xl`}>
             <div className="flex justify-between items-start">
               <div className="flex items-center">
@@ -736,7 +733,6 @@ const WifiPlans = () => {
             </div>
           </div>
 
-          {/* Invoice Details */}
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div>
@@ -750,7 +746,6 @@ const WifiPlans = () => {
                 <p>{invoiceData.customerPhone}</p>
                 <p>{invoiceData.customerLocation}</p>
               </div>
-              
               <div className="text-right">
                 <div className="mb-4">
                   <p><strong>Invoice Date:</strong> {new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
@@ -765,7 +760,6 @@ const WifiPlans = () => {
               </div>
             </div>
 
-            {/* Service Details */}
             <div className={`rounded-lg border ${
               darkMode ? 'border-gray-600' : 'border-gray-200'
             } mb-6`}>
@@ -797,7 +791,6 @@ const WifiPlans = () => {
               </table>
             </div>
 
-            {/* Total */}
             <div className="flex justify-end mb-8">
               <div className="text-right">
                 <div className={`text-2xl font-bold ${
@@ -809,7 +802,6 @@ const WifiPlans = () => {
               </div>
             </div>
 
-            {/* Features Included */}
             <div className="mb-8">
               <h3 className={`text-lg font-semibold mb-4 ${
                 darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
@@ -826,7 +818,6 @@ const WifiPlans = () => {
               </div>
             </div>
 
-            {/* Payment Instructions */}
             <div className={`p-6 rounded-lg ${
               darkMode ? 'bg-gray-700' : 'bg-blue-50'
             }`}>
@@ -851,7 +842,6 @@ const WifiPlans = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex flex-wrap gap-4 justify-center mt-8">
               <motion.button
                 className={`flex items-center px-6 py-3 rounded-full transition-colors ${
@@ -866,7 +856,6 @@ const WifiPlans = () => {
                 <Download size={18} className="mr-2" />
                 Download PDF
               </motion.button>
-              
               <motion.button
                 className={`flex items-center px-6 py-3 rounded-full border transition-colors ${
                   darkMode 
@@ -882,7 +871,6 @@ const WifiPlans = () => {
               </motion.button>
             </div>
 
-            {/* Footer */}
             <div className={`text-center mt-8 pt-6 border-t ${
               darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-600'
             }`}>
@@ -929,13 +917,12 @@ const WifiPlans = () => {
       transition={{ duration: 0.7 }}
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* Hero Section - Updated with GGCC-style hero integration */}
+      {/* Hero Section */}
       <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-[#182b5c] to-[#0f1f45] z-0">
           <div className="absolute inset-0 bg-black/40 z-10"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 z-20"></div>
         </div>
-        
         <div className="container mx-auto px-4 relative z-30 text-center text-white">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -953,7 +940,6 @@ const WifiPlans = () => {
               <br />
               Internet
             </motion.h1>
-            
             <motion.p 
               className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 max-w-2xl mx-auto text-gray-200 leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
@@ -962,7 +948,6 @@ const WifiPlans = () => {
             >
               Join thousands of satisfied customers with our reliable, high-speed fiber internet
             </motion.p>
-
             <motion.div 
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
               initial={{ opacity: 0, y: 20 }}
@@ -988,8 +973,6 @@ const WifiPlans = () => {
             </motion.div>
           </motion.div>
         </div>
-
-        {/* Scroll indicator */}
         <motion.div 
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30"
           initial={{ opacity: 0, y: 10 }}
@@ -1010,7 +993,6 @@ const WifiPlans = () => {
         </motion.div>
       </section>
 
-      {/* Main Content */}
       <div className="relative -mt-20 md:-mt-32 z-20">
         <div className="container mx-auto px-4">
           {/* Mobile Hotspot Section */}
@@ -1035,7 +1017,6 @@ const WifiPlans = () => {
               >
                 Mobile Hotspot Packages
               </motion.h2>
-
               <motion.div 
                 className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6"
                 variants={containerVariants}
@@ -1054,7 +1035,6 @@ const WifiPlans = () => {
                   />
                 ))}
               </motion.div>
-
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1104,7 +1084,6 @@ const WifiPlans = () => {
                   We provide the best internet experience with cutting-edge technology
                 </motion.p>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {features.map((feature, index) => (
                   <motion.div
@@ -1157,7 +1136,6 @@ const WifiPlans = () => {
               >
                 Optimas Fiber Packages
               </motion.h2>
-
               <motion.div 
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
                 variants={containerVariants}
@@ -1277,13 +1255,11 @@ const WifiPlans = () => {
                     <X className="text-xl" />
                   </motion.button>
                 </div>
-
                 <p className={`text-sm mb-6 ${
                   darkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   Complete the form below and we'll send your professional invoice via WhatsApp and Email.
                 </p>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <div>
                     <h3 className={`text-lg font-medium mb-4 flex items-center ${
@@ -1309,7 +1285,6 @@ const WifiPlans = () => {
                       ))}
                     </ul>
                   </div>
-
                   <div>
                     <h3 className={`text-lg font-medium mb-4 flex items-center ${
                       darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
@@ -1326,14 +1301,12 @@ const WifiPlans = () => {
                         }`}>Price</h4>
                         <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Ksh {selectedPlan.price}/month</p>
                       </div>
-                      
                       <div className="mb-3">
                         <h4 className={`font-medium ${
                           darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
                         }`}>Speed</h4>
                         <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{selectedPlan.speed}</p>
                       </div>
-                      
                       <div>
                         <h4 className={`font-medium ${
                           darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
@@ -1353,6 +1326,7 @@ const WifiPlans = () => {
                     <p>Invoice created successfully! Sending to your WhatsApp and Email...</p>
                   </motion.div>
                 )}
+
                 {messageStatus === "error" && (
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}

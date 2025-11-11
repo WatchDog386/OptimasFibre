@@ -1,3 +1,5 @@
+// backend/src/routes/invoiceRoutes.js
+
 import express from 'express';
 import Invoice from '../models/Invoice.js';
 import { protect } from '../middleware/authMiddleware.js';
@@ -6,7 +8,7 @@ import { sendWhatsAppInvoice } from '../utils/whatsappService.js';
 
 const router = express.Router();
 
-// Create new invoice and send notifications
+// POST /api/invoices — Create new invoice and send notifications
 router.post('/', async (req, res) => {
   try {
     const {
@@ -20,10 +22,9 @@ router.post('/', async (req, res) => {
       features,
       connectionType,
       notes,
-      sendNotifications = true // Default to true
+      sendNotifications = true
     } = req.body;
 
-    // Log incoming request for debugging
     console.log('📥 Received invoice creation request:', {
       customerName,
       customerEmail: customerEmail ? '***' : 'missing',
@@ -36,14 +37,7 @@ router.post('/', async (req, res) => {
 
     // Validate required fields
     if (!customerName || !customerEmail || !customerPhone || !customerLocation || !planName) {
-      console.log('❌ Missing required fields:', {
-        customerName: !customerName,
-        customerEmail: !customerEmail,
-        customerPhone: !customerPhone,
-        customerLocation: !customerLocation,
-        planName: !planName
-      });
-      
+      console.log('❌ Missing required fields');
       return res.status(400).json({
         success: false,
         message: 'Missing required fields: name, email, phone, location, and plan name are required'
@@ -67,56 +61,35 @@ router.post('/', async (req, res) => {
     await invoice.save();
     console.log('✅ Invoice saved successfully:', invoice.invoiceNumber);
 
-    // Send notifications if requested
     let emailResult = null;
     let whatsappResult = null;
 
     if (sendNotifications) {
       try {
         console.log('📧 Sending notifications...');
-        
-        // Send email
         emailResult = await sendInvoiceEmail(invoice);
         console.log('✅ Email sent successfully');
-        
-        // Send WhatsApp (with a small delay to avoid rate limiting)
-        setTimeout(async () => {
-          try {
-            whatsappResult = await sendWhatsAppInvoice(invoice);
-            console.log('✅ WhatsApp message sent successfully');
-          } catch (whatsappError) {
-            console.error('❌ WhatsApp sending failed:', whatsappError);
-            whatsappResult = { success: false, error: whatsappError.message };
-          }
-        }, 1000);
-        
-      } catch (notificationError) {
-        console.error('❌ Error sending notifications:', notificationError);
-        // Don't fail the request if notifications fail
+
+        // Send WhatsApp message (without blocking response)
+        sendWhatsAppInvoice(invoice)
+          .then(() => console.log('✅ WhatsApp message sent successfully'))
+          .catch(err => console.error('❌ WhatsApp sending failed:', err.message));
+      } catch (err) {
+        console.error('❌ Error during notification dispatch:', err);
+        // Notifications are best-effort — don't fail the request
       }
     }
 
-    // CORS-friendly success response
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
-    res.status(201).json({
+    // Return response immediately (WhatsApp is fire-and-forget)
+    return res.status(201).json({
       success: true,
       message: 'Invoice created successfully',
-      invoice: invoice,
-      notifications: {
-        email: emailResult,
-        whatsapp: whatsappResult
-      }
+      invoice
     });
 
   } catch (error) {
     console.error('❌ Error creating invoice:', error);
-    
-    // CORS-friendly error response
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
+
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
@@ -124,7 +97,7 @@ router.post('/', async (req, res) => {
         errors: Object.values(error.errors).map(err => err.message)
       });
     }
-    
+
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
@@ -132,49 +105,43 @@ router.post('/', async (req, res) => {
       });
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error creating invoice',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// Get all invoices (protected)
+// GET /api/invoices — Get all invoices (protected)
 router.get('/', protect, async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
-    
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
     const query = {};
     if (status && ['pending', 'paid', 'cancelled'].includes(status)) {
       query.status = status;
     }
-    
+
     const invoices = await Invoice.find(query)
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-    
+      .limit(limitNum)
+      .skip((pageNum - 1) * limitNum);
+
     const total = await Invoice.countDocuments(query);
-    
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
+
     res.json({
       success: true,
       count: invoices.length,
       total,
-      pages: Math.ceil(total / limit),
-      currentPage: parseInt(page),
+      pages: Math.ceil(total / limitNum),
+      currentPage: pageNum,
       invoices
     });
   } catch (error) {
     console.error('❌ Error fetching invoices:', error);
-    
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
     res.status(500).json({
       success: false,
       message: 'Error fetching invoices'
@@ -182,44 +149,25 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// Get single invoice
+// GET /api/invoices/:id — Get single invoice
 router.get('/:id', async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id);
-    
     if (!invoice) {
-      // CORS headers for error response
-      res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      
       return res.status(404).json({
         success: false,
         message: 'Invoice not found'
       });
     }
-
-    // CORS headers for success response
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
-    res.json({
-      success: true,
-      invoice
-    });
+    res.json({ success: true, invoice });
   } catch (error) {
     console.error('❌ Error fetching invoice:', error);
-    
-    // CORS headers for error response
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
     if (error.name === 'CastError') {
       return res.status(400).json({
         success: false,
         message: 'Invalid invoice ID'
       });
     }
-
     res.status(500).json({
       success: false,
       message: 'Error fetching invoice'
@@ -227,18 +175,14 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Update invoice status (protected)
+// PUT /api/invoices/:id/status — Update invoice status (protected)
 router.put('/:id/status', protect, async (req, res) => {
   try {
     const { status } = req.body;
-    
     if (!['pending', 'paid', 'cancelled'].includes(status)) {
-      res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      
       return res.status(400).json({
         success: false,
-        message: 'Invalid status'
+        message: 'Invalid status. Must be: pending, paid, or cancelled'
       });
     }
 
@@ -249,73 +193,52 @@ router.put('/:id/status', protect, async (req, res) => {
     );
 
     if (!invoice) {
-      res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      
       return res.status(404).json({
         success: false,
         message: 'Invoice not found'
       });
     }
 
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
     res.json({
       success: true,
       message: 'Invoice status updated',
       invoice
     });
   } catch (error) {
-    console.error('❌ Error updating invoice:', error);
-    
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
+    console.error('❌ Error updating invoice status:', error);
     res.status(500).json({
       success: false,
-      message: 'Error updating invoice'
+      message: 'Error updating invoice status'
     });
   }
 });
 
-// Resend notifications for an invoice (protected)
+// POST /api/invoices/:id/resend-notifications — Resend notifications (protected)
 router.post('/:id/resend-notifications', protect, async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id);
-    
     if (!invoice) {
-      res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      
       return res.status(404).json({
         success: false,
         message: 'Invoice not found'
       });
     }
 
-    const emailResult = await sendInvoiceEmail(invoice);
-    const whatsappResult = await sendWhatsAppInvoice(invoice);
+    const [emailResult, whatsappResult] = await Promise.allSettled([
+      sendInvoiceEmail(invoice),
+      sendWhatsAppInvoice(invoice)
+    ]);
 
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
     res.json({
       success: true,
       message: 'Notifications resent successfully',
       notifications: {
-        email: emailResult,
-        whatsapp: whatsappResult
+        email: emailResult.status === 'fulfilled' ? emailResult.value : { success: false, error: emailResult.reason?.message || 'Unknown error' },
+        whatsapp: whatsappResult.status === 'fulfilled' ? whatsappResult.value : { success: false, error: whatsappResult.reason?.message || 'Unknown error' }
       }
     });
   } catch (error) {
     console.error('❌ Error resending notifications:', error);
-    
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
     res.status(500).json({
       success: false,
       message: 'Error resending notifications'
@@ -323,35 +246,22 @@ router.post('/:id/resend-notifications', protect, async (req, res) => {
   }
 });
 
-// Delete invoice (protected)
+// DELETE /api/invoices/:id — Delete invoice (protected)
 router.delete('/:id', protect, async (req, res) => {
   try {
     const invoice = await Invoice.findByIdAndDelete(req.params.id);
-
     if (!invoice) {
-      res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      
       return res.status(404).json({
         success: false,
         message: 'Invoice not found'
       });
     }
-
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
     res.json({
       success: true,
       message: 'Invoice deleted successfully'
     });
   } catch (error) {
     console.error('❌ Error deleting invoice:', error);
-    
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
     res.status(500).json({
       success: false,
       message: 'Error deleting invoice'
