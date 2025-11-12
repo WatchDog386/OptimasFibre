@@ -1,5 +1,4 @@
-// backend/src/index.js
-
+// server.js — FINAL BACKEND VERSION (Mongoose Error Handling Improved)
 import dotenv from '@dotenvx/dotenvx';
 dotenv.config();
 
@@ -13,33 +12,32 @@ import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import morgan from 'morgan';
 import fs from 'fs';
+import mongoose from 'mongoose'; // Import mongoose for error type check
 
-// Import routes
+// Routes
 import authRoutes from './routes/authRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
 import portfolioRoutes from './routes/portfolioRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
 
-// Import DB connection
+// DB connection
 import connectDB from './config/db.js';
 
-// Import middleware
+// Middleware
 import { protect } from './middleware/authMiddleware.js';
 
 // ✅ Validate required environment variables
 const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI', 'FRONTEND_URL'];
 const missingEnvVars = requiredEnvVars.filter(v => !process.env[v]);
 if (missingEnvVars.length > 0) {
-  console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
-  console.error('❌ Please check your .env.keys or Render dashboard');
-  process.exit(1);
+    console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
+    process.exit(1);
 }
 
-// Debug logs
-console.log('🔧 MONGODB_URI loaded:', process.env.MONGODB_URI ? 'Yes' : 'No');
-console.log('🌍 FRONTEND_URL:', JSON.stringify(process.env.FRONTEND_URL));
-console.log('🔐 JWT_SECRET length:', process.env.JWT_SECRET?.length || 0, 'characters');
+// Normalize FRONTEND_URL (remove trailing slash and spaces)
+const FRONTEND_URL = (process.env.FRONTEND_URL || '').trim().replace(/\/$/, '');
+console.log('🌍 FRONTEND_URL (sanitized):', FRONTEND_URL);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,278 +46,249 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Create log directory
+// ✅ Logging setup
 const logDir = path.join(__dirname, '../logs');
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
-}
+if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
 const accessLogStream = fs.createWriteStream(path.join(logDir, 'access.log'), { flags: 'a' });
 
-// Security headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "https:", "http:"],
-    },
-  },
-  crossOriginEmbedderPolicy: false
-}));
+// ✅ Security headers
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+                fontSrc: ["'self'", "https://fonts.gstatic.com"],
+                // Added opt-in for potential cloud storage or CDN images
+                imgSrc: ["'self'", "data:", "https:", "blob:"], 
+                scriptSrc: ["'self'", "'unsafe-inline'"],
+                // Added allowed origins for connection headers
+                connectSrc: ["'self'", "https://optimasfibre.onrender.com", "http://localhost:10000", "https://optimaswifi.co.ke"],
+            },
+        },
+        crossOriginEmbedderPolicy: false,
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+);
 
-// ✅ CLEANED CORS CONFIGURATION — NO TRAILING SPACES
+// ✅ CORS: Build clean, normalized allowed origins
 const allowedOrigins = [
-  process.env.FRONTEND_URL?.trim(), // e.g., 'https://optimaswifi.co.ke'
-  'https://www.optimaswifi.co.ke',
-  'https://optimasfibre.onrender.com',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000'
-].filter(origin => origin && origin.trim() !== '');
+    FRONTEND_URL,
+    'https://www.optimaswifi.co.ke',
+    'https://optimasfibre.onrender.com',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+]
+    .filter(Boolean)
+    .map(origin => origin.trim())
+    .filter((origin, i, self) => self.indexOf(origin) === i); // dedupe
 
-console.log('✅ Final allowed CORS origins:', allowedOrigins);
+console.log('✅ Allowed CORS origins:', allowedOrigins);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (curl, Postman, mobile apps, server-to-server)
-    if (!origin) {
-      return callback(null, true);
+// Apply CORS middleware
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // Allow requests with no origin (like mobile apps or curl) or if origin is explicitly allowed
+            if (!origin || allowedOrigins.includes(origin.trim())) { 
+                return callback(null, true);
+            }
+            
+            // Allow localhost/127.0.0.1 origins if any variation is allowed in the list (simplifies configuration)
+            if (NODE_ENV === 'development' && (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1'))) {
+                return callback(null, true);
+            }
+            
+            console.warn(`❌ CORS blocked: ${origin}`);
+            return callback(new Error(`CORS: Origin ${origin} not permitted`), false);
+        },
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+        exposedHeaders: ['Content-Range', 'X-Content-Range'],
+        optionsSuccessStatus: 200,
+    })
+);
+
+// ✅ UNIVERSAL PREFLIGHT HANDLER
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        // Reuse CORS middleware for preflight
+        cors()(req, res, () => {
+            res.status(204).end(); // Standard preflight response
+        });
+    } else {
+        next();
     }
-
-    console.log('🔍 CORS check for origin:', origin);
-
-    // Exact match only (no fuzzy logic)
-    const trimmedOrigin = origin.trim();
-    if (allowedOrigins.includes(trimmedOrigin)) {
-      return callback(null, true);
-    }
-
-    // ❌ Block if not in allowed list
-    const msg = `❌ CORS blocked: "${origin}" not in allowed origins`;
-    console.warn(msg);
-    console.warn('Allowed list:', allowedOrigins);
-    return callback(new Error(msg), false);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  optionsSuccessStatus: 200
-}));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: NODE_ENV === 'production' ? 100 : 1000,
-  message: {
-    success: false,
-    message: 'Too many requests from this IP, please try again later.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false
 });
-app.use('/api/', limiter);
 
-// Body parsing & compression
+// ✅ Rate limiting
+app.use(
+    '/api/',
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: NODE_ENV === 'production' ? 100 : 1000,
+        message: { success: false, message: 'Too many requests. Please try again later.' },
+        standardHeaders: true,
+        legacyHeaders: false,
+    })
+);
+
+// ✅ Body parsing & compression
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// MongoDB injection sanitization
+// ✅ MongoDB injection sanitization
 app.use((req, res, next) => {
-  sanitizeObject(req.body);
-  sanitizeObject(req.query);
-  sanitizeObject(req.params);
-  next();
+    const sanitize = (obj) => {
+        if (obj && typeof obj === 'object') {
+            for (const key in obj) {
+                if (typeof obj[key] === 'string') {
+                    // Strips potential MongoDB operator strings from user input
+                    const dangerousPatterns = [
+                        /\$where/i, /\$ne/i, /\$nin/i, /\$gt/i, /\$gte/i,
+                        /\$lt/i, /\$lte/i, /\$regex/i, /\$options/i,
+                        /\$expr/i, /\$jsonSchema/i, /\$mod/i, /\$text/i,
+                        /\$search/i, /\$all/i, /\$elemMatch/i, /\$size/i
+                    ];
+                    for (const pattern of dangerousPatterns) {
+                        obj[key] = obj[key].replace(pattern, '');
+                    }
+                } else if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                    sanitize(obj[key]);
+                }
+            }
+        }
+    };
+    sanitize(req.body);
+    sanitize(req.query);
+    next();
 });
 
-function sanitizeObject(obj) {
-  if (obj && typeof obj === 'object') {
-    Object.keys(obj).forEach(key => {
-      if (typeof obj[key] === 'string') {
-        const prohibitedPatterns = [
-          /\$where/i, /\$ne/i, /\$nin/i, /\$gt/i, /\$gte/i,
-          /\$lt/i, /\$lte/i, /\$regex/i, /\$options/i, /\$expr/i,
-          /\$jsonSchema/i, /\$mod/i, /\$text/i, /\$search/i,
-          /\$all/i, /\$elemMatch/i, /\$size/i
-        ];
-        prohibitedPatterns.forEach(pattern => {
-          if (pattern.test(obj[key])) {
-            obj[key] = obj[key].replace(pattern, '');
-          }
-        });
-      } else if (typeof obj[key] === 'object') {
-        sanitizeObject(obj[key]);
-      }
-    });
-  }
-}
+// ✅ Logging
+app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev', { stream: accessLogStream }));
 
-// Logging
-if (NODE_ENV === 'production') {
-  app.use(morgan('combined', { stream: accessLogStream }));
-} else {
-  app.use(morgan('dev'));
-}
-
-// Uploads
+// ✅ Static files
 const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-const portfolioUploadsDir = path.join(uploadsDir, 'portfolio');
-if (!fs.existsSync(portfolioUploadsDir)) fs.mkdirSync(portfolioUploadsDir, { recursive: true });
+app.use('/uploads', express.static(uploadsDir));
 
-// Static files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Health check
+// ✅ Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Server is healthy',
-    timestamp: new Date().toISOString(),
-    env: NODE_ENV,
-    uptime: process.uptime(),
-    memoryUsage: process.memoryUsage(),
-    nodeVersion: process.version,
-    platform: process.platform
-  });
+    res.status(200).json({
+        success: true,
+        message: 'Server is healthy ✅',
+        timestamp: new Date().toISOString(),
+        env: NODE_ENV,
+        allowedOrigins,
+    });
 });
 
-// Root route
+// ✅ Root endpoint
 app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: '🚀 Optimas Fiber Backend is running!',
-    version: '1.0.0',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      auth: '/api/auth',
-      blog: '/api/blog',
-      portfolio: '/api/portfolio',
-      settings: '/api/settings',
-      invoices: '/api/invoices',
-      health: '/health'
-    }
-  });
+    res.json({
+        success: true,
+        message: '🚀 Optimas Fibre Backend running!',
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        endpoints: {
+            auth: '/api/auth',
+            blog: '/api/blog',
+            portfolio: '/api/portfolio',
+            settings: '/api/settings (protected)',
+            invoices: '/api/invoices',
+            health: '/health',
+        },
+    });
 });
 
-// API routes
+// ✅ API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/settings', protect, settingRoutes);
 app.use('/api/invoices', invoiceRoutes);
 
-// 404 handler
+// ✅ 404 handler
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'API endpoint not found',
-    path: req.path,
-    method: req.method
-  });
+    res.status(404).json({
+        success: false,
+        message: 'API endpoint not found',
+        path: req.path,
+    });
 });
 
-// Global error handler
+// ✅ Global error handler
 app.use((err, req, res, next) => {
-  console.error('❌ Global error:', err.message);
-  console.error('❌ Stack trace:', err.stack);
+    let statusCode = err.statusCode || 500;
+    let message = err.message || 'Internal Server Error';
 
-  let statusCode = err.statusCode || 500;
-  let message = err.message || 'Internal Server Error';
+    console.error('❌ Global error:', err.stack || err.message);
 
-  if (err.message?.includes('CORS')) {
-    statusCode = 403;
-    message = 'Cross-Origin Request Blocked: Your origin is not allowed.';
-    return res.status(statusCode).json({
-      success: false,
-      message,
-      ...(NODE_ENV === 'development' && {
-        allowedOrigins,
-        yourOrigin: req.get('origin')
-      })
+    // Mongoose Validation Error (if missed by the controller)
+    if (err instanceof mongoose.Error.ValidationError) {
+        statusCode = 400;
+        message = 'Validation Failed: ' + Object.values(err.errors).map(e => e.message).join(', ');
+    } 
+    // MongoDB Duplicate Key Error (E11000)
+    else if (err.code === 11000) {
+        statusCode = 400;
+        message = 'Duplicate key error: A unique field already exists.';
+    }
+    // CORS Error handling
+    else if (message.includes('CORS')) {
+        statusCode = 403;
+        message = 'CORS policy violation';
+    }
+
+    res.status(statusCode).json({
+        success: false,
+        message: message,
+        stack: NODE_ENV === 'development' ? err.stack : undefined,
     });
-  }
-
-  if (err.name === 'ValidationError') {
-    statusCode = 400;
-    message = Object.values(err.errors).map(val => val.message).join(', ');
-  }
-  if (err.code === 11000) {
-    statusCode = 400;
-    message = 'Duplicate field value entered';
-  }
-  if (err.name === 'CastError') {
-    statusCode = 400;
-    message = 'Resource not found';
-  }
-  if (err.name === 'JsonWebTokenError') {
-    statusCode = 401;
-    message = 'Invalid token';
-  }
-  if (err.name === 'TokenExpiredError') {
-    statusCode = 401;
-    message = 'Token expired';
-  }
-  if (err.message?.includes('Only image files are allowed')) {
-    statusCode = 400;
-    message = 'Only image files are allowed';
-  }
-  if (err.message?.includes('File too large')) {
-    statusCode = 400;
-    message = 'File size exceeds limit (5MB)';
-  }
-
-  res.status(statusCode).json({
-    success: false,
-    message,
-    ...(NODE_ENV === 'development' && { stack: err.stack })
-  });
 });
 
-// Start server
+// ✅ Start server
 const startServer = async () => {
-  try {
-    console.log('🔄 Connecting to database...');
-    await connectDB();
+    try {
+        console.log('🔄 Connecting to MongoDB...');
+        await connectDB();
 
-    const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`\n🎉 Server running in ${NODE_ENV} mode on port ${PORT}`);
-      console.log(`🌐 Listening on all interfaces (0.0.0.0:${PORT})`);
-      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-      console.log(`✅ Server started successfully at ${new Date().toISOString()}`);
-    });
+        const server = app.listen(PORT, '0.0.0.0', () => {
+            console.log(`\n🎉 Server running in ${NODE_ENV} mode`);
+            console.log(`🌐 Port: ${PORT}`);
+            console.log(`🔗 Health: http://localhost:${PORT}/health`);
+            console.log(`✅ Started at: ${new Date().toISOString()}`);
+        });
 
-    const shutdown = (signal) => {
-      console.log(`\n${signal} received. Shutting down gracefully…`);
-      server.close(() => {
-        console.log('✅ HTTP server closed');
-        process.exit(0);
-      });
-      setTimeout(() => {
-        console.error('❌ Could not close connections in time, forcefully shutting down');
+        const shutdown = (signal) => {
+            console.log(`\n${signal} received. Shutting down gracefully...`);
+            server.close(() => {
+                console.log('✅ Server closed');
+                process.exit(0);
+            });
+            setTimeout(() => {
+                console.error('❌ Forced shutdown after 10s');
+                process.exit(1);
+            }, 10000);
+        };
+
+        process.on('SIGTERM', () => shutdown('SIGTERM'));
+        process.on('SIGINT', () => shutdown('SIGINT'));
+        process.on('unhandledRejection', (reason) => {
+            console.error('❌ Unhandled Rejection:', reason);
+            shutdown('Unhandled Rejection');
+        });
+        process.on('uncaughtException', (error) => {
+            console.error('❌ Uncaught Exception:', error);
+            shutdown('Uncaught Exception');
+        });
+    } catch (error) {
+        console.error('❌ Failed to start server:', error);
         process.exit(1);
-      }, 10000);
-    };
-
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
-    process.on('unhandledRejection', (err) => {
-      console.error('❌ Unhandled Promise Rejection:', err);
-      shutdown('Unhandled Rejection');
-    });
-    process.on('uncaughtException', (err) => {
-      console.error('❌ Uncaught Exception:', err);
-      shutdown('Uncaught Exception');
-    });
-
-  } catch (err) {
-    console.error('❌ Could not start server:', err);
-    process.exit(1);
-  }
+    }
 };
 
 startServer();

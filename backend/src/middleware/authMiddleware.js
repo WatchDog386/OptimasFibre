@@ -1,5 +1,3 @@
-// backend/src/middleware/authMiddleware.js
-
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
@@ -12,16 +10,16 @@ import User from '../models/User.js';
 export const protect = async (req, res, next) => {
   let token;
 
-  // 1. Try to get token from Authorization header
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+  // 1️⃣ Try to get token from Authorization header
+  if (req.headers.authorization?.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
   }
-  // 2. Fallback: get from cookies (if you're using cookie-based auth)
+  // 2️⃣ Fallback: get from cookies (if using cookie-based auth)
   else if (req.cookies?.token) {
     token = req.cookies.token;
   }
 
-  // 3. No token? Reject.
+  // 3️⃣ No token? Reject.
   if (!token) {
     return res.status(401).json({
       success: false,
@@ -30,12 +28,11 @@ export const protect = async (req, res, next) => {
   }
 
   try {
-    // 4. Verify token signature
+    // 4️⃣ Verify token signature
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 5. Find user and attach to req.user (exclude password)
+    // 5️⃣ Find user and attach to req.user (exclude password)
     const user = await User.findById(decoded.id).select('-password');
-
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -46,7 +43,7 @@ export const protect = async (req, res, next) => {
     // ✅ Attach user to request — available in all downstream routes/controllers
     req.user = user;
 
-    // 🟢 Log successful auth (optional for debugging)
+    // 🟢 Log successful auth (development only)
     if (process.env.NODE_ENV === 'development') {
       console.log(`🔐 Authenticated user: ${user.email} (${user.role || 'user'})`);
     }
@@ -55,7 +52,7 @@ export const protect = async (req, res, next) => {
   } catch (error) {
     console.error('🔐 Token verification failed:', error.message);
 
-    // Handle specific JWT errors
+    // Specific JWT errors
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
@@ -83,7 +80,6 @@ export const protect = async (req, res, next) => {
  * → Must be used AFTER `protect` middleware
  */
 export const admin = (req, res, next) => {
-  // First, ensure req.user exists (protect middleware ran)
   if (!req.user) {
     return res.status(403).json({
       success: false,
@@ -91,7 +87,6 @@ export const admin = (req, res, next) => {
     });
   }
 
-  // Check role — also handles case where role is undefined
   if (req.user.role === 'admin') {
     next();
   } else {
@@ -143,14 +138,14 @@ export const refreshToken = async (req, res, next) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
     );
 
-    // Optional: Generate new refresh token (rotation for enhanced security)
+    // Optional: Generate new refresh token (rotation)
     const newRefreshToken = jwt.sign(
       { id: user._id },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
     );
 
-    // Attach to request for route handler to send back
+    // Attach tokens to request for route handler
     req.newAccessToken = newAccessToken;
     req.newRefreshToken = newRefreshToken;
 

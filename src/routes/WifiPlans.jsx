@@ -1,3 +1,4 @@
+// WifiPlans.jsx — FINAL VERSION (Aligned with Backend Schema)
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone, Download, Send } from "lucide-react";
 import { motion, AnimatePresence, useInView, useAnimation } from "framer-motion";
@@ -83,18 +84,15 @@ const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
       gradientEnd: darkMode ? "#db2777" : "#be185d"
     }
   };
-
   const currentColor = colorMap[color];
   const controls = useAnimation();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
-
   useEffect(() => {
     if (inView) {
       controls.start({ opacity: 1, y: 0, transition: { duration: 0.6, delay: index * 0.1 } });
     }
   }, [controls, inView, index]);
-
   return (
     <motion.div 
       ref={ref}
@@ -201,18 +199,15 @@ const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
       button: "bg-blue-600 hover:bg-blue-700 text-white",
     }
   };
-
   const currentColor = colorMap[color];
   const controls = useAnimation();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
-
   useEffect(() => {
     if (inView) {
       controls.start({ opacity: 1, y: 0, transition: { duration: 0.6, delay: index * 0.1 } });
     }
   }, [controls, inView, index]);
-
   return (
     <motion.div 
       ref={ref}
@@ -282,167 +277,58 @@ const WifiPlans = () => {
     email: "",
     phone: "",
     location: "",
-    connectionType: "",
   });
   const [messageStatus, setMessageStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeFeature, setActiveFeature] = useState(0);
   const [invoiceData, setInvoiceData] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [errorDetails, setErrorDetails] = useState("");
   const navigate = useNavigate();
   const { darkMode } = useContext(ThemeContext);
 
-  // Navigation handlers
+  // 🔧 DYNAMIC API URL RESOLUTION
+  const getApiBaseUrl = () => {
+    const viteUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+    if (viteUrl && viteUrl !== 'undefined' && viteUrl !== '') {
+      return viteUrl;
+    }
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:10000';
+    }
+    return 'https://optimasfibre.onrender.com';
+  };
+
   const handleContactClick = () => {
     navigate('/contact');
   };
 
   const mobilePlans = [
-    {
-      id: 1,
-      name: "2 Hours",
-      price: "15",
-      duration: "2hrs",
-      devices: "1 Device",
-      features: ["Fast browsing", "Social media access", "Email checking"],
-      popular: false,
-      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
-    },
-    {
-      id: 2,
-      name: "12 Hours",
-      price: "30",
-      duration: "12hrs",
-      devices: "1 Device",
-      features: ["Extended browsing", "Streaming music", "Social media"],
-      popular: false,
-      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
-    },
-    {
-      id: 3,
-      name: "1 Day",
-      price: "40",
-      duration: "1 day",
-      devices: "1 Device",
-      features: ["Full day access", "Standard streaming", "Online gaming"],
-      popular: true,
-      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
-    },
-    {
-      id: 4,
-      name: "Weekly",
-      price: "250",
-      duration: "week",
-      devices: "2 Devices",
-      features: ["7 days unlimited", "HD streaming", "Multiple devices"],
-      popular: false,
-      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
-    },
-    {
-      id: 5,
-      name: "Monthly Single",
-      price: "610",
-      duration: "month",
-      devices: "1 Device",
-      features: ["30 days access", "Priority bandwidth", "24/7 support"],
-      popular: false,
-      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
-    },
-    {
-      id: 6,
-      name: "Monthly Dual",
-      price: "1000",
-      duration: "month",
-      devices: "2 Devices",
-      features: ["30 days unlimited", "4K streaming", "Two devices simultaneously"],
-      popular: false,
-      link: "http://wifi.optimassys.co.ke/index.php?_route=main"
-    },
+    { id: 1, name: "2 Hours", price: "15", duration: "2hrs", devices: "1 Device", features: ["Fast browsing", "Social media access", "Email checking"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
+    { id: 2, name: "12 Hours", price: "30", duration: "12hrs", devices: "1 Device", features: ["Extended browsing", "Streaming music", "Social media"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
+    { id: 3, name: "1 Day", price: "40", duration: "1 day", devices: "1 Device", features: ["Full day access", "Standard streaming", "Online gaming"], popular: true, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
+    { id: 4, name: "Weekly", price: "250", duration: "week", devices: "2 Devices", features: ["7 days unlimited", "HD streaming", "Multiple devices"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
+    { id: 5, name: "Monthly Single", price: "610", duration: "month", devices: "1 Device", features: ["30 days access", "Priority bandwidth", "24/7 support"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
+    { id: 6, name: "Monthly Dual", price: "1000", duration: "month", devices: "2 Devices", features: ["30 days unlimited", "4K streaming", "Two devices simultaneously"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
   ];
 
   const mobileColors = ["teal", "amber", "violet", "rose", "emerald", "blue"];
 
   const plans = [
-    {
-      id: 1,
-      name: "Jumbo",
-      price: "1,499",
-      speed: "8Mbps",
-      features: ["Great for browsing", "24/7 Support", "Free Installation"],
-      type: "home",
-      popular: false,
-    },
-    {
-      id: 2,
-      name: "Buffalo",
-      price: "1,999",
-      speed: "15Mbps",
-      features: ["Streaming & Social Media", "24/7 Support", "Free Installation"],
-      type: "home",
-      popular: false,
-    },
-    {
-      id: 3,
-      name: "Ndovu",
-      price: "2,499",
-      speed: "25Mbps",
-      features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"],
-      type: "home",
-      popular: false,
-    },
-    {
-      id: 4,
-      name: "Gazzelle",
-      price: "2,999",
-      speed: "30Mbps",
-      features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"],
-      type: "home",
-      popular: true,
-    },
-    {
-      id: 5,
-      name: "Tiger",
-      price: "3,999",
-      speed: "40Mbps",
-      features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"],
-      type: "home",
-      popular: false,
-    },
-    {
-      id: 6,
-      name: "Chui",
-      price: "4,999",
-      speed: "60Mbps",
-      features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"],
-      type: "home",
-      popular: false,
-    },
+    { id: 1, name: "Jumbo", price: "1499", speed: "8Mbps", features: ["Great for browsing", "24/7 Support", "Free Installation"], type: "home", popular: false },
+    { id: 2, name: "Buffalo", price: "1999", speed: "15Mbps", features: ["Streaming & Social Media", "24/7 Support", "Free Installation"], type: "home", popular: false },
+    { id: 3, name: "Ndovu", price: "2499", speed: "25Mbps", features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"], type: "home", popular: false },
+    { id: 4, name: "Gazzelle", price: "2999", speed: "30Mbps", features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"], type: "home", popular: true },
+    { id: 5, name: "Tiger", price: "3999", speed: "40Mbps", features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"], type: "home", popular: false },
+    { id: 6, name: "Chui", price: "4999", speed: "60Mbps", features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], type: "home", popular: false },
   ];
 
   const colors = ["blue", "red", "goldenYellow", "goldenGreen", "purple", "pink"];
 
   const features = [
-    {
-      title: "Lightning Fast Speeds",
-      description: "Experience blazing fast internet with our fiber optic technology",
-      icon: <Wifi size={24} />
-    },
-    {
-      title: "24/7 Support",
-      description: "Our technical team is available round the clock to assist you",
-      icon: <Phone size={24} />
-    },
-    {
-      title: "Free Installation",
-      description: "Get connected without any setup fees or hidden charges",
-      icon: <MapPin size={24} />
-    },
-    {
-      title: "Reliable Connection",
-      description: "99.9% uptime guarantee for uninterrupted browsing and streaming",
-      icon: <CheckCircle size={24} />
-    }
+    { title: "Lightning Fast Speeds", description: "Experience blazing fast internet with our fiber optic technology", icon: <Wifi size={24} /> },
+    { title: "24/7 Support", description: "Our technical team is available round the clock to assist you", icon: <Phone size={24} /> },
+    { title: "Free Installation", description: "Get connected without any setup fees or hidden charges", icon: <MapPin size={24} /> },
+    { title: "Reliable Connection", description: "99.9% uptime guarantee for uninterrupted browsing and streaming", icon: <CheckCircle size={24} /> }
   ];
 
   useEffect(() => {
@@ -452,12 +338,10 @@ const WifiPlans = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const [activeFeature, setActiveFeature] = useState(0);
+
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
-    setFormData((prev) => ({
-      ...prev,
-      connectionType: plan.name,
-    }));
     setShowForm(true);
     setMessageStatus(null);
     setErrorDetails("");
@@ -475,44 +359,94 @@ const WifiPlans = () => {
     }));
   };
 
-  // ✅ UPDATED handleSubmit with proper env usage and error diagnostics
+  // ✅ FINAL handleSubmit — FULL VALIDATION + CORRECT PAYLOAD
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessageStatus(null);
     setErrorDetails("");
 
+    const { name, email, phone, location } = formData;
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim().replace(/\s+/g, '');
+    const trimmedLocation = location.trim();
+
+    // Required field checks
+    if (!trimmedName) {
+      showError("Full name is required.");
+      return;
+    }
+    if (trimmedName.length > 100) {
+      showError("Full name cannot exceed 100 characters.");
+      return;
+    }
+    if (!trimmedEmail) {
+      showError("Email address is required.");
+      return;
+    }
+    if (!trimmedPhone) {
+      showError("Phone number is required.");
+      return;
+    }
+    if (!trimmedLocation) {
+      showError("Location is required.");
+      return;
+    }
+    if (trimmedLocation.length > 200) {
+      showError("Location cannot exceed 200 characters.");
+      return;
+    }
+
+    // Email validation (matches backend)
+    const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      showError("Please enter a valid email address.");
+      return;
+    }
+
+    // Phone validation (matches backend)
+    const phoneRegex = /^(?:\+254|0)?[17]\d{8}$/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      showError("Please enter a valid Kenyan phone number (e.g., 0712345678 or +254712345678).");
+      return;
+    }
+
+    if (!selectedPlan) {
+      showError("No plan selected.");
+      return;
+    }
+
+    // Parse price
+    const cleanPriceStr = selectedPlan.price.toString().replace(/,/g, '');
+    const planPriceNum = parseInt(cleanPriceStr, 10);
+    if (isNaN(planPriceNum) || planPriceNum <= 0) {
+      showError("Invalid plan price. Please contact support.");
+      return;
+    }
+
+    const invoicePayload = {
+      customerName: trimmedName,
+      customerEmail: trimmedEmail,
+      customerPhone: trimmedPhone,
+      customerLocation: trimmedLocation,
+      planName: selectedPlan.name,
+      planPrice: planPriceNum,
+      planSpeed: selectedPlan.speed,
+      features: selectedPlan.features,
+      connectionType: "Fiber Optic", // ✅ CORRECT VALUE
+    };
+
     try {
-      // 🔧 Use VITE_API_BASE_URL from .env — fallback only for safety
-      const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
-      if (!API_BASE_URL) {
-        throw new Error('API base URL is not configured. Check VITE_API_BASE_URL in .env');
-      }
-
-      const invoicePayload = {
-        customerName: formData.name,
-        customerEmail: formData.email,
-        customerPhone: formData.phone,
-        customerLocation: formData.location,
-        planName: selectedPlan.name,
-        planPrice: selectedPlan.price.replace(/,/g, ''),
-        planSpeed: selectedPlan.speed,
-        features: selectedPlan.features,
-        connectionType: formData.connectionType,
-      };
-
-      console.log('📤 Sending to:', `${API_BASE_URL}/api/invoices`);
+      const API_BASE_URL = getApiBaseUrl();
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invoicePayload),
       });
 
       if (!response.ok) {
-        // Try to extract meaningful error
-        let errorMsg = `Server error: ${response.status} ${response.statusText}`;
+        let errorMsg = 'Validation error. Please check all fields and try again.';
         try {
           const errJson = await response.json();
           errorMsg = errJson.message || errJson.error || errorMsg;
@@ -524,7 +458,6 @@ const WifiPlans = () => {
       }
 
       const result = await response.json();
-
       if (result.success) {
         setInvoiceData(result.invoice);
         setMessageStatus("success");
@@ -533,41 +466,41 @@ const WifiPlans = () => {
           setShowForm(false);
         }, 2000);
       } else {
-        setMessageStatus("error");
-        setErrorDetails(result.message || 'Unknown server error');
+        showError(result.message || 'Unknown server error');
       }
     } catch (err) {
       console.error('❌ Invoice creation failed:', err);
-      setMessageStatus("error");
-
-      let message = err.message || 'Network error';
-
-      // 🔍 Improve user-facing error for common issues
-      if (err.message?.includes('CORS') || err.message?.includes('fetch')) {
-        message = 'CORS error: Backend does not allow requests from localhost. Add http://localhost:3000 to allowed origins on the server.';
-      } else if (err.message?.includes('NetworkError') || err.message?.includes('load')) {
-        message = 'Cannot reach the server. Check your internet or if the backend is running.';
-      }
-
-      setErrorDetails(message);
+      showError(err.message || 'Failed to create invoice. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Invoice Preview Component (unchanged from your original)
+  const showError = (msg) => {
+    setErrorDetails(msg);
+    setMessageStatus("error");
+    setIsLoading(false);
+  };
+
+  const formatPrice = (price) => {
+    if (price === undefined || price === null) return '0';
+    const cleanStr = price.toString().replace(/,/g, '');
+    const num = parseInt(cleanStr, 10);
+    return isNaN(num) ? price : num.toLocaleString();
+  };
+
+  // Invoice Preview Component (unchanged)
   const InvoicePreview = () => {
     if (!invoiceData) return null;
-
     const handlePrint = () => {
       const invoiceContent = document.getElementById('invoice-content');
+      if (!invoiceContent) return;
       const originalContents = document.body.innerHTML;
       document.body.innerHTML = invoiceContent.innerHTML;
       window.print();
       document.body.innerHTML = originalContents;
       window.location.reload();
     };
-
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -582,7 +515,7 @@ const WifiPlans = () => {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Invoice Content for Print */}
+          {/* Hidden print version */}
           <div id="invoice-content" className="hidden">
             <div className="p-8 bg-white text-gray-900">
               <div className="flex justify-between items-start mb-8">
@@ -591,29 +524,21 @@ const WifiPlans = () => {
                     src="/oppo.jpg" 
                     alt="Optimas Fiber" 
                     className="h-16 w-16 mr-4 rounded-lg"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
                   />
                   <div>
                     <h1 className="text-3xl font-bold text-[#182b5c]">OPTIMAS FIBER</h1>
-                    <p className="text-gray-600 text-lg">
-                      High-Speed Internet Solutions
-                    </p>
+                    <p className="text-gray-600 text-lg">High-Speed Internet Solutions</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <h2 className="text-4xl font-bold text-[#d0b216]">INVOICE</h2>
-                  <p className="text-gray-600 text-lg">
-                    #{invoiceData.invoiceNumber}
-                  </p>
+                  <p className="text-gray-600 text-lg">#{invoiceData.invoiceNumber}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-8 mb-8">
                 <div>
-                  <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">
-                    Bill To:
-                  </h3>
+                  <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">Bill To:</h3>
                   <p className="font-medium text-lg">{invoiceData.customerName}</p>
                   <p className="text-gray-700">{invoiceData.customerEmail}</p>
                   <p className="text-gray-700">{invoiceData.customerPhone}</p>
@@ -652,7 +577,7 @@ const WifiPlans = () => {
                         <p className="text-gray-700">Monthly Subscription</p>
                       </td>
                       <td className="p-4 text-right font-semibold text-lg">
-                        Ksh {parseInt(invoiceData.planPrice).toLocaleString()}
+                        Ksh {formatPrice(invoiceData.planPrice)}
                       </td>
                     </tr>
                   </tbody>
@@ -661,15 +586,13 @@ const WifiPlans = () => {
               <div className="flex justify-end mb-8">
                 <div className="text-right">
                   <div className="text-3xl font-bold text-[#182b5c]">
-                    Total: Ksh {parseInt(invoiceData.planPrice).toLocaleString()}
+                    Total: Ksh {formatPrice(invoiceData.planPrice)}
                   </div>
                   <p className="text-gray-700 text-lg">Per month</p>
                 </div>
               </div>
               <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">
-                  Features Included:
-                </h3>
+                <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">Features Included:</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {invoiceData.features && invoiceData.features.map((feature, index) => (
                     <div key={index} className="flex items-center">
@@ -680,9 +603,7 @@ const WifiPlans = () => {
                 </div>
               </div>
               <div className="p-6 rounded-lg bg-blue-50 border border-blue-200">
-                <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">
-                  Payment Instructions:
-                </h3>
+                <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">Payment Instructions:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <p className="text-lg font-semibold">Bank Transfer:</p>
@@ -704,8 +625,7 @@ const WifiPlans = () => {
               </div>
             </div>
           </div>
-
-          {/* Visible Invoice UI */}
+          {/* Visible UI */}
           <div className={`p-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-t-xl`}>
             <div className="flex justify-between items-start">
               <div className="flex items-center">
@@ -713,34 +633,23 @@ const WifiPlans = () => {
                   src="/oppo.jpg" 
                   alt="Optimas Fiber" 
                   className="h-12 w-12 mr-4 rounded-lg"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
                 />
                 <div>
                   <h1 className="text-2xl font-bold text-[#182b5c]">OPTIMAS FIBER</h1>
-                  <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                    High-Speed Internet Solutions
-                  </p>
+                  <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>High-Speed Internet Solutions</p>
                 </div>
               </div>
               <div className="text-right">
                 <h2 className="text-3xl font-bold text-[#d0b216]">INVOICE</h2>
-                <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                  #{invoiceData.invoiceNumber}
-                </p>
+                <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>#{invoiceData.invoiceNumber}</p>
               </div>
             </div>
           </div>
-
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div>
-                <h3 className={`text-lg font-semibold mb-4 ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                }`}>
-                  Bill To:
-                </h3>
+                <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Bill To:</h3>
                 <p className="font-medium">{invoiceData.customerName}</p>
                 <p>{invoiceData.customerEmail}</p>
                 <p>{invoiceData.customerPhone}</p>
@@ -751,18 +660,13 @@ const WifiPlans = () => {
                   <p><strong>Invoice Date:</strong> {new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
                   <p><strong>Due Date:</strong> {new Date(invoiceData.dueDate).toLocaleDateString()}</p>
                 </div>
-                <div className={`inline-flex items-center px-4 py-2 rounded-full ${
-                  darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
-                }`}>
+                <div className={`inline-flex items-center px-4 py-2 rounded-full ${darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'}`}>
                   <CheckCircle size={16} className="mr-2" />
                   {invoiceData.status}
                 </div>
               </div>
             </div>
-
-            <div className={`rounded-lg border ${
-              darkMode ? 'border-gray-600' : 'border-gray-200'
-            } mb-6`}>
+            <div className={`rounded-lg border ${darkMode ? 'border-gray-600' : 'border-gray-200'} mb-6`}>
               <table className="w-full">
                 <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
                   <tr>
@@ -784,30 +688,22 @@ const WifiPlans = () => {
                       <p className="text-sm opacity-75">Monthly Subscription</p>
                     </td>
                     <td className="p-4 text-right font-semibold">
-                      Ksh {parseInt(invoiceData.planPrice).toLocaleString()}
+                      Ksh {formatPrice(invoiceData.planPrice)}
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-
             <div className="flex justify-end mb-8">
               <div className="text-right">
-                <div className={`text-2xl font-bold ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                }`}>
-                  Total: Ksh {parseInt(invoiceData.planPrice).toLocaleString()}
+                <div className={`text-2xl font-bold ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
+                  Total: Ksh {formatPrice(invoiceData.planPrice)}
                 </div>
                 <p className="text-sm opacity-75">Per month</p>
               </div>
             </div>
-
             <div className="mb-8">
-              <h3 className={`text-lg font-semibold mb-4 ${
-                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-              }`}>
-                Features Included:
-              </h3>
+              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Features Included:</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {invoiceData.features && invoiceData.features.map((feature, index) => (
                   <div key={index} className="flex items-center">
@@ -817,15 +713,8 @@ const WifiPlans = () => {
                 ))}
               </div>
             </div>
-
-            <div className={`p-6 rounded-lg ${
-              darkMode ? 'bg-gray-700' : 'bg-blue-50'
-            }`}>
-              <h3 className={`text-lg font-semibold mb-4 ${
-                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-              }`}>
-                Payment Instructions:
-              </h3>
+            <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Payment Instructions:</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p><strong>Bank Transfer:</strong></p>
@@ -841,7 +730,6 @@ const WifiPlans = () => {
                 </div>
               </div>
             </div>
-
             <div className="flex flex-wrap gap-4 justify-center mt-8">
               <motion.button
                 className={`flex items-center px-6 py-3 rounded-full transition-colors ${
@@ -870,10 +758,7 @@ const WifiPlans = () => {
                 Close Invoice
               </motion.button>
             </div>
-
-            <div className={`text-center mt-8 pt-6 border-t ${
-              darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-600'
-            }`}>
+            <div className={`text-center mt-8 pt-6 border-t ${darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-600'}`}>
               <p>Thank you for choosing Optimas Fiber!</p>
               <p>For any queries, contact us at: support@optimasfiber.co.ke | +254 741 874 200</p>
             </div>
@@ -883,28 +768,15 @@ const WifiPlans = () => {
     );
   };
 
-  // Animation variants matching Services.jsx
+  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 12
-      }
-    }
+    visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100, damping: 12 } }
   };
 
   return (
@@ -992,7 +864,6 @@ const WifiPlans = () => {
           </motion.div>
         </motion.div>
       </section>
-
       <div className="relative -mt-20 md:-mt-32 z-20">
         <div className="container mx-auto px-4">
           {/* Mobile Hotspot Section */}
@@ -1044,15 +915,12 @@ const WifiPlans = () => {
                   darkMode ? 'bg-gray-700' : 'bg-gray-50'
                 }`}
               >
-                <p className={`text-sm ${
-                  darkMode ? 'text-gray-300' : 'text-gray-600'
-                }`}>
+                <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                   <strong>Note:</strong> All packages redirect to our secure payment portal. You'll receive access credentials via SMS.
                 </p>
               </motion.div>
             </motion.div>
           </section>
-
           {/* Features Section */}
           <section id="features" className="mb-12 md:mb-16 relative z-10">
             <motion.div 
@@ -1113,7 +981,6 @@ const WifiPlans = () => {
               </div>
             </motion.div>
           </section>
-
           {/* Fiber Plans Section */}
           <section id="plans" className="mb-12 md:mb-16 relative z-10">
             <motion.div 
@@ -1156,7 +1023,6 @@ const WifiPlans = () => {
               </motion.div>
             </motion.div>
           </section>
-
           {/* Final CTA Section */}
           <section className="text-center relative z-10">
             <motion.div
@@ -1208,7 +1074,6 @@ const WifiPlans = () => {
           </section>
         </div>
       </div>
-
       {/* Contact Form Modal */}
       <AnimatePresence>
         {showForm && selectedPlan && (
@@ -1233,14 +1098,10 @@ const WifiPlans = () => {
               <div className="p-6">
                 <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center">
-                    <div className={`mr-3 text-lg ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                    }`}>
+                    <div className={`mr-3 text-lg ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
                       <Wifi className="w-6 h-6" />
                     </div>
-                    <h2 className={`text-xl font-semibold ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                    }`}>
+                    <h2 className={`text-xl font-semibold ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
                       {selectedPlan.name} - Get Connected
                     </h2>
                   </div>
@@ -1255,16 +1116,12 @@ const WifiPlans = () => {
                     <X className="text-xl" />
                   </motion.button>
                 </div>
-                <p className={`text-sm mb-6 ${
-                  darkMode ? 'text-gray-300' : 'text-gray-600'
-                }`}>
+                <p className={`text-sm mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                   Complete the form below and we'll send your professional invoice via WhatsApp and Email.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <div>
-                    <h3 className={`text-lg font-medium mb-4 flex items-center ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                    }`}>
+                    <h3 className={`text-lg font-medium mb-4 flex items-center ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
                       <CheckCircle className="text-green-500 mr-2 w-5 h-5" />
                       Key Features
                     </h3>
@@ -1277,46 +1134,33 @@ const WifiPlans = () => {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <span className={`w-3 h-3 rounded-full mt-1.5 mr-3 flex-shrink-0 ${
-                            darkMode ? 'bg-[#d0b216]' : 'bg-[#182b5c]'
-                          }`}></span>
+                          <span className={`w-3 h-3 rounded-full mt-1.5 mr-3 flex-shrink-0 ${darkMode ? 'bg-[#d0b216]' : 'bg-[#182b5c]'}`}></span>
                           <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{feature}</span>
                         </motion.li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <h3 className={`text-lg font-medium mb-4 flex items-center ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                    }`}>
+                    <h3 className={`text-lg font-medium mb-4 flex items-center ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
                       <Star className="mr-2 w-5 h-5" />
                       Plan Details
                     </h3>
-                    <div className={`rounded-lg p-4 ${
-                      darkMode ? 'bg-gray-700' : 'bg-gray-50'
-                    }`}>
+                    <div className={`rounded-lg p-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       <div className="mb-3">
-                        <h4 className={`font-medium ${
-                          darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                        }`}>Price</h4>
-                        <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Ksh {selectedPlan.price}/month</p>
+                        <h4 className={`font-medium ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Price</h4>
+                        <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Ksh {formatPrice(selectedPlan.price)}/month</p>
                       </div>
                       <div className="mb-3">
-                        <h4 className={`font-medium ${
-                          darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                        }`}>Speed</h4>
+                        <h4 className={`font-medium ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Speed</h4>
                         <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{selectedPlan.speed}</p>
                       </div>
                       <div>
-                        <h4 className={`font-medium ${
-                          darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                        }`}>Swahili Name</h4>
+                        <h4 className={`font-medium ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Swahili Name</h4>
                         <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{animalNames[selectedPlan.name]}</p>
                       </div>
                     </div>
                   </div>
                 </div>
-
                 {messageStatus === "success" && (
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
@@ -1326,18 +1170,16 @@ const WifiPlans = () => {
                     <p>Invoice created successfully! Sending to your WhatsApp and Email...</p>
                   </motion.div>
                 )}
-
                 {messageStatus === "error" && (
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6"
                   >
-                    <p>Failed to create invoice. {errorDetails && `Error: ${errorDetails}`}</p>
+                    <p>Failed to create invoice. **{errorDetails}**</p>
                     <p className="text-sm mt-1">Please try again or contact us directly.</p>
                   </motion.div>
                 )}
-
                 <form onSubmit={handleSubmit}>
                   <div className="space-y-4">
                     <div>
@@ -1393,7 +1235,7 @@ const WifiPlans = () => {
                       <input
                         type="text"
                         className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-xl cursor-not-allowed dark:text-white"
-                        value={formData.connectionType}
+                        value={selectedPlan.name}
                         readOnly
                       />
                     </div>
@@ -1434,7 +1276,6 @@ const WifiPlans = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
       {/* Invoice Preview Modal */}
       <AnimatePresence>
         {showInvoice && <InvoicePreview />}
