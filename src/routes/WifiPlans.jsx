@@ -1,4 +1,4 @@
-// WifiPlans.jsx — FINAL VERSION (Aligned with Backend Schema)
+// WifiPlans.jsx — FINAL VERSION (With invoiceNumber Fix)
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone, Download, Send } from "lucide-react";
 import { motion, AnimatePresence, useInView, useAnimation } from "framer-motion";
@@ -359,7 +359,7 @@ const WifiPlans = () => {
     }));
   };
 
-  // ✅ FINAL handleSubmit — FULL VALIDATION + CORRECT PAYLOAD
+  // ✅ FIXED handleSubmit — NOW INCLUDES invoiceNumber
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -425,7 +425,14 @@ const WifiPlans = () => {
       return;
     }
 
+    // ✅ Generate invoiceNumber on the frontend
+    const now = new Date();
+    const timestamp = now.getTime(); // e.g., 1712345678901
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000); // 4-digit random
+    const invoiceNumber = `INV-${timestamp.toString().slice(-6)}-${randomSuffix}`;
+
     const invoicePayload = {
+      invoiceNumber, // ✅ NOW INCLUDED
       customerName: trimmedName,
       customerEmail: trimmedEmail,
       customerPhone: trimmedPhone,
@@ -434,7 +441,7 @@ const WifiPlans = () => {
       planPrice: planPriceNum,
       planSpeed: selectedPlan.speed,
       features: selectedPlan.features,
-      connectionType: "Fiber Optic", // ✅ CORRECT VALUE
+      connectionType: "Fiber Optic",
     };
 
     try {
@@ -773,7 +780,6 @@ const WifiPlans = () => {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
-
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100, damping: 12 } }
