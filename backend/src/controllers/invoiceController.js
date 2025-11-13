@@ -1,7 +1,36 @@
-// backend/src/controllers/invoiceController.js - COMPLETELY UPDATED WITH DEBUGGING
+// backend/src/controllers/invoiceController.js - COMPLETELY UPDATED (Duplicate Prevention)
 import Invoice from '../models/Invoice.js';
 import { sendInvoiceEmail } from '../utils/emailService.js';
 import { sendWhatsAppInvoice } from '../utils/whatsappService.js';
+
+/**
+ * @desc Check for existing invoice for same customer and plan
+ */
+const checkForExistingInvoice = async (customerEmail, planName) => {
+    try {
+        console.log('🔍 [DUPLICATE CHECK] Checking for existing invoice:', { customerEmail, planName });
+        
+        const existingInvoice = await Invoice.findOne({
+            customerEmail: customerEmail.toLowerCase().trim(),
+            planName: planName.trim(),
+            status: { $in: ['pending', 'paid'] } // Only check active invoices
+        });
+        
+        if (existingInvoice) {
+            console.log('❌ [DUPLICATE CHECK] Duplicate found:', existingInvoice._id);
+            return {
+                isDuplicate: true,
+                existingInvoice: existingInvoice
+            };
+        }
+        
+        console.log('✅ [DUPLICATE CHECK] No duplicate found');
+        return { isDuplicate: false, existingInvoice: null };
+    } catch (error) {
+        console.error('❌ [DUPLICATE CHECK] Error:', error);
+        throw error;
+    }
+};
 
 /**
  * @desc Create new invoice and optionally send notifications
@@ -9,8 +38,7 @@ import { sendWhatsAppInvoice } from '../utils/whatsappService.js';
  * @access Public
  */
 export const createInvoice = async (req, res) => {
-  console.log('🔍 [DEBUG] Starting invoice creation process...');
-  console.log('🔍 [DEBUG] Request body:', JSON.stringify(req.body, null, 2));
+  console.log('🔍 [CONTROLLER] Starting invoice creation process...');
   
   try {
     const {
@@ -32,16 +60,7 @@ export const createInvoice = async (req, res) => {
     const connectionType = (req.body.connectionType || 'Fiber Optic').trim();
     const features = Array.isArray(req.body.features) ? req.body.features : [];
 
-    console.log('🔍 [DEBUG] Sanitized fields:', {
-      customerName: customerName ? '✓' : '✗',
-      customerEmail: customerEmail ? '✓' : '✗', 
-      customerPhone: customerPhone ? '✓' : '✗',
-      customerLocation: customerLocation ? '✓' : '✗',
-      planName: planName ? '✓' : '✗',
-      planSpeed: planSpeed ? '✓' : '✗',
-      planPrice: planPrice !== undefined ? '✓' : '✗',
-      connectionType: connectionType ? '✓' : '✗'
-    });
+    console.log('🔍 [CONTROLLER] Processing request for:', { customerEmail, planName });
 
     // ✅ Enhanced validation with better error messages
     const requiredFields = [
@@ -57,7 +76,7 @@ export const createInvoice = async (req, res) => {
     const missingFields = requiredFields.filter(item => !item.value);
     
     if (missingFields.length > 0) {
-      console.log('❌ [DEBUG] Missing required fields:', missingFields.map(f => f.field));
+      console.log('❌ [CONTROLLER] Missing required fields:', missingFields.map(f => f.field));
       return res.status(400).json({
         success: false,
         message: `Missing required fields: ${missingFields.map(f => f.field).join(', ')}`,
@@ -67,11 +86,26 @@ export const createInvoice = async (req, res) => {
 
     // ✅ Validate email format
     if (!/^\S+@\S+\.\S+$/.test(customerEmail)) {
-      console.log('❌ [DEBUG] Invalid email format:', customerEmail);
+      console.log('❌ [CONTROLLER] Invalid email format:', customerEmail);
       return res.status(400).json({
         success: false,
         message: 'Invalid email format. Please provide a valid email address.',
       });
+    }
+
+    // ✅ CHECK FOR DUPLICATE INVOICE
+    console.log('🔍 [CONTROLLER] Checking for duplicate invoice...');
+    const duplicateCheck = await checkForExistingInvoice(customerEmail, planName);
+
+    if (duplicateCheck.isDuplicate) {
+        console.log('❌ [CONTROLLER] Duplicate invoice blocked for:', { customerEmail, planName });
+        return res.status(400).json({
+            success: false,
+            message: `You already have an active ${planName} plan invoice. Please check your existing invoice or contact support if you need to make changes.`,
+            existingInvoiceId: duplicateCheck.existingInvoice._id,
+            displayId: duplicateCheck.existingInvoice.displayId,
+            error: 'DUPLICATE_PLAN'
+        });
     }
 
     // ✅ Enhanced planPrice validation
@@ -91,9 +125,9 @@ export const createInvoice = async (req, res) => {
         throw new Error('Must be positive');
       }
       
-      console.log('✅ [DEBUG] Plan price parsed successfully:', parsedPlanPrice);
+      console.log('✅ [CONTROLLER] Plan price parsed successfully:', parsedPlanPrice);
     } catch (priceError) {
-      console.log('❌ [DEBUG] Invalid plan price:', planPrice, 'Error:', priceError.message);
+      console.log('❌ [CONTROLLER] Invalid plan price:', planPrice, 'Error:', priceError.message);
       return res.status(400).json({
         success: false,
         message: `Invalid plan price: "${planPrice}". Must be a positive number.`,
@@ -122,20 +156,21 @@ export const createInvoice = async (req, res) => {
       dueDate: finalDueDate,
     };
 
-    console.log('🔍 [DEBUG] Final invoice data to save:', {
-      ...invoiceData,
+    console.log('🔍 [CONTROLLER] Creating invoice with data:', {
+      customerEmail,
+      planName,
       planPrice: parsedPlanPrice,
       featuresCount: features.length
     });
 
-    // ✅ Create and save invoice with detailed logging
-    console.log('🔍 [DEBUG] Creating Invoice instance...');
+    // ✅ Create and save invoice
+    console.log('🔍 [CONTROLLER] Creating Invoice instance...');
     let invoice;
     try {
       invoice = new Invoice(invoiceData);
-      console.log('✅ [DEBUG] Invoice instance created');
+      console.log('✅ [CONTROLLER] Invoice instance created');
     } catch (modelError) {
-      console.error('❌ [DEBUG] Error creating Invoice instance:', modelError);
+      console.error('❌ [CONTROLLER] Error creating Invoice instance:', modelError);
       return res.status(400).json({
         success: false,
         message: 'Invalid invoice data format',
@@ -143,47 +178,47 @@ export const createInvoice = async (req, res) => {
       });
     }
 
-    console.log('🔍 [DEBUG] Saving invoice to database...');
+    console.log('🔍 [CONTROLLER] Saving invoice to database...');
     try {
       await invoice.save();
-      console.log('✅ [DEBUG] Invoice saved successfully! ID:', invoice._id);
-      console.log('✅ [DEBUG] Invoice displayId:', invoice.displayId);
+      console.log('✅ [CONTROLLER] Invoice saved successfully! ID:', invoice._id);
+      console.log('✅ [CONTROLLER] Invoice displayId:', invoice.displayId);
     } catch (saveError) {
-      console.error('❌ [DEBUG] Error saving invoice:', saveError);
-      throw saveError; // Re-throw to be caught by the main catch block
+      console.error('❌ [CONTROLLER] Error saving invoice:', saveError);
+      throw saveError;
     }
 
     // ✅ Send notifications (non-blocking)
     if (sendNotifications) {
-      console.log('🔍 [DEBUG] Sending notifications...');
+      console.log('🔍 [CONTROLLER] Sending notifications...');
       try {
         const notificationPromises = [];
         
         if (sendInvoiceEmail) {
           notificationPromises.push(
             sendInvoiceEmail(invoice)
-              .then(() => console.log('✅ [DEBUG] Email sent successfully'))
-              .catch(err => console.error('❌ [DEBUG] Email failed:', err.message))
+              .then(() => console.log('✅ [CONTROLLER] Email sent successfully'))
+              .catch(err => console.error('❌ [CONTROLLER] Email failed:', err.message))
           );
         }
         
         if (sendWhatsAppInvoice) {
           notificationPromises.push(
             sendWhatsAppInvoice(invoice)
-              .then(() => console.log('✅ [DEBUG] WhatsApp sent successfully'))
-              .catch(err => console.error('❌ [DEBUG] WhatsApp failed:', err.message))
+              .then(() => console.log('✅ [CONTROLLER] WhatsApp sent successfully'))
+              .catch(err => console.error('❌ [CONTROLLER] WhatsApp failed:', err.message))
           );
         }
         
         await Promise.allSettled(notificationPromises);
-        console.log('✅ [DEBUG] All notifications processed');
+        console.log('✅ [CONTROLLER] All notifications processed');
       } catch (notifyError) {
-        console.warn('⚠️ [DEBUG] Notification system error:', notifyError.message);
+        console.warn('⚠️ [CONTROLLER] Notification system error:', notifyError.message);
         // Don't fail the request if notifications fail
       }
     }
 
-    console.log('🎉 [DEBUG] Invoice creation completed successfully!');
+    console.log('🎉 [CONTROLLER] Invoice creation completed successfully!');
     return res.status(201).json({
       success: true,
       message: 'Invoice created successfully!',
@@ -191,17 +226,15 @@ export const createInvoice = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ [DEBUG] CATCH BLOCK - Invoice creation failed!');
-    console.error('❌ [DEBUG] Error name:', error.name);
-    console.error('❌ [DEBUG] Error message:', error.message);
-    console.error('❌ [DEBUG] Error code:', error.code);
-    console.error('❌ [DEBUG] Error stack:', error.stack);
+    console.error('❌ [CONTROLLER] Invoice creation failed!');
+    console.error('❌ [CONTROLLER] Error name:', error.name);
+    console.error('❌ [CONTROLLER] Error message:', error.message);
+    console.error('❌ [CONTROLLER] Error code:', error.code);
 
     // ✅ Enhanced error handling
     if (error.name === 'ValidationError') {
-      console.error('❌ [DEBUG] Validation errors detected');
+      console.error('❌ [CONTROLLER] Validation errors detected');
       const validationErrors = Object.values(error.errors).map((err) => {
-        console.error(`❌ [DEBUG] Validation error - Path: ${err.path}, Message: ${err.message}`);
         return `${err.path}: ${err.message}`;
       });
 
@@ -214,7 +247,7 @@ export const createInvoice = async (req, res) => {
     }
 
     if (error.name === 'CastError') {
-      console.error('❌ [DEBUG] Cast error:', error);
+      console.error('❌ [CONTROLLER] Cast error:', error);
       return res.status(400).json({
         success: false,
         message: `Invalid data format for field: ${error.path}`,
@@ -223,7 +256,7 @@ export const createInvoice = async (req, res) => {
     }
 
     if (error.code === 11000) {
-      console.error('❌ [DEBUG] Duplicate key error:', error.keyValue);
+      console.error('❌ [CONTROLLER] Duplicate key error:', error.keyValue);
       const field = Object.keys(error.keyValue)[0];
       return res.status(400).json({
         success: false,
@@ -234,7 +267,7 @@ export const createInvoice = async (req, res) => {
 
     // ✅ Database connection errors
     if (error.name === 'MongoNetworkError' || error.name === 'MongoTimeoutError') {
-      console.error('❌ [DEBUG] Database connection error:', error.message);
+      console.error('❌ [CONTROLLER] Database connection error:', error.message);
       return res.status(503).json({
         success: false,
         message: 'Database connection unavailable. Please try again later.',
@@ -242,16 +275,15 @@ export const createInvoice = async (req, res) => {
       });
     }
 
-    // ✅ Generic error with detailed info in development
-    console.error('❌ [DEBUG] Unhandled error type:', error.name);
+    // ✅ Generic error
+    console.error('❌ [CONTROLLER] Unhandled error type:', error.name);
     return res.status(500).json({
       success: false,
       message: 'Internal Server Error while creating invoice',
       ...(process.env.NODE_ENV === 'development' && {
         error: {
           name: error.name,
-          message: error.message,
-          stack: error.stack
+          message: error.message
         }
       })
     });
@@ -318,19 +350,15 @@ export const getInvoiceById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    console.log('🔍 [DEBUG] Fetching invoice by ID:', id);
-    
     const invoice = await Invoice.findById(id);
     
     if (!invoice) {
-      console.log('❌ [DEBUG] Invoice not found for ID:', id);
       return res.status(404).json({
         success: false,
         message: 'Invoice not found',
       });
     }
     
-    console.log('✅ [DEBUG] Invoice found:', invoice._id);
     res.json({ 
       success: true, 
       invoice 
