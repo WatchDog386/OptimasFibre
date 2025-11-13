@@ -1,13 +1,9 @@
- // src/models/Invoice.js
+// src/models/Invoice.js - COMPLETELY UPDATED (InvoiceNumber REMOVED)
 import mongoose from 'mongoose';
 
 const invoiceSchema = new mongoose.Schema({
-    invoiceNumber: { 
-        type: String, 
-        required: true, 
-        unique: true,
-        index: true
-    },
+    // ✅ NO invoiceNumber field - completely removed from schema
+    
     customerName: { 
         type: String, 
         required: [true, 'Customer name is required'],
@@ -19,14 +15,12 @@ const invoiceSchema = new mongoose.Schema({
         required: [true, 'Customer email is required'],
         trim: true,
         lowercase: true,
-        // Standard email regex check
         match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
     },
     customerPhone: { 
         type: String, 
         required: [true, 'Customer phone is required'],
         trim: true,
-        // Updated to match Kenyan numbers (e.g., 07xx, +2547xx). Allows 9-12 digits starting with 0, 1, 7, or +254.
         match: [/^(?:\+254|0)?[17]\d{8}$/, 'Please enter a valid Kenyan phone number (e.g., 0712345678 or +254712345678)']
     },
     customerLocation: { 
@@ -44,7 +38,6 @@ const invoiceSchema = new mongoose.Schema({
             message: 'Invalid plan name. Must be one of: Jumbo, Buffalo, Ndovu, Gazzelle, Tiger, Chui'
         }
     },
-    // ✅ This field is critical and must be a Number.
     planPrice: { 
         type: Number, 
         required: [true, 'Plan price is required'],
@@ -71,23 +64,11 @@ const invoiceSchema = new mongoose.Schema({
     },
     invoiceDate: { 
         type: Date, 
-        default: Date.now,
-        validate: {
-            validator: function(date) {
-                return date <= new Date();
-            },
-            message: 'Invoice date cannot be in the future'
-        }
+        default: Date.now
     },
     dueDate: { 
         type: Date, 
-        default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-        validate: {
-            validator: function(date) {
-                return date > this.invoiceDate;
-            },
-            message: 'Due date must be after invoice date'
-        }
+        default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     },
     status: { 
         type: String, 
@@ -110,7 +91,9 @@ const invoiceSchema = new mongoose.Schema({
         default: '',
         maxlength: [500, 'Notes cannot exceed 500 characters']
     },
-    // Calculated fields based on planPrice
+    paidAt: {
+        type: Date
+    },
     totalAmount: {
         type: Number,
         default: 0,
@@ -149,30 +132,27 @@ const invoiceSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Pre-save: Generate unique invoice number & sync amounts
-invoiceSchema.pre('save', async function(next) {
-    // 1. Generate Invoice Number if new
-    if (this.isNew && !this.invoiceNumber) {
-        const timestamp = Date.now();
-        // Use a 4-digit random number for better uniqueness probability
-        const random = Math.floor(1000 + Math.random() * 9000); 
-        this.invoiceNumber = `OPT-${timestamp}-${random}`;
-    }
-
-    // 2. Sync financial fields
-    const isFinancialModified = this.isModified('planPrice') || this.isModified('taxAmount') || this.isModified('discount') || this.isNew;
-
-    if (isFinancialModified) {
-        // totalAmount = planPrice (assuming planPrice is the base cost of service)
-        this.totalAmount = this.planPrice || 0; 
-        
-        // Calculate Final Amount
+// ✅ SIMPLIFIED Pre-save: Only handle financial calculations
+invoiceSchema.pre('save', function(next) {
+    // 1. Sync financial fields
+    if (this.isNew || this.isModified('planPrice') || this.isModified('taxAmount') || this.isModified('discount')) {
+        this.totalAmount = this.planPrice || 0;
         this.finalAmount = (this.totalAmount || 0) + (this.taxAmount || 0) - (this.discount || 0);
     }
 
-    // 3. Auto-mark as overdue
+    // 2. Auto-mark as overdue
     if (this.status === 'pending' && this.dueDate < new Date()) {
         this.status = 'overdue';
+    }
+
+    // 3. Set paidAt timestamp when status changes to paid
+    if (this.isModified('status') && this.status === 'paid' && !this.paidAt) {
+        this.paidAt = new Date();
+    }
+
+    // 4. Clear paidAt if status changes from paid
+    if (this.isModified('status') && this.status !== 'paid' && this.paidAt) {
+        this.paidAt = undefined;
     }
 
     next();
@@ -185,6 +165,34 @@ invoiceSchema.methods.updateStatus = function() {
         return this.save();
     }
     return Promise.resolve(this);
+};
+
+// Instance method: Add payment to history
+invoiceSchema.methods.addPayment = function(paymentData) {
+    this.paymentHistory.push(paymentData);
+    
+    const totalPaid = this.paymentHistory.reduce((sum, payment) => sum + payment.amount, 0);
+    if (totalPaid >= this.finalAmount) {
+        this.status = 'paid';
+        this.paidAt = new Date();
+    }
+    
+    return this.save();
+};
+
+// Instance method: Mark notifications as sent
+invoiceSchema.methods.markNotificationsSent = function(types = ['email', 'whatsapp']) {
+    const update = { 'notifications.lastNotificationDate': new Date() };
+    
+    if (types.includes('email')) {
+        update['notifications.emailSent'] = true;
+    }
+    
+    if (types.includes('whatsapp')) {
+        update['notifications.whatsappSent'] = true;
+    }
+    
+    return this.updateOne(update);
 };
 
 // Static methods
@@ -205,6 +213,42 @@ invoiceSchema.statics.getInvoicesByCustomer = function(email) {
 
 invoiceSchema.statics.getRecentInvoices = function(limit = 10) {
     return this.find().sort({ createdAt: -1 }).limit(limit);
+};
+
+// Static method: Get invoice statistics
+invoiceSchema.statics.getStats = async function() {
+    const stats = await this.aggregate([
+        {
+            $group: {
+                _id: '$status',
+                count: { $sum: 1 },
+                totalRevenue: { $sum: '$finalAmount' }
+            }
+        }
+    ]);
+    
+    const totalRevenue = await this.aggregate([
+        { $match: { status: 'paid' } },
+        { $group: { _id: null, total: { $sum: '$finalAmount' } } }
+    ]);
+    
+    return {
+        byStatus: stats,
+        totalRevenue: totalRevenue[0]?.total || 0,
+        totalInvoices: await this.countDocuments()
+    };
+};
+
+// Static method: Get overdue invoices that need reminders
+invoiceSchema.statics.getInvoicesNeedingReminder = function(daysBeforeDue = 3) {
+    const reminderDate = new Date();
+    reminderDate.setDate(reminderDate.getDate() + daysBeforeDue);
+    
+    return this.find({
+        status: 'pending',
+        dueDate: { $lte: reminderDate },
+        reminderSent: false
+    });
 };
 
 // Virtuals
@@ -229,12 +273,53 @@ invoiceSchema.virtual('formattedFinalAmount').get(function() {
     return `Ksh ${(this.finalAmount || 0).toLocaleString()}`;
 });
 
-// Serialization: Remove __v, include virtuals
-invoiceSchema.set('toJSON', { virtuals: true, transform: (doc, ret) => { delete ret.__v; return ret; } });
-invoiceSchema.set('toObject', { virtuals: true, transform: (doc, ret) => { delete ret.__v; return ret; } });
+// Virtual: Check if invoice is fully paid
+invoiceSchema.virtual('isFullyPaid').get(function() {
+    if (this.status === 'paid') return true;
+    
+    const totalPaid = this.paymentHistory.reduce((sum, payment) => sum + payment.amount, 0);
+    return totalPaid >= this.finalAmount;
+});
+
+// Virtual: Get amount due
+invoiceSchema.virtual('amountDue').get(function() {
+    if (this.status === 'paid') return 0;
+    
+    const totalPaid = this.paymentHistory.reduce((sum, payment) => sum + payment.amount, 0);
+    return Math.max(0, this.finalAmount - totalPaid);
+});
+
+// Virtual: Get payment progress percentage
+invoiceSchema.virtual('paymentProgress').get(function() {
+    if (this.finalAmount <= 0) return 0;
+    
+    const totalPaid = this.paymentHistory.reduce((sum, payment) => sum + payment.amount, 0);
+    return Math.min(100, Math.round((totalPaid / this.finalAmount) * 100));
+});
+
+// ✅ Virtual: Generate a display ID using MongoDB _id
+invoiceSchema.virtual('displayId').get(function() {
+    return this._id ? `INV-${this._id.toString().slice(-6).toUpperCase()}` : 'INV-NONE';
+});
+
+// Serialization
+invoiceSchema.set('toJSON', { 
+    virtuals: true, 
+    transform: (doc, ret) => { 
+        delete ret.__v; 
+        return ret; 
+    } 
+});
+
+invoiceSchema.set('toObject', { 
+    virtuals: true, 
+    transform: (doc, ret) => { 
+        delete ret.__v; 
+        return ret; 
+    } 
+});
 
 // Indexes for performance
-invoiceSchema.index({ invoiceNumber: 1 });
 invoiceSchema.index({ customerEmail: 1 });
 invoiceSchema.index({ status: 1 });
 invoiceSchema.index({ dueDate: 1 });
@@ -242,5 +327,8 @@ invoiceSchema.index({ createdAt: -1 });
 invoiceSchema.index({ status: 1, dueDate: 1 });
 invoiceSchema.index({ customerEmail: 1, createdAt: -1 });
 invoiceSchema.index({ reminderSent: 1, dueDate: 1 });
+invoiceSchema.index({ customerName: 'text', customerEmail: 'text' });
+invoiceSchema.index({ paidAt: 1 });
+invoiceSchema.index({ 'notifications.lastNotificationDate': 1 });
 
 export default mongoose.model('Invoice', invoiceSchema);

@@ -96,6 +96,7 @@ app.use(
           "https://optimasfibre.onrender.com",
           "http://localhost:10000",
           "https://optimaswifi.co.ke",
+          "http://localhost:3000"
         ],
       },
     },

@@ -1,4 +1,4 @@
-// backend/src/controllers/invoiceController.js
+// backend/src/controllers/invoiceController.js - COMPLETELY UPDATED (InvoiceNumber Removed)
 import Invoice from '../models/Invoice.js';
 import { sendInvoiceEmail } from '../utils/emailService.js';
 import { sendWhatsAppInvoice } from '../utils/whatsappService.js';
@@ -14,6 +14,9 @@ export const createInvoice = async (req, res) => {
       planPrice,
       notes,
       sendNotifications = true,
+      status = 'pending',
+      invoiceDate,
+      dueDate,
     } = req.body;
 
     // ✅ Sanitize input
@@ -26,14 +29,29 @@ export const createInvoice = async (req, res) => {
     const connectionType = (req.body.connectionType || '').trim();
     const features = Array.isArray(req.body.features) ? req.body.features : [];
 
-    console.log('📥 Received invoice creation request with plan price:', planPrice);
+    console.log('📥 Received invoice creation request:', {
+      customerName,
+      customerEmail,
+      customerPhone,
+      planName,
+      planPrice,
+      // ❌ NO invoiceNumber logging
+    });
 
-    // ✅ Basic validation
-    if (!customerName || !customerEmail || !customerPhone || !customerLocation || !planName) {
+    // ✅ UPDATED: Enhanced validation - NO invoiceNumber in required fields
+    const requiredFields = [
+      'customerName', 'customerEmail', 'customerPhone', 
+      'customerLocation', 'planName', 'planPrice', 'planSpeed'
+      // ❌ REMOVED: 'invoiceNumber' completely
+    ];
+    
+    const missingFields = requiredFields.filter(field => !req.body[field]?.trim());
+    
+    if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message:
-          'Missing required fields: name, email, phone, location, and plan name are required',
+        message: `Missing required fields: ${missingFields.join(', ')}`,
+        details: missingFields.map(field => `${field} is required`)
       });
     }
 
@@ -60,8 +78,13 @@ export const createInvoice = async (req, res) => {
       });
     }
 
-    // ✅ Create a new instance (ensures pre-save middleware runs)
-    const invoice = new Invoice({
+    // ✅ Handle dates - use provided dates or generate defaults
+    const now = new Date();
+    const finalInvoiceDate = invoiceDate ? new Date(invoiceDate) : now;
+    const finalDueDate = dueDate ? new Date(dueDate) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    // ✅ Create invoice data - NO invoiceNumber field
+    const invoiceData = {
       customerName,
       customerEmail,
       customerPhone,
@@ -72,11 +95,24 @@ export const createInvoice = async (req, res) => {
       features,
       connectionType,
       notes,
+      // ❌ NO invoiceNumber field - completely removed
+      status: ['pending', 'paid', 'cancelled', 'overdue'].includes(status) ? status : 'pending',
+      invoiceDate: finalInvoiceDate,
+      dueDate: finalDueDate,
+    };
+
+    console.log('📝 Creating invoice with data:', {
+      customerName: invoiceData.customerName,
+      planPrice: invoiceData.planPrice,
+      status: invoiceData.status
+      // ❌ NO invoiceNumber logging
     });
 
-    await invoice.save(); // ← this triggers the pre('save') hook in your model
+    // ✅ Create and save invoice
+    const invoice = new Invoice(invoiceData);
+    await invoice.save();
 
-    console.log('✅ Invoice saved successfully with invoiceNumber:', invoice.invoiceNumber);
+    console.log('✅ Invoice saved successfully with ID:', invoice._id);
 
     // ✅ Send notifications asynchronously
     if (sendNotifications) {
@@ -100,7 +136,7 @@ export const createInvoice = async (req, res) => {
   } catch (error) {
     console.error('❌ Error creating invoice:', error);
 
-    // ✅ Mongoose validation error
+    // ✅ Enhanced Mongoose validation error handling
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map((err) => {
         let msg = err.message;
@@ -115,14 +151,17 @@ export const createInvoice = async (req, res) => {
         success: false,
         message: `Validation Error: ${validationErrors.join(' | ')}`,
         details: validationErrors,
+        error: 'VALIDATION_ERROR'
       });
     }
 
-    // ✅ Duplicate key error
+    // ✅ Duplicate key error (shouldn't occur since invoiceNumber is removed)
     if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
       return res.status(400).json({
         success: false,
-        message: 'Duplicate entry detected (invoice number or unique field already exists)',
+        message: `Duplicate entry detected: ${field} '${error.keyValue[field]}' already exists`,
+        error: 'DUPLICATE_ENTRY'
       });
     }
 
@@ -142,13 +181,25 @@ export const createInvoice = async (req, res) => {
  */
 export const getInvoices = async (req, res) => {
   try {
-    const { page = 1, limit = 10, status } = req.query;
+    const { page = 1, limit = 10, status, search } = req.query;
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
 
     const query = {};
+    
+    // Status filter
     if (status && ['pending', 'paid', 'cancelled', 'overdue'].includes(status)) {
       query.status = status;
+    }
+    
+    // Search filter
+    if (search) {
+      query.$or = [
+        { customerName: { $regex: search, $options: 'i' } },
+        { customerEmail: { $regex: search, $options: 'i' } },
+        { planName: { $regex: search, $options: 'i' } }
+        // ❌ REMOVED: invoiceNumber from search
+      ];
     }
 
     const invoices = await Invoice.find(query)
@@ -181,14 +232,22 @@ export const getInvoices = async (req, res) => {
  */
 export const getInvoiceById = async (req, res) => {
   try {
-    const invoice = await Invoice.findById(req.params.id);
+    const { id } = req.params;
+    
+    // ✅ SIMPLIFIED: Only search by MongoDB ID (invoiceNumber removed)
+    const invoice = await Invoice.findById(id);
+    
     if (!invoice) {
       return res.status(404).json({
         success: false,
         message: 'Invoice not found',
       });
     }
-    res.json({ success: true, invoice });
+    
+    res.json({ 
+      success: true, 
+      invoice 
+    });
   } catch (error) {
     console.error('❌ Error fetching invoice:', error);
     res.status(500).json({
@@ -214,7 +273,10 @@ export const updateInvoiceStatus = async (req, res) => {
 
     const invoice = await Invoice.findByIdAndUpdate(
       req.params.id,
-      { status },
+      { 
+        status,
+        ...(status === 'paid' && { paidAt: new Date() }) // Set paidAt when status changes to paid
+      },
       { new: true, runValidators: true }
     );
 
@@ -304,6 +366,45 @@ export const deleteInvoice = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error deleting invoice',
+    });
+  }
+};
+
+/**
+ * @desc Get invoice statistics
+ * @route GET /api/invoices/stats/summary
+ */
+export const getInvoiceStats = async (req, res) => {
+  try {
+    const stats = await Invoice.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$planPrice' }
+        }
+      }
+    ]);
+
+    const totalInvoices = await Invoice.countDocuments();
+    const totalRevenue = await Invoice.aggregate([
+      { $match: { status: 'paid' } },
+      { $group: { _id: null, total: { $sum: '$planPrice' } } }
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        byStatus: stats,
+        totalInvoices,
+        totalRevenue: totalRevenue[0]?.total || 0
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching invoice stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching invoice statistics',
     });
   }
 };

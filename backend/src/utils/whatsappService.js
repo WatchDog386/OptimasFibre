@@ -1,5 +1,4 @@
 // backend/src/utils/whatsappService.js
-
 import twilio from 'twilio';
 
 /**
@@ -30,22 +29,17 @@ const formatPhoneNumber = (phone) => {
 
   // Handle common Kenyan formats
   if (cleanNumber.length === 10 && cleanNumber.startsWith('0')) {
-    // 07XX XXX XXX → 2547XX XXX XXX
     cleanNumber = '254' + cleanNumber.substring(1);
   } else if (cleanNumber.length === 9 && cleanNumber.startsWith('7')) {
-    // 7XX XXX XXX → 2547XX XXX XXX
     cleanNumber = '254' + cleanNumber;
   } else if (cleanNumber.length === 12 && cleanNumber.startsWith('2547')) {
     // Already correct format
   } else if (cleanNumber.length === 13 && cleanNumber.startsWith('+2547')) {
-    // Remove leading + for internal processing
     cleanNumber = cleanNumber.substring(1);
   } else {
-    // Unsupported format
     throw new Error(`Unsupported phone number format: ${phone}`);
   }
 
-  // Ensure it's exactly 12 digits (2547XXXXXXXX)
   if (cleanNumber.length !== 12 || !cleanNumber.startsWith('2547')) {
     throw new Error(`Invalid Kenyan phone number: ${phone}`);
   }
@@ -125,7 +119,6 @@ export const sendWhatsAppInvoice = async (invoice) => {
       return { success: false, error: 'Twilio credentials missing' };
     }
 
-    // Validate and format phone number
     let formattedPhone;
     try {
       formattedPhone = formatPhoneNumber(invoice.customerPhone);
@@ -160,7 +153,6 @@ export const sendWhatsAppInvoice = async (invoice) => {
       moreInfo: error.moreInfo || 'N/A'
     });
 
-    // Handle specific Twilio error codes
     switch (error.code) {
       case 21211:
         return { success: false, error: 'Invalid phone number format' };
@@ -188,11 +180,9 @@ export const testWhatsAppConfig = async () => {
       return { success: false, error: 'Twilio credentials not configured' };
     }
 
-    // Test by fetching account info
     const account = await client.api.accounts(process.env.TWILIO_ACCOUNT_SID).fetch();
     console.log('✅ Twilio account verified:', account.friendlyName);
 
-    // Verify WhatsApp number is configured
     const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER;
     if (!fromNumber) {
       return { success: false, error: 'TWILIO_WHATSAPP_NUMBER not set in .env' };

@@ -1,4 +1,4 @@
-// WifiPlans.jsx — FINAL VERSION (With invoiceNumber Fix)
+// WifiPlans.jsx — FINAL VERSION (With BACKEND invoiceNumber Fix)
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone, Download, Send } from "lucide-react";
 import { motion, AnimatePresence, useInView, useAnimation } from "framer-motion";
@@ -359,7 +359,7 @@ const WifiPlans = () => {
     }));
   };
 
-  // ✅ FIXED handleSubmit — NOW INCLUDES invoiceNumber
+  // ✅ FIXED handleSubmit — REMOVED invoiceNumber generation (let backend handle it)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -425,14 +425,9 @@ const WifiPlans = () => {
       return;
     }
 
-    // ✅ Generate invoiceNumber on the frontend
-    const now = new Date();
-    const timestamp = now.getTime(); // e.g., 1712345678901
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000); // 4-digit random
-    const invoiceNumber = `INV-${timestamp.toString().slice(-6)}-${randomSuffix}`;
-
+    // ✅ FIX: REMOVED invoiceNumber generation - backend will handle it
     const invoicePayload = {
-      invoiceNumber, // ✅ NOW INCLUDED
+      // NO invoiceNumber - backend will generate it automatically
       customerName: trimmedName,
       customerEmail: trimmedEmail,
       customerPhone: trimmedPhone,
@@ -442,32 +437,60 @@ const WifiPlans = () => {
       planSpeed: selectedPlan.speed,
       features: selectedPlan.features,
       connectionType: "Fiber Optic",
+      status: "pending",
+      // Let backend handle dates too
     };
 
     try {
       const API_BASE_URL = getApiBaseUrl();
+      console.log('📤 Sending invoice request to:', `${API_BASE_URL}/api/invoices`);
+      console.log('📦 Invoice payload (NO invoiceNumber):', JSON.stringify(invoicePayload, null, 2));
+
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(invoicePayload),
       });
 
+      console.log('📥 Response status:', response.status);
+      
       if (!response.ok) {
         let errorMsg = 'Validation error. Please check all fields and try again.';
+        let errorDetails = '';
+        
         try {
           const errJson = await response.json();
           errorMsg = errJson.message || errJson.error || errorMsg;
-        } catch {
+          errorDetails = errJson.details || JSON.stringify(errJson);
+          console.log('❌ Server error details:', errJson);
+        } catch (parseError) {
           const text = await response.text();
-          if (text) errorMsg = text;
+          if (text) {
+            errorMsg = text;
+            errorDetails = text;
+          }
+          console.log('❌ Server error text:', text);
         }
-        throw new Error(errorMsg);
+        
+        throw new Error(`${errorMsg} ${errorDetails ? `- ${errorDetails}` : ''}`);
       }
 
       const result = await response.json();
+      console.log('✅ Invoice creation successful:', result);
+      
       if (result.success) {
-        setInvoiceData(result.invoice);
+        setInvoiceData(result.invoice || result.data);
         setMessageStatus("success");
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          location: "",
+        });
         setTimeout(() => {
           setShowInvoice(true);
           setShowForm(false);
@@ -496,9 +519,10 @@ const WifiPlans = () => {
     return isNaN(num) ? price : num.toLocaleString();
   };
 
-  // Invoice Preview Component (unchanged)
+  // Invoice Preview Component
   const InvoicePreview = () => {
     if (!invoiceData) return null;
+    
     const handlePrint = () => {
       const invoiceContent = document.getElementById('invoice-content');
       if (!invoiceContent) return;
@@ -508,6 +532,41 @@ const WifiPlans = () => {
       document.body.innerHTML = originalContents;
       window.location.reload();
     };
+
+    const handleDownloadPDF = async () => {
+      try {
+        setIsLoading(true);
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceData._id || invoiceData.id}/pdf`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/pdf',
+          },
+        });
+        
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `invoice-${invoiceData.invoiceNumber}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        } else {
+          console.error('Failed to download PDF');
+          handlePrint(); // Fallback to print if PDF download fails
+        }
+      } catch (error) {
+        console.error('Error downloading PDF:', error);
+        handlePrint(); // Fallback to print
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -558,7 +617,7 @@ const WifiPlans = () => {
                   </div>
                   <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-800 text-lg">
                     <CheckCircle size={20} className="mr-2" />
-                    {invoiceData.status}
+                    {invoiceData.status || 'Pending'}
                   </div>
                 </div>
               </div>
@@ -669,7 +728,7 @@ const WifiPlans = () => {
                 </div>
                 <div className={`inline-flex items-center px-4 py-2 rounded-full ${darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'}`}>
                   <CheckCircle size={16} className="mr-2" />
-                  {invoiceData.status}
+                  {invoiceData.status || 'Pending'}
                 </div>
               </div>
             </div>
@@ -746,10 +805,11 @@ const WifiPlans = () => {
                 }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handlePrint}
+                onClick={handleDownloadPDF}
+                disabled={isLoading}
               >
                 <Download size={18} className="mr-2" />
-                Download PDF
+                {isLoading ? 'Generating PDF...' : 'Download PDF'}
               </motion.button>
               <motion.button
                 className={`flex items-center px-6 py-3 rounded-full border transition-colors ${
@@ -759,9 +819,22 @@ const WifiPlans = () => {
                 }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setShowInvoice(false)}
+                onClick={handlePrint}
               >
                 <Send size={18} className="mr-2" />
+                Print Invoice
+              </motion.button>
+              <motion.button
+                className={`flex items-center px-6 py-3 rounded-full border transition-colors ${
+                  darkMode 
+                    ? 'border-gray-600 text-gray-300 hover:border-red-500 hover:text-red-500' 
+                    : 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowInvoice(false)}
+              >
+                <X size={18} className="mr-2" />
                 Close Invoice
               </motion.button>
             </div>
