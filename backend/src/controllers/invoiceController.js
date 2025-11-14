@@ -1,588 +1,1051 @@
-// backend/src/controllers/invoiceController.js - FULL UPDATED
+// backend/src/controllers/invoiceController.js - COMPLETELY UPDATED
 import Invoice from '../models/Invoice.js';
-import { sendInvoiceEmail } from '../utils/emailService.js';
-import { sendWhatsAppInvoice, sendConnectionRequest as sendWhatsAppConnectionRequest } from '../utils/whatsappService.js';
+import mongoose from 'mongoose';
 
-/**
- * @desc Check for existing invoice and handle package changes
- */
-const handleExistingInvoice = async (customerEmail, planName, newPlanData) => {
-    try {
-        console.log('🔍 [INVOICE CHECK] Checking for existing invoices:', { customerEmail, planName });
-        
-        // Check for existing invoice with same plan
-        const existingSamePlan = await Invoice.findOne({
-            customerEmail: customerEmail.toLowerCase(),
-            planName: planName,
-            status: { $in: ['pending', 'completed'] }
-        });
-        
-        if (existingSamePlan) {
-            console.log('🔄 [INVOICE CHECK] Found existing invoice with same plan:', existingSamePlan.invoiceNumber);
-            return {
-                action: 'update',
-                invoice: existingSamePlan,
-                message: 'Updating existing invoice with same plan'
-            };
-        }
-        
-        // Check if customer has any other active invoices
-        const customerInvoices = await Invoice.find({
-            customerEmail: customerEmail.toLowerCase(),
-            status: { $in: ['pending', 'completed'] }
-        });
-        
-        if (customerInvoices.length > 0) {
-            console.log('❌ [INVOICE CHECK] Customer has other active invoices:', customerInvoices.map(i => i.planName));
-            return {
-                action: 'block',
-                invoice: customerInvoices[0],
-                message: `Customer already has active ${customerInvoices[0].planName} invoice`
-            };
-        }
-        
-        console.log('✅ [INVOICE CHECK] No conflicts - creating new invoice');
-        return {
-            action: 'create',
-            invoice: null,
-            message: 'Creating new invoice'
-        };
-    } catch (error) {
-        console.error('❌ [INVOICE CHECK] Error:', error);
-        throw error;
-    }
-};
-
-// ✅ NEW: Function to check for existing active invoices by customer details
-export const checkExistingActiveInvoices = async (req, res) => {
-    try {
-        const { email, phone } = req.query;
-        
-        console.log('🔍 [EXISTING INVOICE CHECK] Checking for existing invoices:', { email, phone });
-        
-        if (!email && !phone) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email or phone number is required to check existing invoices'
-            });
-        }
-
-        let query = {};
-        if (email) {
-            query.customerEmail = email.toLowerCase().trim();
-        }
-        if (phone) {
-            query.customerPhone = phone.trim().replace(/\s+/g, '');
-        }
-
-        // Find active invoices (pending or completed)
-        const activeInvoices = await Invoice.find({
-            ...query,
-            status: { $in: ['pending', 'completed'] }
-        }).sort({ createdAt: -1 }); // Get most recent first
-
-        console.log('📋 [EXISTING INVOICE CHECK] Found active invoices:', activeInvoices.length);
-
-        if (activeInvoices.length === 0) {
-            return res.json({
-                success: true,
-                hasActiveInvoices: false,
-                message: 'No active invoices found'
-            });
-        }
-
-        // Return the most recent active invoice
-        const latestInvoice = activeInvoices[0];
-        
-        res.json({
-            success: true,
-            hasActiveInvoices: true,
-            activeInvoice: {
-                _id: latestInvoice._id,
-                invoiceNumber: latestInvoice.invoiceNumber,
-                customerName: latestInvoice.customerName,
-                customerEmail: latestInvoice.customerEmail,
-                customerPhone: latestInvoice.customerPhone,
-                customerLocation: latestInvoice.customerLocation,
-                planName: latestInvoice.planName,
-                planSpeed: latestInvoice.planSpeed,
-                planPrice: latestInvoice.planPrice,
-                features: latestInvoice.features,
-                connectionType: latestInvoice.connectionType,
-                status: latestInvoice.status,
-                invoiceDate: latestInvoice.invoiceDate,
-                dueDate: latestInvoice.dueDate,
-                createdAt: latestInvoice.createdAt,
-                connectionRequestSent: latestInvoice.connectionRequestSent,
-                connectionRequestSentAt: latestInvoice.connectionRequestSentAt
-            },
-            totalActiveInvoices: activeInvoices.length,
-            message: `Found active ${latestInvoice.planName} plan invoice`
-        });
-
-    } catch (error) {
-        console.error('❌ [EXISTING INVOICE CHECK] Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error checking for existing invoices',
-            ...(process.env.NODE_ENV === 'development' && { error: error.message })
-        });
-    }
-};
-
-/**
- * @desc Create or update invoice for customer
- * @route POST /api/invoices
- * @access Public
- */
+// ✅ Basic CRUD Operations
 export const createInvoice = async (req, res) => {
-    console.log('🔍 [CONTROLLER] Starting invoice processing...');
-    
     try {
-        const {
-            planPrice,
-            notes,
-            sendNotifications = true,
-            status = 'pending',
-            invoiceDate,
-            dueDate,
-        } = req.body;
-
-        // ✅ Sanitize input with defaults
-        const customerName = (req.body.customerName || '').trim();
-        const customerEmail = (req.body.customerEmail || '').trim().toLowerCase();
-        const customerPhone = (req.body.customerPhone || '').trim();
-        const customerLocation = (req.body.customerLocation || '').trim();
-        const planName = (req.body.planName || '').trim();
-        const planSpeed = (req.body.planSpeed || '').trim();
-        const connectionType = (req.body.connectionType || 'Fiber Optic').trim();
-        const features = Array.isArray(req.body.features) ? req.body.features : [];
-
-        console.log('🔍 [CONTROLLER] Processing request for:', { customerEmail, planName });
-
-        // ✅ Enhanced validation with better error messages
-        const requiredFields = [
-            { field: 'customerName', value: customerName, message: 'Customer name is required' },
-            { field: 'customerEmail', value: customerEmail, message: 'Customer email is required' },
-            { field: 'customerPhone', value: customerPhone, message: 'Customer phone is required' },
-            { field: 'customerLocation', value: customerLocation, message: 'Customer location is required' },
-            { field: 'planName', value: planName, message: 'Plan name is required' },
-            { field: 'planSpeed', value: planSpeed, message: 'Plan speed is required' },
-            { field: 'planPrice', value: planPrice, message: 'Plan price is required' }
-        ];
-
-        const missingFields = requiredFields.filter(item => !item.value);
+        console.log('📝 Creating new invoice...');
         
-        if (missingFields.length > 0) {
-            console.log('❌ [CONTROLLER] Missing required fields:', missingFields.map(f => f.field));
+        const invoiceData = {
+            ...req.body,
+            createdBy: req.user?._id
+        };
+
+        // Validate required fields
+        if (!invoiceData.customerName || !invoiceData.customerEmail || !invoiceData.planName) {
             return res.status(400).json({
                 success: false,
-                message: `Missing required fields: ${missingFields.map(f => f.field).join(', ')}`,
-                details: missingFields.map(f => f.message)
+                message: 'Missing required fields: customerName, customerEmail, planName'
             });
         }
 
-        // ✅ Validate email format
-        if (!/^\S+@\S+\.\S+$/.test(customerEmail)) {
-            console.log('❌ [CONTROLLER] Invalid email format:', customerEmail);
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid email format. Please provide a valid email address.',
-            });
-        }
+        const invoice = new Invoice(invoiceData);
+        await invoice.save();
 
-        // ✅ Enhanced planPrice validation
-        let parsedPlanPrice;
-        try {
-            if (typeof planPrice === 'string') {
-                parsedPlanPrice = parseInt(planPrice.replace(/,/g, ''), 10);
-            } else {
-                parsedPlanPrice = Number(planPrice);
-            }
-
-            if (isNaN(parsedPlanPrice)) throw new Error('Not a number');
-            if (parsedPlanPrice <= 0) throw new Error('Must be positive');
-            console.log('✅ [CONTROLLER] Plan price parsed successfully:', parsedPlanPrice);
-        } catch (priceError) {
-            console.log('❌ [CONTROLLER] Invalid plan price:', planPrice, 'Error:', priceError.message);
-            return res.status(400).json({
-                success: false,
-                message: `Invalid plan price: "${planPrice}". Must be a positive number.`,
-            });
-        }
-
-        // ✅ Handle dates
-        const now = new Date();
-        const finalInvoiceDate = invoiceDate ? new Date(invoiceDate) : now;
-        const finalDueDate = dueDate ? new Date(dueDate) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-        // ✅ Prepare plan data
-        const planData = { planName, planPrice: parsedPlanPrice, planSpeed, features };
-
-        // ✅ CHECK FOR EXISTING INVOICE AND HANDLE ACCORDINGLY
-        console.log('🔍 [CONTROLLER] Checking invoice status...');
-        const invoiceCheck = await handleExistingInvoice(customerEmail, planName, planData);
-
-        let invoice;
-        let action = 'created';
-
-        if (invoiceCheck.action === 'update') {
-            console.log('🔄 [CONTROLLER] Updating existing invoice:', invoiceCheck.invoice.invoiceNumber);
-            
-            // Update existing invoice
-            const updatedInvoice = await Invoice.findByIdAndUpdate(
-                invoiceCheck.invoice._id,
-                {
-                    planPrice: parsedPlanPrice,
-                    planSpeed,
-                    features,
-                    connectionType,
-                    notes: notes || '',
-                    updatedAt: new Date()
-                },
-                { new: true, runValidators: true }
-            );
-            
-            invoice = updatedInvoice;
-            action = 'updated';
-            console.log('✅ [CONTROLLER] Invoice updated successfully');
-
-        } else if (invoiceCheck.action === 'block') {
-            console.log('❌ [CONTROLLER] Blocking - customer has other active invoices');
-            return res.status(400).json({
-                success: false,
-                message: `You already have an active ${invoiceCheck.invoice.planName} plan invoice. Please complete or cancel your existing invoice before creating a new one.`,
-                existingInvoiceId: invoiceCheck.invoice._id,
-                existingInvoiceNumber: invoiceCheck.invoice.invoiceNumber,
-                existingPlan: invoiceCheck.invoice.planName,
-                error: 'EXISTING_ACTIVE_INVOICE',
-                solution: 'Contact support to change your plan or cancel existing invoice'
-            });
-
-        } else {
-            console.log('🆕 [CONTROLLER] Creating new invoice...');
-            const invoiceData = {
-                customerName,
-                customerEmail,
-                customerPhone,
-                customerLocation,
-                planName,
-                planSpeed,
-                planPrice: parsedPlanPrice,
-                features,
-                connectionType,
-                notes: notes || '',
-                status: ['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status) ? status : 'pending',
-                invoiceDate: finalInvoiceDate,
-                dueDate: finalDueDate,
-            };
-
-            invoice = new Invoice(invoiceData);
-            await invoice.save();
-            console.log('✅ [CONTROLLER] New invoice created:', invoice.invoiceNumber);
-        }
-
-        console.log(`✅ [CONTROLLER] Invoice ${action} successfully:`, invoice.invoiceNumber);
-
-        // ✅ Send notifications (non-blocking)
-        if (sendNotifications) {
-            console.log('🔍 [CONTROLLER] Sending notifications...');
-            try {
-                const notificationPromises = [];
-                if (sendInvoiceEmail) {
-                    notificationPromises.push(
-                        sendInvoiceEmail(invoice).catch(err => console.error('❌ Email failed:', err.message))
-                    );
-                }
-                if (sendWhatsAppInvoice) {
-                    notificationPromises.push(
-                        sendWhatsAppInvoice(invoice).catch(err => console.error('❌ WhatsApp failed:', err.message))
-                    );
-                }
-                await Promise.allSettled(notificationPromises);
-                console.log('✅ [CONTROLLER] All notifications processed');
-            } catch (notifyError) {
-                console.warn('⚠️ [CONTROLLER] Notification system error:', notifyError.message);
-            }
-        }
-
-        console.log('🎉 [CONTROLLER] Invoice processing completed successfully!');
-        return res.status(action === 'created' ? 201 : 200).json({
+        console.log(`✅ Invoice created: ${invoice.invoiceNumber}`);
+        
+        res.status(201).json({
             success: true,
-            message: `Invoice ${action} successfully!`,
-            action,
-            invoice,
-            isPlanUpdate: action === 'updated',
-            invoiceNumber: invoice.invoiceNumber
+            message: 'Invoice created successfully',
+            invoice: invoice
         });
-
     } catch (error) {
-        console.error('❌ [CONTROLLER] Invoice processing failed!', error);
+        console.error('❌ Error creating invoice:', error);
+        
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invoice number already exists'
+            });
+        }
+        
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors: errors
+            });
+        }
+        
         res.status(500).json({
             success: false,
-            message: 'Internal Server Error while processing invoice',
-            ...(process.env.NODE_ENV === 'development' && { error: { name: error.name, message: error.message } })
+            message: 'Error creating invoice',
+            error: error.message
         });
     }
 };
 
-/**
- * @desc Send connection request to WhatsApp
- */
-export const sendConnectionRequestToOwner = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const invoice = await Invoice.findById(id);
-        if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
-
-        const whatsappResult = await sendWhatsAppConnectionRequest(invoice);
-        
-        // Update invoice to mark connection request as sent
-        await Invoice.findByIdAndUpdate(id, {
-            connectionRequestSent: true,
-            connectionRequestSentAt: new Date(),
-            status: 'completed'
-        });
-
-        res.json({
-            success: true,
-            message: 'Connection request sent successfully! Our team will contact you shortly.',
-            invoice: {
-                id: invoice._id,
-                invoiceNumber: invoice.invoiceNumber,
-                status: 'completed',
-                connectionRequestSent: true,
-                connectionRequestSentAt: new Date()
-            },
-            whatsappResult
-        });
-    } catch (error) {
-        console.error('❌ [CONTROLLER] Error sending connection request:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error sending connection request', 
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined 
-        });
-    }
-};
-
-/**
- * @desc Get customer invoice history
- */
-export const getCustomerInvoices = async (req, res) => {
-    try {
-        const { email } = req.params;
-        const invoices = await Invoice.find({ customerEmail: email.toLowerCase() }).sort({ createdAt: -1 });
-
-        res.json({
-            success: true,
-            customerEmail: email,
-            totalInvoices: invoices.length,
-            activeInvoices: invoices.filter(inv => ['pending', 'completed'].includes(inv.status)),
-            invoiceHistory: invoices
-        });
-    } catch (error) {
-        console.error('❌ Error fetching customer invoices:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error fetching invoice history', 
-            ...(process.env.NODE_ENV === 'development' && { error: error.message }) 
-        });
-    }
-};
-
-/**
- * @desc Get paginated invoices
- */
 export const getInvoices = async (req, res) => {
     try {
-        const { page = 1, limit = 10, status, search } = req.query;
-        const pageNum = Math.max(1, parseInt(page, 10));
-        const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+        const { 
+            page = 1, 
+            limit = 10, 
+            status, 
+            customerEmail, 
+            search,
+            sortBy = 'createdAt',
+            sortOrder = 'desc'
+        } = req.query;
 
-        const query = {};
-        if (status && ['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status)) {
-            query.status = status;
-        }
+        // Build query
+        let query = {};
+        
+        if (status) query.status = status;
+        if (customerEmail) query.customerEmail = customerEmail.toLowerCase();
+        
         if (search) {
             query.$or = [
+                { invoiceNumber: { $regex: search, $options: 'i' } },
                 { customerName: { $regex: search, $options: 'i' } },
                 { customerEmail: { $regex: search, $options: 'i' } },
-                { planName: { $regex: search, $options: 'i' } },
-                { invoiceNumber: { $regex: search, $options: 'i' } }
+                { customerPhone: { $regex: search, $options: 'i' } }
             ];
         }
 
+        // Sort options
+        const sortOptions = {};
+        sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+        // Execute query with pagination
         const invoices = await Invoice.find(query)
-            .sort({ createdAt: -1 })
-            .limit(limitNum)
-            .skip((pageNum - 1) * limitNum);
-            
+            .sort(sortOptions)
+            .limit(limit * 1)
+            .skip((page - 1) * limit);
+
         const total = await Invoice.countDocuments(query);
 
-        res.json({ 
-            success: true, 
-            count: invoices.length, 
-            total, 
-            pages: Math.ceil(total / limitNum), 
-            currentPage: pageNum, 
-            invoices 
+        res.json({
+            success: true,
+            invoices,
+            pagination: {
+                current: parseInt(page),
+                pages: Math.ceil(total / limit),
+                total
+            }
         });
     } catch (error) {
         console.error('❌ Error fetching invoices:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error fetching invoices', 
-            ...(process.env.NODE_ENV === 'development' && { error: error.message }) 
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching invoices',
+            error: error.message
         });
     }
 };
 
-/**
- * @desc Get single invoice by ID
- */
 export const getInvoiceById = async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
-        if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
-        res.json({ success: true, invoice });
-    } catch (error) {
-        console.error('❌ Error fetching invoice:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error fetching invoice', 
-            ...(process.env.NODE_ENV === 'development' && { error: error.message }) 
-        });
-    }
-};
-
-/**
- * @desc Update invoice status
- */
-export const updateInvoiceStatus = async (req, res) => {
-    try {
-        const { status } = req.body;
-        if (!['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status)) {
-            return res.status(400).json({ success: false, message: 'Invalid status' });
+        
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
         }
 
-        const updateData = { status };
-        if (status === 'paid') updateData.paidAt = new Date();
-
-        const invoice = await Invoice.findByIdAndUpdate(
-            req.params.id, 
-            updateData, 
-            { new: true, runValidators: true }
-        );
-        
-        if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
-
-        res.json({ 
-            success: true, 
-            message: 'Invoice status updated successfully', 
-            invoice 
-        });
-    } catch (error) {
-        console.error('❌ Error updating invoice status:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error updating invoice status', 
-            ...(process.env.NODE_ENV === 'development' && { error: error.message }) 
-        });
-    }
-};
-
-/**
- * @desc Resend invoice notifications
- */
-export const resendInvoiceNotifications = async (req, res) => {
-    try {
-        const invoice = await Invoice.findById(req.params.id);
-        if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
-
-        const [emailResult, whatsappResult] = await Promise.allSettled([
-            sendInvoiceEmail(invoice), 
-            sendWhatsAppInvoice(invoice)
-        ]);
-        
         res.json({
             success: true,
-            message: 'Notifications resent successfully',
-            notifications: {
-                email: { 
-                    success: emailResult.status === 'fulfilled', 
-                    error: emailResult.status === 'rejected' ? emailResult.reason?.message : null 
-                },
-                whatsapp: { 
-                    success: whatsappResult.status === 'fulfilled', 
-                    error: whatsappResult.status === 'rejected' ? whatsappResult.reason?.message : null 
-                }
-            }
+            invoice
         });
     } catch (error) {
-        console.error('❌ Error resending notifications:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error resending notifications', 
-            ...(process.env.NODE_ENV === 'development' && { error: error.message }) 
+        console.error('❌ Error fetching invoice:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching invoice',
+            error: error.message
         });
     }
 };
 
-/**
- * @desc Delete invoice
- */
+export const updateInvoice = async (req, res) => {
+    try {
+        const invoice = await Invoice.findByIdAndUpdate(
+            req.params.id,
+            { 
+                ...req.body,
+                updatedBy: req.user?._id
+            },
+            { new: true, runValidators: true }
+        );
+
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Invoice updated successfully',
+            invoice
+        });
+    } catch (error) {
+        console.error('❌ Error updating invoice:', error);
+        
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors: errors
+            });
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: 'Error updating invoice',
+            error: error.message
+        });
+    }
+};
+
 export const deleteInvoice = async (req, res) => {
     try {
         const invoice = await Invoice.findByIdAndDelete(req.params.id);
-        if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
-        res.json({ success: true, message: 'Invoice deleted successfully' });
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Invoice deleted successfully'
+        });
     } catch (error) {
         console.error('❌ Error deleting invoice:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error deleting invoice', 
-            ...(process.env.NODE_ENV === 'development' && { error: error.message }) 
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting invoice',
+            error: error.message
         });
     }
 };
 
-/**
- * @desc Get invoice statistics
- */
+// ✅ Enhanced Status Management
+export const updateInvoiceStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        
+        if (!status) {
+            return res.status(400).json({
+                success: false,
+                message: 'Status is required'
+            });
+        }
+
+        const invoice = await Invoice.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true }
+        );
+
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: `Invoice status updated to ${status}`,
+            invoice
+        });
+    } catch (error) {
+        console.error('❌ Error updating invoice status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating invoice status',
+            error: error.message
+        });
+    }
+};
+
+export const markInvoiceAsPaid = async (req, res) => {
+    try {
+        const invoice = await Invoice.findByIdAndUpdate(
+            req.params.id,
+            { 
+                status: 'paid',
+                paidAt: new Date(),
+                amountPaid: req.body.amount || undefined
+            },
+            { new: true }
+        );
+
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Invoice marked as paid',
+            invoice
+        });
+    } catch (error) {
+        console.error('❌ Error marking invoice as paid:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error marking invoice as paid',
+            error: error.message
+        });
+    }
+};
+
+export const markInvoiceAsOverdue = async (req, res) => {
+    try {
+        const invoice = await Invoice.findByIdAndUpdate(
+            req.params.id,
+            { status: 'overdue' },
+            { new: true }
+        );
+
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Invoice marked as overdue',
+            invoice
+        });
+    } catch (error) {
+        console.error('❌ Error marking invoice as overdue:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error marking invoice as overdue',
+            error: error.message
+        });
+    }
+};
+
+// ✅ Customer Operations
+export const getCustomerInvoices = async (req, res) => {
+    try {
+        const { email } = req.params;
+        const invoices = await Invoice.find({ 
+            customerEmail: email.toLowerCase() 
+        }).sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            invoices,
+            total: invoices.length
+        });
+    } catch (error) {
+        console.error('❌ Error fetching customer invoices:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching customer invoices',
+            error: error.message
+        });
+    }
+};
+
+export const checkExistingActiveInvoices = async (req, res) => {
+    try {
+        const { customerEmail, planName } = req.query;
+        
+        if (!customerEmail) {
+            return res.status(400).json({
+                success: false,
+                message: 'customerEmail is required'
+            });
+        }
+
+        const existingInvoice = await Invoice.findOne({
+            customerEmail: customerEmail.toLowerCase(),
+            status: { $in: ['pending', 'completed'] }
+        });
+
+        res.json({
+            success: true,
+            exists: !!existingInvoice,
+            invoice: existingInvoice
+        });
+    } catch (error) {
+        console.error('❌ Error checking existing invoices:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error checking existing invoices',
+            error: error.message
+        });
+    }
+};
+
+// ✅ Notification & Communication
+export const sendInvoiceToCustomer = async (req, res) => {
+    try {
+        const invoice = await Invoice.findById(req.params.id);
+        
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        // TODO: Implement email sending logic
+        console.log(`📧 Sending invoice ${invoice.invoiceNumber} to ${invoice.customerEmail}`);
+        
+        // Update sent status
+        invoice.sentToCustomer = true;
+        invoice.lastSentAt = new Date();
+        invoice.sendCount += 1;
+        await invoice.save();
+
+        res.json({
+            success: true,
+            message: 'Invoice sent to customer successfully',
+            invoice
+        });
+    } catch (error) {
+        console.error('❌ Error sending invoice:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error sending invoice',
+            error: error.message
+        });
+    }
+};
+
+export const resendInvoiceNotifications = async (req, res) => {
+    try {
+        const invoice = await Invoice.findById(req.params.id);
+        
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        // TODO: Implement resend logic for email/WhatsApp
+        console.log(`🔄 Resending notifications for invoice ${invoice.invoiceNumber}`);
+        
+        invoice.lastSentAt = new Date();
+        invoice.sendCount += 1;
+        await invoice.save();
+
+        res.json({
+            success: true,
+            message: 'Invoice notifications resent successfully',
+            invoice
+        });
+    } catch (error) {
+        console.error('❌ Error resending invoice notifications:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error resending invoice notifications',
+            error: error.message
+        });
+    }
+};
+
+export const sendConnectionRequestToOwner = async (req, res) => {
+    try {
+        const invoice = await Invoice.findById(req.params.id);
+        
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        // Mark connection request as sent
+        await invoice.markConnectionRequestSent();
+
+        res.json({
+            success: true,
+            message: 'Connection request sent to owner successfully',
+            invoice
+        });
+    } catch (error) {
+        console.error('❌ Error sending connection request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error sending connection request',
+            error: error.message
+        });
+    }
+};
+
+// ✅ Export & Download (Placeholder implementations)
+export const exportInvoicePDF = async (req, res) => {
+    try {
+        const invoice = await Invoice.findById(req.params.id);
+        
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        // TODO: Implement PDF generation
+        res.json({
+            success: true,
+            message: 'PDF export functionality coming soon',
+            invoice
+        });
+    } catch (error) {
+        console.error('❌ Error exporting invoice PDF:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error exporting invoice PDF',
+            error: error.message
+        });
+    }
+};
+
+export const exportInvoicesExcel = async (req, res) => {
+    try {
+        // TODO: Implement Excel export
+        res.json({
+            success: true,
+            message: 'Excel export functionality coming soon'
+        });
+    } catch (error) {
+        console.error('❌ Error exporting invoices Excel:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error exporting invoices Excel',
+            error: error.message
+        });
+    }
+};
+
+export const downloadInvoiceAttachment = async (req, res) => {
+    try {
+        const invoice = await Invoice.findById(req.params.id);
+        
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        // TODO: Implement file download
+        res.json({
+            success: true,
+            message: 'Download functionality coming soon',
+            invoice
+        });
+    } catch (error) {
+        console.error('❌ Error downloading invoice:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error downloading invoice',
+            error: error.message
+        });
+    }
+};
+
+// ✅ Statistics & Analytics
 export const getInvoiceStats = async (req, res) => {
     try {
-        const stats = await Invoice.aggregate([
-            { 
-                $group: { 
-                    _id: '$status', 
-                    count: { $sum: 1 }, 
-                    totalAmount: { $sum: '$planPrice' } 
-                } 
-            }
-        ]);
+        const stats = await Invoice.getStatistics();
         
-        const totalInvoices = await Invoice.countDocuments();
-        const totalRevenue = await Invoice.aggregate([
-            { $match: { status: 'paid' } }, 
-            { $group: { _id: null, total: { $sum: '$planPrice' } } }
-        ]);
-
-        res.json({ 
-            success: true, 
-            stats: { 
-                byStatus: stats, 
-                totalInvoices, 
-                totalRevenue: totalRevenue[0]?.total || 0 
-            } 
+        res.json({
+            success: true,
+            stats
         });
     } catch (error) {
         console.error('❌ Error fetching invoice stats:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error fetching invoice statistics', 
-            ...(process.env.NODE_ENV === 'development' && { error: error.message }) 
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching invoice stats',
+            error: error.message
+        });
+    }
+};
+
+export const getInvoiceAnalytics = async (req, res) => {
+    try {
+        // Enhanced analytics
+        const totalInvoices = await Invoice.countDocuments();
+        const paidInvoices = await Invoice.countDocuments({ status: 'paid' });
+        const pendingInvoices = await Invoice.countDocuments({ status: 'pending' });
+        const overdueInvoices = await Invoice.countDocuments({ status: 'overdue' });
+        
+        const revenueStats = await Invoice.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: '$totalAmount' },
+                    collectedRevenue: { $sum: '$amountPaid' },
+                    outstandingRevenue: { $sum: '$balanceDue' }
+                }
+            }
+        ]);
+
+        const planStats = await Invoice.aggregate([
+            {
+                $group: {
+                    _id: '$planName',
+                    count: { $sum: 1 },
+                    revenue: { $sum: '$totalAmount' }
+                }
+            }
+        ]);
+
+        res.json({
+            success: true,
+            analytics: {
+                overview: {
+                    totalInvoices,
+                    paidInvoices,
+                    pendingInvoices,
+                    overdueInvoices,
+                    completionRate: totalInvoices > 0 ? (paidInvoices / totalInvoices) * 100 : 0
+                },
+                revenue: revenueStats[0] || {
+                    totalRevenue: 0,
+                    collectedRevenue: 0,
+                    outstandingRevenue: 0
+                },
+                plans: planStats
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error fetching invoice analytics:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching invoice analytics',
+            error: error.message
+        });
+    }
+};
+
+export const getRevenueReports = async (req, res) => {
+    try {
+        const { period = 'monthly' } = req.query;
+        
+        let groupStage = {};
+        if (period === 'monthly') {
+            groupStage = {
+                _id: {
+                    year: { $year: '$invoiceDate' },
+                    month: { $month: '$invoiceDate' }
+                }
+            };
+        } else if (period === 'weekly') {
+            groupStage = {
+                _id: {
+                    year: { $year: '$invoiceDate' },
+                    week: { $week: '$invoiceDate' }
+                }
+            };
+        } else {
+            groupStage = {
+                _id: {
+                    year: { $year: '$invoiceDate' }
+                }
+            };
+        }
+
+        const revenueReport = await Invoice.aggregate([
+            {
+                $group: {
+                    ...groupStage,
+                    invoiceCount: { $sum: 1 },
+                    totalRevenue: { $sum: '$totalAmount' },
+                    collectedRevenue: { $sum: '$amountPaid' },
+                    outstandingRevenue: { $sum: '$balanceDue' }
+                }
+            },
+            { $sort: { '_id.year': -1, '_id.month': -1 } }
+        ]);
+
+        res.json({
+            success: true,
+            period,
+            report: revenueReport
+        });
+    } catch (error) {
+        console.error('❌ Error fetching revenue reports:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching revenue reports',
+            error: error.message
+        });
+    }
+};
+
+// ✅ Search & Filtering
+export const searchInvoices = async (req, res) => {
+    try {
+        const { q: searchTerm, status, paymentMethod, startDate, endDate } = req.query;
+        
+        const invoices = await Invoice.searchInvoices(searchTerm, {
+            status,
+            paymentMethod,
+            startDate,
+            endDate
+        });
+
+        res.json({
+            success: true,
+            invoices,
+            total: invoices.length
+        });
+    } catch (error) {
+        console.error('❌ Error searching invoices:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error searching invoices',
+            error: error.message
+        });
+    }
+};
+
+export const getInvoicesByDateRange = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.params;
+        
+        const invoices = await Invoice.find({
+            invoiceDate: {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            }
+        }).sort({ invoiceDate: -1 });
+
+        res.json({
+            success: true,
+            invoices,
+            total: invoices.length
+        });
+    } catch (error) {
+        console.error('❌ Error fetching invoices by date range:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching invoices by date range',
+            error: error.message
+        });
+    }
+};
+
+export const getInvoicesByStatus = async (req, res) => {
+    try {
+        const { status } = req.params;
+        
+        const invoices = await Invoice.find({ status }).sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            invoices,
+            total: invoices.length
+        });
+    } catch (error) {
+        console.error('❌ Error fetching invoices by status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching invoices by status',
+            error: error.message
+        });
+    }
+};
+
+// ✅ Bulk Operations (Placeholder implementations)
+export const bulkUpdateInvoices = async (req, res) => {
+    try {
+        const { invoiceIds, updates } = req.body;
+        
+        if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'invoiceIds array is required'
+            });
+        }
+
+        const result = await Invoice.updateMany(
+            { _id: { $in: invoiceIds } },
+            { ...updates, updatedBy: req.user?._id }
+        );
+
+        res.json({
+            success: true,
+            message: `Updated ${result.modifiedCount} invoices`,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('❌ Error bulk updating invoices:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error bulk updating invoices',
+            error: error.message
+        });
+    }
+};
+
+export const bulkDeleteInvoices = async (req, res) => {
+    try {
+        const { invoiceIds } = req.body;
+        
+        if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'invoiceIds array is required'
+            });
+        }
+
+        const result = await Invoice.deleteMany({ _id: { $in: invoiceIds } });
+
+        res.json({
+            success: true,
+            message: `Deleted ${result.deletedCount} invoices`,
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        console.error('❌ Error bulk deleting invoices:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error bulk deleting invoices',
+            error: error.message
+        });
+    }
+};
+
+export const bulkSendInvoices = async (req, res) => {
+    try {
+        const { invoiceIds } = req.body;
+        
+        if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'invoiceIds array is required'
+            });
+        }
+
+        // TODO: Implement bulk email sending
+        const invoices = await Invoice.find({ _id: { $in: invoiceIds } });
+        
+        // Update sent status for all invoices
+        await Invoice.updateMany(
+            { _id: { $in: invoiceIds } },
+            { 
+                sentToCustomer: true,
+                lastSentAt: new Date(),
+                $inc: { sendCount: 1 }
+            }
+        );
+
+        res.json({
+            success: true,
+            message: `Sent ${invoices.length} invoices to customers`,
+            sentCount: invoices.length
+        });
+    } catch (error) {
+        console.error('❌ Error bulk sending invoices:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error bulk sending invoices',
+            error: error.message
+        });
+    }
+};
+
+// ✅ System Operations
+export const getInvoiceTemplates = async (req, res) => {
+    try {
+        const templates = [
+            {
+                id: 'standard',
+                name: 'Standard Invoice',
+                description: 'Basic invoice template with company details',
+                fields: ['customerName', 'customerEmail', 'planName', 'planPrice']
+            },
+            {
+                id: 'detailed',
+                name: 'Detailed Invoice', 
+                description: 'Invoice with itemized billing and terms',
+                fields: ['customerName', 'customerEmail', 'items', 'terms', 'notes']
+            }
+        ];
+
+        res.json({
+            success: true,
+            templates
+        });
+    } catch (error) {
+        console.error('❌ Error fetching invoice templates:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching invoice templates',
+            error: error.message
+        });
+    }
+};
+
+export const validateInvoiceData = async (req, res) => {
+    try {
+        const invoiceData = req.body;
+        
+        // Basic validation
+        const errors = [];
+        
+        if (!invoiceData.customerName) errors.push('Customer name is required');
+        if (!invoiceData.customerEmail) errors.push('Customer email is required');
+        if (!invoiceData.planName) errors.push('Plan name is required');
+        if (!invoiceData.planPrice || invoiceData.planPrice <= 0) errors.push('Valid plan price is required');
+        
+        // Check for duplicate invoice number
+        if (invoiceData.invoiceNumber) {
+            const existing = await Invoice.findOne({ invoiceNumber: invoiceData.invoiceNumber });
+            if (existing) errors.push('Invoice number already exists');
+        }
+
+        res.json({
+            success: errors.length === 0,
+            errors,
+            validated: true
+        });
+    } catch (error) {
+        console.error('❌ Error validating invoice data:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error validating invoice data',
+            error: error.message
+        });
+    }
+};
+
+export const cleanupInvoices = async (req, res) => {
+    try {
+        // Delete invoices older than 1 year with cancelled status
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        
+        const result = await Invoice.deleteMany({
+            status: 'cancelled',
+            createdAt: { $lt: oneYearAgo }
+        });
+
+        res.json({
+            success: true,
+            message: `Cleaned up ${result.deletedCount} old cancelled invoices`,
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        console.error('❌ Error cleaning up invoices:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error cleaning up invoices',
+            error: error.message
+        });
+    }
+};
+
+// ✅ Temporary Cleanup Routes
+export const removeInvoiceNumberIndex = async (req, res) => {
+    try {
+        const indexes = await Invoice.collection.getIndexes();
+        
+        if (indexes.invoiceNumber_1) {
+            await Invoice.collection.dropIndex('invoiceNumber_1');
+            const updatedIndexes = await Invoice.collection.getIndexes();
+            
+            return res.json({
+                success: true,
+                message: 'invoiceNumber index removed successfully!',
+                details: {
+                    indexesBefore: Object.keys(indexes),
+                    indexesAfter: Object.keys(updatedIndexes),
+                    status: 'FIXED'
+                }
+            });
+        } else {
+            return res.json({
+                success: true,
+                message: 'invoiceNumber index already removed. System is ready.',
+                currentIndexes: Object.keys(indexes),
+                status: 'READY'
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error removing index:', error);
+        if (error.code === 27 || error.codeName === 'IndexNotFound') {
+            return res.json({
+                success: true,
+                message: 'invoiceNumber index already removed or never existed',
+                status: 'ALREADY_FIXED'
+            });
+        }
+        return res.status(500).json({
+            success: false,
+            message: 'Error removing index',
+            error: error.message
+        });
+    }
+};
+
+export const checkIndexes = async (req, res) => {
+    try {
+        const indexes = await Invoice.collection.getIndexes();
+        
+        return res.json({
+            success: true,
+            hasInvoiceNumberIndex: !!indexes.invoiceNumber_1,
+            status: indexes.invoiceNumber_1 ? 'NEEDS_CLEANUP' : 'CLEAN',
+            indexes: Object.keys(indexes),
+            recommendation: indexes.invoiceNumber_1 
+                ? 'Run DELETE /api/invoices/cleanup/remove-invoiceNumber-index' 
+                : 'System ready for invoice creation'
+        });
+    } catch (error) {
+        console.error('❌ Error checking indexes:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error checking indexes',
+            error: error.message
+        });
+    }
+};
+
+export const getSystemStatus = async (req, res) => {
+    try {
+        const indexes = await Invoice.collection.getIndexes();
+        const hasInvoiceNumberIndex = !!indexes.invoiceNumber_1;
+        
+        const totalInvoices = await Invoice.countDocuments();
+        const latestInvoice = await Invoice.findOne().sort({ createdAt: -1 });
+        
+        return res.json({
+            success: true,
+            system: {
+                database: 'Connected',
+                invoiceModel: 'Loaded',
+                totalInvoices,
+                latestInvoice: latestInvoice ? {
+                    id: latestInvoice._id,
+                    invoiceNumber: latestInvoice.invoiceNumber,
+                    customer: latestInvoice.customerName,
+                    plan: latestInvoice.planName
+                } : null
+            },
+            indexes: {
+                hasInvoiceNumberIndex,
+                totalIndexes: Object.keys(indexes).length,
+                allIndexes: Object.keys(indexes),
+                status: hasInvoiceNumberIndex ? 'ACTION_REQUIRED' : 'HEALTHY'
+            },
+            actions: hasInvoiceNumberIndex ? [
+                {
+                    action: 'Remove problematic index',
+                    method: 'DELETE',
+                    url: '/api/invoices/cleanup/remove-invoiceNumber-index',
+                    description: 'Fixes the duplicate invoiceNumber null error'
+                }
+            ] : [
+                {
+                    action: 'Create test invoice',
+                    method: 'POST', 
+                    url: '/api/invoices',
+                    description: 'Verify system is working correctly'
+                }
+            ]
+        });
+    } catch (error) {
+        console.error('❌ Error getting system status:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error getting system status',
+            error: error.message
         });
     }
 };

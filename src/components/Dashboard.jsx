@@ -41,7 +41,12 @@ import {
   CreditCard,
   Receipt,
   FileSpreadsheet,
-  Printer
+  Printer,
+  Wifi,
+  Smartphone,
+  Star,
+  Phone,
+  MapPin
 } from 'lucide-react';
 import ReceiptManager from './ReceiptManager';
 import InvoiceManager from './InvoiceManager';
@@ -82,7 +87,9 @@ const Dashboard = () => {
     totalInvoices: 0,
     totalReceipts: 0,
     pendingInvoices: 0,
-    paidInvoices: 0
+    paidInvoices: 0,
+    totalRevenue: 0,
+    monthlyRevenue: 0
   });
   const [editingItem, setEditingItem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -184,7 +191,22 @@ const Dashboard = () => {
         const invoicesRes = await fetch(`${API_BASE_URL}/api/invoices`, { headers });
         if (invoicesRes.ok) {
           const invoicesResponse = await invoicesRes.json();
-          setInvoices(invoicesResponse.invoices || invoicesResponse.data || []);
+          const invoicesData = invoicesResponse.invoices || invoicesResponse.data || [];
+          setInvoices(invoicesData);
+          
+          // Calculate stats from invoices
+          const totalRevenue = invoicesData.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0);
+          const paidInvoices = invoicesData.filter(inv => inv.status === 'paid');
+          const monthlyRevenue = paidInvoices.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0);
+          
+          setStats({
+            totalInvoices: invoicesData.length,
+            totalReceipts: receipts.length,
+            pendingInvoices: invoicesData.filter(inv => inv.status === 'pending').length,
+            paidInvoices: paidInvoices.length,
+            totalRevenue,
+            monthlyRevenue
+          });
         }
 
         // Fetch receipts
@@ -192,18 +214,6 @@ const Dashboard = () => {
         if (receiptsRes.ok) {
           const receiptsResponse = await receiptsRes.json();
           setReceipts(receiptsResponse.receipts || receiptsResponse.data || []);
-        }
-
-        // Fetch stats
-        const statsRes = await fetch(`${API_BASE_URL}/api/invoices/stats/summary`, { headers });
-        if (statsRes.ok) {
-          const statsResponse = await statsRes.json();
-          setStats(statsResponse.stats || {
-            totalInvoices: invoices.length,
-            totalReceipts: receipts.length,
-            pendingInvoices: invoices.filter(inv => inv.status === 'pending').length,
-            paidInvoices: invoices.filter(inv => inv.status === 'paid').length
-          });
         }
 
         // Fetch settings
@@ -874,6 +884,66 @@ const DashboardOverview = ({
     }
   };
 
+  // WiFi Plans data matching the WifiPlans.jsx format
+  const wifiPlans = [
+    { 
+      id: 1, 
+      name: "Jumbo", 
+      price: "1499", 
+      speed: "8Mbps", 
+      features: ["Great for browsing", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
+    { 
+      id: 2, 
+      name: "Buffalo", 
+      price: "1999", 
+      speed: "15Mbps", 
+      features: ["Streaming & Social Media", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
+    { 
+      id: 3, 
+      name: "Ndovu", 
+      price: "2499", 
+      speed: "25Mbps", 
+      features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
+    { 
+      id: 4, 
+      name: "Gazzelle", 
+      price: "2999", 
+      speed: "30Mbps", 
+      features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: true 
+    },
+    { 
+      id: 5, 
+      name: "Tiger", 
+      price: "3999", 
+      speed: "40Mbps", 
+      features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
+    { 
+      id: 6, 
+      name: "Chui", 
+      price: "4999", 
+      speed: "60Mbps", 
+      features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
+  ];
+
+  const colors = ["blue", "red", "goldenYellow", "goldenGreen", "purple", "pink"];
+
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -912,7 +982,17 @@ const DashboardOverview = ({
           </button>
         </div>
       </div>
+
+      {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard 
+          title="Total Revenue" 
+          value={`Ksh ${(stats.totalRevenue || 0).toLocaleString()}`} 
+          change={`Ksh ${(stats.monthlyRevenue || 0).toLocaleString()} this month`} 
+          icon={<DollarSign size={20} />}
+          color="green"
+          darkMode={darkMode}
+        />
         <StatCard 
           title="Blog Posts" 
           value={blogPosts.length} 
@@ -922,19 +1002,11 @@ const DashboardOverview = ({
           darkMode={darkMode}
         />
         <StatCard 
-          title="Portfolio Items" 
-          value={portfolioItems.length} 
-          change={`${portfolioItems.length} published`} 
-          icon={<Image size={20} />}
-          color="gold"
-          darkMode={darkMode}
-        />
-        <StatCard 
           title="Total Invoices" 
           value={stats.totalInvoices || invoices.length} 
           change={`${stats.pendingInvoices || invoices.filter(inv => inv.status === 'pending').length} pending`} 
           icon={<CreditCard size={20} />}
-          color="green"
+          color="gold"
           darkMode={darkMode}
         />
         <StatCard 
@@ -946,6 +1018,41 @@ const DashboardOverview = ({
           darkMode={darkMode}
         />
       </div>
+
+      {/* WiFi Plans Section */}
+      <div className="mb-8">
+        <div className={`${themeClasses.card} p-6 rounded-xl shadow-lg border backdrop-blur-sm`}>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className={`text-xl font-bold ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
+              Optimas Fiber Packages
+            </h3>
+            <button 
+              onClick={() => setActiveTab('invoices')}
+              className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center`}
+            >
+              <Plus size={14} className="mr-1.5" />
+              Create Invoice
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {wifiPlans.map((plan, index) => (
+              <WifiPlanCard 
+                key={plan.id}
+                plan={plan}
+                color={colors[index]}
+                darkMode={darkMode}
+                onSelect={() => {
+                  setActiveTab('invoices');
+                  // You can pass the selected plan data to invoice creation
+                  showNotification(`Selected ${plan.name} plan for invoice creation`, 'info');
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RecentList 
           title="Recent Blog Posts" 
@@ -967,6 +1074,95 @@ const DashboardOverview = ({
           onDelete={onDelete}
           type="invoices"
         />
+      </div>
+    </div>
+  );
+};
+
+// WiFi Plan Card Component (Matching WifiPlans.jsx design)
+const WifiPlanCard = ({ plan, color, darkMode, onSelect }) => {
+  const colorMap = {
+    blue: {
+      bg: darkMode ? "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)" : "linear-gradient(135deg, #182b5c 0%, #0f1f45 100%)",
+      button: darkMode ? BUTTON_STYLES.small.dark : BUTTON_STYLES.small.light,
+    },
+    red: {
+      bg: darkMode ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)" : "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+      button: "bg-red-600 hover:bg-red-700 text-white",
+    },
+    goldenYellow: {
+      bg: darkMode ? "linear-gradient(135deg, #92400e 0%, #d97706 100%)" : "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+      button: "bg-yellow-600 hover:bg-yellow-700 text-white",
+    },
+    goldenGreen: {
+      bg: darkMode ? "linear-gradient(135deg, #047857 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)",
+      button: "bg-green-600 hover:bg-green-700 text-white",
+    },
+    purple: {
+      bg: darkMode ? "linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)" : "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+      button: "bg-purple-600 hover:bg-purple-700 text-white",
+    },
+    pink: {
+      bg: darkMode ? "linear-gradient(135deg, #be185d 0%, #db2777 100%)" : "linear-gradient(135deg, #db2777 0%, #be185d 100%)",
+      button: "bg-pink-600 hover:bg-pink-700 text-white",
+    }
+  };
+  
+  const currentColor = colorMap[color];
+
+  return (
+    <div 
+      className={`rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative h-full flex flex-col group ${
+        darkMode ? 'border border-gray-700' : 'border border-gray-200'
+      }`}
+      style={{ background: currentColor.bg }}
+    >
+      {plan.popular && (
+        <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md">
+          <Star size={12} className="mr-1 fill-current" />
+          Popular
+        </div>
+      )}
+      
+      {/* Card Content */}
+      <div className="flex-grow flex flex-col p-5">
+        <div className="mb-4">
+          <h3 className="text-lg font-bold text-white mb-2">{plan.name}</h3>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <Wifi size={14} className="mr-1 text-white" />
+              <span className="text-sm text-white opacity-90">{plan.speed}</span>
+            </div>
+            <span className="text-sm bg-white/20 px-2 py-1 rounded-full text-white">
+              {plan.name}
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex-grow">
+          <ul className="mb-4 space-y-2">
+            {plan.features.map((feature, idx) => (
+              <li key={idx} className="flex items-center">
+                <CheckCircle className="w-4 h-4 text-white mr-2 flex-shrink-0" />
+                <span className="text-white text-sm">{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        {/* Bottom Section */}
+        <div className="pt-4">
+          <div className="text-center mb-3">
+            <span className="text-xl font-bold text-white">Ksh {plan.price}</span>
+            <span className="text-white opacity-80 text-sm"> /month</span>
+          </div>
+          <button
+            onClick={onSelect}
+            className={`${BUTTON_STYLES.small.base} ${currentColor.button} w-full`}
+          >
+            CREATE INVOICE
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1072,7 +1268,7 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
   </div>
 );
 
-// Content Manager Component
+// Content Manager Component (Remaining components stay the same as your original)
 const ContentManager = ({
   title,
   items,
@@ -1174,7 +1370,7 @@ const ContentManager = ({
               >
                 <input 
                   type="file" 
-                  id="file-upload" 
+                  id='file-upload' 
                   className="hidden" 
                   accept="image/*"
                   onChange={(e) => onImageChange(e.target.files[0])}
@@ -1265,7 +1461,7 @@ const ContentManager = ({
                         src={item.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YwZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiNhYmJjZDAiPk88L3RleHQ+PC9zdmc+'}
                         alt={item.title}
                         onError={(e) => {
-                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwLy93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2FiYmNkMCI+TzwvdGV4dD48L3N2Zz4=';
+                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YwZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiNhYmJjZDAiPk88L3RleHQ+PC9zdmc+';
                           e.target.onerror = null;
                         }}
                       />
