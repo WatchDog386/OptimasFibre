@@ -23,7 +23,8 @@ import BlogList from "./routes/BlogList"; // 👈 Added Blog List
 
 // Admin Components
 import Login from "./components/Login";
-import Dashboard from "./components/Dashboard"; // This should be a default export
+import Dashboard from "./components/Dashboard"; // Default export
+import ReceiptManager from "./components/ReceiptManager"; // 👈 Added ReceiptManager
 import PrivateRoute from "./components/PrivateRoute";
 
 // Track page views with GA
@@ -53,21 +54,25 @@ function AppRoutes() {
         <Route path="faqs" element={<Faqs />} />
         <Route path="contact" element={<Contact />} />
         <Route path="wifi-plans" element={<WifiPlans />} />
-        <Route path="blog" element={<BlogList />} /> {/* 👈 Added Blog List Route */}
+        <Route path="blog" element={<BlogList />} />
         <Route path="articles/:slug" element={<ArticleDetail />} />
         <Route path="coverage" element={<CoverageMap />} />
       </Route>
 
       {/* Admin Routes */}
       <Route path="/admin/login" element={<Login />} />
+
       <Route
         path="/admin/*"
         element={
           <PrivateRoute>
-            <Dashboard />
+            <Dashboard /> {/* Must include <Outlet /> inside Dashboard.jsx */}
           </PrivateRoute>
         }
-      />
+      >
+        {/* Nested admin routes */}
+        <Route path="receipts" element={<ReceiptManager />} /> {/* 👈 Receipt Manager */}
+      </Route>
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
