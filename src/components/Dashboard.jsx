@@ -37,9 +37,11 @@ import {
   MessageCircle,
   DollarSign,
   Calendar,
-  Filter
+  Filter,
+  CreditCard
 } from 'lucide-react';
-import ReceiptManager from './ReceiptManager'; // ✅ Already imported
+import ReceiptManager from './ReceiptManager';
+import InvoiceManager from './InvoiceManager';
 
 // ✅ COMPACT BUTTON STYLES — NO ICONS, NATURAL WIDTH
 const BUTTON_STYLES = {
@@ -516,14 +518,13 @@ const Dashboard = () => {
             contentType="portfolio"
           />
         );
-      case 'settings':
+      case 'invoices':
         return (
-          <SettingsPanel 
-            settingsData={settingsData} 
-            handleSettingsChange={handleSettingsChange} 
-            saveSettings={saveSettings}
-            darkMode={darkMode}
+          <InvoiceManager 
+            darkMode={darkMode} 
             themeClasses={themeClasses}
+            API_BASE_URL={API_BASE_URL}
+            showNotification={showNotification}
           />
         );
       case 'receipts':
@@ -533,6 +534,16 @@ const Dashboard = () => {
             themeClasses={themeClasses}
             API_BASE_URL={API_BASE_URL}
             showNotification={showNotification}
+          />
+        );
+      case 'settings':
+        return (
+          <SettingsPanel 
+            settingsData={settingsData} 
+            handleSettingsChange={handleSettingsChange} 
+            saveSettings={saveSettings}
+            darkMode={darkMode}
+            themeClasses={themeClasses}
           />
         );
       default:
@@ -619,6 +630,13 @@ const Dashboard = () => {
             darkMode={darkMode}
           />
           <NavItem 
+            icon={<CreditCard size={18} />} 
+            text="Invoices" 
+            active={activeTab === 'invoices'} 
+            onClick={() => { setActiveTab('invoices'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
             icon={<FileText size={18} />} 
             text="Receipts" 
             active={activeTab === 'receipts'} 
@@ -656,6 +674,17 @@ const Dashboard = () => {
               <Plus size={16} className="text-[#003366]" />
             </div>
             New Portfolio Item
+          </button>
+          <button 
+            onClick={() => { setActiveTab('invoices'); setSidebarOpen(false); }}
+            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
+              darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
+            }`}
+          >
+            <div className={`p-1.5 rounded-md mr-2 bg-green-500/20`}>
+              <Plus size={16} className="text-green-600" />
+            </div>
+            New Invoice
           </button>
         </div>
         <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
@@ -764,6 +793,13 @@ const DashboardOverview = ({
         >
           <Plus size={16} className="mr-1.5" />
           <span>New Portfolio</span>
+        </button>
+        <button 
+          onClick={() => { setActiveTab('invoices'); }}
+          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
+        >
+          <Plus size={16} className="mr-1.5" />
+          <span>Manage Invoices</span>
         </button>
       </div>
     </div>
