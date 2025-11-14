@@ -38,7 +38,10 @@ import {
   DollarSign,
   Calendar,
   Filter,
-  CreditCard
+  CreditCard,
+  Receipt,
+  FileSpreadsheet,
+  Printer
 } from 'lucide-react';
 import ReceiptManager from './ReceiptManager';
 import InvoiceManager from './InvoiceManager';
@@ -73,6 +76,14 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [blogPosts, setBlogPosts] = useState([]);
   const [portfolioItems, setPortfolioItems] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [receipts, setReceipts] = useState([]);
+  const [stats, setStats] = useState({
+    totalInvoices: 0,
+    totalReceipts: 0,
+    pendingInvoices: 0,
+    paidInvoices: 0
+  });
   const [editingItem, setEditingItem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -148,6 +159,7 @@ const Dashboard = () => {
           'Authorization': `Bearer ${token}`
         };
 
+        // Fetch blog posts
         const blogRes = await fetch(`${API_BASE_URL}/api/blog`, { headers });
         if (!blogRes.ok) {
           throw new Error(`Failed to fetch blog posts: ${blogRes.status} ${blogRes.statusText}`);
@@ -155,6 +167,7 @@ const Dashboard = () => {
         const blogResponse = await blogRes.json();
         setBlogPosts(blogResponse.data || []);
 
+        // Fetch portfolio items
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
           console.warn('Portfolio endpoint not available, initializing empty portfolio');
@@ -167,6 +180,33 @@ const Dashboard = () => {
           setPortfolioItems(portfolioData);
         }
 
+        // Fetch invoices
+        const invoicesRes = await fetch(`${API_BASE_URL}/api/invoices`, { headers });
+        if (invoicesRes.ok) {
+          const invoicesResponse = await invoicesRes.json();
+          setInvoices(invoicesResponse.invoices || invoicesResponse.data || []);
+        }
+
+        // Fetch receipts
+        const receiptsRes = await fetch(`${API_BASE_URL}/api/receipts`, { headers });
+        if (receiptsRes.ok) {
+          const receiptsResponse = await receiptsRes.json();
+          setReceipts(receiptsResponse.receipts || receiptsResponse.data || []);
+        }
+
+        // Fetch stats
+        const statsRes = await fetch(`${API_BASE_URL}/api/invoices/stats/summary`, { headers });
+        if (statsRes.ok) {
+          const statsResponse = await statsRes.json();
+          setStats(statsResponse.stats || {
+            totalInvoices: invoices.length,
+            totalReceipts: receipts.length,
+            pendingInvoices: invoices.filter(inv => inv.status === 'pending').length,
+            paidInvoices: invoices.filter(inv => inv.status === 'paid').length
+          });
+        }
+
+        // Fetch settings
         const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
         if (settingsRes.ok) {
           const settings = await settingsRes.json();
@@ -466,12 +506,17 @@ const Dashboard = () => {
           <DashboardOverview 
             blogPosts={blogPosts} 
             portfolioItems={portfolioItems} 
+            invoices={invoices}
+            receipts={receipts}
+            stats={stats}
             darkMode={darkMode} 
             themeClasses={themeClasses}
             onEdit={handleEdit}
             onDelete={handleDelete}
             setIsEditing={setIsEditing}
             setActiveTab={setActiveTab}
+            API_BASE_URL={API_BASE_URL}
+            showNotification={showNotification}
           />
         );
       case 'blog':
@@ -525,6 +570,8 @@ const Dashboard = () => {
             themeClasses={themeClasses}
             API_BASE_URL={API_BASE_URL}
             showNotification={showNotification}
+            invoices={invoices}
+            setInvoices={setInvoices}
           />
         );
       case 'receipts':
@@ -534,6 +581,9 @@ const Dashboard = () => {
             themeClasses={themeClasses}
             API_BASE_URL={API_BASE_URL}
             showNotification={showNotification}
+            receipts={receipts}
+            setReceipts={setReceipts}
+            invoices={invoices}
           />
         );
       case 'settings':
@@ -551,12 +601,17 @@ const Dashboard = () => {
           <DashboardOverview 
             blogPosts={blogPosts} 
             portfolioItems={portfolioItems} 
+            invoices={invoices}
+            receipts={receipts}
+            stats={stats}
             darkMode={darkMode} 
             themeClasses={themeClasses}
             onEdit={handleEdit}
             onDelete={handleDelete}
             setIsEditing={setIsEditing}
             setActiveTab={setActiveTab}
+            API_BASE_URL={API_BASE_URL}
+            showNotification={showNotification}
           />
         );
     }
@@ -637,7 +692,7 @@ const Dashboard = () => {
             darkMode={darkMode}
           />
           <NavItem 
-            icon={<FileText size={18} />} 
+            icon={<Receipt size={18} />} 
             text="Receipts" 
             active={activeTab === 'receipts'} 
             onClick={() => { setActiveTab('receipts'); setSidebarOpen(false); }} 
@@ -685,6 +740,17 @@ const Dashboard = () => {
               <Plus size={16} className="text-green-600" />
             </div>
             New Invoice
+          </button>
+          <button 
+            onClick={() => { setActiveTab('receipts'); setSidebarOpen(false); }}
+            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
+              darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
+            }`}
+          >
+            <div className={`p-1.5 rounded-md mr-2 bg-blue-500/20`}>
+              <Plus size={16} className="text-blue-600" />
+            </div>
+            New Receipt
           </button>
         </div>
         <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
@@ -766,114 +832,158 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
 const DashboardOverview = ({ 
   blogPosts, 
   portfolioItems, 
+  invoices,
+  receipts,
+  stats,
   darkMode, 
   themeClasses,
   onEdit,
   onDelete,
   setIsEditing,
-  setActiveTab
-}) => (
-  <div>
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Dashboard Overview</h2>
-        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Welcome back! Here's what's happening with your content.</p>
+  setActiveTab,
+  API_BASE_URL,
+  showNotification
+}) => {
+
+  const exportInvoicesToExcel = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/invoices/export/excel`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `invoices-${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showNotification('Invoices exported to Excel successfully!', 'success');
+      } else {
+        throw new Error('Failed to export invoices');
+      }
+    } catch (error) {
+      console.error('Error exporting invoices:', error);
+      showNotification('Error exporting invoices to Excel', 'error');
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Dashboard Overview</h2>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Welcome back! Here's what's happening with your content.</p>
+        </div>
+        <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
+          <button 
+            onClick={() => { setIsEditing(true); setActiveTab('blog'); }}
+            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
+          >
+            <Plus size={16} className="mr-1.5" />
+            <span>New Blog Post</span>
+          </button>
+          <button 
+            onClick={() => { setIsEditing(true); setActiveTab('portfolio'); }}
+            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}
+          >
+            <Plus size={16} className="mr-1.5" />
+            <span>New Portfolio</span>
+          </button>
+          <button 
+            onClick={() => { setActiveTab('invoices'); }}
+            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
+          >
+            <Plus size={16} className="mr-1.5" />
+            <span>Manage Invoices</span>
+          </button>
+          <button 
+            onClick={exportInvoicesToExcel}
+            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}
+          >
+            <FileSpreadsheet size={16} className="mr-1.5" />
+            <span>Export Invoices</span>
+          </button>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
-        <button 
-          onClick={() => { setIsEditing(true); setActiveTab('blog'); }}
-          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
-        >
-          <Plus size={16} className="mr-1.5" />
-          <span>New Blog Post</span>
-        </button>
-        <button 
-          onClick={() => { setIsEditing(true); setActiveTab('portfolio'); }}
-          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}
-        >
-          <Plus size={16} className="mr-1.5" />
-          <span>New Portfolio</span>
-        </button>
-        <button 
-          onClick={() => { setActiveTab('invoices'); }}
-          className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
-        >
-          <Plus size={16} className="mr-1.5" />
-          <span>Manage Invoices</span>
-        </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard 
+          title="Blog Posts" 
+          value={blogPosts.length} 
+          change={`${blogPosts.length} published`} 
+          icon={<FileText size={20} />}
+          color="blue"
+          darkMode={darkMode}
+        />
+        <StatCard 
+          title="Portfolio Items" 
+          value={portfolioItems.length} 
+          change={`${portfolioItems.length} published`} 
+          icon={<Image size={20} />}
+          color="gold"
+          darkMode={darkMode}
+        />
+        <StatCard 
+          title="Total Invoices" 
+          value={stats.totalInvoices || invoices.length} 
+          change={`${stats.pendingInvoices || invoices.filter(inv => inv.status === 'pending').length} pending`} 
+          icon={<CreditCard size={20} />}
+          color="green"
+          darkMode={darkMode}
+        />
+        <StatCard 
+          title="Total Receipts" 
+          value={stats.totalReceipts || receipts.length} 
+          change={`${stats.paidInvoices || invoices.filter(inv => inv.status === 'paid').length} paid`} 
+          icon={<Receipt size={20} />}
+          color="purple"
+          darkMode={darkMode}
+        />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentList 
+          title="Recent Blog Posts" 
+          items={blogPosts.slice(0, 5)}
+          viewAllLink="/admin/blog"
+          darkMode={darkMode}
+          themeClasses={themeClasses}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          type="blog"
+        />
+        <RecentList 
+          title="Recent Invoices" 
+          items={invoices.slice(0, 5)}
+          viewAllLink="/admin/invoices"
+          darkMode={darkMode}
+          themeClasses={themeClasses}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          type="invoices"
+        />
       </div>
     </div>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <StatCard 
-        title="Blog Posts" 
-        value={blogPosts.length} 
-        change={`${blogPosts.length} published`} 
-        icon={<FileText size={20} />}
-        color="blue"
-        darkMode={darkMode}
-      />
-      <StatCard 
-        title="Portfolio Items" 
-        value={portfolioItems.length} 
-        change={`${portfolioItems.length} published`} 
-        icon={<Image size={20} />}
-        color="gold"
-        darkMode={darkMode}
-      />
-      <StatCard 
-        title="Draft Content" 
-        value="0" 
-        change="0 drafts" 
-        icon={<Edit size={20} />}
-        color="yellow"
-        darkMode={darkMode}
-      />
-      <StatCard 
-        title="Total Views" 
-        value="0" 
-        change="No data yet" 
-        icon={<BarChart3 size={20} />}
-        color="purple"
-        darkMode={darkMode}
-      />
-    </div>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <RecentList 
-        title="Recent Blog Posts" 
-        items={blogPosts.slice(0, 5)}
-        viewAllLink="/admin/blog"
-        darkMode={darkMode}
-        themeClasses={themeClasses}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        type="blog"
-      />
-      <RecentList 
-        title="Recent Portfolio Items" 
-        items={portfolioItems.slice(0, 5)}
-        viewAllLink="/admin/portfolio"
-        darkMode={darkMode}
-        themeClasses={themeClasses}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        type="portfolio"
-      />
-    </div>
-  </div>
-);
+  );
+};
 
 // Stat Card Component
 const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   const colorClasses = {
     blue: darkMode ? 'bg-blue-900/20 border-blue-800/30' : 'bg-blue-50 border-blue-200',
     gold: darkMode ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200',
-    yellow: darkMode ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200',
+    green: darkMode ? 'bg-green-900/20 border-green-800/30' : 'bg-green-50 border-green-200',
     purple: darkMode ? 'bg-purple-900/20 border-purple-800/30' : 'bg-purple-50 border-purple-200'
   };
   const iconColor = {
     blue: 'text-blue-500',
     gold: 'text-[#FFCC00]',
-    yellow: 'text-yellow-500',
+    green: 'text-green-500',
     purple: 'text-purple-500'
   };
   const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
@@ -918,10 +1028,23 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
               />
             )}
             <div>
-              <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>{item.title}</h4>
+              <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                {type === 'invoices' ? (item.invoiceNumber || `INV-${item._id}`) : item.title}
+              </h4>
               <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
+                {type === 'invoices' ? item.customerName : new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
               </p>
+              {type === 'invoices' && (
+                <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${
+                  item.status === 'paid' 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                    : item.status === 'pending'
+                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                }`}>
+                  {item.status || 'pending'}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex space-x-2 flex-shrink-0">

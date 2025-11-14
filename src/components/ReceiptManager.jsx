@@ -1,4 +1,4 @@
-// InvoiceManager.jsx
+// ReceiptManager.jsx
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -14,37 +14,17 @@ import {
   RefreshCw,
   Search,
   Plus,
-  AlertCircle,
-  Edit,
-  Trash2,
-  User,
-  CreditCard
+  AlertCircle
 } from 'lucide-react';
 
-const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification }) => {
+const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification }) => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all', 'paid', 'unpaid'
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingInvoice, setEditingInvoice] = useState(null);
-
-  // Form state for creating/editing invoices
-  const [invoiceForm, setInvoiceForm] = useState({
-    customerName: '',
-    customerEmail: '',
-    customerPhone: '',
-    invoiceNumber: '',
-    invoiceDate: new Date().toISOString().split('T')[0],
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    items: [{ description: 'Monthly Internet Service', amount: 59.99 }],
-    subtotal: 59.99,
-    tax: 0,
-    total: 59.99,
-    status: 'unpaid'
-  });
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [sendingReceipt, setSendingReceipt] = useState(false);
 
   // Fetch invoices from backend
   const fetchInvoices = async () => {
@@ -77,16 +57,16 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       } else if (data && Array.isArray(data.invoices)) {
         invoicesData = data.invoices;
       } else if (data && typeof data === 'object') {
+        // If it's a single invoice object, wrap it in an array
         invoicesData = [data];
-      } else {
-        invoicesData = [];
       }
       
-      console.log('Fetched invoices:', invoicesData);
+      console.log('Fetched invoices:', invoicesData); // Debug log
       setInvoices(invoicesData);
     } catch (error) {
       console.error('Error fetching invoices:', error);
       showNotification(`Error loading invoices: ${error.message}`, 'error');
+      // ✅ FIX: Set empty array on error
       setInvoices([]);
     } finally {
       setLoading(false);
@@ -96,79 +76,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   useEffect(() => {
     fetchInvoices();
   }, []);
-
-  // Generate invoice number
-  const generateInvoiceNumber = () => {
-    const timestamp = new Date().getTime();
-    return `INV-${timestamp.toString().slice(-6)}`;
-  };
-
-  // Calculate totals
-  const calculateTotals = (items, tax = 0) => {
-    const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    const total = subtotal + (parseFloat(tax) || 0);
-    return { subtotal, total };
-  };
-
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setInvoiceForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Recalculate totals if items or tax changes
-    if (name === 'tax') {
-      const { subtotal } = calculateTotals(invoiceForm.items);
-      setInvoiceForm(prev => ({
-        ...prev,
-        subtotal,
-        total: subtotal + (parseFloat(value) || 0)
-      }));
-    }
-  };
-
-  // Handle item changes
-  const handleItemChange = (index, field, value) => {
-    const updatedItems = [...invoiceForm.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [field]: field === 'amount' ? parseFloat(value) || 0 : value
-    };
-    
-    const { subtotal, total } = calculateTotals(updatedItems, invoiceForm.tax);
-    
-    setInvoiceForm(prev => ({
-      ...prev,
-      items: updatedItems,
-      subtotal,
-      total
-    }));
-  };
-
-  // Add new item
-  const addItem = () => {
-    setInvoiceForm(prev => ({
-      ...prev,
-      items: [...prev.items, { description: '', amount: 0 }]
-    }));
-  };
-
-  // Remove item
-  const removeItem = (index) => {
-    if (invoiceForm.items.length > 1) {
-      const updatedItems = invoiceForm.items.filter((_, i) => i !== index);
-      const { subtotal, total } = calculateTotals(updatedItems, invoiceForm.tax);
-      
-      setInvoiceForm(prev => ({
-        ...prev,
-        items: updatedItems,
-        subtotal,
-        total
-      }));
-    }
-  };
 
   // Mark invoice as paid
   const markAsPaid = async (invoiceId) => {
@@ -202,153 +109,126 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }
   };
 
-  // Create new invoice
-  const createInvoice = async () => {
+  // Generate receipt
+  const generateReceipt = (invoice) => {
+    const receipt = {
+      receiptNumber: `RCP-${invoice.invoiceNumber?.replace('INV-', '') || '0001'}`,
+      invoiceNumber: invoice.invoiceNumber || 'INV-0001',
+      date: new Date().toLocaleDateString(),
+      customerName: invoice.customerName || 'Customer',
+      customerEmail: invoice.customerEmail || 'customer@example.com',
+      customerPhone: invoice.customerPhone || 'N/A',
+      items: invoice.items || [{ description: 'Internet Service', amount: invoice.total || 0 }],
+      subtotal: invoice.subtotal || invoice.total || 0,
+      tax: invoice.tax || 0,
+      total: invoice.total || 0,
+      amountPaid: invoice.total || 0,
+      paymentMethod: 'Cash/Card',
+      status: 'Paid'
+    };
+    return receipt;
+  };
+
+  // Send receipt via email
+  const sendReceiptEmail = async (invoice) => {
     try {
+      setSendingReceipt(true);
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
 
-      // Generate invoice number if not provided
-      const invoiceData = {
-        ...invoiceForm,
-        invoiceNumber: invoiceForm.invoiceNumber || generateInvoiceNumber()
-      };
-
-      const response = await fetch(`${API_BASE_URL}/api/invoices`, {
+      const receipt = generateReceipt(invoice);
+      
+      const response = await fetch(`${API_BASE_URL}/api/receipts/send-email`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(invoiceData)
+        body: JSON.stringify({
+          invoiceId: invoice._id,
+          customerEmail: invoice.customerEmail,
+          receiptData: receipt
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create invoice');
+        throw new Error('Failed to send email receipt');
       }
 
-      const newInvoice = await response.json();
-      setInvoices(prev => [...prev, newInvoice]);
-      setShowCreateModal(false);
-      resetForm();
-      showNotification('Invoice created successfully!', 'success');
+      showNotification('Receipt sent via email successfully!', 'success');
     } catch (error) {
-      console.error('Error creating invoice:', error);
+      console.error('Error sending email receipt:', error);
       showNotification(`Error: ${error.message}`, 'error');
+    } finally {
+      setSendingReceipt(false);
     }
   };
 
-  // Update invoice
-  const updateInvoice = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication session expired. Please log in again.');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/invoices/${editingInvoice._id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(invoiceForm)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update invoice');
-      }
-
-      const updatedInvoice = await response.json();
-      setInvoices(prev => prev.map(inv => 
-        inv._id === editingInvoice._id ? updatedInvoice : inv
-      ));
-      setShowCreateModal(false);
-      setEditingInvoice(null);
-      resetForm();
-      showNotification('Invoice updated successfully!', 'success');
-    } catch (error) {
-      console.error('Error updating invoice:', error);
-      showNotification(`Error: ${error.message}`, 'error');
-    }
+  // Send receipt via WhatsApp
+  const sendReceiptWhatsApp = (invoice) => {
+    const receipt = generateReceipt(invoice);
+    const message = `Thank you for your payment! Here's your receipt:\n\n` +
+                   `Receipt: ${receipt.receiptNumber}\n` +
+                   `Invoice: ${receipt.invoiceNumber}\n` +
+                   `Date: ${receipt.date}\n` +
+                   `Amount: $${receipt.total}\n` +
+                   `Status: ${receipt.status}\n\n` +
+                   `Thank you for choosing Optimas Home Fiber!`;
+    
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${invoice.customerPhone || '1234567890'}?text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank');
+    showNotification('WhatsApp receipt ready to send!', 'success');
   };
 
-  // Delete invoice
-  const deleteInvoice = async (invoiceId) => {
-    if (!window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication session expired. Please log in again.');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete invoice');
-      }
-
-      setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
-      showNotification('Invoice deleted successfully!', 'success');
-    } catch (error) {
-      console.error('Error deleting invoice:', error);
-      showNotification(`Error: ${error.message}`, 'error');
-    }
+  // Download receipt as PDF
+  const downloadReceipt = (invoice) => {
+    const receipt = generateReceipt(invoice);
+    
+    // Simple PDF generation (in a real app, you'd use a proper PDF library)
+    const receiptContent = `
+      OPTIMAS HOME FIBER
+      Receipt
+      
+      Receipt Number: ${receipt.receiptNumber}
+      Invoice Number: ${receipt.invoiceNumber}
+      Date: ${receipt.date}
+      
+      Customer: ${receipt.customerName}
+      Email: ${receipt.customerEmail}
+      Phone: ${receipt.customerPhone}
+      
+      Items:
+      ${receipt.items.map(item => `  ${item.description} - $${item.amount}`).join('\n')}
+      
+      Subtotal: $${receipt.subtotal}
+      Tax: $${receipt.tax}
+      Total: $${receipt.total}
+      
+      Amount Paid: $${receipt.amountPaid}
+      Payment Method: ${receipt.paymentMethod}
+      Status: ${receipt.status}
+      
+      Thank you for your business!
+    `;
+    
+    const blob = new Blob([receiptContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt-${receipt.receiptNumber}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Receipt downloaded!', 'success');
   };
 
-  // Reset form
-  const resetForm = () => {
-    setInvoiceForm({
-      customerName: '',
-      customerEmail: '',
-      customerPhone: '',
-      invoiceNumber: '',
-      invoiceDate: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      items: [{ description: 'Monthly Internet Service', amount: 59.99 }],
-      subtotal: 59.99,
-      tax: 0,
-      total: 59.99,
-      status: 'unpaid'
-    });
-  };
-
-  // Edit invoice
-  const editInvoice = (invoice) => {
-    setInvoiceForm({
-      customerName: invoice.customerName || '',
-      customerEmail: invoice.customerEmail || '',
-      customerPhone: invoice.customerPhone || '',
-      invoiceNumber: invoice.invoiceNumber || '',
-      invoiceDate: invoice.invoiceDate ? new Date(invoice.invoiceDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      items: invoice.items || [{ description: 'Monthly Internet Service', amount: 59.99 }],
-      subtotal: invoice.subtotal || 59.99,
-      tax: invoice.tax || 0,
-      total: invoice.total || 59.99,
-      status: invoice.status || 'unpaid'
-    });
-    setEditingInvoice(invoice);
-    setShowCreateModal(true);
-  };
-
-  // View invoice details
-  const viewInvoice = (invoice) => {
-    setSelectedInvoice(invoice);
-    setShowInvoiceModal(true);
-  };
-
-  // Filter and search invoices
+  // ✅ FIX: Filter and search invoices with array safety
   const filteredInvoices = Array.isArray(invoices) 
     ? invoices.filter(invoice => {
         if (!invoice || typeof invoice !== 'object') return false;
@@ -366,6 +246,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       })
     : [];
 
+  // View receipt details
+  const viewReceipt = (invoice) => {
+    setSelectedInvoice(invoice);
+    setShowReceiptModal(true);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -379,10 +265,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">
-            Invoice Management
+            Receipt Management
           </h2>
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Create, manage, and track customer invoices
+            Manage invoices, generate receipts, and send to customers
           </p>
         </div>
         <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
@@ -392,17 +278,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           >
             <RefreshCw size={16} className="mr-1.5" />
             Refresh
-          </button>
-          <button 
-            onClick={() => {
-              setEditingInvoice(null);
-              resetForm();
-              setShowCreateModal(true);
-            }}
-            className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light} flex items-center`}
-          >
-            <Plus size={16} className="mr-1.5" />
-            New Invoice
           </button>
         </div>
       </div>
@@ -553,19 +428,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         <button
-                          onClick={() => viewInvoice(invoice)}
+                          onClick={() => viewReceipt(invoice)}
                           className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-100'} transition-colors`}
                           title="View Details"
                         >
                           <Eye size={16} />
-                        </button>
-                        
-                        <button
-                          onClick={() => editInvoice(invoice)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'} transition-colors`}
-                          title="Edit Invoice"
-                        >
-                          <Edit size={16} />
                         </button>
                         
                         {invoice.status === 'unpaid' && (
@@ -578,13 +445,36 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                           </button>
                         )}
                         
-                        <button
-                          onClick={() => deleteInvoice(invoice._id || invoice.id)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-gray-100'} transition-colors`}
-                          title="Delete Invoice"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {invoice.status === 'paid' && (
+                          <>
+                            <button
+                              onClick={() => sendReceiptEmail(invoice)}
+                              disabled={sendingReceipt}
+                              className={`p-2 rounded-lg ${sendingReceipt ? 'opacity-50 cursor-not-allowed' : ''} ${
+                                darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'
+                              } transition-colors`}
+                              title="Send Email"
+                            >
+                              <Mail size={16} />
+                            </button>
+                            
+                            <button
+                              onClick={() => sendReceiptWhatsApp(invoice)}
+                              className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors`}
+                              title="Send WhatsApp"
+                            >
+                              <MessageCircle size={16} />
+                            </button>
+                            
+                            <button
+                              onClick={() => downloadReceipt(invoice)}
+                              className={`p-2 rounded-lg ${darkMode ? 'text-purple-400 hover:bg-gray-600' : 'text-purple-600 hover:bg-gray-100'} transition-colors`}
+                              title="Download Receipt"
+                            >
+                              <Download size={16} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -595,224 +485,8 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       </div>
 
-      {/* Create/Edit Invoice Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  {editingInvoice ? 'Edit Invoice' : 'Create New Invoice'}
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setEditingInvoice(null);
-                    resetForm();
-                  }}
-                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
-                >
-                  <XCircle size={20} />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Customer Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="customerName"
-                    value={invoiceForm.customerName}
-                    onChange={handleInputChange}
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Customer Email *
-                  </label>
-                  <input
-                    type="email"
-                    name="customerEmail"
-                    value={invoiceForm.customerEmail}
-                    onChange={handleInputChange}
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Customer Phone
-                  </label>
-                  <input
-                    type="tel"
-                    name="customerPhone"
-                    value={invoiceForm.customerPhone}
-                    onChange={handleInputChange}
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Invoice Number
-                  </label>
-                  <input
-                    type="text"
-                    name="invoiceNumber"
-                    value={invoiceForm.invoiceNumber}
-                    onChange={handleInputChange}
-                    placeholder="Auto-generated if empty"
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Invoice Date *
-                  </label>
-                  <input
-                    type="date"
-                    name="invoiceDate"
-                    value={invoiceForm.invoiceDate}
-                    onChange={handleInputChange}
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Due Date *
-                  </label>
-                  <input
-                    type="date"
-                    name="dueDate"
-                    value={invoiceForm.dueDate}
-                    onChange={handleInputChange}
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Invoice Items */}
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className={`font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Invoice Items</h4>
-                  <button
-                    type="button"
-                    onClick={addItem}
-                    className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
-                  >
-                    <Plus size={14} className="mr-1" />
-                    Add Item
-                  </button>
-                </div>
-                
-                <div className="space-y-3">
-                  {invoiceForm.items.map((item, index) => (
-                    <div key={index} className="flex gap-3 items-start">
-                      <div className="flex-1">
-                        <input
-                          type="text"
-                          placeholder="Item description"
-                          value={item.description}
-                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                          className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                        />
-                      </div>
-                      <div className="w-32">
-                        <input
-                          type="number"
-                          placeholder="Amount"
-                          value={item.amount}
-                          onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
-                          className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                          step="0.01"
-                          min="0"
-                        />
-                      </div>
-                      {invoiceForm.items.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeItem(index)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'} transition-colors`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Totals */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Tax Amount
-                  </label>
-                  <input
-                    type="number"
-                    name="tax"
-                    value={invoiceForm.tax}
-                    onChange={handleInputChange}
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                    step="0.01"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <div className="text-sm font-medium">Subtotal: ${invoiceForm.subtotal.toFixed(2)}</div>
-                    <div className="text-sm">Tax: ${invoiceForm.tax.toFixed(2)}</div>
-                    <div className="text-lg font-bold mt-1">Total: ${invoiceForm.total.toFixed(2)}</div>
-                  </div>
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={invoiceForm.status}
-                    onChange={handleInputChange}
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                  >
-                    <option value="unpaid">Unpaid</option>
-                    <option value="paid">Paid</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setEditingInvoice(null);
-                    resetForm();
-                  }}
-                  className={`${themeClasses.button.secondary.base} ${darkMode ? themeClasses.button.secondary.dark : themeClasses.button.secondary.light}`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={editingInvoice ? updateInvoice : createInvoice}
-                  className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light}`}
-                >
-                  {editingInvoice ? 'Update Invoice' : 'Create Invoice'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Invoice Details Modal */}
-      {showInvoiceModal && selectedInvoice && (
+      {/* Receipt Modal */}
+      {showReceiptModal && selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -821,7 +495,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   Invoice Details - {selectedInvoice.invoiceNumber || 'N/A'}
                 </h3>
                 <button
-                  onClick={() => setShowInvoiceModal(false)}
+                  onClick={() => setShowReceiptModal(false)}
                   className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
                 >
                   <XCircle size={20} />
@@ -869,14 +543,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     </tbody>
                     <tfoot className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       <tr>
-                        <td className="px-4 py-2 text-sm font-bold">Subtotal</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">${selectedInvoice.subtotal || selectedInvoice.total || 0}</td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-2 text-sm font-bold">Tax</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">${selectedInvoice.tax || 0}</td>
-                      </tr>
-                      <tr>
                         <td className="px-4 py-2 text-sm font-bold">Total</td>
                         <td className="px-4 py-2 text-sm font-bold text-right">${selectedInvoice.total || 0}</td>
                       </tr>
@@ -885,30 +551,49 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 </div>
               </div>
               
-              <div className="flex flex-wrap gap-3 pt-4">
-                {selectedInvoice.status === 'unpaid' && (
+              {selectedInvoice.status === 'paid' && (
+                <div className="flex flex-wrap gap-3 pt-4">
+                  <button
+                    onClick={() => sendReceiptEmail(selectedInvoice)}
+                    disabled={sendingReceipt}
+                    className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light} flex items-center`}
+                  >
+                    <Mail size={16} className="mr-1.5" />
+                    {sendingReceipt ? 'Sending...' : 'Send Email Receipt'}
+                  </button>
+                  
+                  <button
+                    onClick={() => sendReceiptWhatsApp(selectedInvoice)}
+                    className={`${themeClasses.button.secondary.base} ${darkMode ? themeClasses.button.secondary.dark : themeClasses.button.secondary.light} flex items-center`}
+                  >
+                    <MessageCircle size={16} className="mr-1.5" />
+                    Send WhatsApp
+                  </button>
+                  
+                  <button
+                    onClick={() => downloadReceipt(selectedInvoice)}
+                    className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
+                  >
+                    <Download size={16} className="mr-1.5" />
+                    Download Receipt
+                  </button>
+                </div>
+              )}
+              
+              {selectedInvoice.status !== 'paid' && (
+                <div className="pt-4">
                   <button
                     onClick={() => {
                       markAsPaid(selectedInvoice._id || selectedInvoice.id);
-                      setShowInvoiceModal(false);
+                      setShowReceiptModal(false);
                     }}
                     className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light} flex items-center`}
                   >
                     <CheckCircle size={16} className="mr-1.5" />
                     Mark as Paid
                   </button>
-                )}
-                <button
-                  onClick={() => {
-                    setShowInvoiceModal(false);
-                    editInvoice(selectedInvoice);
-                  }}
-                  className={`${themeClasses.button.secondary.base} ${darkMode ? themeClasses.button.secondary.dark : themeClasses.button.secondary.light} flex items-center`}
-                >
-                  <Edit size={16} className="mr-1.5" />
-                  Edit Invoice
-                </button>
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -917,4 +602,4 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   );
 };
 
-export default InvoiceManager;
+export default ReceiptManager;

@@ -18,18 +18,23 @@ import {
   Trash2,
   User,
   CreditCard,
-  X
+  X,
+  FileSpreadsheet,
+  Printer,
+  Send,
+  FileDown
 } from 'lucide-react';
 
-const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification }) => {
-  const [invoices, setInvoices] = useState([]);
+const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification, invoices, setInvoices }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPDFModal, setShowPDFModal] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState(null);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Form state for creating/editing invoices
   const [invoiceForm, setInvoiceForm] = useState({
@@ -62,45 +67,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       });
 
       if (!response.ok) {
-        // If no invoices endpoint exists, use mock data
-        console.log('No invoices endpoint, using mock data');
-        const mockInvoices = [
-          {
-            _id: '1',
-            invoiceNumber: 'INV-001',
-            customerName: 'John Doe',
-            customerEmail: 'john@example.com',
-            customerPhone: '+1234567890',
-            invoiceDate: '2024-01-15',
-            dueDate: '2024-02-15',
-            status: 'unpaid',
-            items: [
-              { description: 'Monthly Internet Plan', amount: 59.99 },
-              { description: 'Router Rental', amount: 5.00 }
-            ],
-            subtotal: 64.99,
-            tax: 6.50,
-            total: 71.49
-          },
-          {
-            _id: '2',
-            invoiceNumber: 'INV-002',
-            customerName: 'Jane Smith',
-            customerEmail: 'jane@example.com',
-            customerPhone: '+0987654321',
-            invoiceDate: '2024-01-10',
-            dueDate: '2024-02-10',
-            status: 'paid',
-            items: [
-              { description: 'Monthly Internet Plan', amount: 79.99 }
-            ],
-            subtotal: 79.99,
-            tax: 8.00,
-            total: 87.99
-          }
-        ];
-        setInvoices(mockInvoices);
-        return;
+        throw new Error(`Failed to fetch invoices: ${response.status}`);
       }
 
       const data = await response.json();
@@ -114,14 +81,18 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         invoicesData = data.data;
       } else if (data && Array.isArray(data.invoices)) {
         invoicesData = data.invoices;
-      } else if (data && typeof data === 'object') {
-        invoicesData = [data];
       } else {
         invoicesData = [];
       }
+
+      // Ensure invoice numbers are properly formatted
+      const formattedInvoices = invoicesData.map((invoice, index) => ({
+        ...invoice,
+        invoiceNumber: invoice.invoiceNumber || `INV-${String(index + 1).padStart(3, '0')}`
+      }));
       
-      console.log('Fetched invoices:', invoicesData);
-      setInvoices(invoicesData);
+      console.log('Fetched invoices:', formattedInvoices);
+      setInvoices(formattedInvoices);
     } catch (error) {
       console.error('Error fetching invoices:', error);
       showNotification(`Error loading invoices: ${error.message}`, 'error');
@@ -132,13 +103,25 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   };
 
   useEffect(() => {
-    fetchInvoices();
+    if (!invoices || invoices.length === 0) {
+      fetchInvoices();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
-  // Generate invoice number
+  // Generate sequential invoice number
   const generateInvoiceNumber = () => {
-    const timestamp = new Date().getTime();
-    return `INV-${timestamp.toString().slice(-6)}`;
+    const latestNumber = invoices.reduce((max, invoice) => {
+      const match = invoice.invoiceNumber?.match(/INV-(\d+)/);
+      if (match) {
+        const num = parseInt(match[1]);
+        return num > max ? num : max;
+      }
+      return max;
+    }, 0);
+    
+    return `INV-${String(latestNumber + 1).padStart(3, '0')}`;
   };
 
   // Calculate totals
@@ -216,29 +199,25 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         throw new Error('Authentication session expired. Please log in again.');
       }
 
-      // Try to call the API endpoint
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/mark-paid`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+      // Update via API
+      const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'paid' })
+      });
 
-        if (response.ok) {
-          showNotification('Invoice marked as paid via API!', 'success');
-        }
-      } catch (apiError) {
-        console.log('API endpoint not available, updating locally');
+      if (response.ok) {
+        const updatedInvoice = await response.json();
+        setInvoices(prev => prev.map(inv => 
+          inv._id === invoiceId ? updatedInvoice.invoice : inv
+        ));
+        showNotification('Invoice marked as paid successfully!', 'success');
+      } else {
+        throw new Error('Failed to update invoice status');
       }
-
-      // Update local state regardless of API call
-      setInvoices(prev => prev.map(inv => 
-        inv._id === invoiceId ? { ...inv, status: 'paid', paidAt: new Date().toISOString() } : inv
-      ));
-
-      showNotification('Invoice marked as paid successfully!', 'success');
     } catch (error) {
       console.error('Error marking invoice as paid:', error);
       showNotification(`Error: ${error.message}`, 'error');
@@ -259,36 +238,25 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         invoiceNumber: invoiceForm.invoiceNumber || generateInvoiceNumber()
       };
 
-      // Try to save to backend
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/invoices`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(invoiceData)
-        });
+      const response = await fetch(`${API_BASE_URL}/api/invoices`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(invoiceData)
+      });
 
-        if (response.ok) {
-          const newInvoice = await response.json();
-          setInvoices(prev => [...prev, newInvoice]);
-          showNotification('Invoice created via API!', 'success');
-        }
-      } catch (apiError) {
-        console.log('API endpoint not available, creating locally');
-        // Create local invoice
-        const newInvoice = {
-          _id: Date.now().toString(),
-          ...invoiceData,
-          createdAt: new Date().toISOString()
-        };
-        setInvoices(prev => [...prev, newInvoice]);
+      if (response.ok) {
+        const newInvoice = await response.json();
+        setInvoices(prev => [...prev, newInvoice.invoice || newInvoice]);
+        setShowCreateModal(false);
+        resetForm();
+        showNotification('Invoice created successfully!', 'success');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create invoice');
       }
-
-      setShowCreateModal(false);
-      resetForm();
-      showNotification('Invoice created successfully!', 'success');
     } catch (error) {
       console.error('Error creating invoice:', error);
       showNotification(`Error: ${error.message}`, 'error');
@@ -303,36 +271,28 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         throw new Error('Authentication session expired. Please log in again.');
       }
 
-      // Try to update via API
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/invoices/${editingInvoice._id}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(invoiceForm)
-        });
+      const response = await fetch(`${API_BASE_URL}/api/invoices/${editingInvoice._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(invoiceForm)
+      });
 
-        if (response.ok) {
-          const updatedInvoice = await response.json();
-          setInvoices(prev => prev.map(inv => 
-            inv._id === editingInvoice._id ? updatedInvoice : inv
-          ));
-          showNotification('Invoice updated via API!', 'success');
-        }
-      } catch (apiError) {
-        console.log('API endpoint not available, updating locally');
-        // Update locally
+      if (response.ok) {
+        const updatedInvoice = await response.json();
         setInvoices(prev => prev.map(inv => 
-          inv._id === editingInvoice._id ? { ...inv, ...invoiceForm } : inv
+          inv._id === editingInvoice._id ? updatedInvoice.invoice : inv
         ));
+        setShowCreateModal(false);
+        setEditingInvoice(null);
+        resetForm();
+        showNotification('Invoice updated successfully!', 'success');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update invoice');
       }
-
-      setShowCreateModal(false);
-      setEditingInvoice(null);
-      resetForm();
-      showNotification('Invoice updated successfully!', 'success');
     } catch (error) {
       console.error('Error updating invoice:', error);
       showNotification(`Error: ${error.message}`, 'error');
@@ -351,29 +311,115 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         throw new Error('Authentication session expired. Please log in again.');
       }
 
-      // Try to delete via API
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          showNotification('Invoice deleted via API!', 'success');
+      const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-      } catch (apiError) {
-        console.log('API endpoint not available, deleting locally');
-      }
+      });
 
-      // Delete locally regardless
-      setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
-      showNotification('Invoice deleted successfully!', 'success');
+      if (response.ok) {
+        setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
+        showNotification('Invoice deleted successfully!', 'success');
+      } else {
+        throw new Error('Failed to delete invoice');
+      }
     } catch (error) {
       console.error('Error deleting invoice:', error);
       showNotification(`Error: ${error.message}`, 'error');
     }
+  };
+
+  // Export invoice as PDF
+  const exportInvoicePDF = async (invoice) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/export/pdf`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${invoice.invoiceNumber || 'invoice'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showNotification('Invoice PDF exported successfully!', 'success');
+      } else {
+        throw new Error('Failed to export PDF');
+      }
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      showNotification('Error exporting invoice PDF', 'error');
+    }
+  };
+
+  // Send invoice to client
+  const sendInvoiceToClient = async (invoice) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        showNotification('Invoice sent to client successfully!', 'success');
+      } else {
+        throw new Error('Failed to send invoice');
+      }
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      showNotification(`Error: ${error.message}`, 'error');
+    }
+  };
+
+  // Export all invoices to Excel
+  const exportInvoicesToExcel = async () => {
+    try {
+      setExportLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/invoices/export/excel`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `invoices-${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showNotification('Invoices exported to Excel successfully!', 'success');
+      } else {
+        throw new Error('Failed to export Excel');
+      }
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      showNotification('Error exporting invoices to Excel', 'error');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  // Preview PDF
+  const previewPDF = (invoice) => {
+    setSelectedInvoice(invoice);
+    setShowPDFModal(true);
   };
 
   // Reset form
@@ -452,7 +498,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             Invoice Management
           </h2>
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Create, manage, and track customer invoices
+            Create, manage, and track customer invoices - Total: {invoices.length} invoices
           </p>
         </div>
         <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
@@ -462,6 +508,14 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           >
             <RefreshCw size={16} className="mr-1.5" />
             Refresh
+          </button>
+          <button 
+            onClick={exportInvoicesToExcel}
+            disabled={exportLoading}
+            className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
+          >
+            <FileSpreadsheet size={16} className="mr-1.5" />
+            {exportLoading ? 'Exporting...' : 'Export Excel'}
           </button>
           <button 
             onClick={() => {
@@ -536,7 +590,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                  Invoice
+                  Invoice #
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">
                   Customer
@@ -572,14 +626,14 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 </tr>
               ) : (
                 filteredInvoices.map((invoice) => (
-                  <tr key={invoice._id || invoice.id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                  <tr key={invoice._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {invoice.invoiceNumber || 'N/A'}
+                          {invoice.invoiceNumber || `INV-${String(invoices.indexOf(invoice) + 1).padStart(3, '0')}`}
                         </div>
                         <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {invoice.description || 'Internet Service'}
+                          {invoice.planName || 'Internet Service'}
                         </div>
                       </div>
                     </td>
@@ -594,11 +648,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm text-gray-600 dark:text-gray-400">
-                      {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 'N/A'}
+                      {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 
+                       invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        ${invoice.total || 0}
+                        ${invoice.total || invoice.planPrice || 0}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -621,7 +676,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end space-x-1">
                         <button
                           onClick={() => viewInvoice(invoice)}
                           className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-100'} transition-colors`}
@@ -631,8 +686,32 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         </button>
                         
                         <button
-                          onClick={() => editInvoice(invoice)}
+                          onClick={() => previewPDF(invoice)}
                           className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'} transition-colors`}
+                          title="Preview PDF"
+                        >
+                          <FileDown size={16} />
+                        </button>
+
+                        <button
+                          onClick={() => exportInvoicePDF(invoice)}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-purple-400 hover:bg-gray-600' : 'text-purple-600 hover:bg-gray-100'} transition-colors`}
+                          title="Export PDF"
+                        >
+                          <Download size={16} />
+                        </button>
+
+                        <button
+                          onClick={() => sendInvoiceToClient(invoice)}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors`}
+                          title="Send to Client"
+                        >
+                          <Send size={16} />
+                        </button>
+                        
+                        <button
+                          onClick={() => editInvoice(invoice)}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-yellow-400 hover:bg-gray-600' : 'text-yellow-600 hover:bg-gray-100'} transition-colors`}
                           title="Edit Invoice"
                         >
                           <Edit size={16} />
@@ -640,7 +719,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         
                         {invoice.status === 'unpaid' && (
                           <button
-                            onClick={() => markAsPaid(invoice._id || invoice.id)}
+                            onClick={() => markAsPaid(invoice._id)}
                             className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors`}
                             title="Mark as Paid"
                           >
@@ -649,7 +728,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         )}
                         
                         <button
-                          onClick={() => deleteInvoice(invoice._id || invoice.id)}
+                          onClick={() => deleteInvoice(invoice._id)}
                           className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-gray-100'} transition-colors`}
                           title="Delete Invoice"
                         >
@@ -912,7 +991,8 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Invoice Details</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    <strong>Date:</strong> {selectedInvoice.invoiceDate ? new Date(selectedInvoice.invoiceDate).toLocaleDateString() : 'N/A'}<br/>
+                    <strong>Date:</strong> {selectedInvoice.invoiceDate ? new Date(selectedInvoice.invoiceDate).toLocaleDateString() : 
+                                         selectedInvoice.createdAt ? new Date(selectedInvoice.createdAt).toLocaleDateString() : 'N/A'}<br/>
                     <strong>Due Date:</strong> {selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString() : 'N/A'}<br/>
                     <strong>Status:</strong> {selectedInvoice.status || 'unpaid'}
                   </p>
@@ -930,7 +1010,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                      {(selectedInvoice.items || [{ description: 'Internet Service', amount: selectedInvoice.total || 0 }]).map((item, index) => (
+                      {(selectedInvoice.items || [{ description: selectedInvoice.planName || 'Internet Service', amount: selectedInvoice.total || selectedInvoice.planPrice || 0 }]).map((item, index) => (
                         <tr key={index}>
                           <td className="px-4 py-2 text-sm">{item.description}</td>
                           <td className="px-4 py-2 text-sm text-right">${item.amount}</td>
@@ -956,10 +1036,24 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               </div>
               
               <div className="flex flex-wrap gap-3 pt-4">
+                <button
+                  onClick={() => exportInvoicePDF(selectedInvoice)}
+                  className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
+                >
+                  <Download size={16} className="mr-1.5" />
+                  Export PDF
+                </button>
+                <button
+                  onClick={() => sendInvoiceToClient(selectedInvoice)}
+                  className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
+                >
+                  <Send size={16} className="mr-1.5" />
+                  Send to Client
+                </button>
                 {selectedInvoice.status === 'unpaid' && (
                   <button
                     onClick={() => {
-                      markAsPaid(selectedInvoice._id || selectedInvoice.id);
+                      markAsPaid(selectedInvoice._id);
                       setShowInvoiceModal(false);
                     }}
                     className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light} flex items-center`}
@@ -977,6 +1071,105 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 >
                   <Edit size={16} className="mr-1.5" />
                   Edit Invoice
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Preview Modal */}
+      {showPDFModal && selectedInvoice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  PDF Preview - {selectedInvoice.invoiceNumber}
+                </h3>
+                <button
+                  onClick={() => setShowPDFModal(false)}
+                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <div className={`border-2 border-dashed rounded-lg p-8 ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-white'}`}>
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">INVOICE</h2>
+                  <p className="text-gray-600 dark:text-gray-400">Invoice #: {selectedInvoice.invoiceNumber}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-8 mb-6">
+                  <div>
+                    <h3 className="font-semibold mb-2">Bill To:</h3>
+                    <p>{selectedInvoice.customerName}</p>
+                    <p>{selectedInvoice.customerEmail}</p>
+                    <p>{selectedInvoice.customerPhone}</p>
+                  </div>
+                  <div className="text-right">
+                    <p><strong>Date:</strong> {selectedInvoice.invoiceDate ? new Date(selectedInvoice.invoiceDate).toLocaleDateString() : 
+                                            selectedInvoice.createdAt ? new Date(selectedInvoice.createdAt).toLocaleDateString() : 'N/A'}</p>
+                    <p><strong>Due Date:</strong> {selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString() : 'N/A'}</p>
+                    <p><strong>Status:</strong> {selectedInvoice.status}</p>
+                  </div>
+                </div>
+                
+                <table className="w-full mb-6">
+                  <thead>
+                    <tr className={`border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                      <th className="text-left py-2">Description</th>
+                      <th className="text-right py-2">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(selectedInvoice.items || [{ description: selectedInvoice.planName || 'Internet Service', amount: selectedInvoice.total || selectedInvoice.planPrice || 0 }]).map((item, index) => (
+                      <tr key={index} className={`border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                        <td className="py-2">{item.description}</td>
+                        <td className="text-right py-2">${item.amount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td className="py-2 font-semibold">Subtotal</td>
+                      <td className="text-right py-2">${selectedInvoice.subtotal || selectedInvoice.total || 0}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 font-semibold">Tax</td>
+                      <td className="text-right py-2">${selectedInvoice.tax || 0}</td>
+                    </tr>
+                    <tr className={`border-t ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                      <td className="py-2 font-bold">Total</td>
+                      <td className="text-right py-2 font-bold">${selectedInvoice.total || 0}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+                
+                <div className={`mt-8 p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <p className="text-sm text-center">
+                    Thank you for your business!
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex justify-center space-x-4 mt-6">
+                <button
+                  onClick={() => exportInvoicePDF(selectedInvoice)}
+                  className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light} flex items-center`}
+                >
+                  <Download size={16} className="mr-1.5" />
+                  Download PDF
+                </button>
+                <button
+                  onClick={() => sendInvoiceToClient(selectedInvoice)}
+                  className={`${themeClasses.button.secondary.base} ${darkMode ? themeClasses.button.secondary.dark : themeClasses.button.secondary.light} flex items-center`}
+                >
+                  <Send size={16} className="mr-1.5" />
+                  Send to Client
                 </button>
               </div>
             </div>
