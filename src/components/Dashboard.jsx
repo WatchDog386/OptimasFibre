@@ -34,6 +34,7 @@ import {
   TrendingUp,
   Users
 } from 'lucide-react';
+import ReceiptManager from './ReceiptManager'; // ✅ Already imported
 
 // ✅ COMPACT BUTTON STYLES — NO ICONS, NATURAL WIDTH
 const BUTTON_STYLES = {
@@ -87,7 +88,7 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [notification, setNotification] = useState({ show: false, message: '', type: 'info' });
 
-  // ✅ DYNAMIC API URL - Will work in any environment
+  // ✅ DYNAMIC API URL — Will work in any environment
   const getApiBaseUrl = () => {
     if (import.meta.env.VITE_API_BASE_URL) {
       return import.meta.env.VITE_API_BASE_URL;
@@ -114,10 +115,8 @@ const Dashboard = () => {
     }, 5000);
   };
 
-  // Toggle dark mode
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
-  // Theme classes for dark mode
   const themeClasses = {
     background: darkMode ? 'bg-gray-900' : 'bg-gray-50',
     text: darkMode ? 'text-gray-100' : 'text-gray-800',
@@ -141,28 +140,26 @@ const Dashboard = () => {
         const headers = {
           'Authorization': `Bearer ${token}`
         };
-        // Fetch blog posts
+
         const blogRes = await fetch(`${API_BASE_URL}/api/blog`, { headers });
         if (!blogRes.ok) {
           throw new Error(`Failed to fetch blog posts: ${blogRes.status} ${blogRes.statusText}`);
         }
         const blogResponse = await blogRes.json();
         setBlogPosts(blogResponse.data || []);
-        // ✅ FIXED: Fetch portfolio items with better error handling and data structure
+
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
-          // If portfolio endpoint doesn't exist, set empty array instead of throwing error
           console.warn('Portfolio endpoint not available, initializing empty portfolio');
           setPortfolioItems([]);
         } else {
           const portfolioResponse = await portfolioRes.json();
-          // Handle both array and object responses
           const portfolioData = Array.isArray(portfolioResponse) 
             ? portfolioResponse 
             : (portfolioResponse.data || portfolioResponse.items || []);
           setPortfolioItems(portfolioData);
         }
-        // Fetch settings
+
         const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
         if (settingsRes.ok) {
           const settings = await settingsRes.json();
@@ -208,7 +205,6 @@ const Dashboard = () => {
     });
   };
 
-  // ✅ FIXED: Save settings properly
   const saveSettings = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -236,7 +232,6 @@ const Dashboard = () => {
     }
   };
 
-  // ✅ UPDATED: Upload file directly to Cloudinary
   const handleImageChange = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -247,13 +242,11 @@ const Dashboard = () => {
       showNotification('Image size should be less than 5MB.', 'error');
       return;
     }
-
     try {
       showNotification('Uploading image...', 'info');
       const formDataCloud = new FormData();
       formDataCloud.append('file', file);
-      formDataCloud.append('upload_preset', 'admin_dashboard_upload'); // 👈 Dedicated preset
-
+      formDataCloud.append('upload_preset', 'admin_dashboard_upload');
       const res = await fetch(
         'https://api.cloudinary.com/v1_1/dsfwavo7x/image/upload',
         {
@@ -261,13 +254,10 @@ const Dashboard = () => {
           body: formDataCloud,
         }
       );
-
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error?.message || 'Upload failed');
       }
-
-      // ✅ Set the public Cloudinary URL
       setFormData((prev) => ({
         ...prev,
         image: file,
@@ -288,12 +278,11 @@ const Dashboard = () => {
   const handleImageUrlChange = (url) => {
     setFormData({
       ...formData,
-      imageUrl: url || '', // ✅ Ensure string to avoid controlled/uncontrolled warning
+      imageUrl: url || '',
       image: null
     });
   };
 
-  // ✅ FIXED: Unified save function for both blog and portfolio
   const handleSave = async () => {
     try {
       setError('');
@@ -311,16 +300,13 @@ const Dashboard = () => {
       if (!formData.category?.trim()) {
         throw new Error('Category is required');
       }
-      // ✅ BUILD CONSISTENT PAYLOAD - Use same structure as blog
       const payload = {
         title: formData.title.trim(),
         category: formData.category.trim(),
         imageUrl: formData.imageUrl?.trim() || '',
-        // Use consistent field names - portfolio should use same structure as blog
         content: formData.content.trim(),
-        description: formData.content.trim() // Include both for compatibility
+        description: formData.content.trim()
       };
-      // Remove empty fields
       Object.keys(payload).forEach(key => {
         if (payload[key] === '' || payload[key] == null) {
           delete payload[key];
@@ -350,7 +336,6 @@ const Dashboard = () => {
       if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
-      // ✅ FIXED: Proper state update for portfolio items
       if (activeTab === 'blog') {
         if (isEditing) {
           setBlogPosts(prev => prev.map(item => 
@@ -365,19 +350,11 @@ const Dashboard = () => {
             item._id === editingItem._id ? responseData.data : item
           ));
         } else {
-          // ✅ FIXED: Ensure portfolio item is properly added to state
           const newItem = responseData.data || responseData;
           setPortfolioItems(prev => [...prev, newItem]);
         }
       }
-      // Reset form
-      setFormData({
-        title: '',
-        content: '',
-        category: '',
-        image: null,
-        imageUrl: ''
-      });
+      setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
       setEditingItem(null);
       setIsEditing(false);
       setUploadMethod('url');
@@ -441,20 +418,13 @@ const Dashboard = () => {
   };
 
   const cancelEdit = () => {
-    setFormData({
-      title: '',
-      content: '',
-      category: '',
-      image: null,
-      imageUrl: ''
-    });
+    setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
     setEditingItem(null);
     setIsEditing(false);
     setUploadMethod('url');
     setError('');
   };
 
-  // Render content based on active tab
   const renderContent = () => {
     if (loading && activeTab === 'dashboard') {
       return (
@@ -551,6 +521,14 @@ const Dashboard = () => {
             themeClasses={themeClasses}
           />
         );
+      case 'receipts':
+        return (
+          <ReceiptManager 
+            darkMode={darkMode} 
+            themeClasses={themeClasses}
+            API_BASE_URL={API_BASE_URL}
+          />
+        );
       default:
         return (
           <DashboardOverview 
@@ -635,6 +613,13 @@ const Dashboard = () => {
             darkMode={darkMode}
           />
           <NavItem 
+            icon={<FileText size={18} />} 
+            text="Receipts" 
+            active={activeTab === 'receipts'} 
+            onClick={() => { setActiveTab('receipts'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
             icon={<Settings size={18} />} 
             text="Settings" 
             active={activeTab === 'settings'} 
@@ -667,7 +652,6 @@ const Dashboard = () => {
             New Portfolio Item
           </button>
         </div>
-        {/* Logout Button in Sidebar */}
         <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
           <button
             onClick={handleLogout}
@@ -698,7 +682,6 @@ const Dashboard = () => {
                 className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003366] focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`}
               />
             </div>
-            {/* Theme Toggle Button */}
             <button
               onClick={toggleDarkMode}
               className={`p-2.5 rounded-xl transition-all duration-300 ${
@@ -959,7 +942,6 @@ const ContentManager = ({
           </button>
         )}
       </div>
-      {/* Content Form */}
       <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border mb-8 backdrop-blur-sm`}>
         <div className="space-y-6">
           <InputGroup 
@@ -1011,7 +993,7 @@ const ContentManager = ({
                 <input
                   type="url"
                   name="imageUrl"
-                  value={formData.imageUrl || ''} // ✅ Always a string
+                  value={formData.imageUrl || ''}
                   onChange={(e) => onImageUrlChange(e.target.value)}
                   placeholder="Paste image URL here..."
                   className={`w-full p-3 pl-10 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
@@ -1080,7 +1062,6 @@ const ContentManager = ({
           </div>
         </div>
       </div>
-      {/* Item List Table */}
       <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
         Existing {isPortfolio ? 'Portfolio Items' : 'Blog Posts'}
       </h3>
@@ -1160,12 +1141,11 @@ const ContentManager = ({
   );
 };
 
-// Settings Panel Component with System Monitoring
+// Settings Panel Component
 const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => (
   <div>
     <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Site & System Settings</h2>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Site Settings */}
       <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
         <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Site Configuration</h3>
         <div className="space-y-6">
@@ -1229,7 +1209,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
           </div>
         </div>
       </div>
-      {/* System Monitoring */}
       <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
         <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">System Health Monitoring</h3>
         <div className="space-y-4">

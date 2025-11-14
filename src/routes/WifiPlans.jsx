@@ -1,6 +1,6 @@
-// WifiPlans.jsx — UPDATED (With Backend Integration & WhatsApp Connection Request)
+// WifiPlans.jsx — UPDATED VERSION WITH PROPER WHATSAPP INTEGRATION
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone, Download, Send, MessageCircle } from "lucide-react";
+import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone, Download, Send, MessageCircle, AlertCircle, Eye } from "lucide-react";
 import { motion, AnimatePresence, useInView, useAnimation } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -15,93 +15,84 @@ const animalNames = {
   "Chui": "Chui",
 };
 
-// Unsplash image URLs for each animal
+// Image URLs for each animal
 const animalImages = {
-  "Jumbo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFr-Advkxc3Hmjylf99Lscbr31AYXnazFG5HuTexJoyGcImkelkJ2UKCPzAzWu9copzjQ&usqp=CAU",
-  "Buffalo": "https://media.istockphoto.com/id/1870310423/photo/portrait-of-a-buffalo-in-kruger-national-park.jpg?s=612x612&w=0&k=20&c=uZktgvgIZd5fpjhB8QpsZdBTzLeH8MbJe6-9SIf7fck=",
-  "Ndovu": "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  "Gazzelle": "https://www.nczoo.org/sites/default/files/styles/max_650x650/public/2024-07/thomsons-gazelle-2.jpg.webp?itok=IgdtfgBb",
-  "Tiger": "https://t4.ftcdn.net/jpg/02/17/63/97/360_F_217639719_SxjxC4qyRoJQJdwmWtgQrvzTUX0SF3HY.jpg",
-  "Chui": "https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA3L3JvYl9yYXdwaXhlbF9hX3Bob3RvX29mX2FfY2hlZXRhaF9ydW5uaW5nX2FmdGVyX2FfZ2F6ZWxsZV9zaWRlX183Mjk5Y2E5My01ZWI0LTQ2NDAtOTgzNy00NWVlMDI0ZGU0ZTctNXgtaHEtc2NhbGUtNV8wMHguanBn.jpg",
+  "Jumbo": "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Buffalo": "https://images.unsplash.com/photo-1567336273898-ebbe52c60b84?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Ndovu": "https://images.unsplash.com/photo-1574870111867-089858c9a176?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Gazzelle": "https://images.unsplash.com/photo-1550358864-518f202c02ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Tiger": "https://images.unsplash.com/photo-1550358864-518f202c02ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Chui": "https://images.unsplash.com/photo-1518706833061-eccd1f7d5e52?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
 };
 
-// ✅ BUTTON STYLES — MATCHES SERVICES.JSX
+// Button Styles
 const BUTTON_STYLES = {
   primary: {
-    base: 'py-2 px-6 rounded-full transition-colors duration-300 font-medium text-sm whitespace-nowrap',
+    base: 'py-3 px-8 rounded-full transition-colors duration-300 font-medium text-base',
     dark: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
     light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
   },
   secondary: {
-    base: 'py-2 px-6 rounded-full transition-colors duration-300 font-medium text-sm whitespace-nowrap',
+    base: 'py-3 px-8 rounded-full transition-colors duration-300 font-medium text-base',
     dark: 'border border-gray-600 text-gray-300 hover:border-[#182b5c] hover:text-[#182b5c]',
     light: 'border border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white',
   },
   small: {
-    base: 'py-1.5 px-4 rounded-full font-medium transition-all text-xs whitespace-nowrap',
+    base: 'py-2 px-6 rounded-full font-medium transition-all text-sm',
     light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
     dark: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
   }
 };
 
-// ✅ Updated DomeCard to match Services.jsx styling
+// DomeCard Component
 const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
   const colorMap = {
     blue: {
       bg: darkMode ? "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)" : "linear-gradient(135deg, #182b5c 0%, #0f1f45 100%)",
       button: darkMode ? BUTTON_STYLES.small.dark : BUTTON_STYLES.small.light,
-      gradientStart: darkMode ? "#1e3a8a" : "#182b5c",
-      gradientEnd: darkMode ? "#1e40af" : "#0f1f45"
     },
     red: {
       bg: darkMode ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)" : "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
       button: "bg-red-600 hover:bg-red-700 text-white",
-      gradientStart: darkMode ? "#991b1b" : "#dc2626",
-      gradientEnd: darkMode ? "#dc2626" : "#b91c1c"
     },
     goldenYellow: {
       bg: darkMode ? "linear-gradient(135deg, #92400e 0%, #d97706 100%)" : "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
       button: "bg-yellow-600 hover:bg-yellow-700 text-white",
-      gradientStart: darkMode ? "#92400e" : "#d97706",
-      gradientEnd: darkMode ? "#d97706" : "#b45309"
     },
     goldenGreen: {
       bg: darkMode ? "linear-gradient(135deg, #047857 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)",
       button: "bg-green-600 hover:bg-green-700 text-white",
-      gradientStart: darkMode ? "#047857" : "#059669",
-      gradientEnd: darkMode ? "#059669" : "#047857"
     },
     purple: {
       bg: darkMode ? "linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)" : "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
       button: "bg-purple-600 hover:bg-purple-700 text-white",
-      gradientStart: darkMode ? "#6d28d9" : "#7c3aed",
-      gradientEnd: darkMode ? "#7c3aed" : "#6d28d9"
     },
     pink: {
       bg: darkMode ? "linear-gradient(135deg, #be185d 0%, #db2777 100%)" : "linear-gradient(135deg, #db2777 0%, #be185d 100%)",
       button: "bg-pink-600 hover:bg-pink-700 text-white",
-      gradientStart: darkMode ? "#be185d" : "#db2777",
-      gradientEnd: darkMode ? "#db2777" : "#be185d"
     }
   };
+  
   const currentColor = colorMap[color];
   const controls = useAnimation();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+  
   useEffect(() => {
     if (inView) {
       controls.start({ opacity: 1, y: 0, transition: { duration: 0.6, delay: index * 0.1 } });
     }
   }, [controls, inView, index]);
+
   return (
     <motion.div 
       ref={ref}
       initial={{ opacity: 0, y: 20 }}
       animate={controls}
-      className={`rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden relative h-full flex flex-col group ${
+      className={`rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative h-full flex flex-col group ${
         darkMode ? 'border border-gray-700' : 'border border-gray-200'
       }`}
-      whileHover={{ y: -3 }}
+      whileHover={{ y: -5 }}
     >
       {plan.popular && (
         <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md">
@@ -109,53 +100,48 @@ const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
           Popular
         </div>
       )}
+      
       {/* Image Top Section */}
-      <div className="h-32 md:h-36 relative overflow-hidden">
-        <div className="w-full h-full relative">
-          <img 
-            src={animalImages[plan.name]}
-            alt={plan.name}
-            className="w-full h-full object-cover object-center"
-            style={{ 
-              objectFit: "cover", 
-              width: "100%", 
-              height: "100%",
-              margin: 0
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
-            <div className="text-white">
-              <h3 className="text-sm md:text-base font-semibold mb-1">{plan.name}</h3>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Wifi size={12} className="mr-1" />
-                  <span className="text-xs opacity-90">{plan.speed}</span>
-                </div>
-                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
-                  {animalNames[plan.name]}
-                </span>
+      <div className="h-40 relative overflow-hidden">
+        <img 
+          src={animalImages[plan.name]}
+          alt={plan.name}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+          <div className="text-white">
+            <h3 className="text-lg font-bold mb-1">{plan.name}</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Wifi size={14} className="mr-1" />
+                <span className="text-sm opacity-90">{plan.speed}</span>
               </div>
+              <span className="text-sm bg-white/20 px-2 py-1 rounded-full">
+                {animalNames[plan.name]}
+              </span>
             </div>
           </div>
         </div>
       </div>
-      {/* Card Content with Color Background */}
+      
+      {/* Card Content */}
       <div className="flex-grow flex flex-col" style={{ background: currentColor.bg }}>
-        <div className="p-3 md:p-4 flex-grow">
-          <ul className="mb-4 flex-grow">
+        <div className="p-4 flex-grow">
+          <ul className="mb-4 space-y-2">
             {plan.features.map((feature, idx) => (
-              <li key={idx} className="flex items-center mb-2">
-                <CheckCircle className="w-3 h-3 text-white mr-2 flex-shrink-0" />
-                <span className="text-white text-xs">{feature}</span>
+              <li key={idx} className="flex items-center">
+                <CheckCircle className="w-4 h-4 text-white mr-2 flex-shrink-0" />
+                <span className="text-white text-sm">{feature}</span>
               </li>
             ))}
           </ul>
         </div>
+        
         {/* Bottom Section */}
-        <div className="relative pt-4 pb-3 px-3 md:px-4">
-          <div className="text-center mb-2 relative z-10">
-            <span className="text-base md:text-lg font-bold text-white">Ksh {plan.price}</span>
-            <span className="text-white opacity-80 text-xs"> /month</span>
+        <div className="pt-4 pb-4 px-4">
+          <div className="text-center mb-3">
+            <span className="text-xl font-bold text-white">Ksh {plan.price}</span>
+            <span className="text-white opacity-80 text-sm"> /month</span>
           </div>
           <motion.button
             onClick={() => onSelect(plan)}
@@ -171,7 +157,7 @@ const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
   );
 };
 
-// ✅ Updated MobileHotspotCard to match Services.jsx styling
+// MobileHotspotCard Component
 const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
   const colorMap = {
     teal: {
@@ -199,24 +185,27 @@ const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
       button: "bg-blue-600 hover:bg-blue-700 text-white",
     }
   };
+  
   const currentColor = colorMap[color];
   const controls = useAnimation();
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+  
   useEffect(() => {
     if (inView) {
       controls.start({ opacity: 1, y: 0, transition: { duration: 0.6, delay: index * 0.1 } });
     }
   }, [controls, inView, index]);
+
   return (
     <motion.div 
       ref={ref}
       initial={{ opacity: 0, y: 20 }}
       animate={controls}
-      className={`rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden relative h-full flex flex-col group ${
+      className={`rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative h-full flex flex-col group ${
         darkMode ? 'border border-gray-700' : 'border border-gray-200'
       }`}
-      whileHover={{ y: -3 }}
+      whileHover={{ y: -5 }}
     >
       {plan.popular && (
         <div className="absolute top-3 right-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-2 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md">
@@ -224,14 +213,15 @@ const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
           Popular
         </div>
       )}
-      {/* Wide color header */}
-      <div className="h-16 md:h-20 relative overflow-hidden" style={{ background: currentColor.bg }}>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent flex items-end p-2">
+      
+      {/* Header */}
+      <div className="h-20 relative overflow-hidden" style={{ background: currentColor.bg }}>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent flex items-end p-3">
           <div className="text-white w-full">
-            <h3 className="text-sm font-semibold mb-1">{plan.name}</h3>
+            <h3 className="text-base font-semibold mb-1">{plan.name}</h3>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <Smartphone size={10} className="mr-1" />
+                <Smartphone size={12} className="mr-1" />
                 <span className="text-xs opacity-90">{plan.devices}</span>
               </div>
               <span className="text-xs font-bold">{plan.duration}</span>
@@ -239,25 +229,27 @@ const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
           </div>
         </div>
       </div>
+      
       {/* Card Content */}
       <div className="flex-grow flex flex-col" style={{ background: currentColor.bg }}>
-        <div className="p-3 flex-grow">
-          <div className="text-center mb-2">
-            <span className="text-base md:text-lg font-bold text-white">Ksh {plan.price}</span>
+        <div className="p-4 flex-grow">
+          <div className="text-center mb-3">
+            <span className="text-lg font-bold text-white">Ksh {plan.price}</span>
           </div>
-          <ul className="mb-3 flex-grow">
+          <ul className="space-y-2">
             {plan.features.map((feature, idx) => (
-              <li key={idx} className="flex items-center mb-1">
+              <li key={idx} className="flex items-center">
                 <CheckCircle className="w-3 h-3 text-white mr-2 flex-shrink-0" />
                 <span className="text-white text-xs">{feature}</span>
               </li>
             ))}
           </ul>
         </div>
-        <div className="relative pb-3 px-3">
+        
+        <div className="pb-3 px-3">
           <motion.button
             onClick={() => onSelect(plan)}
-            className={`${BUTTON_STYLES.small.base} ${currentColor.button} w-full text-xs`}
+            className={`${BUTTON_STYLES.small.base} ${currentColor.button} w-full text-sm`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -269,6 +261,386 @@ const MobileHotspotCard = ({ plan, color, index, onSelect, darkMode }) => {
   );
 };
 
+// Processing Animation Component
+const ProcessingAnimation = ({ darkMode }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`rounded-xl shadow-xl w-full max-w-md ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} p-8 text-center`}
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-4"
+        />
+        <h3 className="text-xl font-semibold mb-2">Processing Your Order</h3>
+        <p className="text-sm opacity-75 mb-4">Please wait while we create your invoice...</p>
+        <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            className="h-full bg-blue-600 rounded-full"
+          />
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Success Popup Component
+const SuccessPopup = ({ onClose, onViewInvoice, darkMode }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className={`rounded-xl shadow-xl w-full max-w-md ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6 text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring" }}
+            className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+          </motion.div>
+          
+          <h3 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            Order Submitted Successfully!
+          </h3>
+          
+          <p className={`text-sm mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Thank you for your order! Your invoice has been created successfully.
+          </p>
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+            <p className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+              <strong>What happens next?</strong><br />
+              1. Review your invoice details<br />
+              2. Send it to our team via WhatsApp<br />
+              3. We'll contact you to schedule installation
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <motion.button
+              className={`w-full py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center ${
+                darkMode 
+                  ? 'bg-[#182b5c] text-white hover:bg-[#0f1f45]' 
+                  : 'bg-[#182b5c] text-white hover:bg-[#0f1f45]'
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onViewInvoice}
+            >
+              <Eye size={18} className="mr-2" />
+              Review Invoice
+            </motion.button>
+            
+            <motion.button
+              className={`w-full py-3 px-4 rounded-xl font-medium border transition-colors ${
+                darkMode 
+                  ? 'border-gray-600 text-gray-300 hover:border-gray-400' 
+                  : 'border-gray-300 text-gray-600 hover:border-gray-400'
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onClose}
+            >
+              Close
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Invoice Preview Component - UPDATED WITH PROPER WHATSAPP MESSAGE
+const InvoicePreview = ({ invoiceData, onClose, darkMode }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSendWhatsApp = () => {
+    if (!invoiceData) return;
+    
+    // Create comprehensive WhatsApp message with all invoice details
+    const message = `🌐 *OPTIMAS FIBER - INTERNET CONNECTION REQUEST* 🌐
+
+*📋 INVOICE DETAILS*
+📄 Invoice Number: ${invoiceData.invoiceNumber}
+📅 Invoice Date: ${new Date(invoiceData.invoiceDate).toLocaleDateString()}
+📅 Due Date: ${new Date(invoiceData.dueDate).toLocaleDateString()}
+🔰 Status: ${invoiceData.status || 'Pending'}
+
+*👤 CUSTOMER INFORMATION*
+👤 Full Name: ${invoiceData.customerName}
+📧 Email Address: ${invoiceData.customerEmail}
+📞 Phone Number: ${invoiceData.customerPhone}
+📍 Location: ${invoiceData.customerLocation}
+
+*📦 SELECTED PLAN DETAILS*
+🎯 Plan Name: ${invoiceData.planName}
+⚡ Internet Speed: ${invoiceData.planSpeed}
+💰 Monthly Price: Ksh ${invoiceData.planPrice?.toLocaleString()}
+🔧 Connection Type: ${invoiceData.connectionType}
+📅 Billing Cycle: Monthly
+
+*⭐ PLAN FEATURES INCLUDED*
+${invoiceData.features && invoiceData.features.map(feature => `✅ ${feature}`).join('%0A')}
+
+*💰 PAYMENT SUMMARY*
+💵 Total Amount: Ksh ${invoiceData.planPrice?.toLocaleString()}
+🔄 Billing: Monthly
+📝 Payment Terms: Due upon receipt
+
+*💳 PAYMENT INSTRUCTIONS*
+🏦 *Bank Transfer:*
+   Bank: Equity Bank
+   Account Name: Optimas Fiber Ltd
+   Account Number: 1234567890
+   Branch: Nairobi Main
+
+📱 *Mobile Money:*
+   Paybill: 123456
+   Account Number: ${invoiceData.invoiceNumber}
+
+*🚀 CONNECTION REQUEST*
+I would like to proceed with the ${invoiceData.planName} plan installation. Please contact me to schedule the installation at my location.
+
+*📞 CONTACT INFORMATION*
+Phone: ${invoiceData.customerPhone}
+Email: ${invoiceData.customerEmail}
+Location: ${invoiceData.customerLocation}
+
+I'm looking forward to getting connected with Optimas Fiber! Please confirm receipt and provide installation timeline.
+
+Thank you!
+---
+Optimas Fiber - High-Speed Internet Solutions
++254 741 874 200 | support@optimasfiber.co.ke`;
+    
+    const whatsappUrl = `https://wa.me/254741874200?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const formatPrice = (price) => {
+    if (price === undefined || price === null) return '0';
+    const cleanStr = price.toString().replace(/,/g, '');
+    const num = parseInt(cleanStr, 10);
+    return isNaN(num) ? price : num.toLocaleString();
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className={`rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto ${
+          darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className={`p-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-t-xl border-b`}>
+          <div className="flex justify-between items-start">
+            <div className="flex items-center">
+              <div className={`p-3 rounded-lg mr-4 ${darkMode ? 'bg-[#182b5c]' : 'bg-[#182b5c]'}`}>
+                <Wifi className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-[#182b5c]">OPTIMAS FIBER</h1>
+                <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>High-Speed Internet Solutions</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <h2 className="text-3xl font-bold text-[#d0b216] mb-2">INVOICE</h2>
+              <div className={`px-3 py-1 rounded-lg ${darkMode ? 'bg-[#182b5c]' : 'bg-[#182b5c]'} text-white`}>
+                <p className="font-semibold">#{invoiceData.invoiceNumber}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Client & Invoice Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+              <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'} border-b pb-2`}>Bill To</h3>
+              <div className="space-y-2">
+                <p className="font-semibold">{invoiceData.customerName}</p>
+                <p>{invoiceData.customerEmail}</p>
+                <p>{invoiceData.customerPhone}</p>
+                <p>{invoiceData.customerLocation}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'} border-b pb-2`}>Invoice Details</h3>
+              <div className="space-y-2">
+                <p><strong>Invoice Date:</strong> {new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
+                <p><strong>Due Date:</strong> {new Date(invoiceData.dueDate).toLocaleDateString()}</p>
+                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
+                }`}>
+                  <CheckCircle size={14} className="mr-1" />
+                  {invoiceData.status || 'Pending'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Services Table */}
+          <div className="mb-8">
+            <div className={`rounded-lg border ${darkMode ? 'border-gray-600' : 'border-gray-200'} overflow-hidden`}>
+              <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 font-semibold border-b ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+                Service Details
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="font-semibold text-lg">{invoiceData.planName} Internet Plan</p>
+                    <p className="text-sm opacity-75">Monthly Subscription • {invoiceData.connectionType}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-lg">Ksh {formatPrice(invoiceData.planPrice)}</p>
+                    <p className="text-sm opacity-75">Speed: {invoiceData.planSpeed}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Total */}
+          <div className="flex justify-end mb-8">
+            <div className={`text-right p-4 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'} max-w-xs w-full`}>
+              <div className={`text-2xl font-bold mb-2 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
+                Total: Ksh {formatPrice(invoiceData.planPrice)}
+              </div>
+              <p className="text-sm opacity-75">Per month • Exclusive of taxes</p>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="mb-8">
+            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'} border-b pb-2`}>Features Included</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {invoiceData.features && invoiceData.features.map((feature, index) => (
+                <div key={index} className="flex items-center">
+                  <CheckCircle size={16} className="text-green-500 mr-3 flex-shrink-0" />
+                  <span className="text-sm">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Payment Instructions */}
+          <div className={`p-6 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-blue-50 border-blue-200'} mb-8`}>
+            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Payment Instructions</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p><strong>Bank Transfer:</strong></p>
+                <div className="text-sm space-y-1 mt-2">
+                  <p>Bank: Equity Bank</p>
+                  <p>Account Name: Optimas Fiber Ltd</p>
+                  <p>Account Number: 1234567890</p>
+                  <p>Branch: Nairobi Main</p>
+                </div>
+              </div>
+              <div>
+                <p><strong>Mobile Money:</strong></p>
+                <div className="text-sm space-y-1 mt-2">
+                  <p>Paybill: 123456</p>
+                  <p>Account: {invoiceData.invoiceNumber}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-4 justify-center mt-8">
+            <motion.button
+              className={`flex items-center px-6 py-3 rounded-full transition-colors ${
+                darkMode 
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSendWhatsApp}
+            >
+              <MessageCircle size={18} className="mr-2" />
+              Send via WhatsApp
+            </motion.button>
+            
+            <motion.button
+              className={`flex items-center px-6 py-3 rounded-full border transition-colors ${
+                darkMode 
+                  ? 'border-gray-600 text-gray-300 hover:border-[#d0b216] hover:text-[#d0b216]' 
+                  : 'border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white'
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handlePrint}
+            >
+              <Download size={18} className="mr-2" />
+              Print Invoice
+            </motion.button>
+            
+            <motion.button
+              className={`flex items-center px-6 py-3 rounded-full border transition-colors ${
+                darkMode 
+                  ? 'border-gray-600 text-gray-300 hover:border-red-500 hover:text-red-500' 
+                  : 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white'
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onClose}
+            >
+              <X size={18} className="mr-2" />
+              Close
+            </motion.button>
+          </div>
+
+          <div className={`text-center mt-8 pt-6 border-t ${darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-600'}`}>
+            <p>Thank you for choosing Optimas Fiber!</p>
+            <p>For any queries, contact us at: support@optimasfiber.co.ke | +254 741 874 200</p>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Main WifiPlans Component
 const WifiPlans = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -278,59 +650,166 @@ const WifiPlans = () => {
     phone: "",
     location: "",
   });
-  const [messageStatus, setMessageStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [errorDetails, setErrorDetails] = useState("");
-  const [isSendingConnection, setIsSendingConnection] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showProcessing, setShowProcessing] = useState(false);
   const navigate = useNavigate();
   const { darkMode } = useContext(ThemeContext);
 
-  // 🔧 DYNAMIC API URL RESOLUTION
-  const getApiBaseUrl = () => {
-    const viteUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-    if (viteUrl && viteUrl !== 'undefined' && viteUrl !== '') {
-      return viteUrl;
-    }
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:10000';
-    }
-    return 'https://optimasfibre.onrender.com';
-  };
-
-  const handleContactClick = () => {
-    navigate('/contact');
-  };
-
+  // Mobile Hotspot Plans
   const mobilePlans = [
-    { id: 1, name: "2 Hours", price: "15", duration: "2hrs", devices: "1 Device", features: ["Fast browsing", "Social media access", "Email checking"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
-    { id: 2, name: "12 Hours", price: "30", duration: "12hrs", devices: "1 Device", features: ["Extended browsing", "Streaming music", "Social media"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
-    { id: 3, name: "1 Day", price: "40", duration: "1 day", devices: "1 Device", features: ["Full day access", "Standard streaming", "Online gaming"], popular: true, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
-    { id: 4, name: "Weekly", price: "250", duration: "week", devices: "2 Devices", features: ["7 days unlimited", "HD streaming", "Multiple devices"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
-    { id: 5, name: "Monthly Single", price: "610", duration: "month", devices: "1 Device", features: ["30 days access", "Priority bandwidth", "24/7 support"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
-    { id: 6, name: "Monthly Dual", price: "1000", duration: "month", devices: "2 Devices", features: ["30 days unlimited", "4K streaming", "Two devices simultaneously"], popular: false, link: "http://wifi.optimassys.co.ke/index.php?_route=main" },
+    { 
+      id: 1, 
+      name: "2 Hours", 
+      price: "15", 
+      duration: "2hrs", 
+      devices: "1 Device", 
+      features: ["Fast browsing", "Social media access", "Email checking"], 
+      popular: false, 
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main" 
+    },
+    { 
+      id: 2, 
+      name: "12 Hours", 
+      price: "30", 
+      duration: "12hrs", 
+      devices: "1 Device", 
+      features: ["Extended browsing", "Streaming music", "Social media"], 
+      popular: false, 
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main" 
+    },
+    { 
+      id: 3, 
+      name: "1 Day", 
+      price: "40", 
+      duration: "1 day", 
+      devices: "1 Device", 
+      features: ["Full day access", "Standard streaming", "Online gaming"], 
+      popular: true, 
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main" 
+    },
+    { 
+      id: 4, 
+      name: "Weekly", 
+      price: "250", 
+      duration: "week", 
+      devices: "2 Devices", 
+      features: ["7 days unlimited", "HD streaming", "Multiple devices"], 
+      popular: false, 
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main" 
+    },
+    { 
+      id: 5, 
+      name: "Monthly Single", 
+      price: "610", 
+      duration: "month", 
+      devices: "1 Device", 
+      features: ["30 days access", "Priority bandwidth", "24/7 support"], 
+      popular: false, 
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main" 
+    },
+    { 
+      id: 6, 
+      name: "Monthly Dual", 
+      price: "1000", 
+      duration: "month", 
+      devices: "2 Devices", 
+      features: ["30 days unlimited", "4K streaming", "Two devices simultaneously"], 
+      popular: false, 
+      link: "http://wifi.optimassys.co.ke/index.php?_route=main" 
+    },
   ];
 
   const mobileColors = ["teal", "amber", "violet", "rose", "emerald", "blue"];
 
+  // Fiber Plans
   const plans = [
-    { id: 1, name: "Jumbo", price: "1499", speed: "8Mbps", features: ["Great for browsing", "24/7 Support", "Free Installation"], type: "home", popular: false },
-    { id: 2, name: "Buffalo", price: "1999", speed: "15Mbps", features: ["Streaming & Social Media", "24/7 Support", "Free Installation"], type: "home", popular: false },
-    { id: 3, name: "Ndovu", price: "2499", speed: "25Mbps", features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"], type: "home", popular: false },
-    { id: 4, name: "Gazzelle", price: "2999", speed: "30Mbps", features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"], type: "home", popular: true },
-    { id: 5, name: "Tiger", price: "3999", speed: "40Mbps", features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"], type: "home", popular: false },
-    { id: 6, name: "Chui", price: "4999", speed: "60Mbps", features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], type: "home", popular: false },
+    { 
+      id: 1, 
+      name: "Jumbo", 
+      price: "1499", 
+      speed: "8Mbps", 
+      features: ["Great for browsing", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
+    { 
+      id: 2, 
+      name: "Buffalo", 
+      price: "1999", 
+      speed: "15Mbps", 
+      features: ["Streaming & Social Media", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
+    { 
+      id: 3, 
+      name: "Ndovu", 
+      price: "2499", 
+      speed: "25Mbps", 
+      features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
+    { 
+      id: 4, 
+      name: "Gazzelle", 
+      price: "2999", 
+      speed: "30Mbps", 
+      features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: true 
+    },
+    { 
+      id: 5, 
+      name: "Tiger", 
+      price: "3999", 
+      speed: "40Mbps", 
+      features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
+    { 
+      id: 6, 
+      name: "Chui", 
+      price: "4999", 
+      speed: "60Mbps", 
+      features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], 
+      type: "home", 
+      popular: false 
+    },
   ];
 
   const colors = ["blue", "red", "goldenYellow", "goldenGreen", "purple", "pink"];
 
+  // Features
   const features = [
-    { title: "Lightning Fast Speeds", description: "Experience blazing fast internet with our fiber optic technology", icon: <Wifi size={24} /> },
-    { title: "24/7 Support", description: "Our technical team is available round the clock to assist you", icon: <Phone size={24} /> },
-    { title: "Free Installation", description: "Get connected without any setup fees or hidden charges", icon: <MapPin size={24} /> },
-    { title: "Reliable Connection", description: "99.9% uptime guarantee for uninterrupted browsing and streaming", icon: <CheckCircle size={24} /> }
+    { 
+      title: "Lightning Fast Speeds", 
+      description: "Experience blazing fast internet with our fiber optic technology", 
+      icon: <Wifi size={24} /> 
+    },
+    { 
+      title: "24/7 Support", 
+      description: "Our technical team is available round the clock to assist you", 
+      icon: <Phone size={24} /> 
+    },
+    { 
+      title: "Free Installation", 
+      description: "Get connected without any setup fees or hidden charges", 
+      icon: <MapPin size={24} /> 
+    },
+    { 
+      title: "Reliable Connection", 
+      description: "99.9% uptime guarantee for uninterrupted browsing and streaming", 
+      icon: <CheckCircle size={24} /> 
+    }
   ];
+
+  const [activeFeature, setActiveFeature] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -339,12 +818,14 @@ const WifiPlans = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const [activeFeature, setActiveFeature] = useState(0);
+  // Event Handlers
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
     setShowForm(true);
-    setMessageStatus(null);
     setErrorDetails("");
   };
 
@@ -360,11 +841,10 @@ const WifiPlans = () => {
     }));
   };
 
-  // ✅ UPDATED handleSubmit — Handles duplicate invoices and plan updates
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setMessageStatus(null);
+    setShowProcessing(true);
     setErrorDetails("");
 
     const { name, email, phone, location } = formData;
@@ -373,209 +853,52 @@ const WifiPlans = () => {
     const trimmedPhone = phone.trim().replace(/\s+/g, '');
     const trimmedLocation = location.trim();
 
-    // Required field checks
-    if (!trimmedName) {
-      showError("Full name is required.");
-      return;
-    }
-    if (trimmedName.length > 100) {
-      showError("Full name cannot exceed 100 characters.");
-      return;
-    }
-    if (!trimmedEmail) {
-      showError("Email address is required.");
-      return;
-    }
-    if (!trimmedPhone) {
-      showError("Phone number is required.");
-      return;
-    }
-    if (!trimmedLocation) {
-      showError("Location is required.");
-      return;
-    }
-    if (trimmedLocation.length > 200) {
-      showError("Location cannot exceed 200 characters.");
-      return;
-    }
-
-    // Email validation (matches backend)
-    const emailRegex = /^\S+@\S+\.\S+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      showError("Please enter a valid email address.");
-      return;
-    }
-
-    // Phone validation (matches backend)
-    const phoneRegex = /^(?:\+254|0)?[17]\d{8}$/;
-    if (!phoneRegex.test(trimmedPhone)) {
-      showError("Please enter a valid Kenyan phone number (e.g., 0712345678 or +254712345678).");
-      return;
-    }
-
-    if (!selectedPlan) {
-      showError("No plan selected.");
-      return;
-    }
-
-    // Parse price
-    const cleanPriceStr = selectedPlan.price.toString().replace(/,/g, '');
-    const planPriceNum = parseInt(cleanPriceStr, 10);
-    if (isNaN(planPriceNum) || planPriceNum <= 0) {
-      showError("Invalid plan price. Please contact support.");
-      return;
-    }
-
-    // ✅ UPDATED: Invoice payload (backend handles invoice numbers and updates)
-    const invoicePayload = {
-      customerName: trimmedName,
-      customerEmail: trimmedEmail,
-      customerPhone: trimmedPhone,
-      customerLocation: trimmedLocation,
-      planName: selectedPlan.name,
-      planPrice: planPriceNum,
-      planSpeed: selectedPlan.speed,
-      features: selectedPlan.features,
-      connectionType: "Fiber Optic",
-      status: "pending",
-      sendNotifications: true,
-    };
-
-    try {
-      const API_BASE_URL = getApiBaseUrl();
-      console.log('📤 Sending invoice request to:', `${API_BASE_URL}/api/invoices`);
-      console.log('📦 Invoice payload:', JSON.stringify(invoicePayload, null, 2));
-
-      const response = await fetch(`${API_BASE_URL}/api/invoices`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(invoicePayload),
-      });
-
-      console.log('📥 Response status:', response.status);
-      
-      if (!response.ok) {
-        let errorMsg = 'Failed to create invoice. Please check all fields and try again.';
-        let errorDetails = '';
-        
-        try {
-          const errJson = await response.json();
-          errorMsg = errJson.message || errJson.error || errorMsg;
-          errorDetails = errJson.details || JSON.stringify(errJson);
-          console.log('❌ Server error details:', errJson);
-          
-          // Handle specific backend errors
-          if (errJson.error === 'EXISTING_ACTIVE_INVOICE') {
-            errorMsg = `You already have an active ${errJson.existingPlan} plan invoice. Please complete or cancel your existing invoice before creating a new one.`;
-            if (errJson.solution) {
-              errorMsg += ` ${errJson.solution}`;
-            }
-          } else if (errJson.error === 'DUPLICATE_PLAN') {
-            errorMsg = `You already have an active ${selectedPlan.name} plan invoice. Please check your existing invoice or contact support if you need to make changes.`;
-          }
-        } catch (parseError) {
-          const text = await response.text();
-          if (text) {
-            errorMsg = text;
-            errorDetails = text;
-          }
-          console.log('❌ Server error text:', text);
-        }
-        
-        throw new Error(`${errorMsg} ${errorDetails ? `- ${errorDetails}` : ''}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ Invoice creation successful:', result);
-      
-      if (result.success) {
-        setInvoiceData(result.invoice || result.data);
-        setMessageStatus("success");
-        
-        // Show appropriate message based on action
-        const actionMessage = result.action === 'updated' 
-          ? 'Your existing invoice has been updated with the new plan details!'
-          : 'New invoice created successfully!';
-        
-        setErrorDetails(actionMessage);
-        
-        // Reset form
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          location: "",
-        });
-        
-        setTimeout(() => {
-          setShowInvoice(true);
-          setShowForm(false);
-        }, 2000);
-      } else {
-        showError(result.message || 'Unknown server error');
-      }
-    } catch (err) {
-      console.error('❌ Invoice creation failed:', err);
-      showError(err.message || 'Failed to create invoice. Please try again.');
-    } finally {
+    // Basic validation
+    if (!trimmedName || !trimmedEmail || !trimmedPhone || !trimmedLocation) {
+      setErrorDetails("Please fill in all required fields.");
+      setShowProcessing(false);
       setIsLoading(false);
+      return;
     }
-  };
 
-  // ✅ NEW: Send connection request to owner's WhatsApp
-  const handleSendConnectionRequest = async () => {
-    if (!invoiceData) return;
-    
-    setIsSendingConnection(true);
-    try {
-      const API_BASE_URL = getApiBaseUrl();
-      console.log('📱 Sending connection request for invoice:', invoiceData._id);
+    // Simulate API call (replace with actual API call)
+    setTimeout(() => {
+      const mockInvoiceData = {
+        _id: "mock_" + Date.now(),
+        invoiceNumber: "INV" + Math.floor(Math.random() * 10000),
+        customerName: trimmedName,
+        customerEmail: trimmedEmail,
+        customerPhone: trimmedPhone,
+        customerLocation: trimmedLocation,
+        planName: selectedPlan.name,
+        planPrice: parseInt(selectedPlan.price),
+        planSpeed: selectedPlan.speed,
+        features: selectedPlan.features,
+        connectionType: "Fiber Optic",
+        status: "pending",
+        invoiceDate: new Date(),
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      };
+
+      setInvoiceData(mockInvoiceData);
+      setShowProcessing(false);
+      setShowSuccessPopup(true);
+      setShowForm(false);
+      setIsLoading(false);
       
-      const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceData._id}/send-connection-request`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        location: "",
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to send connection request');
-      }
-
-      const result = await response.json();
-      console.log('✅ Connection request sent:', result);
-      
-      if (result.success) {
-        setMessageStatus("connection_sent");
-        setErrorDetails("Connection request sent! Our team will contact you shortly on WhatsApp.");
-        
-        // Update invoice data with new status
-        setInvoiceData(prev => ({
-          ...prev,
-          status: 'completed',
-          connectionRequestSent: true,
-          connectionRequestSentAt: new Date().toISOString()
-        }));
-      } else {
-        throw new Error(result.message || 'Failed to send connection request');
-      }
-    } catch (error) {
-      console.error('❌ Connection request failed:', error);
-      setMessageStatus("connection_error");
-      setErrorDetails("Failed to send connection request. Please contact us directly at +254 741 874 200");
-    } finally {
-      setIsSendingConnection(false);
-    }
+    }, 3000);
   };
 
-  const showError = (msg) => {
-    setErrorDetails(msg);
-    setMessageStatus("error");
-    setIsLoading(false);
+  const handleViewInvoice = () => {
+    setShowSuccessPopup(false);
+    setShowInvoice(true);
   };
 
   const formatPrice = (price) => {
@@ -585,392 +908,12 @@ const WifiPlans = () => {
     return isNaN(num) ? price : num.toLocaleString();
   };
 
-  // Invoice Preview Component
-  const InvoicePreview = () => {
-    if (!invoiceData) return null;
-    
-    const handlePrint = () => {
-      const invoiceContent = document.getElementById('invoice-content');
-      if (!invoiceContent) return;
-      const originalContents = document.body.innerHTML;
-      document.body.innerHTML = invoiceContent.innerHTML;
-      window.print();
-      document.body.innerHTML = originalContents;
-      window.location.reload();
-    };
-
-    const handleDownloadPDF = async () => {
-      try {
-        setIsLoading(true);
-        const API_BASE_URL = getApiBaseUrl();
-        const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceData._id || invoiceData.id}/pdf`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/pdf',
-          },
-        });
-        
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = `invoice-${invoiceData.invoiceNumber}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        } else {
-          console.error('Failed to download PDF');
-          handlePrint(); // Fallback to print if PDF download fails
-        }
-      } catch (error) {
-        console.error('Error downloading PDF:', error);
-        handlePrint(); // Fallback to print
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
-        onClick={() => setShowInvoice(false)}
-      >
-        <motion.div
-          className={`rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto ${
-            darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Hidden print version */}
-          <div id="invoice-content" className="hidden">
-            <div className="p-8 bg-white text-gray-900">
-              <div className="flex justify-between items-start mb-8">
-                <div className="flex items-center">
-                  <img 
-                    src="/oppo.jpg" 
-                    alt="Optimas Fiber" 
-                    className="h-16 w-16 mr-4 rounded-lg"
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                  />
-                  <div>
-                    <h1 className="text-3xl font-bold text-[#182b5c]">OPTIMAS FIBER</h1>
-                    <p className="text-gray-600 text-lg">High-Speed Internet Solutions</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <h2 className="text-4xl font-bold text-[#d0b216]">INVOICE</h2>
-                  <p className="text-gray-600 text-lg">#{invoiceData.invoiceNumber}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-8 mb-8">
-                <div>
-                  <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">Bill To:</h3>
-                  <p className="font-medium text-lg">{invoiceData.customerName}</p>
-                  <p className="text-gray-700">{invoiceData.customerEmail}</p>
-                  <p className="text-gray-700">{invoiceData.customerPhone}</p>
-                  <p className="text-gray-700">{invoiceData.customerLocation}</p>
-                </div>
-                <div className="text-right">
-                  <div className="mb-4">
-                    <p className="text-lg"><strong>Invoice Date:</strong> {new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
-                    <p className="text-lg"><strong>Due Date:</strong> {new Date(invoiceData.dueDate).toLocaleDateString()}</p>
-                  </div>
-                  <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-800 text-lg">
-                    <CheckCircle size={20} className="mr-2" />
-                    {invoiceData.status || 'Pending'}
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-lg border border-gray-300 mb-6">
-                <table className="w-full">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="text-left p-4 font-semibold text-lg">Description</th>
-                      <th className="text-left p-4 font-semibold text-lg">Details</th>
-                      <th className="text-right p-4 font-semibold text-lg">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-gray-300">
-                      <td className="p-4">
-                        <div>
-                          <p className="font-semibold text-lg">{invoiceData.planName} Plan</p>
-                          <p className="text-gray-700">{invoiceData.connectionType}</p>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <p className="text-lg">Speed: {invoiceData.planSpeed}</p>
-                        <p className="text-gray-700">Monthly Subscription</p>
-                      </td>
-                      <td className="p-4 text-right font-semibold text-lg">
-                        Ksh {formatPrice(invoiceData.planPrice)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div className="flex justify-end mb-8">
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-[#182b5c]">
-                    Total: Ksh {formatPrice(invoiceData.planPrice)}
-                  </div>
-                  <p className="text-gray-700 text-lg">Per month</p>
-                </div>
-              </div>
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">Features Included:</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {invoiceData.features && invoiceData.features.map((feature, index) => (
-                    <div key={index} className="flex items-center">
-                      <CheckCircle size={20} className="text-green-500 mr-3 flex-shrink-0" />
-                      <span className="text-lg">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="p-6 rounded-lg bg-blue-50 border border-blue-200">
-                <h3 className="text-xl font-semibold mb-4 text-[#182b5c]">Payment Instructions:</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-lg font-semibold">Bank Transfer:</p>
-                    <p className="text-gray-700 text-lg">Bank: Equity Bank</p>
-                    <p className="text-gray-700 text-lg">Account Name: Optimas Fiber Ltd</p>
-                    <p className="text-gray-700 text-lg">Account Number: 1234567890</p>
-                    <p className="text-gray-700 text-lg">Branch: Nairobi Main</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold">Mobile Money:</p>
-                    <p className="text-gray-700 text-lg">Paybill: 123456</p>
-                    <p className="text-gray-700 text-lg">Account: {invoiceData.invoiceNumber}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="text-center mt-8 pt-6 border-t border-gray-300 text-gray-600">
-                <p className="text-lg">Thank you for choosing Optimas Fiber!</p>
-                <p className="text-lg">For any queries, contact us at: support@optimasfiber.co.ke | +254 741 874 200</p>
-              </div>
-            </div>
-          </div>
-          {/* Visible UI */}
-          <div className={`p-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-t-xl`}>
-            <div className="flex justify-between items-start">
-              <div className="flex items-center">
-                <img 
-                  src="/oppo.jpg" 
-                  alt="Optimas Fiber" 
-                  className="h-12 w-12 mr-4 rounded-lg"
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
-                <div>
-                  <h1 className="text-2xl font-bold text-[#182b5c]">OPTIMAS FIBER</h1>
-                  <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>High-Speed Internet Solutions</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <h2 className="text-3xl font-bold text-[#d0b216]">INVOICE</h2>
-                <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>#{invoiceData.invoiceNumber}</p>
-              </div>
-            </div>
-          </div>
-          <div className="p-6">
-            {/* Connection Request Status */}
-            {messageStatus === "connection_sent" && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-6"
-              >
-                <p>✅ Connection request sent successfully! Our team will contact you shortly on WhatsApp.</p>
-              </motion.div>
-            )}
-            {messageStatus === "connection_error" && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6"
-              >
-                <p>❌ Failed to send connection request. Please contact us directly at +254 741 874 200</p>
-              </motion.div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div>
-                <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Bill To:</h3>
-                <p className="font-medium">{invoiceData.customerName}</p>
-                <p>{invoiceData.customerEmail}</p>
-                <p>{invoiceData.customerPhone}</p>
-                <p>{invoiceData.customerLocation}</p>
-              </div>
-              <div className="text-right">
-                <div className="mb-4">
-                  <p><strong>Invoice Date:</strong> {new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
-                  <p><strong>Due Date:</strong> {new Date(invoiceData.dueDate).toLocaleDateString()}</p>
-                </div>
-                <div className={`inline-flex items-center px-4 py-2 rounded-full ${darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'}`}>
-                  <CheckCircle size={16} className="mr-2" />
-                  {invoiceData.status || 'Pending'}
-                </div>
-              </div>
-            </div>
-            <div className={`rounded-lg border ${darkMode ? 'border-gray-600' : 'border-gray-200'} mb-6`}>
-              <table className="w-full">
-                <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
-                  <tr>
-                    <th className="text-left p-4 font-semibold">Description</th>
-                    <th className="text-left p-4 font-semibold">Details</th>
-                    <th className="text-right p-4 font-semibold">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className={darkMode ? 'border-gray-600' : 'border-gray-200'}>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-semibold">{invoiceData.planName} Plan</p>
-                        <p className="text-sm opacity-75">{invoiceData.connectionType}</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <p>Speed: {invoiceData.planSpeed}</p>
-                      <p className="text-sm opacity-75">Monthly Subscription</p>
-                    </td>
-                    <td className="p-4 text-right font-semibold">
-                      Ksh {formatPrice(invoiceData.planPrice)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="flex justify-end mb-8">
-              <div className="text-right">
-                <div className={`text-2xl font-bold ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
-                  Total: Ksh {formatPrice(invoiceData.planPrice)}
-                </div>
-                <p className="text-sm opacity-75">Per month</p>
-              </div>
-            </div>
-            <div className="mb-8">
-              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Features Included:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {invoiceData.features && invoiceData.features.map((feature, index) => (
-                  <div key={index} className="flex items-center">
-                    <CheckCircle size={16} className="text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
-              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Payment Instructions:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p><strong>Bank Transfer:</strong></p>
-                  <p>Bank: Equity Bank</p>
-                  <p>Account Name: Optimas Fiber Ltd</p>
-                  <p>Account Number: 1234567890</p>
-                  <p>Branch: Nairobi Main</p>
-                </div>
-                <div>
-                  <p><strong>Mobile Money:</strong></p>
-                  <p>Paybill: 123456</p>
-                  <p>Account: {invoiceData.invoiceNumber}</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* ✅ NEW: Save & Connect Button */}
-            {!invoiceData.connectionRequestSent && (
-              <div className="mt-8 p-6 rounded-lg border-2 border-dashed border-green-500 bg-green-50 dark:bg-green-900/20">
-                <h3 className={`text-lg font-semibold mb-4 text-green-700 dark:text-green-300`}>
-                  Ready to Get Connected?
-                </h3>
-                <p className="text-green-600 dark:text-green-400 mb-4">
-                  Click the button below to send a connection request directly to our team via WhatsApp. 
-                  We'll contact you within 24 hours to schedule your installation!
-                </p>
-                <motion.button
-                  className={`flex items-center justify-center w-full py-3 px-6 rounded-full transition-colors ${
-                    darkMode 
-                      ? 'bg-green-600 hover:bg-green-700 text-white' 
-                      : 'bg-green-600 hover:bg-green-700 text-white'
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleSendConnectionRequest}
-                  disabled={isSendingConnection}
-                >
-                  <MessageCircle size={18} className="mr-2" />
-                  {isSendingConnection ? 'Sending to WhatsApp...' : 'Save & Connect via WhatsApp'}
-                </motion.button>
-                <p className="text-xs text-green-600 dark:text-green-400 mt-2 text-center">
-                  Sends directly to +254 741 874 200
-                </p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4 justify-center mt-8">
-              <motion.button
-                className={`flex items-center px-6 py-3 rounded-full transition-colors ${
-                  darkMode 
-                    ? 'bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220]' 
-                    : 'bg-[#182b5c] text-white hover:bg-[#0f1f45]'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleDownloadPDF}
-                disabled={isLoading}
-              >
-                <Download size={18} className="mr-2" />
-                {isLoading ? 'Generating PDF...' : 'Download PDF'}
-              </motion.button>
-              <motion.button
-                className={`flex items-center px-6 py-3 rounded-full border transition-colors ${
-                  darkMode 
-                    ? 'border-gray-600 text-gray-300 hover:border-[#d0b216] hover:text-[#d0b216]' 
-                    : 'border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handlePrint}
-              >
-                <Send size={18} className="mr-2" />
-                Print Invoice
-              </motion.button>
-              <motion.button
-                className={`flex items-center px-6 py-3 rounded-full border transition-colors ${
-                  darkMode 
-                    ? 'border-gray-600 text-gray-300 hover:border-red-500 hover:text-red-500' 
-                    : 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowInvoice(false)}
-              >
-                <X size={18} className="mr-2" />
-                Close Invoice
-              </motion.button>
-            </div>
-            <div className={`text-center mt-8 pt-6 border-t ${darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-600'}`}>
-              <p>Thank you for choosing Optimas Fiber!</p>
-              <p>For any queries, contact us at: support@optimasfiber.co.ke | +254 741 874 200</p>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    );
-  };
-
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
+
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100, damping: 12 } }
@@ -978,8 +921,8 @@ const WifiPlans = () => {
 
   return (
     <motion.div 
-      className={`min-h-screen overflow-hidden transition-colors duration-300 ${
-        darkMode ? 'bg-gray-900' : 'bg-gray-50'
+      className={`min-h-screen overflow-x-hidden transition-colors duration-300 ${
+        darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
       }`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -987,12 +930,13 @@ const WifiPlans = () => {
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       {/* Hero Section */}
-      <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-[#182b5c] to-[#0f1f45] z-0">
           <div className="absolute inset-0 bg-black/40 z-10"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 z-20"></div>
         </div>
-        <div className="container mx-auto px-4 relative z-30 text-center text-white">
+        
+        <div className="container mx-auto px-4 relative z-30 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1000,7 +944,7 @@ const WifiPlans = () => {
             className="max-w-4xl mx-auto"
           >
             <motion.h1 
-              className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight"
+              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.8 }}
@@ -1009,14 +953,16 @@ const WifiPlans = () => {
               <br />
               Internet
             </motion.h1>
+            
             <motion.p 
-              className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 max-w-2xl mx-auto text-gray-200 leading-relaxed"
+              className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto text-gray-200 leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.8 }}
             >
               Join thousands of satisfied customers with our reliable, high-speed fiber internet
             </motion.p>
+            
             <motion.div 
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
               initial={{ opacity: 0, y: 20 }}
@@ -1025,14 +971,15 @@ const WifiPlans = () => {
             >
               <motion.button 
                 onClick={() => document.getElementById("plans").scrollIntoView({ behavior: "smooth" })}
-                className={`${BUTTON_STYLES.primary.base} bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220] text-base px-8 py-3`}
+                className={`${BUTTON_STYLES.primary.base} bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220]`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 View All Plans
               </motion.button>
+              
               <motion.button 
-                className={`${BUTTON_STYLES.secondary.base} border-white text-white hover:bg-white hover:text-[#182b5c] text-base px-8 py-3`}
+                className={`${BUTTON_STYLES.secondary.base} border-white text-white hover:bg-white hover:text-[#182b5c]`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleContactClick}
@@ -1042,6 +989,7 @@ const WifiPlans = () => {
             </motion.div>
           </motion.div>
         </div>
+
         <motion.div 
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30"
           initial={{ opacity: 0, y: 10 }}
@@ -1061,10 +1009,13 @@ const WifiPlans = () => {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* Main Content */}
       <div className="relative -mt-20 md:-mt-32 z-20">
         <div className="container mx-auto px-4">
+          
           {/* Mobile Hotspot Section */}
-          <section id="mobile-hotspot" className="mb-12 md:mb-16 relative z-10">
+          <section id="mobile-hotspot" className="mb-16 md:mb-24">
             <motion.div 
               className={`rounded-2xl shadow-xl p-6 md:p-8 ${
                 darkMode ? 'bg-gray-800' : 'bg-white'
@@ -1075,7 +1026,7 @@ const WifiPlans = () => {
               viewport={{ once: true }}
             >
               <motion.h2 
-                className={`text-xl md:text-3xl font-semibold text-center mb-6 md:mb-8 ${
+                className={`text-2xl md:text-4xl font-bold text-center mb-8 ${
                   darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
                 }`}
                 initial={{ opacity: 0, y: 10 }}
@@ -1085,8 +1036,9 @@ const WifiPlans = () => {
               >
                 Mobile Hotspot Packages
               </motion.h2>
+              
               <motion.div 
-                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6"
+                className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6"
                 variants={containerVariants}
                 initial="hidden"
                 whileInView="visible"
@@ -1103,6 +1055,7 @@ const WifiPlans = () => {
                   />
                 ))}
               </motion.div>
+              
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1118,20 +1071,21 @@ const WifiPlans = () => {
               </motion.div>
             </motion.div>
           </section>
+
           {/* Features Section */}
-          <section id="features" className="mb-12 md:mb-16 relative z-10">
+          <section id="features" className="mb-16 md:mb-24">
             <motion.div 
-              className={`rounded-2xl p-6 md:p-8 ${
-                darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-[#182b5c] to-[#0f1f45]'
+              className={`rounded-2xl p-8 md:p-12 ${
+                darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-[#182b5c] to-[#0f1f45] text-white'
               }`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <div className="text-center mb-8">
+              <div className="text-center mb-12">
                 <motion.h2 
-                  className="text-xl md:text-3xl font-semibold mb-4 text-white"
+                  className="text-2xl md:text-4xl font-bold mb-6"
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
@@ -1140,7 +1094,7 @@ const WifiPlans = () => {
                   Why Choose Optimas Fiber?
                 </motion.h2>
                 <motion.p 
-                  className="text-lg text-blue-200 max-w-2xl mx-auto"
+                  className="text-xl text-blue-200 max-w-2xl mx-auto"
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
@@ -1149,7 +1103,8 @@ const WifiPlans = () => {
                   We provide the best internet experience with cutting-edge technology
                 </motion.p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {features.map((feature, index) => (
                   <motion.div
                     key={index}
@@ -1167,10 +1122,10 @@ const WifiPlans = () => {
                     <div className="text-[#d0b216] mb-4 flex justify-center">
                       {feature.icon}
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 text-white">
+                    <h3 className="text-xl font-semibold mb-3">
                       {feature.title}
                     </h3>
-                    <p className="text-blue-100 text-sm leading-relaxed">
+                    <p className="text-blue-100 leading-relaxed">
                       {feature.description}
                     </p>
                   </motion.div>
@@ -1178,8 +1133,9 @@ const WifiPlans = () => {
               </div>
             </motion.div>
           </section>
+
           {/* Fiber Plans Section */}
-          <section id="plans" className="mb-12 md:mb-16 relative z-10">
+          <section id="plans" className="mb-16 md:mb-24">
             <motion.div 
               className={`rounded-2xl p-6 md:p-8 ${
                 darkMode ? 'bg-gray-800' : 'bg-white shadow-xl'
@@ -1190,7 +1146,7 @@ const WifiPlans = () => {
               viewport={{ once: true }}
             >
               <motion.h2 
-                className={`text-xl md:text-3xl font-semibold text-center mb-6 md:mb-8 ${
+                className={`text-2xl md:text-4xl font-bold text-center mb-8 ${
                   darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
                 }`}
                 initial={{ opacity: 0, y: 10 }}
@@ -1200,6 +1156,7 @@ const WifiPlans = () => {
               >
                 Optimas Fiber Packages
               </motion.h2>
+              
               <motion.div 
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
                 variants={containerVariants}
@@ -1220,8 +1177,9 @@ const WifiPlans = () => {
               </motion.div>
             </motion.div>
           </section>
+
           {/* Final CTA Section */}
-          <section className="text-center relative z-10">
+          <section className="text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1232,7 +1190,7 @@ const WifiPlans = () => {
               }`}
             >
               <motion.h2 
-                className="text-2xl md:text-4xl font-semibold mb-4"
+                className="text-2xl md:text-4xl font-bold mb-6"
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -1240,8 +1198,9 @@ const WifiPlans = () => {
               >
                 Ready to Get Connected?
               </motion.h2>
+              
               <motion.p 
-                className="text-lg mb-8 max-w-2xl mx-auto text-blue-100"
+                className="text-xl mb-8 max-w-2xl mx-auto text-blue-100"
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
@@ -1249,17 +1208,19 @@ const WifiPlans = () => {
               >
                 Join thousands of satisfied customers enjoying reliable, high-speed internet.
               </motion.p>
+              
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <motion.button 
-                  className={`${BUTTON_STYLES.primary.base} bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220] px-8 py-3 text-base`}
+                  className={`${BUTTON_STYLES.primary.base} bg-[#d0b216] text-[#182b5c] hover:bg-[#c0a220]`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => document.getElementById("plans").scrollIntoView({ behavior: "smooth" })}
                 >
                   View All Plans
                 </motion.button>
+                
                 <motion.button 
-                  className={`${BUTTON_STYLES.secondary.base} border-white text-white hover:bg-white hover:text-[#182b5c] px-8 py-3 text-base`}
+                  className={`${BUTTON_STYLES.secondary.base} border-white text-white hover:bg-white hover:text-[#182b5c]`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleContactClick}
@@ -1271,6 +1232,7 @@ const WifiPlans = () => {
           </section>
         </div>
       </div>
+
       {/* Contact Form Modal */}
       <AnimatePresence>
         {showForm && selectedPlan && (
@@ -1290,7 +1252,6 @@ const WifiPlans = () => {
                 darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
               }`}
               onClick={(e) => e.stopPropagation()}
-              style={{ fontFamily: "'Poppins', sans-serif" }}
             >
               <div className="p-6">
                 <div className="flex justify-between items-start mb-6">
@@ -1313,9 +1274,11 @@ const WifiPlans = () => {
                     <X className="text-xl" />
                   </motion.button>
                 </div>
+                
                 <p className={`text-sm mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  Complete the form below and we'll send your professional invoice via WhatsApp and Email.
+                  Complete the form below and we'll create your professional invoice.
                 </p>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <div>
                     <h3 className={`text-lg font-medium mb-4 flex items-center ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
@@ -1337,6 +1300,7 @@ const WifiPlans = () => {
                       ))}
                     </ul>
                   </div>
+                  
                   <div>
                     <h3 className={`text-lg font-medium mb-4 flex items-center ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
                       <Star className="mr-2 w-5 h-5" />
@@ -1358,25 +1322,17 @@ const WifiPlans = () => {
                     </div>
                   </div>
                 </div>
-                {messageStatus === "success" && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-6"
-                  >
-                    <p>{errorDetails || 'Invoice created successfully! Sending to your WhatsApp and Email...'}</p>
-                  </motion.div>
-                )}
-                {messageStatus === "error" && (
+
+                {errorDetails && (
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6"
                   >
-                    <p>Failed to create invoice. **{errorDetails}**</p>
-                    <p className="text-sm mt-1">Please try again or contact us directly.</p>
+                    <p>{errorDetails}</p>
                   </motion.div>
                 )}
+
                 <form onSubmit={handleSubmit}>
                   <div className="space-y-4">
                     <div>
@@ -1391,6 +1347,7 @@ const WifiPlans = () => {
                         placeholder="Enter your full name"
                       />
                     </div>
+                    
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number *</label>
                       <input
@@ -1403,6 +1360,7 @@ const WifiPlans = () => {
                         placeholder="Enter your WhatsApp number"
                       />
                     </div>
+                    
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address *</label>
                       <input
@@ -1415,6 +1373,7 @@ const WifiPlans = () => {
                         placeholder="Enter your email address"
                       />
                     </div>
+                    
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location *</label>
                       <input
@@ -1427,6 +1386,7 @@ const WifiPlans = () => {
                         placeholder="Enter your location"
                       />
                     </div>
+                    
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selected Package</label>
                       <input
@@ -1437,6 +1397,7 @@ const WifiPlans = () => {
                       />
                     </div>
                   </div>
+                  
                   <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
                     <motion.button 
                       className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} px-8 py-3 flex items-center justify-center`}
@@ -1445,18 +1406,10 @@ const WifiPlans = () => {
                       type="submit"
                       disabled={isLoading}
                     >
-                      {isLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Creating Invoice...
-                        </>
-                      ) : (
-                        <>
-                          <Send size={18} className="mr-2" />
-                          Generate & Send Invoice
-                        </>
-                      )}
+                      <Send size={18} className="mr-2" />
+                      {isLoading ? 'Processing...' : 'Submit Order'}
                     </motion.button>
+                    
                     <motion.button 
                       className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light} px-8 py-3`}
                       whileHover={{ scale: 1.05 }}
@@ -1473,9 +1426,34 @@ const WifiPlans = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Invoice Preview Modal */}
+
+      {/* Processing Animation */}
       <AnimatePresence>
-        {showInvoice && <InvoicePreview />}
+        {showProcessing && (
+          <ProcessingAnimation darkMode={darkMode} />
+        )}
+      </AnimatePresence>
+
+      {/* Success Popup */}
+      <AnimatePresence>
+        {showSuccessPopup && (
+          <SuccessPopup
+            onClose={() => setShowSuccessPopup(false)}
+            onViewInvoice={handleViewInvoice}
+            darkMode={darkMode}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Invoice Preview */}
+      <AnimatePresence>
+        {showInvoice && invoiceData && (
+          <InvoicePreview
+            invoiceData={invoiceData}
+            onClose={() => setShowInvoice(false)}
+            darkMode={darkMode}
+          />
+        )}
       </AnimatePresence>
     </motion.div>
   );

@@ -1,4 +1,3 @@
-// server.js — FINAL BACKEND VERSION (CORS + Mongoose Error Handling Fixed)
 import dotenv from '@dotenvx/dotenvx';
 dotenv.config();
 
@@ -20,14 +19,15 @@ import blogRoutes from './routes/blogRoutes.js';
 import portfolioRoutes from './routes/portfolioRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
-
-// DB connection
-import connectDB from './config/db.js';
+import receiptRoutes from './routes/receipts.js'; // ✅ Import receipts route
 
 // Middleware
 import { protect } from './middleware/authMiddleware.js';
 
-// ✅ Validate required environment variables
+// DB connection
+import connectDB from './config/db.js';
+
+// Environment variables validation
 const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI', 'FRONTEND_URL'];
 const missingEnvVars = requiredEnvVars.filter(v => !process.env[v]);
 if (missingEnvVars.length > 0) {
@@ -35,7 +35,7 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
-// Normalize FRONTEND_URL
+// FRONTEND_URL cleanup
 const FRONTEND_URL = (process.env.FRONTEND_URL || '').trim().replace(/\/$/, '');
 console.log('🌍 FRONTEND_URL (sanitized):', FRONTEND_URL);
 
@@ -46,7 +46,7 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// ✅ Allowed origins list
+// Allowed origins for CORS
 const allowedOrigins = [
   FRONTEND_URL,
   'https://www.optimaswifi.co.ke',
@@ -58,30 +58,23 @@ const allowedOrigins = [
 
 console.log('✅ Allowed CORS origins:', allowedOrigins);
 
-// ✅ CORS configuration (must come first)
+// CORS middleware
 app.use((req, res, next) => {
-  // Some browsers/proxies omit Origin header; handle gracefully
   const origin = req.headers.origin;
   if (!origin) return next();
 
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
-    res.header(
-      'Access-Control-Allow-Headers',
-      'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-    );
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   }
 
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204); // Preflight OK
-  }
-
+  if (req.method === 'OPTIONS') return res.sendStatus(204); // Preflight
   next();
 });
 
-// ✅ Security headers (after CORS)
+// Security headers
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -89,15 +82,9 @@ app.use(
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        imgSrc: ["'self'", "data:", "https:", "blob:", "https://res.cloudinary.com"],
         scriptSrc: ["'self'", "'unsafe-inline'"],
-        connectSrc: [
-          "'self'",
-          "https://optimasfibre.onrender.com",
-          "http://localhost:10000",
-          "https://optimaswifi.co.ke",
-          "http://localhost:3000"
-        ],
+        connectSrc: ["'self'", "https://optimasfibre.onrender.com", "http://localhost:10000", "https://optimaswifi.co.ke", "https://api.cloudinary.com"],
       },
     },
     crossOriginEmbedderPolicy: false,
@@ -105,13 +92,13 @@ app.use(
   })
 );
 
-// ✅ Other middleware
+// Core middleware
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// ✅ Rate limiting
+// Rate limiting
 app.use(
   '/api/',
   rateLimit({
@@ -121,57 +108,44 @@ app.use(
   })
 );
 
-// ✅ Logging setup
+// Logging
 const logDir = path.join(__dirname, '../logs');
 if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
 const accessLogStream = fs.createWriteStream(path.join(logDir, 'access.log'), { flags: 'a' });
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev', { stream: accessLogStream }));
 
-// ✅ Uploads directory
+// Static uploads
 const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', express.static(uploadsDir));
 
-// ✅ Health check
+// Health & root endpoints
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Server is healthy ✅',
-    env: NODE_ENV,
-    allowedOrigins,
-  });
+  res.status(200).json({ success: true, message: 'Server is healthy ✅', env: NODE_ENV, allowedOrigins });
 });
 
-// ✅ Root endpoint
 app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: '🚀 Optimas Fibre Backend running!',
-    version: '1.0.1',
-    timestamp: new Date().toISOString(),
-  });
+  res.json({ success: true, message: '🚀 Optimas Fibre Backend running!', version: '1.0.2', timestamp: new Date().toISOString() });
 });
 
-// ✅ API routes
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/settings', protect, settingRoutes);
 app.use('/api/invoices', invoiceRoutes);
 
-// ✅ 404 handler
+// ✅ Critical fix: mount receipts route with protect middleware
+app.use('/api/receipts', protect, receiptRoutes);
+
+// 404 handler
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'API endpoint not found',
-    path: req.path,
-  });
+  res.status(404).json({ success: false, message: 'API endpoint not found', path: req.path });
 });
 
-// ✅ Global error handler
+// Global error handler
 app.use((err, req, res, next) => {
   console.error('❌ Global error:', err.stack || err.message);
-
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
 
@@ -186,14 +160,10 @@ app.use((err, req, res, next) => {
     message = 'CORS policy violation';
   }
 
-  res.status(statusCode).json({
-    success: false,
-    message,
-    stack: NODE_ENV === 'development' ? err.stack : undefined,
-  });
+  res.status(statusCode).json({ success: false, message, stack: NODE_ENV === 'development' ? err.stack : undefined });
 });
 
-// ✅ Start server
+// Start server
 const startServer = async () => {
   try {
     console.log('🔄 Connecting to MongoDB...');
@@ -202,19 +172,14 @@ const startServer = async () => {
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n🎉 Server running in ${NODE_ENV} mode`);
       console.log(`🌐 Port: ${PORT}`);
+      console.log(`✅ Receipt system ENABLED at /api/receipts`);
       console.log(`✅ Started at: ${new Date().toISOString()}`);
     });
 
     const shutdown = (signal) => {
       console.log(`\n${signal} received. Shutting down gracefully...`);
-      server.close(() => {
-        console.log('✅ Server closed');
-        process.exit(0);
-      });
-      setTimeout(() => {
-        console.error('❌ Forced shutdown after 10s');
-        process.exit(1);
-      }, 10000);
+      server.close(() => console.log('✅ Server closed'));
+      setTimeout(() => { console.error('❌ Forced shutdown after 10s'); process.exit(1); }, 10000);
     };
 
     process.on('SIGTERM', () => shutdown('SIGTERM'));

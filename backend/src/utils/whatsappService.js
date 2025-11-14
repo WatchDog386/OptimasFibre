@@ -1,4 +1,4 @@
-// backend/src/utils/whatsappService.js - COMPLETELY UPDATED (With Connection Requests)
+// backend/src/utils/whatsappService.js — FULLY UPDATED (With Receipt Support)
 import twilio from 'twilio';
 
 /**
@@ -105,6 +105,39 @@ Please include your invoice number (${invoice.invoiceNumber}) as the reference w
 
 Thank you for choosing ${companyName}!
 For support: ${companyPhone}
+`.trim();
+};
+
+/**
+ * ✅ NEW: Generates a clean, confirmation-style WhatsApp message for RECEIPTS
+ */
+export const generateWhatsAppReceiptMessage = (receipt) => {
+  const paymentDate = new Date(receipt.paymentDate || receipt.createdAt).toLocaleDateString('en-KE');
+  const companyName = process.env.COMPANY_NAME || 'Optimas Fiber';
+  const companyPhone = process.env.COMPANY_PHONE || '+254741874200';
+
+  return `
+✅ *${companyName.toUpperCase()} - PAYMENT RECEIPT CONFIRMED*
+
+Hello ${receipt.clientName},
+
+Thank you for your payment! 🎉
+
+📄 *Receipt No:* ${receipt.receiptNumber}
+📦 *Package:* ${receipt.packageName}
+💰 *Amount Paid:* Ksh ${parseInt(receipt.paymentAmount).toLocaleString()}
+📅 *Date:* ${paymentDate}
+📍 *Location:* ${receipt.clientLocation}
+
+Your service is now active and ready to use!
+
+📥 *View & Download Receipt:*  
+https://optimaswifi.co.ke/receipts/${receipt._id}
+
+Need help? Call us at *${companyPhone}*  
+We're happy to serve you!
+
+— *Optimas Fiber Team*
 `.trim();
 };
 
@@ -223,6 +256,65 @@ export const sendWhatsAppInvoice = async (invoice) => {
 };
 
 /**
+ * ✅ NEW: Sends a payment receipt to the customer via WhatsApp
+ */
+export const sendWhatsAppReceipt = async (receipt) => {
+  try {
+    const client = getTwilioClient();
+    if (!client) {
+      console.warn('⚠️ WhatsApp service not configured - skipping receipt message');
+      return { success: false, error: 'Twilio credentials missing' };
+    }
+
+    let formattedPhone;
+    try {
+      formattedPhone = formatPhoneNumber(receipt.clientPhone);
+    } catch (formatError) {
+      console.error('❌ Invalid receipt phone number:', formatError.message);
+      return { success: false, error: formatError.message };
+    }
+
+    const from = `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`;
+    const to = `whatsapp:${formattedPhone}`;
+    const messageBody = generateWhatsAppReceiptMessage(receipt);
+
+    console.log('📤 Sending WhatsApp receipt to customer:', formattedPhone);
+
+    const result = await client.messages.create({
+      body: messageBody,
+      from: from,
+      to: to
+    });
+
+    console.log('✅ WhatsApp receipt sent successfully | SID:', result.sid);
+    return {
+      success: true,
+      messageId: result.sid,
+      to: formattedPhone,
+      type: 'customer_receipt'
+    };
+
+  } catch (error) {
+    console.error('❌ WhatsApp receipt sending error:', {
+      code: error.code,
+      message: error.message,
+      moreInfo: error.moreInfo || 'N/A'
+    });
+
+    switch (error.code) {
+      case 21211:
+        return { success: false, error: 'Invalid phone number format for receipt' };
+      case 21610:
+        return { success: false, error: 'Customer not on WhatsApp' };
+      case 63003:
+        return { success: false, error: 'Receipt message delivery failed' };
+      default:
+        return { success: false, error: error.message || 'Unknown WhatsApp receipt error' };
+    }
+  }
+};
+
+/**
  * Sends connection request to owner's WhatsApp (+254 741 874 200)
  */
 export const sendConnectionRequest = async (invoice) => {
@@ -280,7 +372,6 @@ export const sendConnectionRequest = async (invoice) => {
       moreInfo: error.moreInfo || 'N/A'
     });
 
-    // Enhanced error handling for connection requests
     let userFriendlyError = 'Failed to send connection request to our team. ';
     
     switch (error.code) {
@@ -330,7 +421,7 @@ export const sendCompleteWhatsAppNotifications = async (invoice) => {
     });
 
     return {
-      success: invoiceResult.success || connectionResult.success, // Consider success if at least one worked
+      success: invoiceResult.success || connectionResult.success,
       customerInvoice: invoiceResult,
       ownerConnection: connectionResult,
       summary: {

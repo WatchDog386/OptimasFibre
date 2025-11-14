@@ -1,5 +1,4 @@
-// backend/src/utils/emailService.js
-
+// backend/src/utils/emailService.js — FULLY UPDATED (With Receipt Support)
 import nodemailer from 'nodemailer';
 
 /**
@@ -300,6 +299,215 @@ export const generateEmailTemplate = (invoice) => {
 };
 
 /**
+ * ✅ NEW: Generates a clean, professional HTML template for RECEIPTS
+ */
+const generateReceiptEmailTemplate = (receipt) => {
+  const paymentDate = new Date(receipt.paymentDate || receipt.createdAt).toLocaleDateString('en-KE');
+  const companyName = process.env.COMPANY_NAME || 'Optimas Fiber';
+  const companyEmail = process.env.COMPANY_EMAIL || 'support@optimasfiber.co.ke';
+  const companyPhone = process.env.COMPANY_PHONE || '+254741874200';
+  const companyAddress = process.env.COMPANY_ADDRESS || 'Nairobi, Kenya';
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipt ${receipt.receiptNumber} - ${companyName}</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    .container {
+      max-width: 700px;
+      margin: 20px auto;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .header p {
+      margin: 8px 0 0;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    .content {
+      padding: 32px;
+    }
+    .receipt-title {
+      text-align: center;
+      color: #059669;
+      margin-bottom: 28px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .receipt-details {
+      background: #f0fdf4;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      border: 1px solid #bbf7d0;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    .detail-label {
+      font-weight: 600;
+      color: #065f46;
+    }
+    .status-paid {
+      color: #059669;
+      font-weight: 600;
+    }
+    .bill-to {
+      margin-bottom: 24px;
+    }
+    .bill-to h3 {
+      color: #065f46;
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+    .bill-to p {
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+    .service-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .service-table th {
+      background: #065f46;
+      color: white;
+      padding: 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .service-table td {
+      padding: 14px;
+      border-bottom: 1px solid #dcfce7;
+    }
+    .service-table tr:last-child td {
+      border-bottom: none;
+    }
+    .total-section {
+      text-align: right;
+      margin: 24px 0;
+    }
+    .total-amount {
+      font-size: 26px;
+      font-weight: 700;
+      color: #065f46;
+    }
+    .footer {
+      text-align: center;
+      padding: 24px;
+      background: #f0fdf4;
+      color: #065f46;
+      font-size: 14px;
+      border-top: 1px solid #bbf7d0;
+    }
+    .footer p {
+      margin: 6px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${companyName}</h1>
+      <p>Thank You for Your Payment!</p>
+    </div>
+    <div class="content">
+      <h2 class="receipt-title">PAYMENT RECEIPT</h2>
+
+      <div class="receipt-details">
+        <div class="detail-row">
+          <span class="detail-label">Receipt No:</span>
+          <span>${receipt.receiptNumber}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Date:</span>
+          <span>${paymentDate}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="status-paid">PAID</span>
+        </div>
+      </div>
+
+      <div class="bill-to">
+        <h3>Client:</h3>
+        <p><strong>${receipt.clientName}</strong></p>
+        <p>${receipt.clientEmail}</p>
+        <p>${receipt.clientPhone}</p>
+        <p>${receipt.clientLocation}</p>
+      </div>
+
+      <table class="service-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Details</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>${receipt.packageName} Plan</strong>
+            </td>
+            <td>
+              Speed: ${receipt.packageSpeed || 'N/A'}<br>
+              <small>${receipt.packageType === 'mobile' ? 'Mobile Hotspot' : 'Fiber Internet'}</small>
+            </td>
+            <td>
+              <strong>Ksh ${parseInt(receipt.paymentAmount).toLocaleString()}</strong>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="total-section">
+        <div class="total-amount">Total Paid: Ksh ${parseInt(receipt.paymentAmount).toLocaleString()}</div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <p>Thank you for your payment!</p>
+      <p>Contact: ${companyEmail} | ${companyPhone}</p>
+      <p>${companyAddress}</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+};
+
+/**
  * Sends an invoice email to the customer
  */
 export const sendInvoiceEmail = async (invoice) => {
@@ -326,6 +534,37 @@ export const sendInvoiceEmail = async (invoice) => {
 
   } catch (error) {
     console.error('❌ Failed to send invoice email:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * ✅ NEW: Sends a payment receipt email to the customer
+ */
+export const sendReceiptEmail = async (receipt) => {
+  try {
+    const transporter = createTransporter();
+
+    const mailOptions = {
+      from: `"${process.env.COMPANY_NAME || 'Optimas Fiber'}" <${process.env.EMAIL_USER}>`,
+      to: receipt.clientEmail,
+      subject: `Payment Receipt ${receipt.receiptNumber} - Optimas Fiber`,
+      html: generateReceiptEmailTemplate(receipt),
+      attachments: [
+        {
+          filename: `receipt-${receipt.receiptNumber}.html`,
+          content: generateReceiptEmailTemplate(receipt),
+          contentType: 'text/html'
+        }
+      ]
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Receipt email sent to:', receipt.clientEmail);
+    return { success: true, messageId: result.messageId };
+
+  } catch (error) {
+    console.error('❌ Failed to send receipt email:', error.message);
     return { success: false, error: error.message };
   }
 };

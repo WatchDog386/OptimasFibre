@@ -1,4 +1,4 @@
-// backend/src/routes/invoiceRoutes.js - COMPLETELY UPDATED (With Connection Requests - FIXED)
+// backend/src/routes/invoiceRoutes.js - UPDATED (With Existing Invoice Check)
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
 import {
@@ -9,8 +9,9 @@ import {
     resendInvoiceNotifications,
     deleteInvoice,
     getInvoiceStats,
-    sendConnectionRequestToOwner, // ✅ FIXED: Updated function name
-    getCustomerInvoices
+    sendConnectionRequestToOwner,
+    getCustomerInvoices,
+    checkExistingActiveInvoices // ✅ NEW: Import the new function
 } from '../controllers/invoiceController.js';
 
 const router = express.Router();
@@ -59,6 +60,19 @@ router.get('/:id', getInvoiceById);
 router.get('/customer/:email', getCustomerInvoices);
 
 /**
+ * @route   GET /api/invoices/check/existing
+ * @desc    Check for existing active invoices by customer email or phone
+ * @access  Public
+ * @query   {string} email - Customer email address
+ * @query   {string} phone - Customer phone number
+ * @returns {object} Existing active invoice details if found
+ * ✅ Checks for pending or completed invoices
+ * ✅ Returns most recent active invoice
+ * ✅ Used to prevent duplicate invoices
+ */
+router.get('/check/existing', checkExistingActiveInvoices); // ✅ NEW: Added route
+
+/**
  * @route   POST /api/invoices/:id/send-connection-request
  * @desc    Send connection request to owner's WhatsApp (+254 741 874 200)
  * @access  Public
@@ -68,7 +82,7 @@ router.get('/customer/:email', getCustomerInvoices);
  * ✅ Marks invoice as connection request sent
  * ✅ Updates invoice status to 'completed'
  */
-router.post('/:id/send-connection-request', sendConnectionRequestToOwner); // ✅ FIXED: Updated function name
+router.post('/:id/send-connection-request', sendConnectionRequestToOwner);
 
 // --- PROTECTED ROUTES (Admin/Staff) ---
 

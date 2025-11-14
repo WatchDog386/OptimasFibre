@@ -1,4 +1,4 @@
-// backend/src/controllers/invoiceController.js - FIXED (No Naming Conflict)
+// backend/src/controllers/invoiceController.js - UPDATED (With Existing Invoice Fetch)
 import Invoice from '../models/Invoice.js';
 import { sendInvoiceEmail } from '../utils/emailService.js';
 import { sendWhatsAppInvoice, sendConnectionRequest as sendWhatsAppConnectionRequest } from '../utils/whatsappService.js';
@@ -46,6 +46,83 @@ const handleExistingInvoice = async (customerEmail, planName, newPlanData) => {
     } catch (error) {
         console.error('❌ [INVOICE CHECK] Error:', error);
         throw error;
+    }
+};
+
+// ✅ NEW: Function to check for existing active invoices by customer details
+export const checkExistingActiveInvoices = async (req, res) => {
+    try {
+        const { email, phone } = req.query;
+        
+        console.log('🔍 [EXISTING INVOICE CHECK] Checking for existing invoices:', { email, phone });
+        
+        if (!email && !phone) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email or phone number is required to check existing invoices'
+            });
+        }
+
+        let query = {};
+        if (email) {
+            query.customerEmail = email.toLowerCase().trim();
+        }
+        if (phone) {
+            query.customerPhone = phone.trim().replace(/\s+/g, '');
+        }
+
+        // Find active invoices (pending or completed)
+        const activeInvoices = await Invoice.find({
+            ...query,
+            status: { $in: ['pending', 'completed'] }
+        }).sort({ createdAt: -1 }); // Get most recent first
+
+        console.log('📋 [EXISTING INVOICE CHECK] Found active invoices:', activeInvoices.length);
+
+        if (activeInvoices.length === 0) {
+            return res.json({
+                success: true,
+                hasActiveInvoices: false,
+                message: 'No active invoices found'
+            });
+        }
+
+        // Return the most recent active invoice
+        const latestInvoice = activeInvoices[0];
+        
+        res.json({
+            success: true,
+            hasActiveInvoices: true,
+            activeInvoice: {
+                _id: latestInvoice._id,
+                invoiceNumber: latestInvoice.invoiceNumber,
+                customerName: latestInvoice.customerName,
+                customerEmail: latestInvoice.customerEmail,
+                customerPhone: latestInvoice.customerPhone,
+                customerLocation: latestInvoice.customerLocation,
+                planName: latestInvoice.planName,
+                planSpeed: latestInvoice.planSpeed,
+                planPrice: latestInvoice.planPrice,
+                features: latestInvoice.features,
+                connectionType: latestInvoice.connectionType,
+                status: latestInvoice.status,
+                invoiceDate: latestInvoice.invoiceDate,
+                dueDate: latestInvoice.dueDate,
+                createdAt: latestInvoice.createdAt,
+                connectionRequestSent: latestInvoice.connectionRequestSent,
+                connectionRequestSentAt: latestInvoice.connectionRequestSentAt
+            },
+            totalActiveInvoices: activeInvoices.length,
+            message: `Found active ${latestInvoice.planName} plan invoice`
+        });
+
+    } catch (error) {
+        console.error('❌ [EXISTING INVOICE CHECK] Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error checking for existing invoices',
+            ...(process.env.NODE_ENV === 'development' && { error: error.message })
+        });
     }
 };
 
