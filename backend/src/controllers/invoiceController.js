@@ -2,7 +2,10 @@
 import Invoice from '../models/Invoice.js';
 import mongoose from 'mongoose';
 
+// ============================================================================
 // ✅ Basic CRUD Operations
+// ============================================================================
+
 export const createInvoice = async (req, res) => {
     try {
         console.log('📝 Creating new invoice...');
@@ -12,7 +15,6 @@ export const createInvoice = async (req, res) => {
             createdBy: req.user?._id
         };
 
-        // Validate required fields
         if (!invoiceData.customerName || !invoiceData.customerEmail || !invoiceData.planName) {
             return res.status(400).json({
                 success: false,
@@ -28,27 +30,27 @@ export const createInvoice = async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Invoice created successfully',
-            invoice: invoice
+            invoice
         });
     } catch (error) {
         console.error('❌ Error creating invoice:', error);
-        
+
         if (error.code === 11000) {
             return res.status(400).json({
                 success: false,
                 message: 'Invoice number already exists'
             });
         }
-        
+
         if (error.name === 'ValidationError') {
             const errors = Object.values(error.errors).map(err => err.message);
             return res.status(400).json({
                 success: false,
                 message: 'Validation error',
-                errors: errors
+                errors
             });
         }
-        
+
         res.status(500).json({
             success: false,
             message: 'Error creating invoice',
@@ -60,21 +62,20 @@ export const createInvoice = async (req, res) => {
 export const getInvoices = async (req, res) => {
     try {
         const { 
-            page = 1, 
-            limit = 10, 
-            status, 
-            customerEmail, 
+            page = 1,
+            limit = 10,
+            status,
+            customerEmail,
             search,
             sortBy = 'createdAt',
             sortOrder = 'desc'
         } = req.query;
 
-        // Build query
         let query = {};
-        
+
         if (status) query.status = status;
         if (customerEmail) query.customerEmail = customerEmail.toLowerCase();
-        
+
         if (search) {
             query.$or = [
                 { invoiceNumber: { $regex: search, $options: 'i' } },
@@ -84,11 +85,9 @@ export const getInvoices = async (req, res) => {
             ];
         }
 
-        // Sort options
         const sortOptions = {};
         sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-        // Execute query with pagination
         const invoices = await Invoice.find(query)
             .sort(sortOptions)
             .limit(limit * 1)
@@ -118,7 +117,7 @@ export const getInvoices = async (req, res) => {
 export const getInvoiceById = async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
-        
+
         if (!invoice) {
             return res.status(404).json({
                 success: false,
@@ -144,7 +143,7 @@ export const updateInvoice = async (req, res) => {
     try {
         const invoice = await Invoice.findByIdAndUpdate(
             req.params.id,
-            { 
+            {
                 ...req.body,
                 updatedBy: req.user?._id
             },
@@ -165,16 +164,16 @@ export const updateInvoice = async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error updating invoice:', error);
-        
+
         if (error.name === 'ValidationError') {
             const errors = Object.values(error.errors).map(err => err.message);
             return res.status(400).json({
                 success: false,
                 message: 'Validation error',
-                errors: errors
+                errors
             });
         }
-        
+
         res.status(500).json({
             success: false,
             message: 'Error updating invoice',
@@ -208,11 +207,14 @@ export const deleteInvoice = async (req, res) => {
     }
 };
 
+// ============================================================================
 // ✅ Enhanced Status Management
+// ============================================================================
+
 export const updateInvoiceStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        
+
         if (!status) {
             return res.status(400).json({
                 success: false,
@@ -252,7 +254,7 @@ export const markInvoiceAsPaid = async (req, res) => {
     try {
         const invoice = await Invoice.findByIdAndUpdate(
             req.params.id,
-            { 
+            {
                 status: 'paid',
                 paidAt: new Date(),
                 amountPaid: req.body.amount || undefined
@@ -312,12 +314,16 @@ export const markInvoiceAsOverdue = async (req, res) => {
     }
 };
 
+// ============================================================================
 // ✅ Customer Operations
+// ============================================================================
+
 export const getCustomerInvoices = async (req, res) => {
     try {
         const { email } = req.params;
-        const invoices = await Invoice.find({ 
-            customerEmail: email.toLowerCase() 
+
+        const invoices = await Invoice.find({
+            customerEmail: email.toLowerCase()
         }).sort({ createdAt: -1 });
 
         res.json({
@@ -337,8 +343,8 @@ export const getCustomerInvoices = async (req, res) => {
 
 export const checkExistingActiveInvoices = async (req, res) => {
     try {
-        const { customerEmail, planName } = req.query;
-        
+        const { customerEmail } = req.query;
+
         if (!customerEmail) {
             return res.status(400).json({
                 success: false,
@@ -366,11 +372,14 @@ export const checkExistingActiveInvoices = async (req, res) => {
     }
 };
 
+// ============================================================================
 // ✅ Notification & Communication
+// ============================================================================
+
 export const sendInvoiceToCustomer = async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
-        
+
         if (!invoice) {
             return res.status(404).json({
                 success: false,
@@ -378,10 +387,8 @@ export const sendInvoiceToCustomer = async (req, res) => {
             });
         }
 
-        // TODO: Implement email sending logic
         console.log(`📧 Sending invoice ${invoice.invoiceNumber} to ${invoice.customerEmail}`);
-        
-        // Update sent status
+
         invoice.sentToCustomer = true;
         invoice.lastSentAt = new Date();
         invoice.sendCount += 1;
@@ -405,7 +412,7 @@ export const sendInvoiceToCustomer = async (req, res) => {
 export const resendInvoiceNotifications = async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
-        
+
         if (!invoice) {
             return res.status(404).json({
                 success: false,
@@ -413,9 +420,8 @@ export const resendInvoiceNotifications = async (req, res) => {
             });
         }
 
-        // TODO: Implement resend logic for email/WhatsApp
         console.log(`🔄 Resending notifications for invoice ${invoice.invoiceNumber}`);
-        
+
         invoice.lastSentAt = new Date();
         invoice.sendCount += 1;
         await invoice.save();
@@ -438,7 +444,7 @@ export const resendInvoiceNotifications = async (req, res) => {
 export const sendConnectionRequestToOwner = async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
-        
+
         if (!invoice) {
             return res.status(404).json({
                 success: false,
@@ -446,7 +452,6 @@ export const sendConnectionRequestToOwner = async (req, res) => {
             });
         }
 
-        // Mark connection request as sent
         await invoice.markConnectionRequestSent();
 
         res.json({
@@ -464,11 +469,14 @@ export const sendConnectionRequestToOwner = async (req, res) => {
     }
 };
 
-// ✅ Export & Download (Placeholder implementations)
+// ============================================================================
+// ✅ Export & Download (Placeholders)
+// ============================================================================
+
 export const exportInvoicePDF = async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
-        
+
         if (!invoice) {
             return res.status(404).json({
                 success: false,
@@ -476,7 +484,6 @@ export const exportInvoicePDF = async (req, res) => {
             });
         }
 
-        // TODO: Implement PDF generation
         res.json({
             success: true,
             message: 'PDF export functionality coming soon',
@@ -494,7 +501,6 @@ export const exportInvoicePDF = async (req, res) => {
 
 export const exportInvoicesExcel = async (req, res) => {
     try {
-        // TODO: Implement Excel export
         res.json({
             success: true,
             message: 'Excel export functionality coming soon'
@@ -512,7 +518,7 @@ export const exportInvoicesExcel = async (req, res) => {
 export const downloadInvoiceAttachment = async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
-        
+
         if (!invoice) {
             return res.status(404).json({
                 success: false,
@@ -520,7 +526,6 @@ export const downloadInvoiceAttachment = async (req, res) => {
             });
         }
 
-        // TODO: Implement file download
         res.json({
             success: true,
             message: 'Download functionality coming soon',
@@ -536,11 +541,14 @@ export const downloadInvoiceAttachment = async (req, res) => {
     }
 };
 
-// ✅ Statistics & Analytics
+// ============================================================================
+// ✅ Analytics & Reports
+// ============================================================================
+
 export const getInvoiceStats = async (req, res) => {
     try {
         const stats = await Invoice.getStatistics();
-        
+
         res.json({
             success: true,
             stats
@@ -557,12 +565,11 @@ export const getInvoiceStats = async (req, res) => {
 
 export const getInvoiceAnalytics = async (req, res) => {
     try {
-        // Enhanced analytics
         const totalInvoices = await Invoice.countDocuments();
         const paidInvoices = await Invoice.countDocuments({ status: 'paid' });
         const pendingInvoices = await Invoice.countDocuments({ status: 'pending' });
         const overdueInvoices = await Invoice.countDocuments({ status: 'overdue' });
-        
+
         const revenueStats = await Invoice.aggregate([
             {
                 $group: {
@@ -592,13 +599,15 @@ export const getInvoiceAnalytics = async (req, res) => {
                     paidInvoices,
                     pendingInvoices,
                     overdueInvoices,
-                    completionRate: totalInvoices > 0 ? (paidInvoices / totalInvoices) * 100 : 0
+                    completionRate:
+                        totalInvoices > 0 ? (paidInvoices / totalInvoices) * 100 : 0
                 },
-                revenue: revenueStats[0] || {
-                    totalRevenue: 0,
-                    collectedRevenue: 0,
-                    outstandingRevenue: 0
-                },
+                revenue:
+                    revenueStats[0] || {
+                        totalRevenue: 0,
+                        collectedRevenue: 0,
+                        outstandingRevenue: 0
+                    },
                 plans: planStats
             }
         });
@@ -615,8 +624,9 @@ export const getInvoiceAnalytics = async (req, res) => {
 export const getRevenueReports = async (req, res) => {
     try {
         const { period = 'monthly' } = req.query;
-        
+
         let groupStage = {};
+
         if (period === 'monthly') {
             groupStage = {
                 _id: {
@@ -667,11 +677,14 @@ export const getRevenueReports = async (req, res) => {
     }
 };
 
-// ✅ Search & Filtering
+// ============================================================================
+// ✅ Searching & Filters
+// ============================================================================
+
 export const searchInvoices = async (req, res) => {
     try {
         const { q: searchTerm, status, paymentMethod, startDate, endDate } = req.query;
-        
+
         const invoices = await Invoice.searchInvoices(searchTerm, {
             status,
             paymentMethod,
@@ -697,7 +710,7 @@ export const searchInvoices = async (req, res) => {
 export const getInvoicesByDateRange = async (req, res) => {
     try {
         const { startDate, endDate } = req.params;
-        
+
         const invoices = await Invoice.find({
             invoiceDate: {
                 $gte: new Date(startDate),
@@ -723,7 +736,7 @@ export const getInvoicesByDateRange = async (req, res) => {
 export const getInvoicesByStatus = async (req, res) => {
     try {
         const { status } = req.params;
-        
+
         const invoices = await Invoice.find({ status }).sort({ createdAt: -1 });
 
         res.json({
@@ -741,11 +754,14 @@ export const getInvoicesByStatus = async (req, res) => {
     }
 };
 
-// ✅ Bulk Operations (Placeholder implementations)
+// ============================================================================
+// ✅ Bulk Operations
+// ============================================================================
+
 export const bulkUpdateInvoices = async (req, res) => {
     try {
         const { invoiceIds, updates } = req.body;
-        
+
         if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -776,7 +792,7 @@ export const bulkUpdateInvoices = async (req, res) => {
 export const bulkDeleteInvoices = async (req, res) => {
     try {
         const { invoiceIds } = req.body;
-        
+
         if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -804,7 +820,7 @@ export const bulkDeleteInvoices = async (req, res) => {
 export const bulkSendInvoices = async (req, res) => {
     try {
         const { invoiceIds } = req.body;
-        
+
         if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -812,13 +828,11 @@ export const bulkSendInvoices = async (req, res) => {
             });
         }
 
-        // TODO: Implement bulk email sending
         const invoices = await Invoice.find({ _id: { $in: invoiceIds } });
-        
-        // Update sent status for all invoices
+
         await Invoice.updateMany(
             { _id: { $in: invoiceIds } },
-            { 
+            {
                 sentToCustomer: true,
                 lastSentAt: new Date(),
                 $inc: { sendCount: 1 }
@@ -840,7 +854,10 @@ export const bulkSendInvoices = async (req, res) => {
     }
 };
 
+// ============================================================================
 // ✅ System Operations
+// ============================================================================
+
 export const getInvoiceTemplates = async (req, res) => {
     try {
         const templates = [
@@ -852,7 +869,7 @@ export const getInvoiceTemplates = async (req, res) => {
             },
             {
                 id: 'detailed',
-                name: 'Detailed Invoice', 
+                name: 'Detailed Invoice',
                 description: 'Invoice with itemized billing and terms',
                 fields: ['customerName', 'customerEmail', 'items', 'terms', 'notes']
             }
@@ -875,18 +892,19 @@ export const getInvoiceTemplates = async (req, res) => {
 export const validateInvoiceData = async (req, res) => {
     try {
         const invoiceData = req.body;
-        
-        // Basic validation
+
         const errors = [];
-        
+
         if (!invoiceData.customerName) errors.push('Customer name is required');
         if (!invoiceData.customerEmail) errors.push('Customer email is required');
         if (!invoiceData.planName) errors.push('Plan name is required');
-        if (!invoiceData.planPrice || invoiceData.planPrice <= 0) errors.push('Valid plan price is required');
-        
-        // Check for duplicate invoice number
+        if (!invoiceData.planPrice || invoiceData.planPrice <= 0)
+            errors.push('Valid plan price is required');
+
         if (invoiceData.invoiceNumber) {
-            const existing = await Invoice.findOne({ invoiceNumber: invoiceData.invoiceNumber });
+            const existing = await Invoice.findOne({
+                invoiceNumber: invoiceData.invoiceNumber
+            });
             if (existing) errors.push('Invoice number already exists');
         }
 
@@ -907,10 +925,9 @@ export const validateInvoiceData = async (req, res) => {
 
 export const cleanupInvoices = async (req, res) => {
     try {
-        // Delete invoices older than 1 year with cancelled status
         const oneYearAgo = new Date();
         oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-        
+
         const result = await Invoice.deleteMany({
             status: 'cancelled',
             createdAt: { $lt: oneYearAgo }
@@ -931,15 +948,18 @@ export const cleanupInvoices = async (req, res) => {
     }
 };
 
-// ✅ Temporary Cleanup Routes
+// ============================================================================
+// ✅ Index Cleanup for invoiceNumber (Fix Duplicate Null)
+// ============================================================================
+
 export const removeInvoiceNumberIndex = async (req, res) => {
     try {
         const indexes = await Invoice.collection.getIndexes();
-        
+
         if (indexes.invoiceNumber_1) {
             await Invoice.collection.dropIndex('invoiceNumber_1');
             const updatedIndexes = await Invoice.collection.getIndexes();
-            
+
             return res.json({
                 success: true,
                 message: 'invoiceNumber index removed successfully!',
@@ -959,6 +979,7 @@ export const removeInvoiceNumberIndex = async (req, res) => {
         }
     } catch (error) {
         console.error('❌ Error removing index:', error);
+
         if (error.code === 27 || error.codeName === 'IndexNotFound') {
             return res.json({
                 success: true,
@@ -966,6 +987,7 @@ export const removeInvoiceNumberIndex = async (req, res) => {
                 status: 'ALREADY_FIXED'
             });
         }
+
         return res.status(500).json({
             success: false,
             message: 'Error removing index',
@@ -977,18 +999,20 @@ export const removeInvoiceNumberIndex = async (req, res) => {
 export const checkIndexes = async (req, res) => {
     try {
         const indexes = await Invoice.collection.getIndexes();
-        
+        const hasInvoiceNumberIndex = !!indexes.invoiceNumber_1;
+
         return res.json({
             success: true,
-            hasInvoiceNumberIndex: !!indexes.invoiceNumber_1,
-            status: indexes.invoiceNumber_1 ? 'NEEDS_CLEANUP' : 'CLEAN',
+            hasInvoiceNumberIndex,
+            status: hasInvoiceNumberIndex ? 'NEEDS_CLEANUP' : 'CLEAN',
             indexes: Object.keys(indexes),
-            recommendation: indexes.invoiceNumber_1 
-                ? 'Run DELETE /api/invoices/cleanup/remove-invoiceNumber-index' 
+            recommendation: hasInvoiceNumberIndex
+                ? 'Run DELETE /api/invoices/cleanup/remove-invoiceNumber-index'
                 : 'System ready for invoice creation'
         });
     } catch (error) {
         console.error('❌ Error checking indexes:', error);
+
         return res.status(500).json({
             success: false,
             message: 'Error checking indexes',
@@ -1001,22 +1025,24 @@ export const getSystemStatus = async (req, res) => {
     try {
         const indexes = await Invoice.collection.getIndexes();
         const hasInvoiceNumberIndex = !!indexes.invoiceNumber_1;
-        
+
         const totalInvoices = await Invoice.countDocuments();
         const latestInvoice = await Invoice.findOne().sort({ createdAt: -1 });
-        
+
         return res.json({
             success: true,
             system: {
                 database: 'Connected',
                 invoiceModel: 'Loaded',
                 totalInvoices,
-                latestInvoice: latestInvoice ? {
-                    id: latestInvoice._id,
-                    invoiceNumber: latestInvoice.invoiceNumber,
-                    customer: latestInvoice.customerName,
-                    plan: latestInvoice.planName
-                } : null
+                latestInvoice: latestInvoice
+                    ? {
+                          id: latestInvoice._id,
+                          invoiceNumber: latestInvoice.invoiceNumber,
+                          customer: latestInvoice.customerName,
+                          plan: latestInvoice.planName
+                      }
+                    : null
             },
             indexes: {
                 hasInvoiceNumberIndex,
@@ -1024,24 +1050,28 @@ export const getSystemStatus = async (req, res) => {
                 allIndexes: Object.keys(indexes),
                 status: hasInvoiceNumberIndex ? 'ACTION_REQUIRED' : 'HEALTHY'
             },
-            actions: hasInvoiceNumberIndex ? [
-                {
-                    action: 'Remove problematic index',
-                    method: 'DELETE',
-                    url: '/api/invoices/cleanup/remove-invoiceNumber-index',
-                    description: 'Fixes the duplicate invoiceNumber null error'
-                }
-            ] : [
-                {
-                    action: 'Create test invoice',
-                    method: 'POST', 
-                    url: '/api/invoices',
-                    description: 'Verify system is working correctly'
-                }
-            ]
+            actions: hasInvoiceNumberIndex
+                ? [
+                      {
+                          action: 'Remove problematic index',
+                          method: 'DELETE',
+                          url: '/api/invoices/cleanup/remove-invoiceNumber-index',
+                          description:
+                              'Fixes the duplicate invoiceNumber null error'
+                      }
+                  ]
+                : [
+                      {
+                          action: 'Create test invoice',
+                          method: 'POST',
+                          url: '/api/invoices',
+                          description: 'Verify system is working correctly'
+                      }
+                  ]
         });
     } catch (error) {
         console.error('❌ Error getting system status:', error);
+
         return res.status(500).json({
             success: false,
             message: 'Error getting system status',

@@ -1,57 +1,20 @@
+// Dashboard.jsx - FULLY UPDATED & FIXED VERSION
 import React, { useState, useEffect } from 'react';
 import { 
-  BarChart3, 
-  FileText, 
-  Image, 
-  LogOut, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Upload,
-  Save,
-  X,
-  Menu,
-  User,
-  Settings,
-  Search,
-  Moon,
-  Sun,
-  Link,
-  Download,
-  Eye,
-  Globe,
-  AlertCircle,
-  CheckCircle,
-  Info,
-  RefreshCw,
-  Database,
-  Server,
-  Shield,
-  Activity,
-  HardDrive,
-  Clock,
-  Zap,
-  TrendingUp,
-  Users,
-  Mail,
-  MessageCircle,
-  DollarSign,
-  Calendar,
-  Filter,
-  CreditCard,
-  Receipt,
-  FileSpreadsheet,
-  Printer,
-  Wifi,
-  Smartphone,
-  Star,
-  Phone,
-  MapPin
+  BarChart3, FileText, Image, LogOut, Plus, Edit, Trash2, Upload, Save, X, Menu, User, Settings, Search, Moon, Sun, Link, Download, Eye, Globe, AlertCircle, CheckCircle, Info, RefreshCw, Database, Server, Shield, Activity, HardDrive, Clock, Zap, TrendingUp, Users, Mail, MessageCircle, DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer
 } from 'lucide-react';
-import ReceiptManager from './ReceiptManager';
 import InvoiceManager from './InvoiceManager';
+import ReceiptManager from './ReceiptManager';
 
-// ✅ COMPACT BUTTON STYLES — NO ICONS, NATURAL WIDTH
+// Utility function for consistent price formatting
+const formatPrice = (price) => {
+  if (price === undefined || price === null) return '0';
+  const cleanStr = price.toString().replace(/,/g, '');
+  const num = parseInt(cleanStr, 10);
+  return isNaN(num) ? price : num.toLocaleString();
+};
+
+// ✅ COMPACT BUTTON STYLES
 const BUTTON_STYLES = {
   primary: {
     base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
@@ -88,8 +51,7 @@ const Dashboard = () => {
     totalReceipts: 0,
     pendingInvoices: 0,
     paidInvoices: 0,
-    totalRevenue: 0,
-    monthlyRevenue: 0
+    totalRevenue: 0
   });
   const [editingItem, setEditingItem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -113,7 +75,7 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [notification, setNotification] = useState({ show: false, message: '', type: 'info' });
 
-  // ✅ DYNAMIC API URL — Will work in any environment
+  // ✅ DYNAMIC API URL
   const getApiBaseUrl = () => {
     if (import.meta.env.VITE_API_BASE_URL) {
       return import.meta.env.VITE_API_BASE_URL;
@@ -132,8 +94,9 @@ const Dashboard = () => {
     if (type === 'success') emoji = '✅';
     else if (type === 'error') emoji = '🚨';
     else if (message.includes('Welcome')) emoji = '👋';
-    else if (message.includes('Publish') || message.includes('created') || message.includes('updated')) emoji = '📤';
+    else if (message.includes('Publish') || message.includes('created') || message.includes('updated') || message.includes('generated')) emoji = '📤';
     else if (message.includes('wait') || message.includes('Loading')) emoji = '⏳';
+    else if (message.includes('refreshed')) emoji = '🔄';
     setNotification({ show: true, message: `${emoji} ${message}`, type });
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'info' });
@@ -187,40 +150,57 @@ const Dashboard = () => {
           setPortfolioItems(portfolioData);
         }
 
-        // Fetch invoices
-        const invoicesRes = await fetch(`${API_BASE_URL}/api/invoices`, { headers });
-        if (invoicesRes.ok) {
-          const invoicesResponse = await invoicesRes.json();
-          const invoicesData = invoicesResponse.invoices || invoicesResponse.data || [];
-          setInvoices(invoicesData);
-          
-          // Calculate stats from invoices
-          const totalRevenue = invoicesData.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0);
-          const paidInvoices = invoicesData.filter(inv => inv.status === 'paid');
-          const monthlyRevenue = paidInvoices.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0);
-          
-          setStats({
-            totalInvoices: invoicesData.length,
-            totalReceipts: receipts.length,
-            pendingInvoices: invoicesData.filter(inv => inv.status === 'pending').length,
-            paidInvoices: paidInvoices.length,
-            totalRevenue,
-            monthlyRevenue
-          });
+        // Fetch invoices with proper error handling
+        let fetchedInvoices = [];
+        try {
+          const invoicesRes = await fetch(`${API_BASE_URL}/api/invoices`, { headers });
+          if (invoicesRes.ok) {
+            const invoicesResponse = await invoicesRes.json();
+            fetchedInvoices = invoicesResponse.invoices || invoicesResponse.data || [];
+            console.log('📄 Fetched invoices:', fetchedInvoices.length);
+          } else {
+            console.warn('Invoices endpoint not available');
+          }
+        } catch (invoiceError) {
+          console.warn('Error fetching invoices:', invoiceError);
         }
+        setInvoices(fetchedInvoices);
 
-        // Fetch receipts
-        const receiptsRes = await fetch(`${API_BASE_URL}/api/receipts`, { headers });
-        if (receiptsRes.ok) {
-          const receiptsResponse = await receiptsRes.json();
-          setReceipts(receiptsResponse.receipts || receiptsResponse.data || []);
+        // Fetch receipts with proper error handling
+        let fetchedReceipts = [];
+        try {
+          const receiptsRes = await fetch(`${API_BASE_URL}/api/receipts`, { headers });
+          if (receiptsRes.ok) {
+            const receiptsResponse = await receiptsRes.json();
+            fetchedReceipts = receiptsResponse.receipts || receiptsResponse.data || [];
+            console.log('🧾 Fetched receipts:', fetchedReceipts.length);
+          } else {
+            console.warn('Receipts endpoint not available');
+          }
+        } catch (receiptError) {
+          console.warn('Error fetching receipts:', receiptError);
         }
+        setReceipts(fetchedReceipts);
+
+        // Calculate stats from fetched data
+        const calculatedStats = {
+          totalInvoices: fetchedInvoices.length,
+          totalReceipts: fetchedReceipts.length,
+          pendingInvoices: fetchedInvoices.filter(inv => inv.status === 'pending' || inv.status === 'draft').length,
+          paidInvoices: fetchedInvoices.filter(inv => inv.status === 'paid').length,
+          totalRevenue: fetchedInvoices.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0)
+        };
+        setStats(calculatedStats);
 
         // Fetch settings
-        const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
-        if (settingsRes.ok) {
-          const settings = await settingsRes.json();
-          setSettingsData(settings);
+        try {
+          const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
+          if (settingsRes.ok) {
+            const settings = await settingsRes.json();
+            setSettingsData(settings);
+          }
+        } catch (settingsError) {
+          console.warn('Settings endpoint not available');
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -235,6 +215,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [API_BASE_URL]);
 
@@ -357,6 +338,7 @@ const Dashboard = () => {
       if (!formData.category?.trim()) {
         throw new Error('Category is required');
       }
+
       const payload = {
         title: formData.title.trim(),
         category: formData.category.trim(),
@@ -364,11 +346,13 @@ const Dashboard = () => {
         content: formData.content.trim(),
         description: formData.content.trim()
       };
+
       Object.keys(payload).forEach(key => {
         if (payload[key] === '' || payload[key] == null) {
           delete payload[key];
         }
       });
+
       if (activeTab === 'blog') {
         endpoint = `${API_BASE_URL}/api/blog`;
         if (isEditing && editingItem && editingItem._id) {
@@ -380,7 +364,9 @@ const Dashboard = () => {
           endpoint = `${endpoint}/${editingItem._id}`;
         }
       }
+
       const method = isEditing && editingItem && editingItem._id ? 'PUT' : 'POST';
+
       const res = await fetch(endpoint, {
         method: method,
         headers: {
@@ -389,10 +375,12 @@ const Dashboard = () => {
         },
         body: JSON.stringify(payload)
       });
+
       const responseData = await res.json();
       if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
+
       if (activeTab === 'blog') {
         if (isEditing) {
           setBlogPosts(prev => prev.map(item => 
@@ -411,6 +399,7 @@ const Dashboard = () => {
           setPortfolioItems(prev => [...prev, newItem]);
         }
       }
+
       setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
       setEditingItem(null);
       setIsEditing(false);
@@ -437,6 +426,16 @@ const Dashboard = () => {
     setIsEditing(true);
     setUploadMethod('url');
     setError('');
+    // Switch to the correct tab if editing from dashboard
+    if (item.title && blogPosts.some(post => post._id === item._id)) {
+        setActiveTab('blog');
+    } else if (item.title && portfolioItems.some(port => port._id === item._id)) {
+        setActiveTab('portfolio');
+    } else if (item.invoiceNumber) {
+        setActiveTab('invoices');
+    } else if (item.receiptNumber) {
+        setActiveTab('receipts');
+    }
   };
 
   const handleDelete = async (id, type) => {
@@ -510,6 +509,7 @@ const Dashboard = () => {
         </div>
       );
     }
+
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -582,6 +582,8 @@ const Dashboard = () => {
             showNotification={showNotification}
             invoices={invoices}
             setInvoices={setInvoices}
+            receipts={receipts}
+            setReceipts={setReceipts}
           />
         );
       case 'receipts':
@@ -649,6 +651,7 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div 
@@ -656,6 +659,7 @@ const Dashboard = () => {
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
+
       {/* Sidebar */}
       <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
         <div className="p-5 border-b border-gray-200 flex justify-between items-center">
@@ -719,7 +723,7 @@ const Dashboard = () => {
         <div className="mt-8 px-3 pb-4">
           <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
           <button 
-            onClick={() => { setActiveTab('blog'); setIsEditing(true); setSidebarOpen(false); }}
+            onClick={() => { setActiveTab('blog'); setIsEditing(false); setEditingItem(null); setSidebarOpen(false); }}
             className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
               darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
             }`}
@@ -730,7 +734,7 @@ const Dashboard = () => {
             New Blog Post
           </button>
           <button 
-            onClick={() => { setActiveTab('portfolio'); setIsEditing(true); setSidebarOpen(false); }}
+            onClick={() => { setActiveTab('portfolio'); setIsEditing(false); setEditingItem(null); setSidebarOpen(false); }}
             className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
               darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
             }`}
@@ -775,6 +779,7 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
@@ -854,7 +859,6 @@ const DashboardOverview = ({
   API_BASE_URL,
   showNotification
 }) => {
-
   const exportInvoicesToExcel = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -863,7 +867,6 @@ const DashboardOverview = ({
           'Authorization': `Bearer ${token}`
         }
       });
-      
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -884,66 +887,6 @@ const DashboardOverview = ({
     }
   };
 
-  // WiFi Plans data matching the WifiPlans.jsx format
-  const wifiPlans = [
-    { 
-      id: 1, 
-      name: "Jumbo", 
-      price: "1499", 
-      speed: "8Mbps", 
-      features: ["Great for browsing", "24/7 Support", "Free Installation"], 
-      type: "home", 
-      popular: false 
-    },
-    { 
-      id: 2, 
-      name: "Buffalo", 
-      price: "1999", 
-      speed: "15Mbps", 
-      features: ["Streaming & Social Media", "24/7 Support", "Free Installation"], 
-      type: "home", 
-      popular: false 
-    },
-    { 
-      id: 3, 
-      name: "Ndovu", 
-      price: "2499", 
-      speed: "25Mbps", 
-      features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"], 
-      type: "home", 
-      popular: false 
-    },
-    { 
-      id: 4, 
-      name: "Gazzelle", 
-      price: "2999", 
-      speed: "30Mbps", 
-      features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"], 
-      type: "home", 
-      popular: true 
-    },
-    { 
-      id: 5, 
-      name: "Tiger", 
-      price: "3999", 
-      speed: "40Mbps", 
-      features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"], 
-      type: "home", 
-      popular: false 
-    },
-    { 
-      id: 6, 
-      name: "Chui", 
-      price: "4999", 
-      speed: "60Mbps", 
-      features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], 
-      type: "home", 
-      popular: false 
-    },
-  ];
-
-  const colors = ["blue", "red", "goldenYellow", "goldenGreen", "purple", "pink"];
-
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -953,14 +896,14 @@ const DashboardOverview = ({
         </div>
         <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
           <button 
-            onClick={() => { setIsEditing(true); setActiveTab('blog'); }}
+            onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('blog'); }}
             className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
           >
             <Plus size={16} className="mr-1.5" />
             <span>New Blog Post</span>
           </button>
           <button 
-            onClick={() => { setIsEditing(true); setActiveTab('portfolio'); }}
+            onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('portfolio'); }}
             className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}
           >
             <Plus size={16} className="mr-1.5" />
@@ -982,17 +925,7 @@ const DashboardOverview = ({
           </button>
         </div>
       </div>
-
-      {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard 
-          title="Total Revenue" 
-          value={`Ksh ${(stats.totalRevenue || 0).toLocaleString()}`} 
-          change={`Ksh ${(stats.monthlyRevenue || 0).toLocaleString()} this month`} 
-          icon={<DollarSign size={20} />}
-          color="green"
-          darkMode={darkMode}
-        />
         <StatCard 
           title="Blog Posts" 
           value={blogPosts.length} 
@@ -1002,57 +935,30 @@ const DashboardOverview = ({
           darkMode={darkMode}
         />
         <StatCard 
-          title="Total Invoices" 
-          value={stats.totalInvoices || invoices.length} 
-          change={`${stats.pendingInvoices || invoices.filter(inv => inv.status === 'pending').length} pending`} 
-          icon={<CreditCard size={20} />}
+          title="Portfolio Items" 
+          value={portfolioItems.length} 
+          change={`${portfolioItems.length} published`} 
+          icon={<Image size={20} />}
           color="gold"
           darkMode={darkMode}
         />
         <StatCard 
-          title="Total Receipts" 
-          value={stats.totalReceipts || receipts.length} 
+          title="Total Invoices" 
+          value={stats.totalInvoices || invoices.length} 
+          change={`${stats.pendingInvoices || invoices.filter(inv => inv.status === 'pending').length} pending`} 
+          icon={<CreditCard size={20} />}
+          color="green"
+          darkMode={darkMode}
+        />
+        <StatCard 
+          title="Total Revenue" 
+          value={`Ksh ${formatPrice(stats.totalRevenue || 0)}`} 
           change={`${stats.paidInvoices || invoices.filter(inv => inv.status === 'paid').length} paid`} 
-          icon={<Receipt size={20} />}
+          icon={<DollarSign size={20} />}
           color="purple"
           darkMode={darkMode}
         />
       </div>
-
-      {/* WiFi Plans Section */}
-      <div className="mb-8">
-        <div className={`${themeClasses.card} p-6 rounded-xl shadow-lg border backdrop-blur-sm`}>
-          <div className="flex justify-between items-center mb-6">
-            <h3 className={`text-xl font-bold ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>
-              Optimas Fiber Packages
-            </h3>
-            <button 
-              onClick={() => setActiveTab('invoices')}
-              className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center`}
-            >
-              <Plus size={14} className="mr-1.5" />
-              Create Invoice
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {wifiPlans.map((plan, index) => (
-              <WifiPlanCard 
-                key={plan.id}
-                plan={plan}
-                color={colors[index]}
-                darkMode={darkMode}
-                onSelect={() => {
-                  setActiveTab('invoices');
-                  // You can pass the selected plan data to invoice creation
-                  showNotification(`Selected ${plan.name} plan for invoice creation`, 'info');
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RecentList 
           title="Recent Blog Posts" 
@@ -1079,95 +985,6 @@ const DashboardOverview = ({
   );
 };
 
-// WiFi Plan Card Component (Matching WifiPlans.jsx design)
-const WifiPlanCard = ({ plan, color, darkMode, onSelect }) => {
-  const colorMap = {
-    blue: {
-      bg: darkMode ? "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)" : "linear-gradient(135deg, #182b5c 0%, #0f1f45 100%)",
-      button: darkMode ? BUTTON_STYLES.small.dark : BUTTON_STYLES.small.light,
-    },
-    red: {
-      bg: darkMode ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)" : "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
-      button: "bg-red-600 hover:bg-red-700 text-white",
-    },
-    goldenYellow: {
-      bg: darkMode ? "linear-gradient(135deg, #92400e 0%, #d97706 100%)" : "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
-      button: "bg-yellow-600 hover:bg-yellow-700 text-white",
-    },
-    goldenGreen: {
-      bg: darkMode ? "linear-gradient(135deg, #047857 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)",
-      button: "bg-green-600 hover:bg-green-700 text-white",
-    },
-    purple: {
-      bg: darkMode ? "linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)" : "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
-      button: "bg-purple-600 hover:bg-purple-700 text-white",
-    },
-    pink: {
-      bg: darkMode ? "linear-gradient(135deg, #be185d 0%, #db2777 100%)" : "linear-gradient(135deg, #db2777 0%, #be185d 100%)",
-      button: "bg-pink-600 hover:bg-pink-700 text-white",
-    }
-  };
-  
-  const currentColor = colorMap[color];
-
-  return (
-    <div 
-      className={`rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative h-full flex flex-col group ${
-        darkMode ? 'border border-gray-700' : 'border border-gray-200'
-      }`}
-      style={{ background: currentColor.bg }}
-    >
-      {plan.popular && (
-        <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md">
-          <Star size={12} className="mr-1 fill-current" />
-          Popular
-        </div>
-      )}
-      
-      {/* Card Content */}
-      <div className="flex-grow flex flex-col p-5">
-        <div className="mb-4">
-          <h3 className="text-lg font-bold text-white mb-2">{plan.name}</h3>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center">
-              <Wifi size={14} className="mr-1 text-white" />
-              <span className="text-sm text-white opacity-90">{plan.speed}</span>
-            </div>
-            <span className="text-sm bg-white/20 px-2 py-1 rounded-full text-white">
-              {plan.name}
-            </span>
-          </div>
-        </div>
-        
-        <div className="flex-grow">
-          <ul className="mb-4 space-y-2">
-            {plan.features.map((feature, idx) => (
-              <li key={idx} className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-white mr-2 flex-shrink-0" />
-                <span className="text-white text-sm">{feature}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        
-        {/* Bottom Section */}
-        <div className="pt-4">
-          <div className="text-center mb-3">
-            <span className="text-xl font-bold text-white">Ksh {plan.price}</span>
-            <span className="text-white opacity-80 text-sm"> /month</span>
-          </div>
-          <button
-            onClick={onSelect}
-            className={`${BUTTON_STYLES.small.base} ${currentColor.button} w-full`}
-          >
-            CREATE INVOICE
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Stat Card Component
 const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   const colorClasses = {
@@ -1184,6 +1001,7 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   };
   const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
   const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
+
   return (
     <div className={`${colorClasses[color]} p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105`}>
       <div className="flex items-center justify-between">
@@ -1213,7 +1031,7 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
       {items.map(item => (
         <li key={item._id} className="py-3 flex justify-between items-center">
           <div className="flex items-center">
-            {item.imageUrl && (
+            {item.imageUrl && type !== 'invoices' && (
               <img 
                 src={item.imageUrl} 
                 alt={item.title} 
@@ -1240,6 +1058,11 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
                 }`}>
                   {item.status || 'pending'}
                 </span>
+              )}
+              {type === 'invoices' && item.planPrice && (
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Ksh {formatPrice(item.planPrice)}
+                </p>
               )}
             </div>
           </div>
@@ -1268,7 +1091,7 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
   </div>
 );
 
-// Content Manager Component (Remaining components stay the same as your original)
+// Content Manager Component
 const ContentManager = ({
   title,
   items,
@@ -1329,6 +1152,7 @@ const ContentManager = ({
             <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
             <div className={`flex items-center space-x-4 p-2 rounded-lg ${darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gray-100 border border-gray-200'}`}>
               <button
+                type="button"
                 onClick={() => setUploadMethod('url')}
                 className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                   uploadMethod === 'url' 
@@ -1339,6 +1163,7 @@ const ContentManager = ({
                 <Link size={16} className="inline-block mr-1.5" /> Use URL
               </button>
               <button
+                type="button"
                 onClick={() => setUploadMethod('upload')}
                 className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                   uploadMethod === 'upload' 
@@ -1368,9 +1193,10 @@ const ContentManager = ({
                 }`}
                 onClick={() => document.getElementById('file-upload').click()}
               >
+                {/* ✅ FIXED: added missing closing quote on id */}
                 <input 
                   type="file" 
-                  id='file-upload' 
+                  id="file-upload" 
                   className="hidden" 
                   accept="image/*"
                   onChange={(e) => onImageChange(e.target.files[0])}
@@ -1406,6 +1232,7 @@ const ContentManager = ({
           <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
             {isEditing && (
               <button
+                type="button"
                 onClick={onCancel}
                 className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light}`}
               >
@@ -1414,6 +1241,7 @@ const ContentManager = ({
               </button>
             )}
             <button
+              type="button"
               onClick={onSave}
               className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center justify-center`}
             >
@@ -1461,7 +1289,7 @@ const ContentManager = ({
                         src={item.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YwZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiNhYmJjZDAiPk88L3RleHQ+PC9zdmc+'}
                         alt={item.title}
                         onError={(e) => {
-                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YwZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiNhYmJjZDAiPk88L3RleHQ+PC9zdmc+';
+                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwLy93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2FiYmNkMCI+TzwvdGV4dD48L3N2Zz4=';
                           e.target.onerror = null;
                         }}
                       />

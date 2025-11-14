@@ -43,10 +43,12 @@ const receiptSchema = new mongoose.Schema({
     required: [true, 'Customer phone is required'],
     trim: true
   },
+  // ✅ FIXED: Made customerLocation optional to match frontend
   customerLocation: {
     type: String,
     trim: true,
-    maxlength: [200, 'Location cannot exceed 200 characters']
+    maxlength: [200, 'Location cannot exceed 200 characters'],
+    default: '' // Made optional with default value
   },
 
   // ✅ NEW: Itemized receipt items for detailed billing
@@ -121,7 +123,11 @@ const receiptSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     required: true,
-    enum: ['cash', 'card', 'bank_transfer', 'mobile_money', 'cheque', 'other'],
+    // ✅ FIXED: Added proper enum values that match frontend
+    enum: {
+      values: ['cash', 'card', 'bank_transfer', 'mobile_money', 'cheque', 'other'],
+      message: 'Payment method `{VALUE}` is not supported. Use: cash, card, bank_transfer, mobile_money, cheque, or other'
+    },
     default: 'cash'
   },
   paymentDate: {
@@ -483,7 +489,7 @@ receiptSchema.statics.generateFromInvoice = async function(invoiceData) {
       customerName: invoiceData.customerName,
       customerEmail: invoiceData.customerEmail,
       customerPhone: invoiceData.customerPhone,
-      customerLocation: invoiceData.customerLocation,
+      customerLocation: invoiceData.customerLocation || '', // ✅ FIXED: Handle missing location
       items: invoiceData.items || [],
       subtotal: invoiceData.subtotal || invoiceData.planPrice,
       taxRate: invoiceData.taxRate || 0,

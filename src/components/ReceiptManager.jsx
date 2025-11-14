@@ -1,3 +1,4 @@
+// ReceiptManager.jsx - UPDATED VERSION WITH FIXED VALIDATION
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -26,6 +27,43 @@ import {
   CreditCard
 } from 'lucide-react';
 
+// Utility function for consistent price formatting in KSH
+const formatPrice = (price) => {
+  if (price === undefined || price === null) return '0';
+  const cleanStr = price.toString().replace(/,/g, '');
+  const num = parseInt(cleanStr, 10);
+  return isNaN(num) ? price : num.toLocaleString();
+};
+
+// Authentication check function
+const checkAuth = async (API_BASE_URL) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Authentication session expired. Please log in again.');
+    }
+    
+    // Verify token with backend
+    const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      // Token is invalid, clear storage and redirect
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      throw new Error('Authentication failed. Please log in again.');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Auth check failed:', error);
+    throw error;
+  }
+};
+
 const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification, receipts, setReceipts, invoices }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -40,34 +78,46 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [searchInvoiceTerm, setSearchInvoiceTerm] = useState('');
   const [showInvoiceSearch, setShowInvoiceSearch] = useState(false);
 
-  // Form state for creating/editing receipts
+  // Form state for creating/editing receipts - UPDATED TO MATCH YOUR MODEL
   const [receiptForm, setReceiptForm] = useState({
     receiptNumber: '',
+    invoiceId: '',
     invoiceNumber: '',
     customerName: '',
     customerEmail: '',
     customerPhone: '',
+    customerAddress: '', // Frontend uses customerAddress
     receiptDate: new Date().toISOString().split('T')[0],
     paymentDate: new Date().toISOString().split('T')[0],
-    items: [{ description: 'Monthly Internet Service', amount: 59.99 }],
-    subtotal: 59.99,
-    tax: 0,
-    total: 59.99,
-    amountPaid: 59.99,
-    paymentMethod: 'cash',
-    status: 'paid',
-    notes: ''
+    items: [{ description: 'Monthly Internet Service', quantity: 1, unitPrice: 0, amount: 0 }],
+    subtotal: 0,
+    taxRate: 0,
+    taxAmount: 0,
+    discount: 0,
+    discountType: 'none',
+    total: 0,
+    amountPaid: 0,
+    balance: 0,
+    paymentMethod: 'mobile_money',
+    status: 'issued',
+    serviceDescription: '',
+    planName: '',
+    planPrice: 0,
+    planSpeed: '',
+    notes: '',
+    terms: 'Thank you for your business!',
+    paymentReference: '',
+    transactionId: '',
+    bankReference: ''
   });
 
   // Fetch receipts from backend
   const fetchReceipts = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication session expired. Please log in again.');
-      }
+      await checkAuth(API_BASE_URL); // Check authentication first
 
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/receipts`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -93,18 +143,19 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         receiptsData = [];
       }
 
-      // Ensure receipt numbers are properly formatted
-      const formattedReceipts = receiptsData.map((receipt, index) => ({
-        ...receipt,
-        receiptNumber: receipt.receiptNumber || `RCP-${String(receiptsData.length - index).padStart(3, '0')}`
-      }));
-      
-      console.log('Fetched receipts:', formattedReceipts);
-      setReceipts(formattedReceipts);
+      console.log('📄 Fetched receipts:', receiptsData);
+      setReceipts(receiptsData);
     } catch (error) {
       console.error('Error fetching receipts:', error);
       showNotification(`Error loading receipts: ${error.message}`, 'error');
       setReceipts([]);
+      
+      // Redirect to login if authentication fails
+      if (error.message.includes('Authentication')) {
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      }
     } finally {
       setLoading(false);
     }
@@ -134,48 +185,102 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     return `RCP-${String(latestNumber + 1).padStart(3, '0')}`;
   };
 
-  // Calculate totals
-  const calculateTotals = (items, tax = 0) => {
+  // Calculate totals based on your model structure
+  const calculateTotals = (items, taxRate = 0, discount = 0, discountType = 'none') => {
     const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    const total = subtotal + (parseFloat(tax) || 0);
-    return { subtotal, total };
+    const taxAmount = (subtotal * (parseFloat(taxRate) || 0)) / 100;
+    
+    let discountAmount = 0;
+    if (discountType === 'percentage') {
+      discountAmount = (subtotal * (parseFloat(discount) || 0)) / 100;
+    } else if (discountType === 'fixed') {
+      discountAmount = parseFloat(discount) || 0;
+    }
+    
+    const total = subtotal + taxAmount - discountAmount;
+    
+    return { subtotal, taxAmount, total };
   };
 
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setReceiptForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Recalculate totals if items or tax changes
-    if (name === 'tax') {
-      const { subtotal } = calculateTotals(receiptForm.items);
-      setReceiptForm(prev => ({
+    setReceiptForm(prev => {
+      const updatedForm = {
         ...prev,
-        subtotal,
-        total: subtotal + (parseFloat(value) || 0)
-      }));
-    }
+        [name]: value
+      };
+
+      // Recalculate totals if financial fields change
+      if (['taxRate', 'discount', 'discountType'].includes(name)) {
+        const { subtotal, taxAmount, total } = calculateTotals(
+          updatedForm.items, 
+          updatedForm.taxRate, 
+          updatedForm.discount, 
+          updatedForm.discountType
+        );
+        
+        return {
+          ...updatedForm,
+          subtotal,
+          taxAmount,
+          total,
+          amountPaid: updatedForm.amountPaid || total,
+          balance: Math.max(0, total - (updatedForm.amountPaid || 0))
+        };
+      }
+
+      // Update balance when amountPaid changes
+      if (name === 'amountPaid') {
+        const amountPaid = parseFloat(value) || 0;
+        return {
+          ...updatedForm,
+          amountPaid,
+          balance: Math.max(0, updatedForm.total - amountPaid)
+        };
+      }
+
+      return updatedForm;
+    });
   };
 
   // Handle item changes
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...receiptForm.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [field]: field === 'amount' ? parseFloat(value) || 0 : value
-    };
+    const item = updatedItems[index];
     
-    const { subtotal, total } = calculateTotals(updatedItems, receiptForm.tax);
+    if (field === 'quantity' || field === 'unitPrice') {
+      const quantity = field === 'quantity' ? parseFloat(value) || 0 : item.quantity;
+      const unitPrice = field === 'unitPrice' ? parseFloat(value) || 0 : item.unitPrice;
+      const amount = quantity * unitPrice;
+      
+      updatedItems[index] = {
+        ...item,
+        [field]: field === 'quantity' || field === 'unitPrice' ? parseFloat(value) || 0 : value,
+        amount
+      };
+    } else {
+      updatedItems[index] = {
+        ...item,
+        [field]: value
+      };
+    }
+    
+    const { subtotal, taxAmount, total } = calculateTotals(
+      updatedItems, 
+      receiptForm.taxRate, 
+      receiptForm.discount, 
+      receiptForm.discountType
+    );
     
     setReceiptForm(prev => ({
       ...prev,
       items: updatedItems,
       subtotal,
+      taxAmount,
       total,
-      amountPaid: total // Auto-set amount paid to total
+      amountPaid: prev.amountPaid || total,
+      balance: Math.max(0, total - (prev.amountPaid || 0))
     }));
   };
 
@@ -183,7 +288,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const addItem = () => {
     setReceiptForm(prev => ({
       ...prev,
-      items: [...prev.items, { description: '', amount: 0 }]
+      items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, amount: 0 }]
     }));
   };
 
@@ -191,32 +296,79 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const removeItem = (index) => {
     if (receiptForm.items.length > 1) {
       const updatedItems = receiptForm.items.filter((_, i) => i !== index);
-      const { subtotal, total } = calculateTotals(updatedItems, receiptForm.tax);
+      const { subtotal, taxAmount, total } = calculateTotals(
+        updatedItems, 
+        receiptForm.taxRate, 
+        receiptForm.discount, 
+        receiptForm.discountType
+      );
       
       setReceiptForm(prev => ({
         ...prev,
         items: updatedItems,
         subtotal,
+        taxAmount,
         total,
-        amountPaid: total
+        amountPaid: prev.amountPaid || total,
+        balance: Math.max(0, total - (prev.amountPaid || 0))
       }));
     }
   };
 
-  // Create new receipt
+  // Create new receipt - FIXED VALIDATION
   const createReceipt = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication session expired. Please log in again.');
+      await checkAuth(API_BASE_URL); // Check authentication first
+
+      // Validate required fields
+      if (!receiptForm.customerName?.trim()) {
+        throw new Error('Customer name is required');
+      }
+      if (!receiptForm.customerEmail?.trim()) {
+        throw new Error('Customer email is required');
       }
 
-      // Generate receipt number if not provided
+      // ✅ CRITICAL FIX: Map frontend customerAddress to backend customerLocation
       const receiptData = {
-        ...receiptForm,
-        receiptNumber: receiptForm.receiptNumber || generateReceiptNumber()
+        receiptNumber: receiptForm.receiptNumber || generateReceiptNumber(),
+        invoiceNumber: receiptForm.invoiceNumber || '',
+        customerName: receiptForm.customerName.trim(),
+        customerEmail: receiptForm.customerEmail.trim(),
+        customerPhone: receiptForm.customerPhone?.trim() || '',
+        // ✅ FIX: Map customerAddress to customerLocation for backend
+        customerLocation: receiptForm.customerAddress?.trim() || 'Not specified', // Backend expects this field
+        receiptDate: new Date(receiptForm.receiptDate),
+        paymentDate: new Date(receiptForm.paymentDate),
+        items: receiptForm.items.map(item => ({
+          description: item.description?.trim() || 'Service',
+          quantity: parseFloat(item.quantity) || 1,
+          unitPrice: parseFloat(item.unitPrice) || 0,
+          amount: parseFloat(item.amount) || 0
+        })),
+        subtotal: parseFloat(receiptForm.subtotal) || 0,
+        taxRate: parseFloat(receiptForm.taxRate) || 0,
+        taxAmount: parseFloat(receiptForm.taxAmount) || 0,
+        discount: parseFloat(receiptForm.discount) || 0,
+        discountType: receiptForm.discountType || 'none',
+        total: parseFloat(receiptForm.total) || 0,
+        amountPaid: parseFloat(receiptForm.amountPaid) || 0,
+        balance: parseFloat(receiptForm.balance) || 0,
+        paymentMethod: receiptForm.paymentMethod || 'mobile_money',
+        status: receiptForm.amountPaid >= receiptForm.total ? 'paid' : 'issued',
+        serviceDescription: receiptForm.serviceDescription?.trim() || '',
+        planName: receiptForm.planName?.trim() || '',
+        planPrice: parseFloat(receiptForm.planPrice) || 0,
+        planSpeed: receiptForm.planSpeed?.trim() || '',
+        notes: receiptForm.notes?.trim() || '',
+        terms: receiptForm.terms?.trim() || 'Thank you for your business!',
+        paymentReference: receiptForm.paymentReference?.trim() || '',
+        transactionId: receiptForm.transactionId?.trim() || '',
+        bankReference: receiptForm.bankReference?.trim() || ''
       };
 
+      console.log('📤 Creating receipt with data:', receiptData);
+
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/receipts`, {
         method: 'POST',
         headers: {
@@ -226,55 +378,110 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         body: JSON.stringify(receiptData)
       });
 
+      const responseData = await response.json();
+
       if (response.ok) {
-        const newReceipt = await response.json();
-        setReceipts(prev => [...prev, newReceipt.receipt || newReceipt]);
+        const newReceipt = responseData.receipt || responseData.data || responseData;
+        setReceipts(prev => [...prev, newReceipt]);
         setShowCreateModal(false);
         resetForm();
-        showNotification('Receipt created successfully!', 'success');
+        showNotification('✅ Receipt created successfully!', 'success');
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create receipt');
+        // Enhanced error handling for validation errors
+        console.error('❌ Server response:', responseData);
+        if (responseData.errors) {
+          const errorMessages = Object.values(responseData.errors).join(', ');
+          throw new Error(`Validation failed: ${errorMessages}`);
+        }
+        throw new Error(responseData.message || `Failed to create receipt: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error creating receipt:', error);
-      showNotification(`Error: ${error.message}`, 'error');
+      console.error('❌ Error creating receipt:', error);
+      showNotification(`🚨 Error: ${error.message}`, 'error');
+      
+      // Redirect to login if authentication fails
+      if (error.message.includes('Authentication')) {
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      }
     }
   };
 
   // Update receipt
   const updateReceipt = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication session expired. Please log in again.');
-      }
+      await checkAuth(API_BASE_URL);
 
+      // ✅ FIX: Map customerAddress to customerLocation for backend
+      const receiptData = {
+        receiptNumber: receiptForm.receiptNumber,
+        invoiceNumber: receiptForm.invoiceNumber,
+        customerName: receiptForm.customerName.trim(),
+        customerEmail: receiptForm.customerEmail.trim(),
+        customerPhone: receiptForm.customerPhone?.trim() || '',
+        // ✅ FIX: Map customerAddress to customerLocation for backend
+        customerLocation: receiptForm.customerAddress?.trim() || 'Not specified', // Backend expects this field
+        receiptDate: new Date(receiptForm.receiptDate),
+        paymentDate: new Date(receiptForm.paymentDate),
+        items: receiptForm.items.map(item => ({
+          description: item.description?.trim() || 'Service',
+          quantity: parseFloat(item.quantity) || 1,
+          unitPrice: parseFloat(item.unitPrice) || 0,
+          amount: parseFloat(item.amount) || 0
+        })),
+        subtotal: parseFloat(receiptForm.subtotal) || 0,
+        taxRate: parseFloat(receiptForm.taxRate) || 0,
+        taxAmount: parseFloat(receiptForm.taxAmount) || 0,
+        discount: parseFloat(receiptForm.discount) || 0,
+        discountType: receiptForm.discountType || 'none',
+        total: parseFloat(receiptForm.total) || 0,
+        amountPaid: parseFloat(receiptForm.amountPaid) || 0,
+        balance: parseFloat(receiptForm.balance) || 0,
+        paymentMethod: receiptForm.paymentMethod || 'mobile_money',
+        status: receiptForm.amountPaid >= receiptForm.total ? 'paid' : 'issued',
+        serviceDescription: receiptForm.serviceDescription?.trim() || '',
+        planName: receiptForm.planName?.trim() || '',
+        planPrice: parseFloat(receiptForm.planPrice) || 0,
+        planSpeed: receiptForm.planSpeed?.trim() || '',
+        notes: receiptForm.notes?.trim() || '',
+        terms: receiptForm.terms?.trim() || 'Thank you for your business!',
+        paymentReference: receiptForm.paymentReference?.trim() || '',
+        transactionId: receiptForm.transactionId?.trim() || '',
+        bankReference: receiptForm.bankReference?.trim() || ''
+      };
+
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/receipts/${editingReceipt._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(receiptForm)
+        body: JSON.stringify(receiptData)
       });
 
+      const responseData = await response.json();
+
       if (response.ok) {
-        const updatedReceipt = await response.json();
+        const updatedReceipt = responseData.receipt || responseData.data || responseData;
         setReceipts(prev => prev.map(rec => 
-          rec._id === editingReceipt._id ? updatedReceipt.receipt : rec
+          rec._id === editingReceipt._id ? updatedReceipt : rec
         ));
         setShowCreateModal(false);
         setEditingReceipt(null);
         resetForm();
-        showNotification('Receipt updated successfully!', 'success');
+        showNotification('✅ Receipt updated successfully!', 'success');
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update receipt');
+        if (responseData.errors) {
+          const errorMessages = Object.values(responseData.errors).join(', ');
+          throw new Error(`Validation failed: ${errorMessages}`);
+        }
+        throw new Error(responseData.message || 'Failed to update receipt');
       }
     } catch (error) {
       console.error('Error updating receipt:', error);
-      showNotification(`Error: ${error.message}`, 'error');
+      showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
 
@@ -285,11 +492,9 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication session expired. Please log in again.');
-      }
+      await checkAuth(API_BASE_URL);
 
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/receipts/${receiptId}`, {
         method: 'DELETE',
         headers: {
@@ -299,168 +504,103 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
       if (response.ok) {
         setReceipts(prev => prev.filter(rec => rec._id !== receiptId));
-        showNotification('Receipt deleted successfully!', 'success');
+        showNotification('✅ Receipt deleted successfully!', 'success');
       } else {
-        throw new Error('Failed to delete receipt');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete receipt');
       }
     } catch (error) {
       console.error('Error deleting receipt:', error);
-      showNotification(`Error: ${error.message}`, 'error');
-    }
-  };
-
-  // Export receipt as PDF
-  const exportReceiptPDF = async (receipt) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/receipts/${receipt._id}/export/pdf`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `${receipt.receiptNumber || 'receipt'}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        showNotification('Receipt PDF exported successfully!', 'success');
-      } else {
-        // Fallback to client-side PDF generation
-        generateClientSidePDF(receipt);
-      }
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-      generateClientSidePDF(receipt);
-    }
-  };
-
-  // Client-side PDF generation fallback
-  const generateClientSidePDF = (receipt) => {
-    showNotification('Generating PDF preview...', 'info');
-    setSelectedReceipt(receipt);
-    setShowPDFModal(true);
-  };
-
-  // Send receipt to client
-  const sendReceiptToClient = async (receipt) => {
-    try {
-      setSendingReceipt(receipt._id);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/receipts/${receipt._id}/send`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        showNotification('Receipt sent to client successfully!', 'success');
-      } else {
-        throw new Error('Failed to send receipt');
-      }
-    } catch (error) {
-      console.error('Error sending receipt:', error);
-      showNotification(`Error: ${error.message}`, 'error');
-    } finally {
-      setSendingReceipt(null);
-    }
-  };
-
-  // Export all receipts to PDF
-  const exportReceiptsToPDF = async () => {
-    try {
-      setExportLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/receipts/export/pdf`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `receipts-export-${new Date().toISOString().split('T')[0]}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        showNotification('Receipts exported to PDF successfully!', 'success');
-      } else {
-        throw new Error('Failed to export PDF');
-      }
-    } catch (error) {
-      console.error('Error exporting to PDF:', error);
-      showNotification('Error exporting receipts to PDF', 'error');
-    } finally {
-      setExportLoading(false);
+      showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
 
   // Generate receipt from invoice
   const generateReceiptFromInvoice = (invoice) => {
+    const items = invoice.items && invoice.items.length > 0 
+      ? invoice.items 
+      : [{ 
+          description: `Internet Service - ${invoice.planName}`, 
+          quantity: 1, 
+          unitPrice: invoice.planPrice || 0, 
+          amount: invoice.planPrice || 0 
+        }];
+
+    const { subtotal, taxAmount, total } = calculateTotals(
+      items, 
+      invoice.taxRate || 0, 
+      invoice.discount || 0, 
+      invoice.discountType || 'none'
+    );
+
     setReceiptForm({
       receiptNumber: generateReceiptNumber(),
+      invoiceId: invoice._id,
       invoiceNumber: invoice.invoiceNumber || '',
       customerName: invoice.customerName || '',
       customerEmail: invoice.customerEmail || '',
       customerPhone: invoice.customerPhone || '',
+      // ✅ FIX: Map customerLocation to customerAddress for frontend
+      customerAddress: invoice.customerAddress || invoice.customerLocation || '', // Frontend uses customerAddress
       receiptDate: new Date().toISOString().split('T')[0],
       paymentDate: new Date().toISOString().split('T')[0],
-      items: invoice.items || [{ description: 'Monthly Internet Service', amount: 59.99 }],
-      subtotal: invoice.subtotal || 59.99,
-      tax: invoice.tax || 0,
-      total: invoice.total || 59.99,
-      amountPaid: invoice.total || 59.99,
-      paymentMethod: 'cash',
+      items: items,
+      subtotal: subtotal,
+      taxRate: invoice.taxRate || 0,
+      taxAmount: taxAmount,
+      discount: invoice.discount || 0,
+      discountType: invoice.discountType || 'none',
+      total: total,
+      amountPaid: total,
+      balance: 0,
+      paymentMethod: invoice.paymentMethod || 'mobile_money',
       status: 'paid',
-      notes: `Payment received for invoice ${invoice.invoiceNumber || ''}`
+      serviceDescription: `Internet Service - ${invoice.planName} (${invoice.planSpeed})`,
+      planName: invoice.planName || '',
+      planPrice: invoice.planPrice || 0,
+      planSpeed: invoice.planSpeed || '',
+      notes: `Payment received for invoice ${invoice.invoiceNumber || ''}`,
+      terms: 'Thank you for your business!',
+      paymentReference: '',
+      transactionId: '',
+      bankReference: ''
     });
     setShowInvoiceSearch(false);
     setShowCreateModal(true);
-  };
-
-  // Preview PDF
-  const previewPDF = (receipt) => {
-    setSelectedReceipt(receipt);
-    setShowPDFModal(true);
-  };
-
-  // Print receipt
-  const printReceipt = (receipt) => {
-    setSelectedReceipt(receipt);
-    setTimeout(() => {
-      window.print();
-    }, 500);
   };
 
   // Reset form
   const resetForm = () => {
     setReceiptForm({
       receiptNumber: '',
+      invoiceId: '',
       invoiceNumber: '',
       customerName: '',
       customerEmail: '',
       customerPhone: '',
+      customerAddress: '', // Frontend uses customerAddress
       receiptDate: new Date().toISOString().split('T')[0],
       paymentDate: new Date().toISOString().split('T')[0],
-      items: [{ description: 'Monthly Internet Service', amount: 59.99 }],
-      subtotal: 59.99,
-      tax: 0,
-      total: 59.99,
-      amountPaid: 59.99,
-      paymentMethod: 'cash',
-      status: 'paid',
-      notes: ''
+      items: [{ description: 'Monthly Internet Service', quantity: 1, unitPrice: 0, amount: 0 }],
+      subtotal: 0,
+      taxRate: 0,
+      taxAmount: 0,
+      discount: 0,
+      discountType: 'none',
+      total: 0,
+      amountPaid: 0,
+      balance: 0,
+      paymentMethod: 'mobile_money',
+      status: 'issued',
+      serviceDescription: '',
+      planName: '',
+      planPrice: 0,
+      planSpeed: '',
+      notes: '',
+      terms: 'Thank you for your business!',
+      paymentReference: '',
+      transactionId: '',
+      bankReference: ''
     });
   };
 
@@ -468,20 +608,35 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const editReceipt = (receipt) => {
     setReceiptForm({
       receiptNumber: receipt.receiptNumber || '',
+      invoiceId: receipt.invoiceId || '',
       invoiceNumber: receipt.invoiceNumber || '',
       customerName: receipt.customerName || '',
       customerEmail: receipt.customerEmail || '',
       customerPhone: receipt.customerPhone || '',
+      // ✅ FIX: Map customerLocation to customerAddress for frontend
+      customerAddress: receipt.customerAddress || receipt.customerLocation || '', // Frontend uses customerAddress
       receiptDate: receipt.receiptDate ? new Date(receipt.receiptDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       paymentDate: receipt.paymentDate ? new Date(receipt.paymentDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      items: receipt.items || [{ description: 'Monthly Internet Service', amount: 59.99 }],
-      subtotal: receipt.subtotal || 59.99,
-      tax: receipt.tax || 0,
-      total: receipt.total || 59.99,
-      amountPaid: receipt.amountPaid || 59.99,
-      paymentMethod: receipt.paymentMethod || 'cash',
-      status: receipt.status || 'paid',
-      notes: receipt.notes || ''
+      items: receipt.items || [{ description: 'Monthly Internet Service', quantity: 1, unitPrice: 0, amount: 0 }],
+      subtotal: receipt.subtotal || 0,
+      taxRate: receipt.taxRate || 0,
+      taxAmount: receipt.taxAmount || 0,
+      discount: receipt.discount || 0,
+      discountType: receipt.discountType || 'none',
+      total: receipt.total || 0,
+      amountPaid: receipt.amountPaid || 0,
+      balance: receipt.balance || 0,
+      paymentMethod: receipt.paymentMethod || 'mobile_money',
+      status: receipt.status || 'issued',
+      serviceDescription: receipt.serviceDescription || '',
+      planName: receipt.planName || '',
+      planPrice: receipt.planPrice || 0,
+      planSpeed: receipt.planSpeed || '',
+      notes: receipt.notes || '',
+      terms: receipt.terms || 'Thank you for your business!',
+      paymentReference: receipt.paymentReference || '',
+      transactionId: receipt.transactionId || '',
+      bankReference: receipt.bankReference || ''
     });
     setEditingReceipt(receipt);
     setShowCreateModal(true);
@@ -498,8 +653,6 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     ? receipts.filter(receipt => {
         if (!receipt || typeof receipt !== 'object') return false;
         
-        const matchesFilter = filter === 'all';
-        
         const matchesSearch = 
           (receipt.customerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
           (receipt.receiptNumber?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -507,7 +660,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           (receipt.customerEmail?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
           (receipt.customerPhone?.toLowerCase() || '').includes(searchTerm.toLowerCase());
         
-        return matchesFilter && matchesSearch;
+        return matchesSearch;
       })
     : [];
 
@@ -521,6 +674,17 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                (invoice.customerEmail?.toLowerCase() || '').includes(searchInvoiceTerm.toLowerCase());
       })
     : [];
+
+  // Calculate stats
+  const stats = {
+    totalReceipts: receipts.length,
+    thisMonth: receipts.filter(rec => {
+      const receiptDate = new Date(rec.receiptDate || rec.createdAt);
+      const now = new Date();
+      return receiptDate.getMonth() === now.getMonth() && receiptDate.getFullYear() === now.getFullYear();
+    }).length,
+    totalReceived: receipts.reduce((sum, rec) => sum + (rec.amountPaid || rec.total || 0), 0)
+  };
 
   if (loading) {
     return (
@@ -550,16 +714,6 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             Refresh
           </button>
           <button 
-            onClick={exportReceiptsToPDF}
-            disabled={exportLoading || receipts.length === 0}
-            className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center ${
-              (exportLoading || receipts.length === 0) ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <FileSpreadsheet size={16} className="mr-1.5" />
-            {exportLoading ? 'Exporting...' : 'Export All PDF'}
-          </button>
-          <button 
             onClick={() => setShowInvoiceSearch(true)}
             className={`${themeClasses.button.secondary.base} ${darkMode ? themeClasses.button.secondary.dark : themeClasses.button.secondary.light} flex items-center`}
           >
@@ -580,13 +734,13 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       </div>
 
-      {/* Stats Summary */}
+      {/* Stats Summary - UPDATED WITH KSH PRICING */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
           <div className="flex items-center justify-between">
             <div>
               <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Receipts</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{receipts.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.totalReceipts}</p>
             </div>
             <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-900/20' : 'bg-blue-100'}`}>
               <Receipt size={20} className="text-blue-600 dark:text-blue-400" />
@@ -598,11 +752,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             <div>
               <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>This Month</p>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {receipts.filter(rec => {
-                  const receiptDate = new Date(rec.receiptDate || rec.createdAt);
-                  const now = new Date();
-                  return receiptDate.getMonth() === now.getMonth() && receiptDate.getFullYear() === now.getFullYear();
-                }).length}
+                {stats.thisMonth}
               </p>
             </div>
             <div className={`p-2 rounded-lg ${darkMode ? 'bg-green-900/20' : 'bg-green-100'}`}>
@@ -615,7 +765,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             <div>
               <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Received</p>
               <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                ${receipts.reduce((sum, rec) => sum + (rec.amountPaid || rec.total || 0), 0).toFixed(2)}
+                Ksh {formatPrice(stats.totalReceived)}
               </p>
             </div>
             <div className={`p-2 rounded-lg ${darkMode ? 'bg-purple-900/20' : 'bg-purple-100'}`}>
@@ -643,7 +793,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       </div>
 
-      {/* Receipts Table */}
+      {/* Receipts Table - UPDATED WITH KSH PRICING */}
       <div className={`${themeClasses.card} rounded-xl shadow-lg border backdrop-blur-sm overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -662,7 +812,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   Amount
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">
-                  Payment Method
+                  Status
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">
                   Actions
@@ -690,7 +840,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {receipt.receiptNumber || `RCP-${String(receipts.indexOf(receipt) + 1).padStart(3, '0')}`}
+                          {receipt.receiptNumber || 'N/A'}
                         </div>
                         <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                           {new Date(receipt.receiptDate || receipt.createdAt).toLocaleDateString()}
@@ -712,18 +862,20 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        ${(receipt.amountPaid || receipt.total || 0).toFixed(2)}
+                        Ksh {formatPrice(receipt.amountPaid || receipt.total || 0)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        receipt.paymentMethod === 'cash' 
+                        receipt.status === 'paid' 
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : receipt.paymentMethod === 'card'
+                          : receipt.status === 'issued'
                           ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                          : receipt.status === 'refunded'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                           : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                       }`}>
-                        {receipt.paymentMethod?.toUpperCase() || 'CASH'}
+                        {receipt.status?.toUpperCase() || 'ISSUED'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -734,33 +886,6 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                           title="View Details"
                         >
                           <Eye size={16} />
-                        </button>
-                        
-                        <button
-                          onClick={() => previewPDF(receipt)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'} transition-colors`}
-                          title="Preview PDF"
-                        >
-                          <FileDown size={16} />
-                        </button>
-
-                        <button
-                          onClick={() => exportReceiptPDF(receipt)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-purple-400 hover:bg-gray-600' : 'text-purple-600 hover:bg-gray-100'} transition-colors`}
-                          title="Export PDF"
-                        >
-                          <Download size={16} />
-                        </button>
-
-                        <button
-                          onClick={() => sendReceiptToClient(receipt)}
-                          disabled={sendingReceipt === receipt._id}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
-                            sendingReceipt === receipt._id ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
-                          title="Send to Client"
-                        >
-                          <Send size={16} />
                         </button>
                         
                         <button
@@ -788,7 +913,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       </div>
 
-      {/* Create/Edit Receipt Modal */}
+      {/* Create/Edit Receipt Modal - UPDATED WITH ALL MODEL FIELDS */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
@@ -878,6 +1003,19 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Customer Address
+                  </label>
+                  <input
+                    type="text"
+                    name="customerAddress"
+                    value={receiptForm.customerAddress}
+                    onChange={handleInputChange}
+                    placeholder="Customer location/address"
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Receipt Date *
                   </label>
                   <input
@@ -916,27 +1054,70 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <option value="card">Card</option>
                     <option value="bank_transfer">Bank Transfer</option>
                     <option value="mobile_money">Mobile Money</option>
+                    <option value="cheque">Cheque</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Amount Paid *
+                    Payment Reference
                   </label>
                   <input
-                    type="number"
-                    name="amountPaid"
-                    value={receiptForm.amountPaid}
+                    type="text"
+                    name="paymentReference"
+                    value={receiptForm.paymentReference}
                     onChange={handleInputChange}
+                    placeholder="Payment reference number"
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                    step="0.01"
-                    min="0"
-                    required
                   />
                 </div>
               </div>
 
-              {/* Receipt Items */}
+              {/* Plan Information */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Plan Name
+                  </label>
+                  <input
+                    type="text"
+                    name="planName"
+                    value={receiptForm.planName}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Jumbo, Buffalo, etc."
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Plan Speed
+                  </label>
+                  <input
+                    type="text"
+                    name="planSpeed"
+                    value={receiptForm.planSpeed}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 8Mbps, 15Mbps, etc."
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Plan Price (Ksh)
+                  </label>
+                  <input
+                    type="number"
+                    name="planPrice"
+                    value={receiptForm.planPrice}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                    step="1"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              {/* Receipt Items - UPDATED WITH QUANTITY AND UNIT PRICE */}
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h4 className={`font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Receipt Items</h4>
@@ -952,8 +1133,8 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 
                 <div className="space-y-3">
                   {receiptForm.items.map((item, index) => (
-                    <div key={index} className="flex gap-3 items-start">
-                      <div className="flex-1">
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+                      <div className="md:col-span-5">
                         <input
                           type="text"
                           placeholder="Item description"
@@ -962,69 +1143,167 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                           className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                         />
                       </div>
-                      <div className="w-32">
+                      <div className="md:col-span-2">
+                        <input
+                          type="number"
+                          placeholder="Qty"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                          className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                          step="1"
+                          min="1"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <input
+                          type="number"
+                          placeholder="Unit Price"
+                          value={item.unitPrice}
+                          onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+                          className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                          step="1"
+                          min="0"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
                         <input
                           type="number"
                           placeholder="Amount"
                           value={item.amount}
-                          onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
-                          className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                          step="0.01"
-                          min="0"
+                          readOnly
+                          className={`w-full p-2 border rounded-lg text-sm bg-gray-50 dark:bg-gray-700 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}
                         />
                       </div>
                       {receiptForm.items.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeItem(index)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'} transition-colors`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="md:col-span-1">
+                          <button
+                            type="button"
+                            onClick={() => removeItem(index)}
+                            className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'} transition-colors`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       )}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Notes */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Notes
-                </label>
-                <textarea
-                  name="notes"
-                  value={receiptForm.notes}
-                  onChange={handleInputChange}
-                  rows="3"
-                  placeholder="Additional notes or payment details..."
-                  className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                ></textarea>
-              </div>
-
-              {/* Totals */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              {/* Financial Summary - UPDATED WITH KSH */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Tax Amount
+                    Tax Rate (%)
                   </label>
                   <input
                     type="number"
-                    name="tax"
-                    value={receiptForm.tax}
+                    name="taxRate"
+                    value={receiptForm.taxRate}
                     onChange={handleInputChange}
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                     step="0.01"
                     min="0"
+                    max="100"
                   />
                 </div>
                 <div>
-                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <div className="text-sm font-medium">Subtotal: ${receiptForm.subtotal.toFixed(2)}</div>
-                    <div className="text-sm">Tax: ${receiptForm.tax.toFixed(2)}</div>
-                    <div className="text-lg font-bold mt-1">Total: ${receiptForm.total.toFixed(2)}</div>
-                    <div className="text-sm font-semibold mt-2">Amount Paid: ${receiptForm.amountPaid.toFixed(2)}</div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Discount
+                  </label>
+                  <input
+                    type="number"
+                    name="discount"
+                    value={receiptForm.discount}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                    step="1"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Discount Type
+                  </label>
+                  <select
+                    name="discountType"
+                    value={receiptForm.discountType}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  >
+                    <option value="none">None</option>
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed Amount</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Amount Paid (Ksh) *
+                  </label>
+                  <input
+                    type="number"
+                    name="amountPaid"
+                    value={receiptForm.amountPaid}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                    step="1"
+                    min="0"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Totals Display */}
+              <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="font-medium">Subtotal:</div>
+                    <div className="font-bold">Ksh {formatPrice(receiptForm.subtotal)}</div>
                   </div>
+                  <div>
+                    <div className="font-medium">Tax:</div>
+                    <div className="font-bold">Ksh {formatPrice(receiptForm.taxAmount)}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Total:</div>
+                    <div className="font-bold text-lg">Ksh {formatPrice(receiptForm.total)}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Balance:</div>
+                    <div className={`font-bold ${receiptForm.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      Ksh {formatPrice(receiptForm.balance)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes and Terms */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Notes
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={receiptForm.notes}
+                    onChange={handleInputChange}
+                    rows="3"
+                    placeholder="Additional notes or payment details..."
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  ></textarea>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Terms
+                  </label>
+                  <textarea
+                    name="terms"
+                    value={receiptForm.terms}
+                    onChange={handleInputChange}
+                    rows="3"
+                    placeholder="Payment terms and conditions..."
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  ></textarea>
                 </div>
               </div>
 
@@ -1109,15 +1388,20 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                             {invoice.customerName} • {invoice.customerEmail}
                           </p>
                           <p className="text-sm font-medium mt-1">
-                            ${invoice.total || 0}
+                            Ksh {formatPrice(invoice.totalAmount || invoice.planPrice || 0)}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {invoice.planName} • {invoice.planSpeed}
                           </p>
                         </div>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           invoice.status === 'paid' 
                             ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            : invoice.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                         }`}>
-                          {invoice.status || 'unpaid'}
+                          {invoice.status || 'pending'}
                         </span>
                       </div>
                     </div>
@@ -1129,7 +1413,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       )}
 
-      {/* Receipt Details Modal */}
+      {/* Receipt Details Modal - UPDATED WITH KSH PRICING */}
       {showReceiptModal && selectedReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
@@ -1154,7 +1438,8 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     <strong>Name:</strong> {selectedReceipt.customerName || 'N/A'}<br/>
                     <strong>Email:</strong> {selectedReceipt.customerEmail || 'N/A'}<br/>
-                    <strong>Phone:</strong> {selectedReceipt.customerPhone || 'N/A'}
+                    <strong>Phone:</strong> {selectedReceipt.customerPhone || 'N/A'}<br/>
+                    <strong>Address:</strong> {selectedReceipt.customerAddress || selectedReceipt.customerLocation || 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -1164,10 +1449,28 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                                                   selectedReceipt.createdAt ? new Date(selectedReceipt.createdAt).toLocaleDateString() : 'N/A'}<br/>
                     <strong>Payment Date:</strong> {selectedReceipt.paymentDate ? new Date(selectedReceipt.paymentDate).toLocaleDateString() : 'N/A'}<br/>
                     <strong>Invoice #:</strong> {selectedReceipt.invoiceNumber || 'N/A'}<br/>
-                    <strong>Payment Method:</strong> {selectedReceipt.paymentMethod?.toUpperCase() || 'CASH'}
+                    <strong>Payment Method:</strong> {selectedReceipt.paymentMethod?.toUpperCase() || 'CASH'}<br/>
+                    <strong>Status:</strong> <span className={`font-semibold ${
+                      selectedReceipt.status === 'paid' ? 'text-green-600' : 
+                      selectedReceipt.status === 'issued' ? 'text-blue-600' : 
+                      'text-gray-600'
+                    }`}>{selectedReceipt.status?.toUpperCase() || 'ISSUED'}</span>
                   </p>
                 </div>
               </div>
+              
+              {/* Plan Information */}
+              {(selectedReceipt.planName || selectedReceipt.serviceDescription) && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Service Details</h4>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <p className="text-sm">
+                      <strong>Plan:</strong> {selectedReceipt.planName || 'N/A'} • {selectedReceipt.planSpeed || 'N/A'}<br/>
+                      <strong>Description:</strong> {selectedReceipt.serviceDescription || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              )}
               
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Items</h4>
@@ -1176,34 +1479,44 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       <tr>
                         <th className="px-4 py-2 text-left text-sm font-medium">Description</th>
+                        <th className="px-4 py-2 text-center text-sm font-medium">Qty</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium">Unit Price</th>
                         <th className="px-4 py-2 text-right text-sm font-medium">Amount</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                      {(selectedReceipt.items || [{ description: 'Internet Service', amount: selectedReceipt.total || selectedReceipt.amountPaid || 0 }]).map((item, index) => (
+                      {(selectedReceipt.items || [{ description: 'Internet Service', quantity: 1, unitPrice: selectedReceipt.total || selectedReceipt.amountPaid || 0, amount: selectedReceipt.total || selectedReceipt.amountPaid || 0 }]).map((item, index) => (
                         <tr key={index}>
                           <td className="px-4 py-2 text-sm">{item.description}</td>
-                          <td className="px-4 py-2 text-sm text-right">${item.amount}</td>
+                          <td className="px-4 py-2 text-sm text-center">{item.quantity || 1}</td>
+                          <td className="px-4 py-2 text-sm text-right">Ksh {formatPrice(item.unitPrice || item.amount)}</td>
+                          <td className="px-4 py-2 text-sm text-right">Ksh {formatPrice(item.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       <tr>
-                        <td className="px-4 py-2 text-sm font-bold">Subtotal</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">${selectedReceipt.subtotal || selectedReceipt.total || 0}</td>
+                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-right">Subtotal</td>
+                        <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedReceipt.subtotal || selectedReceipt.total || 0)}</td>
                       </tr>
                       <tr>
-                        <td className="px-4 py-2 text-sm font-bold">Tax</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">${selectedReceipt.tax || 0}</td>
+                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-right">Tax</td>
+                        <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedReceipt.taxAmount || 0)}</td>
                       </tr>
                       <tr>
-                        <td className="px-4 py-2 text-sm font-bold">Total</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">${selectedReceipt.total || 0}</td>
+                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-right">Total</td>
+                        <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedReceipt.total || 0)}</td>
                       </tr>
                       <tr className="border-t">
-                        <td className="px-4 py-2 text-sm font-bold text-green-600">Amount Paid</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right text-green-600">${selectedReceipt.amountPaid || selectedReceipt.total || 0}</td>
+                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-green-600 text-right">Amount Paid</td>
+                        <td className="px-4 py-2 text-sm font-bold text-right text-green-600">Ksh {formatPrice(selectedReceipt.amountPaid || selectedReceipt.total || 0)}</td>
                       </tr>
+                      {selectedReceipt.balance > 0 && (
+                        <tr>
+                          <td colSpan="3" className="px-4 py-2 text-sm font-bold text-red-600 text-right">Balance Due</td>
+                          <td className="px-4 py-2 text-sm font-bold text-right text-red-600">Ksh {formatPrice(selectedReceipt.balance || 0)}</td>
+                        </tr>
+                      )}
                     </tfoot>
                   </table>
                 </div>
@@ -1220,30 +1533,6 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               
               <div className="flex flex-wrap gap-3 pt-4">
                 <button
-                  onClick={() => exportReceiptPDF(selectedReceipt)}
-                  className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
-                >
-                  <Download size={16} className="mr-1.5" />
-                  Export PDF
-                </button>
-                <button
-                  onClick={() => sendReceiptToClient(selectedReceipt)}
-                  disabled={sendingReceipt === selectedReceipt._id}
-                  className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center ${
-                    sendingReceipt === selectedReceipt._id ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <Send size={16} className="mr-1.5" />
-                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send to Client'}
-                </button>
-                <button
-                  onClick={() => printReceipt(selectedReceipt)}
-                  className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
-                >
-                  <Printer size={16} className="mr-1.5" />
-                  Print
-                </button>
-                <button
                   onClick={() => {
                     setShowReceiptModal(false);
                     editReceipt(selectedReceipt);
@@ -1252,122 +1541,6 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 >
                   <Edit size={16} className="mr-1.5" />
                   Edit Receipt
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* PDF Preview Modal */}
-      {showPDFModal && selectedReceipt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  PDF Preview - {selectedReceipt.receiptNumber}
-                </h3>
-                <button
-                  onClick={() => setShowPDFModal(false)}
-                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <div className={`border-2 border-dashed rounded-lg p-8 ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-white'}`}>
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">PAYMENT RECEIPT</h2>
-                  <p className="text-gray-600 dark:text-gray-400">Receipt #: {selectedReceipt.receiptNumber}</p>
-                  {selectedReceipt.invoiceNumber && (
-                    <p className="text-gray-600 dark:text-gray-400">Invoice #: {selectedReceipt.invoiceNumber}</p>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-2 gap-8 mb-6">
-                  <div>
-                    <h3 className="font-semibold mb-2">Received From:</h3>
-                    <p>{selectedReceipt.customerName}</p>
-                    <p>{selectedReceipt.customerEmail}</p>
-                    <p>{selectedReceipt.customerPhone}</p>
-                  </div>
-                  <div className="text-right">
-                    <p><strong>Receipt Date:</strong> {selectedReceipt.receiptDate ? new Date(selectedReceipt.receiptDate).toLocaleDateString() : 
-                                                     selectedReceipt.createdAt ? new Date(selectedReceipt.createdAt).toLocaleDateString() : 'N/A'}</p>
-                    <p><strong>Payment Date:</strong> {selectedReceipt.paymentDate ? new Date(selectedReceipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
-                    <p><strong>Payment Method:</strong> {selectedReceipt.paymentMethod?.toUpperCase() || 'CASH'}</p>
-                  </div>
-                </div>
-                
-                <table className="w-full mb-6">
-                  <thead>
-                    <tr className={`border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
-                      <th className="text-left py-2">Description</th>
-                      <th className="text-right py-2">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(selectedReceipt.items || [{ description: 'Internet Service', amount: selectedReceipt.total || selectedReceipt.amountPaid || 0 }]).map((item, index) => (
-                      <tr key={index} className={`border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
-                        <td className="py-2">{item.description}</td>
-                        <td className="text-right py-2">${item.amount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td className="py-2 font-semibold">Subtotal</td>
-                      <td className="text-right py-2">${selectedReceipt.subtotal || selectedReceipt.total || 0}</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 font-semibold">Tax</td>
-                      <td className="text-right py-2">${selectedReceipt.tax || 0}</td>
-                    </tr>
-                    <tr className={`border-t ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
-                      <td className="py-2 font-bold">Total</td>
-                      <td className="text-right py-2 font-bold">${selectedReceipt.total || 0}</td>
-                    </tr>
-                    <tr className={`border-t-2 ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
-                      <td className="py-2 font-bold text-green-600">Amount Paid</td>
-                      <td className="text-right py-2 font-bold text-green-600">${selectedReceipt.amountPaid || selectedReceipt.total || 0}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-                
-                {selectedReceipt.notes && (
-                  <div className={`mt-4 p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <p className="text-sm font-semibold mb-1">Notes:</p>
-                    <p className="text-sm">{selectedReceipt.notes}</p>
-                  </div>
-                )}
-                
-                <div className={`mt-8 p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                  <p className="text-sm text-center">
-                    Thank you for your payment!
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex justify-center space-x-4 mt-6">
-                <button
-                  onClick={() => window.print()}
-                  className={`${themeClasses.button.secondary.base} ${darkMode ? themeClasses.button.secondary.dark : themeClasses.button.secondary.light} flex items-center`}
-                >
-                  <Printer size={16} className="mr-1.5" />
-                  Print
-                </button>
-                <button
-                  onClick={() => sendReceiptToClient(selectedReceipt)}
-                  disabled={sendingReceipt === selectedReceipt._id}
-                  className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light} flex items-center ${
-                    sendingReceipt === selectedReceipt._id ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <Send size={16} className="mr-1.5" />
-                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send to Client'}
                 </button>
               </div>
             </div>

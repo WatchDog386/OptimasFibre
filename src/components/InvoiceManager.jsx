@@ -1,3 +1,4 @@
+// InvoiceManager.jsx - UPDATED VERSION
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -22,10 +23,79 @@ import {
   FileSpreadsheet,
   Printer,
   Send,
-  FileDown
+  FileDown,
+  Wifi,
+  Clock,
+  Zap
 } from 'lucide-react';
 
-const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification, invoices, setInvoices }) => {
+// Utility function for consistent price formatting in KSH
+const formatPrice = (price) => {
+  if (price === undefined || price === null) return '0';
+  const cleanStr = price.toString().replace(/,/g, '');
+  const num = parseInt(cleanStr, 10);
+  return isNaN(num) ? price : num.toLocaleString();
+};
+
+// WiFi Plans data from your wifiplans.jsx
+const WIFI_PLANS = [
+  { 
+    id: 1, 
+    name: "Jumbo", 
+    price: "1499", 
+    speed: "8Mbps", 
+    features: ["Great for browsing", "24/7 Support", "Free Installation"], 
+    type: "home", 
+    popular: false 
+  },
+  { 
+    id: 2, 
+    name: "Buffalo", 
+    price: "1999", 
+    speed: "15Mbps", 
+    features: ["Streaming & Social Media", "24/7 Support", "Free Installation"], 
+    type: "home", 
+    popular: false 
+  },
+  { 
+    id: 3, 
+    name: "Ndovu", 
+    price: "2499", 
+    speed: "25Mbps", 
+    features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"], 
+    type: "home", 
+    popular: false 
+  },
+  { 
+    id: 4, 
+    name: "Gazzelle", 
+    price: "2999", 
+    speed: "30Mbps", 
+    features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"], 
+    type: "home", 
+    popular: true 
+  },
+  { 
+    id: 5, 
+    name: "Tiger", 
+    price: "3999", 
+    speed: "40Mbps", 
+    features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"], 
+    type: "home", 
+    popular: false 
+  },
+  { 
+    id: 6, 
+    name: "Chui", 
+    price: "4999", 
+    speed: "60Mbps", 
+    features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], 
+    type: "home", 
+    popular: false 
+  },
+];
+
+const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification, invoices, setInvoices, receipts, setReceipts }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,20 +105,38 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [exportLoading, setExportLoading] = useState(false);
+  const [sendingInvoice, setSendingInvoice] = useState(null);
+  const [showPlanSelection, setShowPlanSelection] = useState(false);
 
-  // Form state for creating/editing invoices
+  // Form state for creating/editing invoices - UPDATED TO MATCH YOUR MODEL
   const [invoiceForm, setInvoiceForm] = useState({
+    invoiceNumber: '',
     customerName: '',
     customerEmail: '',
     customerPhone: '',
-    invoiceNumber: '',
+    customerLocation: '',
+    planName: '',
+    planPrice: 0,
+    planSpeed: '',
+    features: [],
+    connectionType: 'Fiber Optic',
     invoiceDate: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    items: [{ description: 'Monthly Internet Service', amount: 59.99 }],
-    subtotal: 59.99,
-    tax: 0,
-    total: 59.99,
-    status: 'unpaid'
+    items: [],
+    subtotal: 0,
+    taxRate: 0,
+    taxAmount: 0,
+    discount: 0,
+    discountType: 'none',
+    totalAmount: 0,
+    amountPaid: 0,
+    balanceDue: 0,
+    status: 'pending',
+    paymentMethod: 'mobile_money',
+    paymentTerms: 'Due upon receipt',
+    notes: '',
+    terms: 'Payment due within 30 days. Late payments subject to fees.',
+    billingCycle: 'monthly'
   });
 
   // Fetch invoices from backend
@@ -85,17 +173,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         invoicesData = [];
       }
 
-      // Ensure invoice numbers are properly formatted
-      const formattedInvoices = invoicesData.map((invoice, index) => ({
-        ...invoice,
-        invoiceNumber: invoice.invoiceNumber || `INV-${String(index + 1).padStart(3, '0')}`
-      }));
-      
-      console.log('Fetched invoices:', formattedInvoices);
-      setInvoices(formattedInvoices);
+      console.log('📄 Fetched invoices:', invoicesData);
+      setInvoices(invoicesData);
     } catch (error) {
       console.error('Error fetching invoices:', error);
-      showNotification(`Error loading invoices: ${error.message}`, 'error');
+      showNotification(`🚨 Error loading invoices: ${error.message}`, 'error');
       setInvoices([]);
     } finally {
       setLoading(false);
@@ -112,6 +194,8 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
   // Generate sequential invoice number
   const generateInvoiceNumber = () => {
+    if (invoices.length === 0) return 'INV-0001';
+    
     const latestNumber = invoices.reduce((max, invoice) => {
       const match = invoice.invoiceNumber?.match(/INV-(\d+)/);
       if (match) {
@@ -121,50 +205,136 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       return max;
     }, 0);
     
-    return `INV-${String(latestNumber + 1).padStart(3, '0')}`;
+    return `INV-${String(latestNumber + 1).padStart(4, '0')}`;
   };
 
-  // Calculate totals
-  const calculateTotals = (items, tax = 0) => {
+  // Calculate totals based on your model structure
+  const calculateTotals = (items, taxRate = 0, discount = 0, discountType = 'none') => {
     const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    const total = subtotal + (parseFloat(tax) || 0);
-    return { subtotal, total };
+    const taxAmount = (subtotal * (parseFloat(taxRate) || 0)) / 100;
+    
+    let discountAmount = 0;
+    if (discountType === 'percentage') {
+      discountAmount = (subtotal * (parseFloat(discount) || 0)) / 100;
+    } else if (discountType === 'fixed') {
+      discountAmount = parseFloat(discount) || 0;
+    }
+    
+    const totalAmount = subtotal + taxAmount - discountAmount;
+    
+    return { subtotal, taxAmount, totalAmount };
   };
 
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    setInvoiceForm(prev => {
+      const updatedForm = {
+        ...prev,
+        [name]: value
+      };
+
+      // Recalculate totals if financial fields change
+      if (['taxRate', 'discount', 'discountType'].includes(name)) {
+        const { subtotal, taxAmount, totalAmount } = calculateTotals(
+          updatedForm.items, 
+          updatedForm.taxRate, 
+          updatedForm.discount, 
+          updatedForm.discountType
+        );
+        
+        return {
+          ...updatedForm,
+          subtotal,
+          taxAmount,
+          totalAmount,
+          balanceDue: Math.max(0, totalAmount - (updatedForm.amountPaid || 0))
+        };
+      }
+
+      // Update balance when amountPaid changes
+      if (name === 'amountPaid') {
+        const amountPaid = parseFloat(value) || 0;
+        return {
+          ...updatedForm,
+          amountPaid,
+          balanceDue: Math.max(0, updatedForm.totalAmount - amountPaid)
+        };
+      }
+
+      return updatedForm;
+    });
+  };
+
+  // Select WiFi plan
+  const selectPlan = (plan) => {
+    const items = [{
+      description: `${plan.name} Internet Plan - ${plan.speed}`,
+      quantity: 1,
+      unitPrice: parseFloat(plan.price),
+      amount: parseFloat(plan.price)
+    }];
+
+    const { subtotal, taxAmount, totalAmount } = calculateTotals(
+      items, 
+      invoiceForm.taxRate, 
+      invoiceForm.discount, 
+      invoiceForm.discountType
+    );
+
     setInvoiceForm(prev => ({
       ...prev,
-      [name]: value
+      planName: plan.name,
+      planPrice: parseFloat(plan.price),
+      planSpeed: plan.speed,
+      features: plan.features,
+      items: items,
+      subtotal: subtotal,
+      taxAmount: taxAmount,
+      totalAmount: totalAmount,
+      balanceDue: totalAmount - (prev.amountPaid || 0)
     }));
-
-    // Recalculate totals if items or tax changes
-    if (name === 'tax') {
-      const { subtotal } = calculateTotals(invoiceForm.items);
-      setInvoiceForm(prev => ({
-        ...prev,
-        subtotal,
-        total: subtotal + (parseFloat(value) || 0)
-      }));
-    }
+    
+    setShowPlanSelection(false);
+    showNotification(`✅ ${plan.name} plan selected!`, 'success');
   };
 
   // Handle item changes
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...invoiceForm.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [field]: field === 'amount' ? parseFloat(value) || 0 : value
-    };
+    const item = updatedItems[index];
     
-    const { subtotal, total } = calculateTotals(updatedItems, invoiceForm.tax);
+    if (field === 'quantity' || field === 'unitPrice') {
+      const quantity = field === 'quantity' ? parseFloat(value) || 0 : item.quantity;
+      const unitPrice = field === 'unitPrice' ? parseFloat(value) || 0 : item.unitPrice;
+      const amount = quantity * unitPrice;
+      
+      updatedItems[index] = {
+        ...item,
+        [field]: field === 'quantity' || field === 'unitPrice' ? parseFloat(value) || 0 : value,
+        amount
+      };
+    } else {
+      updatedItems[index] = {
+        ...item,
+        [field]: value
+      };
+    }
+    
+    const { subtotal, taxAmount, totalAmount } = calculateTotals(
+      updatedItems, 
+      invoiceForm.taxRate, 
+      invoiceForm.discount, 
+      invoiceForm.discountType
+    );
     
     setInvoiceForm(prev => ({
       ...prev,
       items: updatedItems,
       subtotal,
-      total
+      taxAmount,
+      totalAmount,
+      balanceDue: Math.max(0, totalAmount - (prev.amountPaid || 0))
     }));
   };
 
@@ -172,7 +342,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const addItem = () => {
     setInvoiceForm(prev => ({
       ...prev,
-      items: [...prev.items, { description: '', amount: 0 }]
+      items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, amount: 0 }]
     }));
   };
 
@@ -180,13 +350,20 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const removeItem = (index) => {
     if (invoiceForm.items.length > 1) {
       const updatedItems = invoiceForm.items.filter((_, i) => i !== index);
-      const { subtotal, total } = calculateTotals(updatedItems, invoiceForm.tax);
+      const { subtotal, taxAmount, totalAmount } = calculateTotals(
+        updatedItems, 
+        invoiceForm.taxRate, 
+        invoiceForm.discount, 
+        invoiceForm.discountType
+      );
       
       setInvoiceForm(prev => ({
         ...prev,
         items: updatedItems,
         subtotal,
-        total
+        taxAmount,
+        totalAmount,
+        balanceDue: Math.max(0, totalAmount - (prev.amountPaid || 0))
       }));
     }
   };
@@ -199,7 +376,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         throw new Error('Authentication session expired. Please log in again.');
       }
 
-      // Update via API
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/status`, {
         method: 'PATCH',
         headers: {
@@ -212,15 +388,15 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (response.ok) {
         const updatedInvoice = await response.json();
         setInvoices(prev => prev.map(inv => 
-          inv._id === invoiceId ? updatedInvoice.invoice : inv
+          inv._id === invoiceId ? (updatedInvoice.invoice || updatedInvoice.data || updatedInvoice) : inv
         ));
-        showNotification('Invoice marked as paid successfully!', 'success');
+        showNotification('✅ Invoice marked as paid successfully!', 'success');
       } else {
         throw new Error('Failed to update invoice status');
       }
     } catch (error) {
       console.error('Error marking invoice as paid:', error);
-      showNotification(`Error: ${error.message}`, 'error');
+      showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
 
@@ -232,11 +408,37 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         throw new Error('Authentication session expired. Please log in again.');
       }
 
-      // Generate invoice number if not provided
+      // Validate required fields
+      if (!invoiceForm.customerName?.trim()) {
+        throw new Error('Customer name is required');
+      }
+      if (!invoiceForm.customerEmail?.trim()) {
+        throw new Error('Customer email is required');
+      }
+      if (!invoiceForm.planName?.trim()) {
+        throw new Error('Please select a plan');
+      }
+
+      // Prepare invoice data matching your model
       const invoiceData = {
         ...invoiceForm,
-        invoiceNumber: invoiceForm.invoiceNumber || generateInvoiceNumber()
+        invoiceNumber: invoiceForm.invoiceNumber || generateInvoiceNumber(),
+        invoiceDate: new Date(invoiceForm.invoiceDate),
+        dueDate: new Date(invoiceForm.dueDate),
+        // Ensure all financial fields are numbers
+        planPrice: parseFloat(invoiceForm.planPrice) || 0,
+        subtotal: parseFloat(invoiceForm.subtotal) || 0,
+        taxRate: parseFloat(invoiceForm.taxRate) || 0,
+        taxAmount: parseFloat(invoiceForm.taxAmount) || 0,
+        discount: parseFloat(invoiceForm.discount) || 0,
+        totalAmount: parseFloat(invoiceForm.totalAmount) || 0,
+        amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
+        balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
+        // Update status based on payment
+        status: invoiceForm.amountPaid >= invoiceForm.totalAmount ? 'paid' : 'pending'
       };
+
+      console.log('📤 Creating invoice:', invoiceData);
 
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
@@ -249,17 +451,17 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
       if (response.ok) {
         const newInvoice = await response.json();
-        setInvoices(prev => [...prev, newInvoice.invoice || newInvoice]);
+        setInvoices(prev => [...prev, newInvoice.invoice || newInvoice.data || newInvoice]);
         setShowCreateModal(false);
         resetForm();
-        showNotification('Invoice created successfully!', 'success');
+        showNotification('✅ Invoice created successfully!', 'success');
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create invoice');
       }
     } catch (error) {
       console.error('Error creating invoice:', error);
-      showNotification(`Error: ${error.message}`, 'error');
+      showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
 
@@ -271,31 +473,46 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         throw new Error('Authentication session expired. Please log in again.');
       }
 
+      const invoiceData = {
+        ...invoiceForm,
+        invoiceDate: new Date(invoiceForm.invoiceDate),
+        dueDate: new Date(invoiceForm.dueDate),
+        planPrice: parseFloat(invoiceForm.planPrice) || 0,
+        subtotal: parseFloat(invoiceForm.subtotal) || 0,
+        taxRate: parseFloat(invoiceForm.taxRate) || 0,
+        taxAmount: parseFloat(invoiceForm.taxAmount) || 0,
+        discount: parseFloat(invoiceForm.discount) || 0,
+        totalAmount: parseFloat(invoiceForm.totalAmount) || 0,
+        amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
+        balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
+        status: invoiceForm.amountPaid >= invoiceForm.totalAmount ? 'paid' : 'pending'
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/invoices/${editingInvoice._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(invoiceForm)
+        body: JSON.stringify(invoiceData)
       });
 
       if (response.ok) {
         const updatedInvoice = await response.json();
         setInvoices(prev => prev.map(inv => 
-          inv._id === editingInvoice._id ? updatedInvoice.invoice : inv
+          inv._id === editingInvoice._id ? (updatedInvoice.invoice || updatedInvoice.data || updatedInvoice) : inv
         ));
         setShowCreateModal(false);
         setEditingInvoice(null);
         resetForm();
-        showNotification('Invoice updated successfully!', 'success');
+        showNotification('✅ Invoice updated successfully!', 'success');
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update invoice');
       }
     } catch (error) {
       console.error('Error updating invoice:', error);
-      showNotification(`Error: ${error.message}`, 'error');
+      showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
 
@@ -320,13 +537,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
       if (response.ok) {
         setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
-        showNotification('Invoice deleted successfully!', 'success');
+        showNotification('✅ Invoice deleted successfully!', 'success');
       } else {
         throw new Error('Failed to delete invoice');
       }
     } catch (error) {
       console.error('Error deleting invoice:', error);
-      showNotification(`Error: ${error.message}`, 'error');
+      showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
 
@@ -350,19 +567,28 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
-        showNotification('Invoice PDF exported successfully!', 'success');
+        showNotification('✅ Invoice PDF exported successfully!', 'success');
       } else {
-        throw new Error('Failed to export PDF');
+        // Fallback to client-side PDF generation
+        generateClientSidePDF(invoice);
       }
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      showNotification('Error exporting invoice PDF', 'error');
+      generateClientSidePDF(invoice);
     }
+  };
+
+  // Client-side PDF generation fallback
+  const generateClientSidePDF = (invoice) => {
+    showNotification('📄 Generating PDF preview...', 'info');
+    setSelectedInvoice(invoice);
+    setShowPDFModal(true);
   };
 
   // Send invoice to client
   const sendInvoiceToClient = async (invoice) => {
     try {
+      setSendingInvoice(invoice._id);
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
         method: 'POST',
@@ -373,13 +599,15 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       });
 
       if (response.ok) {
-        showNotification('Invoice sent to client successfully!', 'success');
+        showNotification('✅ Invoice sent to client successfully!', 'success');
       } else {
         throw new Error('Failed to send invoice');
       }
     } catch (error) {
       console.error('Error sending invoice:', error);
-      showNotification(`Error: ${error.message}`, 'error');
+      showNotification(`🚨 Error: ${error.message}`, 'error');
+    } finally {
+      setSendingInvoice(null);
     }
   };
 
@@ -404,13 +632,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
-        showNotification('Invoices exported to Excel successfully!', 'success');
+        showNotification('✅ Invoices exported to Excel successfully!', 'success');
       } else {
         throw new Error('Failed to export Excel');
       }
     } catch (error) {
       console.error('Error exporting to Excel:', error);
-      showNotification('Error exporting invoices to Excel', 'error');
+      showNotification('🚨 Error exporting invoices to Excel', 'error');
     } finally {
       setExportLoading(false);
     }
@@ -425,34 +653,66 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   // Reset form
   const resetForm = () => {
     setInvoiceForm({
+      invoiceNumber: '',
       customerName: '',
       customerEmail: '',
       customerPhone: '',
-      invoiceNumber: '',
+      customerLocation: '',
+      planName: '',
+      planPrice: 0,
+      planSpeed: '',
+      features: [],
+      connectionType: 'Fiber Optic',
       invoiceDate: new Date().toISOString().split('T')[0],
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      items: [{ description: 'Monthly Internet Service', amount: 59.99 }],
-      subtotal: 59.99,
-      tax: 0,
-      total: 59.99,
-      status: 'unpaid'
+      items: [],
+      subtotal: 0,
+      taxRate: 0,
+      taxAmount: 0,
+      discount: 0,
+      discountType: 'none',
+      totalAmount: 0,
+      amountPaid: 0,
+      balanceDue: 0,
+      status: 'pending',
+      paymentMethod: 'mobile_money',
+      paymentTerms: 'Due upon receipt',
+      notes: '',
+      terms: 'Payment due within 30 days. Late payments subject to fees.',
+      billingCycle: 'monthly'
     });
   };
 
   // Edit invoice
   const editInvoice = (invoice) => {
     setInvoiceForm({
+      invoiceNumber: invoice.invoiceNumber || '',
       customerName: invoice.customerName || '',
       customerEmail: invoice.customerEmail || '',
       customerPhone: invoice.customerPhone || '',
-      invoiceNumber: invoice.invoiceNumber || '',
+      customerLocation: invoice.customerLocation || '',
+      planName: invoice.planName || '',
+      planPrice: invoice.planPrice || 0,
+      planSpeed: invoice.planSpeed || '',
+      features: invoice.features || [],
+      connectionType: invoice.connectionType || 'Fiber Optic',
       invoiceDate: invoice.invoiceDate ? new Date(invoice.invoiceDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      items: invoice.items || [{ description: 'Monthly Internet Service', amount: 59.99 }],
-      subtotal: invoice.subtotal || 59.99,
-      tax: invoice.tax || 0,
-      total: invoice.total || 59.99,
-      status: invoice.status || 'unpaid'
+      items: invoice.items || [],
+      subtotal: invoice.subtotal || 0,
+      taxRate: invoice.taxRate || 0,
+      taxAmount: invoice.taxAmount || 0,
+      discount: invoice.discount || 0,
+      discountType: invoice.discountType || 'none',
+      totalAmount: invoice.totalAmount || 0,
+      amountPaid: invoice.amountPaid || 0,
+      balanceDue: invoice.balanceDue || 0,
+      status: invoice.status || 'pending',
+      paymentMethod: invoice.paymentMethod || 'mobile_money',
+      paymentTerms: invoice.paymentTerms || 'Due upon receipt',
+      notes: invoice.notes || '',
+      terms: invoice.terms || 'Payment due within 30 days. Late payments subject to fees.',
+      billingCycle: invoice.billingCycle || 'monthly'
     });
     setEditingInvoice(invoice);
     setShowCreateModal(true);
@@ -471,16 +731,26 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         
         const matchesFilter = filter === 'all' || 
                             (filter === 'paid' && invoice.status === 'paid') ||
-                            (filter === 'unpaid' && invoice.status === 'unpaid');
+                            (filter === 'pending' && invoice.status === 'pending') ||
+                            (filter === 'overdue' && invoice.status === 'overdue');
         
         const matchesSearch = 
           (invoice.customerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
           (invoice.invoiceNumber?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-          (invoice.customerEmail?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+          (invoice.customerEmail?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+          (invoice.customerPhone?.toLowerCase() || '').includes(searchTerm.toLowerCase());
         
         return matchesFilter && matchesSearch;
       })
     : [];
+
+  // Calculate stats
+  const stats = {
+    totalInvoices: invoices.length,
+    pendingInvoices: invoices.filter(inv => inv.status === 'pending').length,
+    paidInvoices: invoices.filter(inv => inv.status === 'paid').length,
+    totalRevenue: invoices.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0)
+  };
 
   if (loading) {
     return (
@@ -512,7 +782,9 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           <button 
             onClick={exportInvoicesToExcel}
             disabled={exportLoading}
-            className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
+            className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center ${
+              exportLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             <FileSpreadsheet size={16} className="mr-1.5" />
             {exportLoading ? 'Exporting...' : 'Export Excel'}
@@ -531,6 +803,60 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       </div>
 
+      {/* Stats Summary - UPDATED WITH KSH PRICING */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Invoices</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.totalInvoices}</p>
+            </div>
+            <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-900/20' : 'bg-blue-100'}`}>
+              <FileText size={20} className="text-blue-600 dark:text-blue-400" />
+            </div>
+          </div>
+        </div>
+        <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Pending</p>
+              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                {stats.pendingInvoices}
+              </p>
+            </div>
+            <div className={`p-2 rounded-lg ${darkMode ? 'bg-yellow-900/20' : 'bg-yellow-100'}`}>
+              <Clock size={20} className="text-yellow-600 dark:text-yellow-400" />
+            </div>
+          </div>
+        </div>
+        <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Paid</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {stats.paidInvoices}
+              </p>
+            </div>
+            <div className={`p-2 rounded-lg ${darkMode ? 'bg-green-900/20' : 'bg-green-100'}`}>
+              <CheckCircle size={20} className="text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+        </div>
+        <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Revenue</p>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                Ksh {formatPrice(stats.totalRevenue)}
+              </p>
+            </div>
+            <div className={`p-2 rounded-lg ${darkMode ? 'bg-purple-900/20' : 'bg-purple-100'}`}>
+              <DollarSign size={20} className="text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Filters and Search */}
       <div className={`${themeClasses.card} p-4 mb-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
         <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -539,7 +865,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               <input
                 type="text"
-                placeholder="Search by customer name, invoice number, or email..."
+                placeholder="Search by customer name, invoice number, email, or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
@@ -569,21 +895,21 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               Paid
             </button>
             <button
-              onClick={() => setFilter('unpaid')}
+              onClick={() => setFilter('pending')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center ${
-                filter === 'unpaid' 
-                  ? (darkMode ? 'bg-red-600 text-white shadow-md' : 'bg-red-600 text-white shadow-md')
+                filter === 'pending' 
+                  ? (darkMode ? 'bg-yellow-600 text-white shadow-md' : 'bg-yellow-600 text-white shadow-md')
                   : (darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
               }`}
             >
-              <XCircle size={16} className="mr-1.5" />
-              Unpaid
+              <Clock size={16} className="mr-1.5" />
+              Pending
             </button>
           </div>
         </div>
       </div>
 
-      {/* Invoices Table */}
+      {/* Invoices Table - UPDATED WITH KSH PRICING */}
       <div className={`${themeClasses.card} rounded-xl shadow-lg border backdrop-blur-sm overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -596,7 +922,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   Customer
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
-                  Date
+                  Plan
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                   Amount
@@ -630,10 +956,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {invoice.invoiceNumber || `INV-${String(invoices.indexOf(invoice) + 1).padStart(3, '0')}`}
+                          {invoice.invoiceNumber || 'N/A'}
                         </div>
                         <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {invoice.planName || 'Internet Service'}
+                          {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 
+                           invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : 'N/A'}
                         </div>
                       </div>
                     </td>
@@ -647,30 +974,45 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm text-gray-600 dark:text-gray-400">
-                      {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 
-                       invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : 'N/A'}
+                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {invoice.planName || 'N/A'}
+                        </div>
+                        <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {invoice.planSpeed || 'N/A'}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        ${invoice.total || invoice.planPrice || 0}
+                        Ksh {formatPrice(invoice.totalAmount || invoice.planPrice || 0)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         invoice.status === 'paid' 
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          : invoice.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                          : invoice.status === 'overdue'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                       }`}>
                         {invoice.status === 'paid' ? (
                           <>
                             <CheckCircle size={12} className="mr-1" />
                             Paid
                           </>
+                        ) : invoice.status === 'pending' ? (
+                          <>
+                            <Clock size={12} className="mr-1" />
+                            Pending
+                          </>
                         ) : (
                           <>
                             <XCircle size={12} className="mr-1" />
-                            Unpaid
+                            {invoice.status || 'Pending'}
                           </>
                         )}
                       </span>
@@ -703,7 +1045,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
                         <button
                           onClick={() => sendInvoiceToClient(invoice)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors`}
+                          disabled={sendingInvoice === invoice._id}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
+                            sendingInvoice === invoice._id ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
                           title="Send to Client"
                         >
                           <Send size={16} />
@@ -717,7 +1062,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                           <Edit size={16} />
                         </button>
                         
-                        {invoice.status === 'unpaid' && (
+                        {invoice.status === 'pending' && (
                           <button
                             onClick={() => markAsPaid(invoice._id)}
                             className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors`}
@@ -744,10 +1089,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       </div>
 
-      {/* Create/Edit Invoice Modal */}
+      {/* Create/Edit Invoice Modal - UPDATED WITH ALL MODEL FIELDS */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
+          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
@@ -767,6 +1112,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </div>
             
             <div className="p-6 space-y-6">
+              {/* Customer Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -802,6 +1148,18 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     type="tel"
                     name="customerPhone"
                     value={invoiceForm.customerPhone}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Customer Location
+                  </label>
+                  <input
+                    type="text"
+                    name="customerLocation"
+                    value={invoiceForm.customerLocation}
                     onChange={handleInputChange}
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                   />
@@ -845,6 +1203,82 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     required
                   />
                 </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Billing Cycle
+                  </label>
+                  <select
+                    name="billingCycle"
+                    value={invoiceForm.billingCycle}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="annually">Annually</option>
+                    <option value="one_time">One Time</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Plan Selection */}
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className={`font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Internet Plan</h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowPlanSelection(true)}
+                    className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
+                  >
+                    <Wifi size={14} className="mr-1" />
+                    Select Plan
+                  </button>
+                </div>
+                
+                {invoiceForm.planName ? (
+                  <div className={`p-4 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h5 className="font-semibold text-gray-900 dark:text-gray-100">
+                          {invoiceForm.planName} - {invoiceForm.planSpeed}
+                        </h5>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Ksh {formatPrice(invoiceForm.planPrice)} / month
+                        </p>
+                        {invoiceForm.features.length > 0 && (
+                          <ul className="mt-2 space-y-1">
+                            {invoiceForm.features.map((feature, index) => (
+                              <li key={index} className="text-xs text-gray-600 dark:text-gray-400 flex items-center">
+                                <CheckCircle size={12} className="mr-1 text-green-500" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setInvoiceForm(prev => ({
+                            ...prev,
+                            planName: '',
+                            planPrice: 0,
+                            planSpeed: '',
+                            features: []
+                          }));
+                        }}
+                        className={`p-1 rounded ${darkMode ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-gray-200'}`}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`p-4 rounded-lg border-2 border-dashed text-center ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      No plan selected. Click "Select Plan" to choose an internet package.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Invoice Items */}
@@ -863,8 +1297,8 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 
                 <div className="space-y-3">
                   {invoiceForm.items.map((item, index) => (
-                    <div key={index} className="flex gap-3 items-start">
-                      <div className="flex-1">
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+                      <div className="md:col-span-5">
                         <input
                           type="text"
                           placeholder="Item description"
@@ -873,67 +1307,205 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                           className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                         />
                       </div>
-                      <div className="w-32">
+                      <div className="md:col-span-2">
+                        <input
+                          type="number"
+                          placeholder="Qty"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                          className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                          step="1"
+                          min="1"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <input
+                          type="number"
+                          placeholder="Unit Price"
+                          value={item.unitPrice}
+                          onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+                          className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                          step="1"
+                          min="0"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
                         <input
                           type="number"
                           placeholder="Amount"
                           value={item.amount}
-                          onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
-                          className={`w-full p-2 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                          step="0.01"
-                          min="0"
+                          readOnly
+                          className={`w-full p-2 border rounded-lg text-sm bg-gray-50 dark:bg-gray-700 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}
                         />
                       </div>
                       {invoiceForm.items.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeItem(index)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'} transition-colors`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="md:col-span-1">
+                          <button
+                            type="button"
+                            onClick={() => removeItem(index)}
+                            className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'} transition-colors`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       )}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Totals */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              {/* Financial Summary - UPDATED WITH KSH */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Tax Amount
+                    Tax Rate (%)
                   </label>
                   <input
                     type="number"
-                    name="tax"
-                    value={invoiceForm.tax}
+                    name="taxRate"
+                    value={invoiceForm.taxRate}
                     onChange={handleInputChange}
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                     step="0.01"
                     min="0"
+                    max="100"
                   />
                 </div>
                 <div>
-                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <div className="text-sm font-medium">Subtotal: ${invoiceForm.subtotal.toFixed(2)}</div>
-                    <div className="text-sm">Tax: ${invoiceForm.tax.toFixed(2)}</div>
-                    <div className="text-lg font-bold mt-1">Total: ${invoiceForm.total.toFixed(2)}</div>
-                  </div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Discount
+                  </label>
+                  <input
+                    type="number"
+                    name="discount"
+                    value={invoiceForm.discount}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                    step="1"
+                    min="0"
+                  />
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Status
+                    Discount Type
                   </label>
                   <select
-                    name="status"
-                    value={invoiceForm.status}
+                    name="discountType"
+                    value={invoiceForm.discountType}
                     onChange={handleInputChange}
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                   >
-                    <option value="unpaid">Unpaid</option>
-                    <option value="paid">Paid</option>
+                    <option value="none">None</option>
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed Amount</option>
                   </select>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Amount Paid (Ksh)
+                  </label>
+                  <input
+                    type="number"
+                    name="amountPaid"
+                    value={invoiceForm.amountPaid}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                    step="1"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              {/* Totals Display */}
+              <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="font-medium">Subtotal:</div>
+                    <div className="font-bold">Ksh {formatPrice(invoiceForm.subtotal)}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Tax:</div>
+                    <div className="font-bold">Ksh {formatPrice(invoiceForm.taxAmount)}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Total:</div>
+                    <div className="font-bold text-lg">Ksh {formatPrice(invoiceForm.totalAmount)}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Balance Due:</div>
+                    <div className={`font-bold ${invoiceForm.balanceDue > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      Ksh {formatPrice(invoiceForm.balanceDue)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Payment Method
+                  </label>
+                  <select
+                    name="paymentMethod"
+                    value={invoiceForm.paymentMethod}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="mobile_money">Mobile Money</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Payment Terms
+                  </label>
+                  <select
+                    name="paymentTerms"
+                    value={invoiceForm.paymentTerms}
+                    onChange={handleInputChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  >
+                    <option value="Due upon receipt">Due upon receipt</option>
+                    <option value="Net 15">Net 15</option>
+                    <option value="Net 30">Net 30</option>
+                    <option value="Net 60">Net 60</option>
+                    <option value="Custom">Custom</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Notes and Terms */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Notes
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={invoiceForm.notes}
+                    onChange={handleInputChange}
+                    rows="3"
+                    placeholder="Additional notes or instructions..."
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  ></textarea>
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Terms
+                  </label>
+                  <textarea
+                    name="terms"
+                    value={invoiceForm.terms}
+                    onChange={handleInputChange}
+                    rows="3"
+                    placeholder="Payment terms and conditions..."
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  ></textarea>
                 </div>
               </div>
 
@@ -960,7 +1532,71 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       )}
 
-      {/* Invoice Details Modal */}
+      {/* Plan Selection Modal */}
+      {showPlanSelection && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  Select Internet Plan
+                </h3>
+                <button
+                  onClick={() => setShowPlanSelection(false)}
+                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {WIFI_PLANS.map((plan) => (
+                  <div
+                    key={plan.id}
+                    className={`border rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg ${
+                      darkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-200 hover:border-gray-300'
+                    } ${invoiceForm.planName === plan.name ? 'ring-2 ring-[#003366]' : ''}`}
+                    onClick={() => selectPlan(plan)}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <h4 className="font-bold text-gray-900 dark:text-gray-100">{plan.name}</h4>
+                      {plan.popular && (
+                        <span className="bg-yellow-500 text-yellow-900 text-xs px-2 py-1 rounded-full font-bold">
+                          Popular
+                        </span>
+                      )}
+                    </div>
+                    <div className="mb-3">
+                      <div className="text-2xl font-bold text-[#003366] dark:text-[#FFCC00]">
+                        Ksh {formatPrice(plan.price)}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">per month</div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                        <Zap size={14} className="mr-1" />
+                        {plan.speed}
+                      </div>
+                    </div>
+                    <ul className="space-y-2">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="text-xs text-gray-600 dark:text-gray-400 flex items-center">
+                          <CheckCircle size={12} className="mr-1 text-green-500" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Details Modal - UPDATED WITH KSH PRICING */}
       {showInvoiceModal && selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
@@ -985,7 +1621,8 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     <strong>Name:</strong> {selectedInvoice.customerName || 'N/A'}<br/>
                     <strong>Email:</strong> {selectedInvoice.customerEmail || 'N/A'}<br/>
-                    <strong>Phone:</strong> {selectedInvoice.customerPhone || 'N/A'}
+                    <strong>Phone:</strong> {selectedInvoice.customerPhone || 'N/A'}<br/>
+                    <strong>Location:</strong> {selectedInvoice.customerLocation || 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -994,7 +1631,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <strong>Date:</strong> {selectedInvoice.invoiceDate ? new Date(selectedInvoice.invoiceDate).toLocaleDateString() : 
                                          selectedInvoice.createdAt ? new Date(selectedInvoice.createdAt).toLocaleDateString() : 'N/A'}<br/>
                     <strong>Due Date:</strong> {selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString() : 'N/A'}<br/>
-                    <strong>Status:</strong> {selectedInvoice.status || 'unpaid'}
+                    <strong>Plan:</strong> {selectedInvoice.planName || 'N/A'} • {selectedInvoice.planSpeed || 'N/A'}<br/>
+                    <strong>Status:</strong> <span className={`font-semibold ${
+                      selectedInvoice.status === 'paid' ? 'text-green-600' : 
+                      selectedInvoice.status === 'pending' ? 'text-yellow-600' : 
+                      'text-red-600'
+                    }`}>{selectedInvoice.status?.toUpperCase() || 'PENDING'}</span>
                   </p>
                 </div>
               </div>
@@ -1006,34 +1648,62 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       <tr>
                         <th className="px-4 py-2 text-left text-sm font-medium">Description</th>
+                        <th className="px-4 py-2 text-center text-sm font-medium">Qty</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium">Unit Price</th>
                         <th className="px-4 py-2 text-right text-sm font-medium">Amount</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                      {(selectedInvoice.items || [{ description: selectedInvoice.planName || 'Internet Service', amount: selectedInvoice.total || selectedInvoice.planPrice || 0 }]).map((item, index) => (
+                      {(selectedInvoice.items || [{ 
+                        description: selectedInvoice.planName ? `${selectedInvoice.planName} - ${selectedInvoice.planSpeed}` : 'Internet Service', 
+                        quantity: 1, 
+                        unitPrice: selectedInvoice.planPrice || selectedInvoice.totalAmount || 0, 
+                        amount: selectedInvoice.planPrice || selectedInvoice.totalAmount || 0 
+                      }]).map((item, index) => (
                         <tr key={index}>
                           <td className="px-4 py-2 text-sm">{item.description}</td>
-                          <td className="px-4 py-2 text-sm text-right">${item.amount}</td>
+                          <td className="px-4 py-2 text-sm text-center">{item.quantity || 1}</td>
+                          <td className="px-4 py-2 text-sm text-right">Ksh {formatPrice(item.unitPrice || item.amount)}</td>
+                          <td className="px-4 py-2 text-sm text-right">Ksh {formatPrice(item.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       <tr>
-                        <td className="px-4 py-2 text-sm font-bold">Subtotal</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">${selectedInvoice.subtotal || selectedInvoice.total || 0}</td>
+                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-right">Subtotal</td>
+                        <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedInvoice.subtotal || selectedInvoice.totalAmount || 0)}</td>
                       </tr>
                       <tr>
-                        <td className="px-4 py-2 text-sm font-bold">Tax</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">${selectedInvoice.tax || 0}</td>
+                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-right">Tax</td>
+                        <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedInvoice.taxAmount || 0)}</td>
                       </tr>
                       <tr>
-                        <td className="px-4 py-2 text-sm font-bold">Total</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">${selectedInvoice.total || 0}</td>
+                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-right">Total</td>
+                        <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedInvoice.totalAmount || 0)}</td>
                       </tr>
+                      <tr className="border-t">
+                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-green-600 text-right">Amount Paid</td>
+                        <td className="px-4 py-2 text-sm font-bold text-right text-green-600">Ksh {formatPrice(selectedInvoice.amountPaid || 0)}</td>
+                      </tr>
+                      {selectedInvoice.balanceDue > 0 && (
+                        <tr>
+                          <td colSpan="3" className="px-4 py-2 text-sm font-bold text-red-600 text-right">Balance Due</td>
+                          <td className="px-4 py-2 text-sm font-bold text-right text-red-600">Ksh {formatPrice(selectedInvoice.balanceDue || 0)}</td>
+                        </tr>
+                      )}
                     </tfoot>
                   </table>
                 </div>
               </div>
+
+              {selectedInvoice.notes && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Notes</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                    {selectedInvoice.notes}
+                  </p>
+                </div>
+              )}
               
               <div className="flex flex-wrap gap-3 pt-4">
                 <button
@@ -1045,12 +1715,15 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 </button>
                 <button
                   onClick={() => sendInvoiceToClient(selectedInvoice)}
-                  className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
+                  disabled={sendingInvoice === selectedInvoice._id}
+                  className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center ${
+                    sendingInvoice === selectedInvoice._id ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   <Send size={16} className="mr-1.5" />
-                  Send to Client
+                  {sendingInvoice === selectedInvoice._id ? 'Sending...' : 'Send to Client'}
                 </button>
-                {selectedInvoice.status === 'unpaid' && (
+                {selectedInvoice.status === 'pending' && (
                   <button
                     onClick={() => {
                       markAsPaid(selectedInvoice._id);
@@ -1078,7 +1751,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       )}
 
-      {/* PDF Preview Modal */}
+      {/* PDF Preview Modal - UPDATED WITH KSH PRICING */}
       {showPDFModal && selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
@@ -1109,12 +1782,16 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <p>{selectedInvoice.customerName}</p>
                     <p>{selectedInvoice.customerEmail}</p>
                     <p>{selectedInvoice.customerPhone}</p>
+                    <p>{selectedInvoice.customerLocation}</p>
                   </div>
                   <div className="text-right">
                     <p><strong>Date:</strong> {selectedInvoice.invoiceDate ? new Date(selectedInvoice.invoiceDate).toLocaleDateString() : 
                                             selectedInvoice.createdAt ? new Date(selectedInvoice.createdAt).toLocaleDateString() : 'N/A'}</p>
                     <p><strong>Due Date:</strong> {selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString() : 'N/A'}</p>
                     <p><strong>Status:</strong> {selectedInvoice.status}</p>
+                    {selectedInvoice.planName && (
+                      <p><strong>Plan:</strong> {selectedInvoice.planName} • {selectedInvoice.planSpeed}</p>
+                    )}
                   </div>
                 </div>
                 
@@ -1122,32 +1799,58 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   <thead>
                     <tr className={`border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
                       <th className="text-left py-2">Description</th>
+                      <th className="text-center py-2">Qty</th>
+                      <th className="text-right py-2">Unit Price</th>
                       <th className="text-right py-2">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(selectedInvoice.items || [{ description: selectedInvoice.planName || 'Internet Service', amount: selectedInvoice.total || selectedInvoice.planPrice || 0 }]).map((item, index) => (
+                    {(selectedInvoice.items || [{ 
+                      description: selectedInvoice.planName ? `${selectedInvoice.planName} - ${selectedInvoice.planSpeed}` : 'Internet Service', 
+                      quantity: 1, 
+                      unitPrice: selectedInvoice.planPrice || selectedInvoice.totalAmount || 0, 
+                      amount: selectedInvoice.planPrice || selectedInvoice.totalAmount || 0 
+                    }]).map((item, index) => (
                       <tr key={index} className={`border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
                         <td className="py-2">{item.description}</td>
-                        <td className="text-right py-2">${item.amount}</td>
+                        <td className="text-center py-2">{item.quantity || 1}</td>
+                        <td className="text-right py-2">Ksh {formatPrice(item.unitPrice || item.amount)}</td>
+                        <td className="text-right py-2">Ksh {formatPrice(item.amount)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
                     <tr>
-                      <td className="py-2 font-semibold">Subtotal</td>
-                      <td className="text-right py-2">${selectedInvoice.subtotal || selectedInvoice.total || 0}</td>
+                      <td colSpan="3" className="py-2 font-semibold text-right">Subtotal</td>
+                      <td className="text-right py-2">Ksh {formatPrice(selectedInvoice.subtotal || selectedInvoice.totalAmount || 0)}</td>
                     </tr>
                     <tr>
-                      <td className="py-2 font-semibold">Tax</td>
-                      <td className="text-right py-2">${selectedInvoice.tax || 0}</td>
+                      <td colSpan="3" className="py-2 font-semibold text-right">Tax</td>
+                      <td className="text-right py-2">Ksh {formatPrice(selectedInvoice.taxAmount || 0)}</td>
                     </tr>
                     <tr className={`border-t ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
-                      <td className="py-2 font-bold">Total</td>
-                      <td className="text-right py-2 font-bold">${selectedInvoice.total || 0}</td>
+                      <td colSpan="3" className="py-2 font-bold">Total</td>
+                      <td className="text-right py-2 font-bold">Ksh {formatPrice(selectedInvoice.totalAmount || 0)}</td>
                     </tr>
+                    <tr className={`border-t ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                      <td colSpan="3" className="py-2 font-bold text-green-600">Amount Paid</td>
+                      <td className="text-right py-2 font-bold text-green-600">Ksh {formatPrice(selectedInvoice.amountPaid || 0)}</td>
+                    </tr>
+                    {selectedInvoice.balanceDue > 0 && (
+                      <tr>
+                        <td colSpan="3" className="py-2 font-bold text-red-600">Balance Due</td>
+                        <td className="text-right py-2 font-bold text-red-600">Ksh {formatPrice(selectedInvoice.balanceDue || 0)}</td>
+                      </tr>
+                    )}
                   </tfoot>
                 </table>
+                
+                {selectedInvoice.notes && (
+                  <div className={`mt-4 p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <p className="text-sm font-semibold mb-1">Notes:</p>
+                    <p className="text-sm">{selectedInvoice.notes}</p>
+                  </div>
+                )}
                 
                 <div className={`mt-8 p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                   <p className="text-sm text-center">
@@ -1166,10 +1869,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 </button>
                 <button
                   onClick={() => sendInvoiceToClient(selectedInvoice)}
-                  className={`${themeClasses.button.secondary.base} ${darkMode ? themeClasses.button.secondary.dark : themeClasses.button.secondary.light} flex items-center`}
+                  disabled={sendingInvoice === selectedInvoice._id}
+                  className={`${themeClasses.button.secondary.base} ${darkMode ? themeClasses.button.secondary.dark : themeClasses.button.secondary.light} flex items-center ${
+                    sendingInvoice === selectedInvoice._id ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   <Send size={16} className="mr-1.5" />
-                  Send to Client
+                  {sendingInvoice === selectedInvoice._id ? 'Sending...' : 'Send to Client'}
                 </button>
               </div>
             </div>
