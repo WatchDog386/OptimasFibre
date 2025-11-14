@@ -1,8 +1,15 @@
-// src/models/Invoice.js - COMPLETELY UPDATED (No invoiceNumber + Duplicate Prevention)
+// src/models/Invoice.js - COMPLETELY UPDATED (With InvoiceNumber & Upgrade Features)
 import mongoose from 'mongoose';
 
 const invoiceSchema = new mongoose.Schema({
-    // ✅ NO invoiceNumber field - completely removed from schema
+    // ✅ ADDED BACK: Auto-increment invoice numbers (0001, 0002, 0003...)
+    invoiceNumber: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+        default: '0001' // Will be auto-generated in pre-save
+    },
     
     customerName: { 
         type: String, 
@@ -30,7 +37,8 @@ const invoiceSchema = new mongoose.Schema({
     planName: { 
         type: String, 
         required: [true, 'Plan name is required'],
-        trim: true
+        trim: true,
+        enum: ['Jumbo', 'Buffalo', 'Ndovu', 'Gazzelle', 'Tiger', 'Chui']
     },
     planPrice: { 
         type: Number, 
@@ -40,7 +48,8 @@ const invoiceSchema = new mongoose.Schema({
     planSpeed: { 
         type: String, 
         required: [true, 'Plan speed is required'],
-        trim: true
+        trim: true,
+        enum: ['8Mbps', '15Mbps', '25Mbps', '30Mbps', '40Mbps', '60Mbps']
     },
     features: [{ 
         type: String,
@@ -62,7 +71,7 @@ const invoiceSchema = new mongoose.Schema({
     status: { 
         type: String, 
         default: 'pending',
-        enum: ['pending', 'paid', 'cancelled', 'overdue']
+        enum: ['pending', 'paid', 'cancelled', 'completed', 'overdue']
     },
     paymentMethod: { 
         type: String, 
@@ -91,58 +100,148 @@ const invoiceSchema = new mongoose.Schema({
     finalAmount: {
         type: Number,
         default: 0
+    },
+    
+    // ✅ NEW: Track plan changes for upgrades/downgrades
+    previousPlan: {
+        planName: String,
+        planPrice: Number,
+        planSpeed: String,
+        changedAt: Date
+    },
+    isPlanUpgrade: {
+        type: Boolean,
+        default: false
+    },
+    connectionRequestSent: {
+        type: Boolean,
+        default: false
+    },
+    connectionRequestSentAt: {
+        type: Date
     }
 }, {
     timestamps: true
 });
 
-// ✅ SIMPLIFIED Pre-save hook
-invoiceSchema.pre('save', function(next) {
+// ✅ ENHANCED Pre-save hook with invoice number generation
+invoiceSchema.pre('save', async function(next) {
     console.log('🔍 [MODEL] Pre-save hook started');
     
-    // Calculate financial fields
-    this.totalAmount = this.planPrice || 0;
-    this.finalAmount = (this.totalAmount || 0) + (this.taxAmount || 0) - (this.discount || 0);
-    
-    // Auto-mark as overdue
-    if (this.status === 'pending' && this.dueDate && this.dueDate < new Date()) {
-        this.status = 'overdue';
-    }
+    try {
+        // ✅ AUTO-GENERATE INVOICE NUMBERS (0001, 0002, 0003...)
+        if (this.isNew && !this.invoiceNumber) {
+            console.log('🔢 Generating invoice number...');
+            
+            // Get the highest invoice number
+            const lastInvoice = await this.constructor.findOne(
+                {}, 
+                {}, 
+                { sort: { createdAt: -1 } }
+            );
+            
+            let nextNumber = 1;
+            if (lastInvoice && lastInvoice.invoiceNumber) {
+                const lastNumber = parseInt(lastInvoice.invoiceNumber);
+                nextNumber = isNaN(lastNumber) ? 1 : lastNumber + 1;
+            }
+            
+            // Format as 0001, 0002, etc.
+            this.invoiceNumber = nextNumber.toString().padStart(4, '0');
+            console.log(`✅ Generated invoice number: ${this.invoiceNumber}`);
+        }
 
-    // Set paidAt when status changes to paid
-    if (this.isModified('status') && this.status === 'paid' && !this.paidAt) {
-        this.paidAt = new Date();
-    }
+        // Calculate financial fields
+        this.totalAmount = this.planPrice || 0;
+        this.finalAmount = (this.totalAmount || 0) + (this.taxAmount || 0) - (this.discount || 0);
+        
+        // Auto-mark as overdue
+        if (this.status === 'pending' && this.dueDate && this.dueDate < new Date()) {
+            this.status = 'overdue';
+        }
 
-    console.log('✅ [MODEL] Pre-save hook completed');
-    next();
+        // Set paidAt when status changes to paid
+        if (this.isModified('status') && this.status === 'paid' && !this.paidAt) {
+            this.paidAt = new Date();
+        }
+
+        console.log('✅ [MODEL] Pre-save hook completed');
+        next();
+    } catch (error) {
+        console.error('❌ [MODEL] Pre-save hook error:', error);
+        // Fallback invoice number using timestamp
+        if (this.isNew && !this.invoiceNumber) {
+            this.invoiceNumber = Date.now().toString().slice(-4);
+            console.log(`🔄 Using fallback invoice number: ${this.invoiceNumber}`);
+        }
+        next();
+    }
 });
 
-// ✅ NEW: Static method to check for duplicate invoices
-invoiceSchema.statics.checkForDuplicate = async function(customerEmail, planName) {
+// ✅ ENHANCED: Static method to find existing invoice for customer and plan
+invoiceSchema.statics.findByCustomerAndPlan = function(customerEmail, planName) {
+    return this.findOne({
+        customerEmail: customerEmail.toLowerCase().trim(),
+        planName: planName.trim(),
+        status: { $in: ['pending', 'completed'] } // Active invoices
+    });
+};
+
+// ✅ Static method to find all invoices for customer
+invoiceSchema.statics.findByCustomer = function(customerEmail) {
+    return this.find({
+        customerEmail: customerEmail.toLowerCase().trim()
+    }).sort({ createdAt: -1 });
+};
+
+// ✅ Static method to get the next invoice number
+invoiceSchema.statics.getNextInvoiceNumber = async function() {
     try {
-        console.log('🔍 [MODEL] Checking for duplicate invoice:', { customerEmail, planName });
+        const lastInvoice = await this.findOne({}, {}, { sort: { createdAt: -1 } });
+        let nextNumber = 1;
         
-        const existingInvoice = await this.findOne({
-            customerEmail: customerEmail.toLowerCase().trim(),
-            planName: planName.trim(),
-            status: { $in: ['pending', 'paid'] } // Only check active invoices
-        });
-        
-        if (existingInvoice) {
-            console.log('❌ [MODEL] Duplicate invoice found:', existingInvoice._id);
-            return {
-                isDuplicate: true,
-                existingInvoice: existingInvoice
-            };
+        if (lastInvoice && lastInvoice.invoiceNumber) {
+            const lastNumber = parseInt(lastInvoice.invoiceNumber);
+            nextNumber = isNaN(lastNumber) ? 1 : lastNumber + 1;
         }
         
-        console.log('✅ [MODEL] No duplicate invoice found');
-        return { isDuplicate: false, existingInvoice: null };
+        return nextNumber.toString().padStart(4, '0');
     } catch (error) {
-        console.error('❌ [MODEL] Error checking for duplicates:', error);
-        throw error;
+        console.error('Error getting next invoice number:', error);
+        return '0001';
     }
+};
+
+// ✅ NEW: Instance method to update plan (for upgrades/downgrades)
+invoiceSchema.methods.updatePlan = function(newPlanData) {
+    console.log(`🔄 Updating plan from ${this.planName} to ${newPlanData.planName}`);
+    
+    // Save previous plan info before updating
+    this.previousPlan = {
+        planName: this.planName,
+        planPrice: this.planPrice,
+        planSpeed: this.planSpeed,
+        changedAt: new Date()
+    };
+    
+    // Update to new plan
+    this.planName = newPlanData.planName;
+    this.planPrice = newPlanData.planPrice;
+    this.planSpeed = newPlanData.planSpeed;
+    this.features = newPlanData.features || this.features;
+    this.isPlanUpgrade = true;
+    this.invoiceDate = new Date(); // Reset invoice date for the update
+    this.dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Reset due date
+    
+    return this.save();
+};
+
+// ✅ NEW: Mark connection request as sent
+invoiceSchema.methods.markConnectionRequestSent = function() {
+    this.connectionRequestSent = true;
+    this.connectionRequestSentAt = new Date();
+    this.status = 'completed'; // Mark as completed when connection request is sent
+    return this.save();
 };
 
 // ✅ Instance methods
@@ -164,63 +263,6 @@ invoiceSchema.methods.addPayment = function(paymentData) {
     }
     
     return this.save();
-};
-
-invoiceSchema.methods.markNotificationsSent = function(types = ['email', 'whatsapp']) {
-    const update = { 'notifications.lastNotificationDate': new Date() };
-    
-    if (types.includes('email')) {
-        update['notifications.emailSent'] = true;
-    }
-    
-    if (types.includes('whatsapp')) {
-        update['notifications.whatsappSent'] = true;
-    }
-    
-    return this.updateOne(update);
-};
-
-// ✅ Static methods
-invoiceSchema.statics.getOverdueInvoices = function() {
-    return this.find({ status: 'pending', dueDate: { $lt: new Date() } });
-};
-
-invoiceSchema.statics.getInvoicesByStatus = function(status) {
-    if (!['pending', 'paid', 'cancelled', 'overdue'].includes(status)) {
-        return Promise.reject(new Error('Invalid status'));
-    }
-    return this.find({ status });
-};
-
-invoiceSchema.statics.getInvoicesByCustomer = function(email) {
-    return this.find({ customerEmail: email.toLowerCase().trim() }).sort({ createdAt: -1 });
-};
-
-invoiceSchema.statics.getRecentInvoices = function(limit = 10) {
-    return this.find().sort({ createdAt: -1 }).limit(limit);
-};
-
-invoiceSchema.statics.getStats = async function() {
-    const stats = await this.aggregate([
-        {
-            $group: {
-                _id: '$status',
-                count: { $sum: 1 },
-                totalRevenue: { $sum: '$finalAmount' }
-            }
-        }
-    ]);
-    
-    const totalRevenue = await this.aggregate([
-        { $match: { status: 'paid' } },
-        { $group: { _id: null, total: { $sum: '$finalAmount' } } }
-    ]);
-    
-    return {
-        byStatus: stats,
-        totalRevenue: totalRevenue[0]?.total || 0,
-        totalInvoices: await this.countDocuments()
-    };
 };
 
 // ✅ Virtuals
@@ -246,9 +288,20 @@ invoiceSchema.virtual('formattedFinalAmount').get(function() {
     return `Ksh ${(this.finalAmount || 0).toLocaleString()}`;
 });
 
-// ✅ Virtual: Generate a display ID using MongoDB _id
+// ✅ ENHANCED Virtual: Generate display ID using invoice number
 invoiceSchema.virtual('displayId').get(function() {
-    return this._id ? `INV-${this._id.toString().slice(-6).toUpperCase()}` : 'INV-NONE';
+    return `INV-${this.invoiceNumber}`;
+});
+
+// ✅ NEW Virtual: Check if this is an upgrade
+invoiceSchema.virtual('isUpgrade').get(function() {
+    return !!this.previousPlan;
+});
+
+// ✅ NEW Virtual: Get plan change description
+invoiceSchema.virtual('planChangeDescription').get(function() {
+    if (!this.previousPlan) return 'New Connection';
+    return `Upgrade from ${this.previousPlan.planName} (${this.previousPlan.planSpeed})`;
 });
 
 // ✅ Serialization
@@ -256,7 +309,7 @@ invoiceSchema.set('toJSON', {
     virtuals: true, 
     transform: (doc, ret) => { 
         delete ret.__v; 
-        ret.displayId = `INV-${ret._id.toString().slice(-6).toUpperCase()}`;
+        ret.displayId = `INV-${ret.invoiceNumber}`;
         return ret; 
     } 
 });
@@ -265,17 +318,18 @@ invoiceSchema.set('toObject', {
     virtuals: true, 
     transform: (doc, ret) => { 
         delete ret.__v; 
-        ret.displayId = `INV-${ret._id.toString().slice(-6).toUpperCase()}`;
+        ret.displayId = `INV-${ret.invoiceNumber}`;
         return ret; 
     } 
 });
 
-// ✅ Indexes for duplicate prevention
-invoiceSchema.index({ customerEmail: 1, planName: 1, status: 1 });
-invoiceSchema.index({ customerEmail: 1 });
-invoiceSchema.index({ status: 1 });
-invoiceSchema.index({ createdAt: -1 });
+// ✅ Indexes for performance and duplicate prevention
+invoiceSchema.index({ invoiceNumber: 1 }); // For fast invoice number lookups
+invoiceSchema.index({ customerEmail: 1, planName: 1, status: 1 }); // For duplicate prevention
+invoiceSchema.index({ customerEmail: 1 }); // For customer invoice history
+invoiceSchema.index({ status: 1 }); // For status filtering
+invoiceSchema.index({ createdAt: -1 }); // For recent invoices
 
-console.log('✅ Invoice model compiled successfully - No invoiceNumber field');
+console.log('✅ Invoice model compiled successfully - With invoiceNumber & upgrade features');
 
 export default mongoose.model('Invoice', invoiceSchema);

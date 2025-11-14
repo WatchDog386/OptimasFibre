@@ -1,44 +1,61 @@
-// backend/src/controllers/invoiceController.js - COMPLETELY UPDATED (Duplicate Prevention)
+// backend/src/controllers/invoiceController.js - FIXED (No Naming Conflict)
 import Invoice from '../models/Invoice.js';
 import { sendInvoiceEmail } from '../utils/emailService.js';
-import { sendWhatsAppInvoice } from '../utils/whatsappService.js';
+import { sendWhatsAppInvoice, sendConnectionRequest as sendWhatsAppConnectionRequest } from '../utils/whatsappService.js';
 
 /**
- * @desc Check for existing invoice for same customer and plan
+ * @desc Check for existing invoice and handle package changes
  */
-const checkForExistingInvoice = async (customerEmail, planName) => {
+const handleExistingInvoice = async (customerEmail, planName, newPlanData) => {
     try {
-        console.log('🔍 [DUPLICATE CHECK] Checking for existing invoice:', { customerEmail, planName });
+        console.log('🔍 [INVOICE CHECK] Checking for existing invoices:', { customerEmail, planName });
         
-        const existingInvoice = await Invoice.findOne({
-            customerEmail: customerEmail.toLowerCase().trim(),
-            planName: planName.trim(),
-            status: { $in: ['pending', 'paid'] } // Only check active invoices
-        });
+        // Check for existing invoice with same plan
+        const existingSamePlan = await Invoice.findByCustomerAndPlan(customerEmail, planName);
         
-        if (existingInvoice) {
-            console.log('❌ [DUPLICATE CHECK] Duplicate found:', existingInvoice._id);
+        if (existingSamePlan) {
+            console.log('🔄 [INVOICE CHECK] Found existing invoice with same plan:', existingSamePlan.invoiceNumber);
             return {
-                isDuplicate: true,
-                existingInvoice: existingInvoice
+                action: 'update',
+                invoice: existingSamePlan,
+                message: 'Updating existing invoice with same plan'
             };
         }
         
-        console.log('✅ [DUPLICATE CHECK] No duplicate found');
-        return { isDuplicate: false, existingInvoice: null };
+        // Check if customer has any other active invoices
+        const customerInvoices = await Invoice.findByCustomer(customerEmail);
+        const activeInvoices = customerInvoices.filter(inv => 
+            ['pending', 'completed'].includes(inv.status)
+        );
+        
+        if (activeInvoices.length > 0) {
+            console.log('❌ [INVOICE CHECK] Customer has other active invoices:', activeInvoices.map(i => i.planName));
+            return {
+                action: 'block',
+                invoice: activeInvoices[0],
+                message: `Customer already has active ${activeInvoices[0].planName} invoice`
+            };
+        }
+        
+        console.log('✅ [INVOICE CHECK] No conflicts - creating new invoice');
+        return {
+            action: 'create',
+            invoice: null,
+            message: 'Creating new invoice'
+        };
     } catch (error) {
-        console.error('❌ [DUPLICATE CHECK] Error:', error);
+        console.error('❌ [INVOICE CHECK] Error:', error);
         throw error;
     }
 };
 
 /**
- * @desc Create new invoice and optionally send notifications
+ * @desc Create or update invoice for customer
  * @route POST /api/invoices
  * @access Public
  */
 export const createInvoice = async (req, res) => {
-  console.log('🔍 [CONTROLLER] Starting invoice creation process...');
+  console.log('🔍 [CONTROLLER] Starting invoice processing...');
   
   try {
     const {
@@ -93,21 +110,6 @@ export const createInvoice = async (req, res) => {
       });
     }
 
-    // ✅ CHECK FOR DUPLICATE INVOICE
-    console.log('🔍 [CONTROLLER] Checking for duplicate invoice...');
-    const duplicateCheck = await checkForExistingInvoice(customerEmail, planName);
-
-    if (duplicateCheck.isDuplicate) {
-        console.log('❌ [CONTROLLER] Duplicate invoice blocked for:', { customerEmail, planName });
-        return res.status(400).json({
-            success: false,
-            message: `You already have an active ${planName} plan invoice. Please check your existing invoice or contact support if you need to make changes.`,
-            existingInvoiceId: duplicateCheck.existingInvoice._id,
-            displayId: duplicateCheck.existingInvoice.displayId,
-            error: 'DUPLICATE_PLAN'
-        });
-    }
-
     // ✅ Enhanced planPrice validation
     let parsedPlanPrice;
     try {
@@ -139,54 +141,68 @@ export const createInvoice = async (req, res) => {
     const finalInvoiceDate = invoiceDate ? new Date(invoiceDate) : now;
     const finalDueDate = dueDate ? new Date(dueDate) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    // ✅ Create invoice data
-    const invoiceData = {
-      customerName,
-      customerEmail,
-      customerPhone,
-      customerLocation,
+    // ✅ Prepare plan data
+    const planData = {
       planName,
-      planSpeed,
       planPrice: parsedPlanPrice,
-      features,
-      connectionType,
-      notes: notes || '',
-      status: ['pending', 'paid', 'cancelled', 'overdue'].includes(status) ? status : 'pending',
-      invoiceDate: finalInvoiceDate,
-      dueDate: finalDueDate,
+      planSpeed,
+      features
     };
 
-    console.log('🔍 [CONTROLLER] Creating invoice with data:', {
-      customerEmail,
-      planName,
-      planPrice: parsedPlanPrice,
-      featuresCount: features.length
-    });
+    // ✅ CHECK FOR EXISTING INVOICE AND HANDLE ACCORDINGLY
+    console.log('🔍 [CONTROLLER] Checking invoice status...');
+    const invoiceCheck = await handleExistingInvoice(customerEmail, planName, planData);
 
-    // ✅ Create and save invoice
-    console.log('🔍 [CONTROLLER] Creating Invoice instance...');
     let invoice;
-    try {
-      invoice = new Invoice(invoiceData);
-      console.log('✅ [CONTROLLER] Invoice instance created');
-    } catch (modelError) {
-      console.error('❌ [CONTROLLER] Error creating Invoice instance:', modelError);
+    let action = 'created';
+
+    if (invoiceCheck.action === 'update') {
+      // ✅ UPDATE EXISTING INVOICE (same customer, same plan)
+      console.log('🔄 [CONTROLLER] Updating existing invoice:', invoiceCheck.invoice.invoiceNumber);
+      
+      invoice = await invoiceCheck.invoice.updatePlan(planData);
+      action = 'updated';
+      
+      console.log('✅ [CONTROLLER] Invoice updated successfully');
+
+    } else if (invoiceCheck.action === 'block') {
+      // ❌ BLOCK - Customer has other active invoices
+      console.log('❌ [CONTROLLER] Blocking - customer has other active invoices');
       return res.status(400).json({
         success: false,
-        message: 'Invalid invoice data format',
-        error: process.env.NODE_ENV === 'development' ? modelError.message : undefined
+        message: `You already have an active ${invoiceCheck.invoice.planName} plan invoice. Please complete or cancel your existing invoice before creating a new one.`,
+        existingInvoiceId: invoiceCheck.invoice._id,
+        existingInvoiceNumber: invoiceCheck.invoice.invoiceNumber,
+        existingPlan: invoiceCheck.invoice.planName,
+        error: 'EXISTING_ACTIVE_INVOICE',
+        solution: 'Contact support to change your plan or cancel existing invoice'
       });
+
+    } else {
+      // ✅ CREATE NEW INVOICE
+      console.log('🆕 [CONTROLLER] Creating new invoice...');
+      const invoiceData = {
+        customerName,
+        customerEmail,
+        customerPhone,
+        customerLocation,
+        planName,
+        planSpeed,
+        planPrice: parsedPlanPrice,
+        features,
+        connectionType,
+        notes: notes || '',
+        status: ['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status) ? status : 'pending',
+        invoiceDate: finalInvoiceDate,
+        dueDate: finalDueDate,
+      };
+
+      invoice = new Invoice(invoiceData);
+      await invoice.save();
+      console.log('✅ [CONTROLLER] New invoice created:', invoice.invoiceNumber);
     }
 
-    console.log('🔍 [CONTROLLER] Saving invoice to database...');
-    try {
-      await invoice.save();
-      console.log('✅ [CONTROLLER] Invoice saved successfully! ID:', invoice._id);
-      console.log('✅ [CONTROLLER] Invoice displayId:', invoice.displayId);
-    } catch (saveError) {
-      console.error('❌ [CONTROLLER] Error saving invoice:', saveError);
-      throw saveError;
-    }
+    console.log(`✅ [CONTROLLER] Invoice ${action} successfully:`, invoice.invoiceNumber);
 
     // ✅ Send notifications (non-blocking)
     if (sendNotifications) {
@@ -218,15 +234,19 @@ export const createInvoice = async (req, res) => {
       }
     }
 
-    console.log('🎉 [CONTROLLER] Invoice creation completed successfully!');
-    return res.status(201).json({
+    console.log('🎉 [CONTROLLER] Invoice processing completed successfully!');
+    return res.status(action === 'created' ? 201 : 200).json({
       success: true,
-      message: 'Invoice created successfully!',
+      message: `Invoice ${action} successfully!`,
+      action,
       invoice,
+      isPlanUpdate: action === 'updated',
+      invoiceNumber: invoice.invoiceNumber,
+      displayId: invoice.displayId
     });
 
   } catch (error) {
-    console.error('❌ [CONTROLLER] Invoice creation failed!');
+    console.error('❌ [CONTROLLER] Invoice processing failed!');
     console.error('❌ [CONTROLLER] Error name:', error.name);
     console.error('❌ [CONTROLLER] Error message:', error.message);
     console.error('❌ [CONTROLLER] Error code:', error.code);
@@ -279,7 +299,7 @@ export const createInvoice = async (req, res) => {
     console.error('❌ [CONTROLLER] Unhandled error type:', error.name);
     return res.status(500).json({
       success: false,
-      message: 'Internal Server Error while creating invoice',
+      message: 'Internal Server Error while processing invoice',
       ...(process.env.NODE_ENV === 'development' && {
         error: {
           name: error.name,
@@ -289,6 +309,87 @@ export const createInvoice = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc Send connection request to WhatsApp
+ * @route POST /api/invoices/:id/send-connection-request
+ * @access Public
+ */
+export const sendConnectionRequestToOwner = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('📱 [CONTROLLER] Sending connection request for invoice:', id);
+    
+    const invoice = await Invoice.findById(id);
+    if (!invoice) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invoice not found'
+      });
+    }
+
+    // Send connection request to owner's WhatsApp (+254 741 874 200)
+    const whatsappResult = await sendWhatsAppConnectionRequest(invoice);
+    
+    // Mark invoice as connection request sent
+    await invoice.markConnectionRequestSent();
+    
+    console.log('✅ [CONTROLLER] Connection request sent successfully');
+
+    res.json({
+      success: true,
+      message: 'Connection request sent successfully! Our team will contact you shortly.',
+      invoice: {
+        id: invoice._id,
+        invoiceNumber: invoice.invoiceNumber,
+        status: invoice.status,
+        connectionRequestSent: invoice.connectionRequestSent,
+        connectionRequestSentAt: invoice.connectionRequestSentAt
+      },
+      whatsappResult
+    });
+  } catch (error) {
+    console.error('❌ [CONTROLLER] Error sending connection request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error sending connection request to our team. Please try again or contact us directly.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * @desc Get customer invoice history
+ * @route GET /api/invoices/customer/:email
+ * @access Public
+ */
+export const getCustomerInvoices = async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    console.log('📋 [CONTROLLER] Getting invoice history for:', email);
+    
+    const invoices = await Invoice.findByCustomer(email);
+    
+    res.json({
+      success: true,
+      customerEmail: email,
+      totalInvoices: invoices.length,
+      activeInvoices: invoices.filter(inv => ['pending', 'completed'].includes(inv.status)),
+      invoiceHistory: invoices
+    });
+  } catch (error) {
+    console.error('❌ Error fetching customer invoices:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching invoice history',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
+  }
+};
+
+// ... keep other existing functions (getInvoices, getInvoiceById, updateInvoiceStatus, etc.) the same ...
 
 /**
  * @desc Get paginated invoices
@@ -304,7 +405,7 @@ export const getInvoices = async (req, res) => {
     const query = {};
     
     // Status filter
-    if (status && ['pending', 'paid', 'cancelled', 'overdue'].includes(status)) {
+    if (status && ['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status)) {
       query.status = status;
     }
     
@@ -313,7 +414,8 @@ export const getInvoices = async (req, res) => {
       query.$or = [
         { customerName: { $regex: search, $options: 'i' } },
         { customerEmail: { $regex: search, $options: 'i' } },
-        { planName: { $regex: search, $options: 'i' } }
+        { planName: { $regex: search, $options: 'i' } },
+        { invoiceNumber: { $regex: search, $options: 'i' } }
       ];
     }
 
@@ -373,6 +475,8 @@ export const getInvoiceById = async (req, res) => {
   }
 };
 
+// ... keep updateInvoiceStatus, resendInvoiceNotifications, deleteInvoice, getInvoiceStats the same ...
+
 /**
  * @desc Update invoice status
  * @route PATCH /api/invoices/:id/status
@@ -381,10 +485,10 @@ export const updateInvoiceStatus = async (req, res) => {
   try {
     const { status } = req.body;
     
-    if (!['pending', 'paid', 'cancelled', 'overdue'].includes(status)) {
+    if (!['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status. Must be pending, paid, cancelled, or overdue.',
+        message: 'Invalid status. Must be pending, paid, cancelled, completed, or overdue.',
       });
     }
 

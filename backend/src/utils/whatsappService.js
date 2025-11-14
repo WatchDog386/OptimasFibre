@@ -1,4 +1,4 @@
-// backend/src/utils/whatsappService.js
+// backend/src/utils/whatsappService.js - COMPLETELY UPDATED (With Connection Requests)
 import twilio from 'twilio';
 
 /**
@@ -48,7 +48,7 @@ const formatPhoneNumber = (phone) => {
 };
 
 /**
- * Generates a well-formatted WhatsApp message for invoices
+ * Generates a well-formatted WhatsApp message for invoices (to customers)
  */
 export const generateWhatsAppMessage = (invoice) => {
   const invoiceDate = new Date(invoice.invoiceDate).toLocaleDateString('en-KE');
@@ -109,6 +109,57 @@ For support: ${companyPhone}
 };
 
 /**
+ * Generates connection request message for owner (to +254 741 874 200)
+ */
+export const generateConnectionRequestMessage = (invoice) => {
+  const requestTime = new Date().toLocaleString('en-KE', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const planChangeInfo = invoice.isPlanUpgrade ? 
+    `🔄 *PLAN UPGRADE* - Previously: ${invoice.previousPlan.planName} (Ksh ${invoice.previousPlan.planPrice.toLocaleString()})` : 
+    '🆕 *NEW CUSTOMER*';
+
+  return `
+🚀 *NEW CONNECTION REQUEST - ACTION REQUIRED*
+
+${planChangeInfo}
+
+*INVOICE DETAILS:*
+Invoice #: ${invoice.invoiceNumber}
+Plan: ${invoice.planName} (${invoice.planSpeed})
+Amount: Ksh ${parseInt(invoice.planPrice).toLocaleString()}/month
+Status: ${invoice.status.toUpperCase()}
+
+*CUSTOMER INFORMATION:*
+Name: ${invoice.customerName}
+Phone: ${invoice.customerPhone}
+Email: ${invoice.customerEmail}
+Location: ${invoice.customerLocation}
+
+*SERVICE DETAILS:*
+Connection Type: ${invoice.connectionType}
+Features: ${invoice.features.join(', ')}
+
+*TIMING:*
+Requested: ${requestTime}
+${invoice.isPlanUpgrade ? `Plan Changed: ${new Date(invoice.previousPlan.changedAt).toLocaleString()}` : ''}
+
+*ACTION REQUIRED:*
+📍 Visit customer for installation
+📞 Contact: ${invoice.customerPhone}
+💰 Collect payment: Ksh ${parseInt(invoice.planPrice).toLocaleString()}
+
+_This is an automated connection request from the Optima Fibre system_
+`.trim();
+};
+
+/**
  * Sends an invoice to the customer via WhatsApp
  */
 export const sendWhatsAppInvoice = async (invoice) => {
@@ -123,7 +174,7 @@ export const sendWhatsAppInvoice = async (invoice) => {
     try {
       formattedPhone = formatPhoneNumber(invoice.customerPhone);
     } catch (formatError) {
-      console.error('❌ Invalid phone number:', formatError.message);
+      console.error('❌ Invalid customer phone number:', formatError.message);
       return { success: false, error: formatError.message };
     }
 
@@ -131,7 +182,7 @@ export const sendWhatsAppInvoice = async (invoice) => {
     const to = `whatsapp:${formattedPhone}`;
     const messageBody = generateWhatsAppMessage(invoice);
 
-    console.log('📤 Sending WhatsApp to:', formattedPhone);
+    console.log('📤 Sending WhatsApp invoice to customer:', formattedPhone);
 
     const result = await client.messages.create({
       body: messageBody,
@@ -139,15 +190,16 @@ export const sendWhatsAppInvoice = async (invoice) => {
       to: to
     });
 
-    console.log('✅ WhatsApp sent successfully | SID:', result.sid);
+    console.log('✅ WhatsApp invoice sent successfully | SID:', result.sid);
     return {
       success: true,
       messageId: result.sid,
-      to: formattedPhone
+      to: formattedPhone,
+      type: 'customer_invoice'
     };
 
   } catch (error) {
-    console.error('❌ WhatsApp sending error:', {
+    console.error('❌ WhatsApp invoice sending error:', {
       code: error.code,
       message: error.message,
       moreInfo: error.moreInfo || 'N/A'
@@ -155,18 +207,147 @@ export const sendWhatsAppInvoice = async (invoice) => {
 
     switch (error.code) {
       case 21211:
-        return { success: false, error: 'Invalid phone number format' };
+        return { success: false, error: 'Invalid customer phone number format' };
       case 21408:
         return { success: false, error: 'WhatsApp not enabled on Twilio number' };
       case 21610:
-        return { success: false, error: 'Recipient not on WhatsApp' };
+        return { success: false, error: 'Customer not on WhatsApp' };
       case 63003:
-        return { success: false, error: 'Message delivery failed' };
+        return { success: false, error: 'Message delivery failed to customer' };
       case 63018:
         return { success: false, error: 'WhatsApp template rejected' };
       default:
         return { success: false, error: error.message || 'Unknown WhatsApp error' };
     }
+  }
+};
+
+/**
+ * Sends connection request to owner's WhatsApp (+254 741 874 200)
+ */
+export const sendConnectionRequest = async (invoice) => {
+  try {
+    const client = getTwilioClient();
+    if (!client) {
+      console.warn('⚠️ WhatsApp service not configured - skipping connection request');
+      return { success: false, error: 'Twilio credentials missing' };
+    }
+
+    // Fixed owner number - +254 741 874 200
+    const ownerNumber = '+254741874200';
+    let formattedOwnerPhone;
+    
+    try {
+      formattedOwnerPhone = formatPhoneNumber(ownerNumber);
+    } catch (formatError) {
+      console.error('❌ Invalid owner phone number:', formatError.message);
+      return { success: false, error: formatError.message };
+    }
+
+    const from = `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`;
+    const to = `whatsapp:${formattedOwnerPhone}`;
+    const messageBody = generateConnectionRequestMessage(invoice);
+
+    console.log('📤 Sending connection request to owner:', formattedOwnerPhone);
+    console.log('📋 Invoice details:', {
+      invoiceNumber: invoice.invoiceNumber,
+      customer: invoice.customerName,
+      plan: invoice.planName,
+      isUpgrade: invoice.isPlanUpgrade
+    });
+
+    const result = await client.messages.create({
+      body: messageBody,
+      from: from,
+      to: to
+    });
+
+    console.log('✅ Connection request sent successfully to owner | SID:', result.sid);
+    return {
+      success: true,
+      messageId: result.sid,
+      to: formattedOwnerPhone,
+      type: 'owner_connection_request',
+      invoiceNumber: invoice.invoiceNumber,
+      customerName: invoice.customerName,
+      timestamp: new Date().toISOString()
+    };
+
+  } catch (error) {
+    console.error('❌ Connection request sending error:', {
+      code: error.code,
+      message: error.message,
+      moreInfo: error.moreInfo || 'N/A'
+    });
+
+    // Enhanced error handling for connection requests
+    let userFriendlyError = 'Failed to send connection request to our team. ';
+    
+    switch (error.code) {
+      case 21211:
+        userFriendlyError += 'Invalid owner phone number configuration.';
+        break;
+      case 21408:
+        userFriendlyError += 'WhatsApp not configured for business number.';
+        break;
+      case 21610:
+        userFriendlyError += 'Owner not available on WhatsApp.';
+        break;
+      case 63003:
+        userFriendlyError += 'Message delivery failed. Please try again.';
+        break;
+      default:
+        userFriendlyError += 'Please contact us directly at +254 741 874 200.';
+    }
+
+    return { 
+      success: false, 
+      error: error.message,
+      userFriendlyError: userFriendlyError,
+      code: error.code 
+    };
+  }
+};
+
+/**
+ * Sends both invoice to customer and connection request to owner
+ */
+export const sendCompleteWhatsAppNotifications = async (invoice) => {
+  try {
+    console.log('📱 Sending complete WhatsApp notifications...');
+    
+    const results = await Promise.allSettled([
+      sendWhatsAppInvoice(invoice),
+      sendConnectionRequest(invoice)
+    ]);
+
+    const invoiceResult = results[0].status === 'fulfilled' ? results[0].value : { success: false, error: results[0].reason };
+    const connectionResult = results[1].status === 'fulfilled' ? results[1].value : { success: false, error: results[1].reason };
+
+    console.log('📊 WhatsApp notification results:', {
+      customerInvoice: invoiceResult.success ? '✅ Sent' : '❌ Failed',
+      ownerConnection: connectionResult.success ? '✅ Sent' : '❌ Failed'
+    });
+
+    return {
+      success: invoiceResult.success || connectionResult.success, // Consider success if at least one worked
+      customerInvoice: invoiceResult,
+      ownerConnection: connectionResult,
+      summary: {
+        customerNotified: invoiceResult.success,
+        ownerNotified: connectionResult.success,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+  } catch (error) {
+    console.error('❌ Complete WhatsApp notifications failed:', error);
+    return {
+      success: false,
+      error: error.message,
+      customerInvoice: { success: false, error: 'Unknown error' },
+      ownerConnection: { success: false, error: 'Unknown error' }
+    };
   }
 };
 
@@ -188,11 +369,24 @@ export const testWhatsAppConfig = async () => {
       return { success: false, error: 'TWILIO_WHATSAPP_NUMBER not set in .env' };
     }
 
+    // Test owner number formatting
+    const ownerNumber = '+254741874200';
+    let formattedOwnerPhone;
+    try {
+      formattedOwnerPhone = formatPhoneNumber(ownerNumber);
+      console.log('✅ Owner number formatted correctly:', formattedOwnerPhone);
+    } catch (formatError) {
+      console.error('❌ Owner number formatting failed:', formatError.message);
+      return { success: false, error: `Owner number formatting failed: ${formatError.message}` };
+    }
+
     return {
       success: true,
       accountSid: account.sid,
       accountName: account.friendlyName,
-      whatsappNumber: fromNumber
+      whatsappNumber: fromNumber,
+      ownerNumber: formattedOwnerPhone,
+      ownerNumberStatus: 'Valid'
     };
 
   } catch (error) {
@@ -200,6 +394,62 @@ export const testWhatsAppConfig = async () => {
     return {
       success: false,
       error: error.message
+    };
+  }
+};
+
+/**
+ * Quick test to verify owner number can receive messages
+ */
+export const testOwnerWhatsApp = async () => {
+  try {
+    const client = getTwilioClient();
+    if (!client) {
+      return { success: false, error: 'Twilio credentials missing' };
+    }
+
+    const ownerNumber = '+254741874200';
+    const formattedOwnerPhone = formatPhoneNumber(ownerNumber);
+    
+    const from = `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`;
+    const to = `whatsapp:${formattedOwnerPhone}`;
+    
+    const testMessage = `
+🔧 *SYSTEM TEST MESSAGE*
+
+This is a test message from the Optima Fibre invoice system.
+
+✅ System is working correctly
+📅 ${new Date().toLocaleString('en-KE')}
+
+If you receive this message, the WhatsApp integration is properly configured.
+    `.trim();
+
+    console.log('🧪 Testing owner WhatsApp:', formattedOwnerPhone);
+    
+    const result = await client.messages.create({
+      body: testMessage,
+      from: from,
+      to: to
+    });
+
+    console.log('✅ Owner WhatsApp test successful | SID:', result.sid);
+    
+    return {
+      success: true,
+      message: 'Test message sent successfully to owner',
+      messageId: result.sid,
+      ownerNumber: formattedOwnerPhone,
+      timestamp: new Date().toISOString()
+    };
+
+  } catch (error) {
+    console.error('❌ Owner WhatsApp test failed:', error.message);
+    return {
+      success: false,
+      error: error.message,
+      code: error.code,
+      suggestion: 'Check if +254741874200 is a valid WhatsApp number'
     };
   }
 };

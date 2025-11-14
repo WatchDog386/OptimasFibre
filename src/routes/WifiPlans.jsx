@@ -1,6 +1,6 @@
-// WifiPlans.jsx — FINAL VERSION (With BACKEND invoiceNumber Fix)
+// WifiPlans.jsx — UPDATED (With Backend Integration & WhatsApp Connection Request)
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone, Download, Send } from "lucide-react";
+import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone, Download, Send, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence, useInView, useAnimation } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -283,6 +283,7 @@ const WifiPlans = () => {
   const [invoiceData, setInvoiceData] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [errorDetails, setErrorDetails] = useState("");
+  const [isSendingConnection, setIsSendingConnection] = useState(false);
   const navigate = useNavigate();
   const { darkMode } = useContext(ThemeContext);
 
@@ -359,7 +360,7 @@ const WifiPlans = () => {
     }));
   };
 
-  // ✅ FIXED handleSubmit — REMOVED invoiceNumber generation (let backend handle it)
+  // ✅ UPDATED handleSubmit — Handles duplicate invoices and plan updates
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -399,7 +400,7 @@ const WifiPlans = () => {
     }
 
     // Email validation (matches backend)
-    const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+    const emailRegex = /^\S+@\S+\.\S+$/;
     if (!emailRegex.test(trimmedEmail)) {
       showError("Please enter a valid email address.");
       return;
@@ -425,9 +426,8 @@ const WifiPlans = () => {
       return;
     }
 
-    // ✅ FIX: REMOVED invoiceNumber generation - backend will handle it
+    // ✅ UPDATED: Invoice payload (backend handles invoice numbers and updates)
     const invoicePayload = {
-      // NO invoiceNumber - backend will generate it automatically
       customerName: trimmedName,
       customerEmail: trimmedEmail,
       customerPhone: trimmedPhone,
@@ -438,13 +438,13 @@ const WifiPlans = () => {
       features: selectedPlan.features,
       connectionType: "Fiber Optic",
       status: "pending",
-      // Let backend handle dates too
+      sendNotifications: true,
     };
 
     try {
       const API_BASE_URL = getApiBaseUrl();
       console.log('📤 Sending invoice request to:', `${API_BASE_URL}/api/invoices`);
-      console.log('📦 Invoice payload (NO invoiceNumber):', JSON.stringify(invoicePayload, null, 2));
+      console.log('📦 Invoice payload:', JSON.stringify(invoicePayload, null, 2));
 
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
@@ -458,7 +458,7 @@ const WifiPlans = () => {
       console.log('📥 Response status:', response.status);
       
       if (!response.ok) {
-        let errorMsg = 'Validation error. Please check all fields and try again.';
+        let errorMsg = 'Failed to create invoice. Please check all fields and try again.';
         let errorDetails = '';
         
         try {
@@ -466,6 +466,16 @@ const WifiPlans = () => {
           errorMsg = errJson.message || errJson.error || errorMsg;
           errorDetails = errJson.details || JSON.stringify(errJson);
           console.log('❌ Server error details:', errJson);
+          
+          // Handle specific backend errors
+          if (errJson.error === 'EXISTING_ACTIVE_INVOICE') {
+            errorMsg = `You already have an active ${errJson.existingPlan} plan invoice. Please complete or cancel your existing invoice before creating a new one.`;
+            if (errJson.solution) {
+              errorMsg += ` ${errJson.solution}`;
+            }
+          } else if (errJson.error === 'DUPLICATE_PLAN') {
+            errorMsg = `You already have an active ${selectedPlan.name} plan invoice. Please check your existing invoice or contact support if you need to make changes.`;
+          }
         } catch (parseError) {
           const text = await response.text();
           if (text) {
@@ -484,6 +494,14 @@ const WifiPlans = () => {
       if (result.success) {
         setInvoiceData(result.invoice || result.data);
         setMessageStatus("success");
+        
+        // Show appropriate message based on action
+        const actionMessage = result.action === 'updated' 
+          ? 'Your existing invoice has been updated with the new plan details!'
+          : 'New invoice created successfully!';
+        
+        setErrorDetails(actionMessage);
+        
         // Reset form
         setFormData({
           name: "",
@@ -491,6 +509,7 @@ const WifiPlans = () => {
           phone: "",
           location: "",
         });
+        
         setTimeout(() => {
           setShowInvoice(true);
           setShowForm(false);
@@ -503,6 +522,53 @@ const WifiPlans = () => {
       showError(err.message || 'Failed to create invoice. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ✅ NEW: Send connection request to owner's WhatsApp
+  const handleSendConnectionRequest = async () => {
+    if (!invoiceData) return;
+    
+    setIsSendingConnection(true);
+    try {
+      const API_BASE_URL = getApiBaseUrl();
+      console.log('📱 Sending connection request for invoice:', invoiceData._id);
+      
+      const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceData._id}/send-connection-request`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send connection request');
+      }
+
+      const result = await response.json();
+      console.log('✅ Connection request sent:', result);
+      
+      if (result.success) {
+        setMessageStatus("connection_sent");
+        setErrorDetails("Connection request sent! Our team will contact you shortly on WhatsApp.");
+        
+        // Update invoice data with new status
+        setInvoiceData(prev => ({
+          ...prev,
+          status: 'completed',
+          connectionRequestSent: true,
+          connectionRequestSentAt: new Date().toISOString()
+        }));
+      } else {
+        throw new Error(result.message || 'Failed to send connection request');
+      }
+    } catch (error) {
+      console.error('❌ Connection request failed:', error);
+      setMessageStatus("connection_error");
+      setErrorDetails("Failed to send connection request. Please contact us directly at +254 741 874 200");
+    } finally {
+      setIsSendingConnection(false);
     }
   };
 
@@ -713,6 +779,26 @@ const WifiPlans = () => {
             </div>
           </div>
           <div className="p-6">
+            {/* Connection Request Status */}
+            {messageStatus === "connection_sent" && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-6"
+              >
+                <p>✅ Connection request sent successfully! Our team will contact you shortly on WhatsApp.</p>
+              </motion.div>
+            )}
+            {messageStatus === "connection_error" && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6"
+              >
+                <p>❌ Failed to send connection request. Please contact us directly at +254 741 874 200</p>
+              </motion.div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div>
                 <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'}`}>Bill To:</h3>
@@ -796,6 +882,38 @@ const WifiPlans = () => {
                 </div>
               </div>
             </div>
+            
+            {/* ✅ NEW: Save & Connect Button */}
+            {!invoiceData.connectionRequestSent && (
+              <div className="mt-8 p-6 rounded-lg border-2 border-dashed border-green-500 bg-green-50 dark:bg-green-900/20">
+                <h3 className={`text-lg font-semibold mb-4 text-green-700 dark:text-green-300`}>
+                  Ready to Get Connected?
+                </h3>
+                <p className="text-green-600 dark:text-green-400 mb-4">
+                  Click the button below to send a connection request directly to our team via WhatsApp. 
+                  We'll contact you within 24 hours to schedule your installation!
+                </p>
+                <motion.button
+                  className={`flex items-center justify-center w-full py-3 px-6 rounded-full transition-colors ${
+                    darkMode 
+                      ? 'bg-green-600 hover:bg-green-700 text-white' 
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleSendConnectionRequest}
+                  disabled={isSendingConnection}
+                >
+                  <MessageCircle size={18} className="mr-2" />
+                  {isSendingConnection ? 'Sending to WhatsApp...' : 'Save & Connect via WhatsApp'}
+                </motion.button>
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2 text-center">
+                  Sends directly to +254 741 874 200
+                </p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
             <div className="flex flex-wrap gap-4 justify-center mt-8">
               <motion.button
                 className={`flex items-center px-6 py-3 rounded-full transition-colors ${
@@ -1246,7 +1364,7 @@ const WifiPlans = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-6"
                   >
-                    <p>Invoice created successfully! Sending to your WhatsApp and Email...</p>
+                    <p>{errorDetails || 'Invoice created successfully! Sending to your WhatsApp and Email...'}</p>
                   </motion.div>
                 )}
                 {messageStatus === "error" && (
