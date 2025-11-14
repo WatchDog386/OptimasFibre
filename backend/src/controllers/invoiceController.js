@@ -1,4 +1,4 @@
-// backend/src/controllers/invoiceController.js - COMPLETELY UPDATED
+// backend/src/controllers/invoiceController.js - COMPLETELY UPDATED WITH FIXES
 import Invoice from '../models/Invoice.js';
 import mongoose from 'mongoose';
 
@@ -9,23 +9,28 @@ import mongoose from 'mongoose';
 export const createInvoice = async (req, res) => {
     try {
         console.log('📝 Creating new invoice...');
+        console.log('🔐 User making request:', req.user?._id);
         
-        const invoiceData = {
-            ...req.body,
-            createdBy: req.user?._id
-        };
-
-        if (!invoiceData.customerName || !invoiceData.customerEmail || !invoiceData.planName) {
+        // Validate required fields
+        if (!req.body.customerName || !req.body.customerEmail || !req.body.planName) {
             return res.status(400).json({
                 success: false,
                 message: 'Missing required fields: customerName, customerEmail, planName'
             });
         }
 
+        const invoiceData = {
+            ...req.body,
+            createdBy: req.user?._id || null // Handle case where user might not be available
+        };
+
+        // ✅ FIX: Remove duplicate validation that's causing issues
+        // Let the model handle validation instead
+
         const invoice = new Invoice(invoiceData);
         await invoice.save();
 
-        console.log(`✅ Invoice created: ${invoice.invoiceNumber}`);
+        console.log(`✅ Invoice created: ${invoice.invoiceNumber} by user ${req.user?._id || 'system'}`);
         
         res.status(201).json({
             success: true,
@@ -35,13 +40,17 @@ export const createInvoice = async (req, res) => {
     } catch (error) {
         console.error('❌ Error creating invoice:', error);
 
+        // Handle duplicate key errors
         if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern)[0];
             return res.status(400).json({
                 success: false,
-                message: 'Invoice number already exists'
+                message: `${field} already exists`,
+                field: field
             });
         }
 
+        // Handle validation errors
         if (error.name === 'ValidationError') {
             const errors = Object.values(error.errors).map(err => err.message);
             return res.status(400).json({
@@ -901,12 +910,8 @@ export const validateInvoiceData = async (req, res) => {
         if (!invoiceData.planPrice || invoiceData.planPrice <= 0)
             errors.push('Valid plan price is required');
 
-        if (invoiceData.invoiceNumber) {
-            const existing = await Invoice.findOne({
-                invoiceNumber: invoiceData.invoiceNumber
-            });
-            if (existing) errors.push('Invoice number already exists');
-        }
+        // ✅ FIX: Removed duplicate invoice number validation that causes issues
+        // Let the model handle this validation
 
         res.json({
             success: errors.length === 0,
@@ -943,6 +948,71 @@ export const cleanupInvoices = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error cleaning up invoices',
+            error: error.message
+        });
+    }
+};
+
+// ============================================================================
+// ✅ Health Check & System Status
+// ============================================================================
+
+export const healthCheck = async (req, res) => {
+    try {
+        const totalInvoices = await Invoice.countDocuments();
+        const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+        
+        res.json({
+            success: true,
+            status: 'healthy',
+            database: dbStatus,
+            totalInvoices,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ Health check failed:', error);
+        res.status(500).json({
+            success: false,
+            status: 'unhealthy',
+            error: error.message
+        });
+    }
+};
+
+// ============================================================================
+// ✅ Debug Endpoints for Development
+// ============================================================================
+
+export const debugCreateInvoice = async (req, res) => {
+    try {
+        // This endpoint allows testing without authentication
+        const testInvoiceData = {
+            customerName: 'Test Customer',
+            customerEmail: 'test@example.com',
+            customerPhone: '+254700000000',
+            planName: 'Test Plan',
+            planPrice: 5000,
+            planSpeed: '10Mbps',
+            status: 'pending'
+        };
+
+        const invoice = new Invoice(testInvoiceData);
+        await invoice.save();
+
+        res.json({
+            success: true,
+            message: 'Test invoice created successfully',
+            invoice,
+            debug: {
+                user: req.user,
+                hasToken: !!req.headers.authorization
+            }
+        });
+    } catch (error) {
+        console.error('❌ Debug invoice creation failed:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Debug invoice creation failed',
             error: error.message
         });
     }
