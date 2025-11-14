@@ -1,4 +1,4 @@
-// backend/src/routes/invoiceRoutes.js - UPDATED (With Existing Invoice Check)
+// backend/src/routes/invoiceRoutes.js - FULL UPDATED
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
 import {
@@ -11,135 +11,48 @@ import {
     getInvoiceStats,
     sendConnectionRequestToOwner,
     getCustomerInvoices,
-    checkExistingActiveInvoices // ✅ NEW: Import the new function
+    checkExistingActiveInvoices
 } from '../controllers/invoiceController.js';
 
 const router = express.Router();
 
 // --- PUBLIC ROUTES ---
 
-/**
- * @route   POST /api/invoices
- * @desc    Create or update invoice for customer
- * @access  Public
- * @body    {string} customerName - Customer's full name (required)
- * @body    {string} customerEmail - Customer's email (required)
- * @body    {string} customerPhone - Customer's phone number (required)
- * @body    {string} customerLocation - Customer's location (required)
- * @body    {string} planName - Selected plan name (required)
- * @body    {number} planPrice - Plan price (required)
- * @body    {string} planSpeed - Plan speed (required)
- * @body    {array} features - Plan features array
- * @body    {string} connectionType - Connection type (default: 'Fiber Optic')
- * @body    {string} notes - Additional notes
- * @body    {boolean} sendNotifications - Whether to send notifications (default: true)
- * @body    {string} status - Invoice status (default: 'pending')
- * @body    {Date} invoiceDate - Invoice date (auto-generated if not provided)
- * @body    {Date} dueDate - Due date (auto-generated if not provided)
- * ✅ Auto-generates invoice numbers (0001, 0002, 0003...)
- * ✅ Updates existing invoices for same customer + plan
- * ✅ Prevents multiple active invoices per customer
- */
+// Create or update invoice
 router.post('/', createInvoice);
 
-/**
- * @route   GET /api/invoices/:id
- * @desc    Get a single invoice by ID
- * @access  Public (for invoice viewing via shared link)
- * @param   {string} id - Invoice ID (MongoDB ObjectId)
- */
+// Get a single invoice by ID
 router.get('/:id', getInvoiceById);
 
-/**
- * @route   GET /api/invoices/customer/:email
- * @desc    Get all invoices for a specific customer
- * @access  Public
- * @param   {string} email - Customer email address
- * @returns {object} Customer invoice history with active invoices
- */
+// Get all invoices for a specific customer
 router.get('/customer/:email', getCustomerInvoices);
 
-/**
- * @route   GET /api/invoices/check/existing
- * @desc    Check for existing active invoices by customer email or phone
- * @access  Public
- * @query   {string} email - Customer email address
- * @query   {string} phone - Customer phone number
- * @returns {object} Existing active invoice details if found
- * ✅ Checks for pending or completed invoices
- * ✅ Returns most recent active invoice
- * ✅ Used to prevent duplicate invoices
- */
-router.get('/check/existing', checkExistingActiveInvoices); // ✅ NEW: Added route
+// Check for existing active invoices
+router.get('/check/existing', checkExistingActiveInvoices);
 
-/**
- * @route   POST /api/invoices/:id/send-connection-request
- * @desc    Send connection request to owner's WhatsApp (+254 741 874 200)
- * @access  Public
- * @param   {string} id - Invoice ID
- * @returns {object} Success message and WhatsApp result
- * ✅ Sends professional message to owner
- * ✅ Marks invoice as connection request sent
- * ✅ Updates invoice status to 'completed'
- */
+// Send connection request to owner (marks invoice as completed)
 router.post('/:id/send-connection-request', sendConnectionRequestToOwner);
 
 // --- PROTECTED ROUTES (Admin/Staff) ---
 
-/**
- * @route   GET /api/invoices
- * @desc    Get all invoices (supports pagination and status filtering)
- * @access  Protected (admin/staff)
- * @query   {number} page - Page number (default: 1)
- * @query   {number} limit - Items per page (default: 10)
- * @query   {string} status - Filter by status (pending, paid, cancelled, completed, overdue)
- * @query   {string} search - Search in customer name, email, planName, or invoiceNumber
- */
+// Get all invoices (with optional pagination & status filtering)
 router.get('/', protect, getInvoices);
 
-/**
- * @route   GET /api/invoices/stats/summary
- * @desc    Get invoice statistics and summary
- * @access  Protected (admin/staff)
- * @returns {object} Invoice statistics by status and total revenue
- */
+// Get invoice statistics and summary
 router.get('/stats/summary', protect, getInvoiceStats);
 
-/**
- * @route   PATCH /api/invoices/:id/status
- * @desc    Update invoice status
- * @access  Protected (admin/staff)
- * @param   {string} id - Invoice ID
- * @body    {string} status - New status (pending, paid, cancelled, completed, overdue)
- * @returns {object} Updated invoice
- */
+// Update invoice status (e.g., mark as paid, completed, cancelled)
 router.patch('/:id/status', protect, updateInvoiceStatus);
 
-/**
- * @route   POST /api/invoices/:id/resend
- * @desc    Resend email and WhatsApp notifications for a specific invoice
- * @access  Protected (admin/staff)
- * @param   {string} id - Invoice ID
- * @returns {object} Notification results
- */
+// Resend email & WhatsApp notifications for an invoice
 router.post('/:id/resend', protect, resendInvoiceNotifications);
 
-/**
- * @route   DELETE /api/invoices/:id
- * @desc    Delete an invoice
- * @access  Protected (admin/staff)
- * @param   {string} id - Invoice ID
- * @returns {object} Success message
- */
+// Delete an invoice
 router.delete('/:id', protect, deleteInvoice);
 
-// --- TEMPORARY CLEANUP ROUTES (Remove after invoiceNumber index is fixed) ---
+// --- TEMPORARY CLEANUP ROUTES ---
 
-/**
- * @route   DELETE /api/invoices/cleanup/remove-invoiceNumber-index
- * @desc    Remove the problematic invoiceNumber index (TEMPORARY FIX)
- * @access  Public (remove this route after the issue is fixed)
- */
+// Remove problematic invoiceNumber index (TEMP FIX)
 router.delete('/cleanup/remove-invoiceNumber-index', async (req, res) => {
   try {
     const Invoice = await import('../models/Invoice.js');
@@ -156,7 +69,7 @@ router.delete('/cleanup/remove-invoiceNumber-index', async (req, res) => {
       const updatedIndexes = await Invoice.default.collection.getIndexes();
       return res.json({
         success: true,
-        message: 'invoiceNumber index removed successfully! You can now create invoices.',
+        message: 'invoiceNumber index removed successfully!',
         details: {
           indexesBefore: Object.keys(indexes),
           indexesAfter: Object.keys(updatedIndexes),
@@ -188,11 +101,7 @@ router.delete('/cleanup/remove-invoiceNumber-index', async (req, res) => {
   }
 });
 
-/**
- * @route   GET /api/invoices/cleanup/check-indexes
- * @desc    Check current indexes (for debugging)
- * @access  Public (remove after fix)
- */
+// Check current indexes (debugging)
 router.get('/cleanup/check-indexes', async (req, res) => {
   try {
     const Invoice = await import('../models/Invoice.js');
@@ -217,11 +126,7 @@ router.get('/cleanup/check-indexes', async (req, res) => {
   }
 });
 
-/**
- * @route   GET /api/invoices/cleanup/system-status
- * @desc    Get complete system status and recommendations
- * @access  Public (remove after fix)
- */
+// System status check (debugging)
 router.get('/cleanup/system-status', async (req, res) => {
   try {
     const Invoice = await import('../models/Invoice.js');
@@ -229,7 +134,7 @@ router.get('/cleanup/system-status', async (req, res) => {
     const hasInvoiceNumberIndex = !!indexes.invoiceNumber_1;
     
     const totalInvoices = await Invoice.default.countDocuments();
-    const sampleInvoice = await Invoice.default.findOne().sort({ createdAt: -1 });
+    const latestInvoice = await Invoice.default.findOne().sort({ createdAt: -1 });
     
     return res.json({
       success: true,
@@ -237,11 +142,11 @@ router.get('/cleanup/system-status', async (req, res) => {
         database: 'Connected',
         invoiceModel: 'Loaded',
         totalInvoices,
-        latestInvoice: sampleInvoice ? {
-          id: sampleInvoice._id,
-          invoiceNumber: sampleInvoice.invoiceNumber,
-          customer: sampleInvoice.customerName,
-          plan: sampleInvoice.planName
+        latestInvoice: latestInvoice ? {
+          id: latestInvoice._id,
+          invoiceNumber: latestInvoice.invoiceNumber,
+          customer: latestInvoice.customerName,
+          plan: latestInvoice.planName
         } : null
       },
       indexes: {

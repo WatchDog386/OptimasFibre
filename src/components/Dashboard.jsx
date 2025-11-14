@@ -32,7 +32,12 @@ import {
   Clock,
   Zap,
   TrendingUp,
-  Users
+  Users,
+  Mail,
+  MessageCircle,
+  DollarSign,
+  Calendar,
+  Filter
 } from 'lucide-react';
 import ReceiptManager from './ReceiptManager'; // ✅ Already imported
 
@@ -527,6 +532,7 @@ const Dashboard = () => {
             darkMode={darkMode} 
             themeClasses={themeClasses}
             API_BASE_URL={API_BASE_URL}
+            showNotification={showNotification}
           />
         );
       default:

@@ -1,4 +1,4 @@
-// backend/src/controllers/invoiceController.js - UPDATED (With Existing Invoice Fetch)
+// backend/src/controllers/invoiceController.js - UPDATED (Full Version)
 import Invoice from '../models/Invoice.js';
 import { sendInvoiceEmail } from '../utils/emailService.js';
 import { sendWhatsAppInvoice, sendConnectionRequest as sendWhatsAppConnectionRequest } from '../utils/whatsappService.js';
@@ -196,14 +196,8 @@ export const createInvoice = async (req, res) => {
         parsedPlanPrice = Number(planPrice);
       }
 
-      if (isNaN(parsedPlanPrice)) {
-        throw new Error('Not a number');
-      }
-      
-      if (parsedPlanPrice <= 0) {
-        throw new Error('Must be positive');
-      }
-      
+      if (isNaN(parsedPlanPrice)) throw new Error('Not a number');
+      if (parsedPlanPrice <= 0) throw new Error('Must be positive');
       console.log('✅ [CONTROLLER] Plan price parsed successfully:', parsedPlanPrice);
     } catch (priceError) {
       console.log('❌ [CONTROLLER] Invalid plan price:', planPrice, 'Error:', priceError.message);
@@ -219,12 +213,7 @@ export const createInvoice = async (req, res) => {
     const finalDueDate = dueDate ? new Date(dueDate) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     // ✅ Prepare plan data
-    const planData = {
-      planName,
-      planPrice: parsedPlanPrice,
-      planSpeed,
-      features
-    };
+    const planData = { planName, planPrice: parsedPlanPrice, planSpeed, features };
 
     // ✅ CHECK FOR EXISTING INVOICE AND HANDLE ACCORDINGLY
     console.log('🔍 [CONTROLLER] Checking invoice status...');
@@ -234,16 +223,12 @@ export const createInvoice = async (req, res) => {
     let action = 'created';
 
     if (invoiceCheck.action === 'update') {
-      // ✅ UPDATE EXISTING INVOICE (same customer, same plan)
       console.log('🔄 [CONTROLLER] Updating existing invoice:', invoiceCheck.invoice.invoiceNumber);
-      
       invoice = await invoiceCheck.invoice.updatePlan(planData);
       action = 'updated';
-      
       console.log('✅ [CONTROLLER] Invoice updated successfully');
 
     } else if (invoiceCheck.action === 'block') {
-      // ❌ BLOCK - Customer has other active invoices
       console.log('❌ [CONTROLLER] Blocking - customer has other active invoices');
       return res.status(400).json({
         success: false,
@@ -256,7 +241,6 @@ export const createInvoice = async (req, res) => {
       });
 
     } else {
-      // ✅ CREATE NEW INVOICE
       console.log('🆕 [CONTROLLER] Creating new invoice...');
       const invoiceData = {
         customerName,
@@ -286,28 +270,12 @@ export const createInvoice = async (req, res) => {
       console.log('🔍 [CONTROLLER] Sending notifications...');
       try {
         const notificationPromises = [];
-        
-        if (sendInvoiceEmail) {
-          notificationPromises.push(
-            sendInvoiceEmail(invoice)
-              .then(() => console.log('✅ [CONTROLLER] Email sent successfully'))
-              .catch(err => console.error('❌ [CONTROLLER] Email failed:', err.message))
-          );
-        }
-        
-        if (sendWhatsAppInvoice) {
-          notificationPromises.push(
-            sendWhatsAppInvoice(invoice)
-              .then(() => console.log('✅ [CONTROLLER] WhatsApp sent successfully'))
-              .catch(err => console.error('❌ [CONTROLLER] WhatsApp failed:', err.message))
-          );
-        }
-        
+        if (sendInvoiceEmail) notificationPromises.push(sendInvoiceEmail(invoice).catch(err => console.error('❌ Email failed:', err.message)));
+        if (sendWhatsAppInvoice) notificationPromises.push(sendWhatsAppInvoice(invoice).catch(err => console.error('❌ WhatsApp failed:', err.message)));
         await Promise.allSettled(notificationPromises);
         console.log('✅ [CONTROLLER] All notifications processed');
       } catch (notifyError) {
         console.warn('⚠️ [CONTROLLER] Notification system error:', notifyError.message);
-        // Don't fail the request if notifications fail
       }
     }
 
@@ -323,96 +291,26 @@ export const createInvoice = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ [CONTROLLER] Invoice processing failed!');
-    console.error('❌ [CONTROLLER] Error name:', error.name);
-    console.error('❌ [CONTROLLER] Error message:', error.message);
-    console.error('❌ [CONTROLLER] Error code:', error.code);
-
-    // ✅ Enhanced error handling
-    if (error.name === 'ValidationError') {
-      console.error('❌ [CONTROLLER] Validation errors detected');
-      const validationErrors = Object.values(error.errors).map((err) => {
-        return `${err.path}: ${err.message}`;
-      });
-
-      return res.status(400).json({
-        success: false,
-        message: `Validation failed: ${validationErrors.join('; ')}`,
-        details: validationErrors,
-        error: 'VALIDATION_ERROR'
-      });
-    }
-
-    if (error.name === 'CastError') {
-      console.error('❌ [CONTROLLER] Cast error:', error);
-      return res.status(400).json({
-        success: false,
-        message: `Invalid data format for field: ${error.path}`,
-        error: 'CAST_ERROR'
-      });
-    }
-
-    if (error.code === 11000) {
-      console.error('❌ [CONTROLLER] Duplicate key error:', error.keyValue);
-      const field = Object.keys(error.keyValue)[0];
-      return res.status(400).json({
-        success: false,
-        message: `Duplicate entry: ${field} '${error.keyValue[field]}' already exists`,
-        error: 'DUPLICATE_ENTRY'
-      });
-    }
-
-    // ✅ Database connection errors
-    if (error.name === 'MongoNetworkError' || error.name === 'MongoTimeoutError') {
-      console.error('❌ [CONTROLLER] Database connection error:', error.message);
-      return res.status(503).json({
-        success: false,
-        message: 'Database connection unavailable. Please try again later.',
-        error: 'DATABASE_UNAVAILABLE'
-      });
-    }
-
-    // ✅ Generic error
-    console.error('❌ [CONTROLLER] Unhandled error type:', error.name);
-    return res.status(500).json({
+    console.error('❌ [CONTROLLER] Invoice processing failed!', error);
+    res.status(500).json({
       success: false,
       message: 'Internal Server Error while processing invoice',
-      ...(process.env.NODE_ENV === 'development' && {
-        error: {
-          name: error.name,
-          message: error.message
-        }
-      })
+      ...(process.env.NODE_ENV === 'development' && { error: { name: error.name, message: error.message } })
     });
   }
 };
 
 /**
  * @desc Send connection request to WhatsApp
- * @route POST /api/invoices/:id/send-connection-request
- * @access Public
  */
 export const sendConnectionRequestToOwner = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    console.log('📱 [CONTROLLER] Sending connection request for invoice:', id);
-    
     const invoice = await Invoice.findById(id);
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invoice not found'
-      });
-    }
+    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
-    // Send connection request to owner's WhatsApp (+254 741 874 200)
     const whatsappResult = await sendWhatsAppConnectionRequest(invoice);
-    
-    // Mark invoice as connection request sent
     await invoice.markConnectionRequestSent();
-    
-    console.log('✅ [CONTROLLER] Connection request sent successfully');
 
     res.json({
       success: true,
@@ -428,27 +326,18 @@ export const sendConnectionRequestToOwner = async (req, res) => {
     });
   } catch (error) {
     console.error('❌ [CONTROLLER] Error sending connection request:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error sending connection request to our team. Please try again or contact us directly.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ success: false, message: 'Error sending connection request', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
 /**
  * @desc Get customer invoice history
- * @route GET /api/invoices/customer/:email
- * @access Public
  */
 export const getCustomerInvoices = async (req, res) => {
   try {
     const { email } = req.params;
-    
-    console.log('📋 [CONTROLLER] Getting invoice history for:', email);
-    
     const invoices = await Invoice.findByCustomer(email);
-    
+
     res.json({
       success: true,
       customerEmail: email,
@@ -458,20 +347,12 @@ export const getCustomerInvoices = async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error fetching customer invoices:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching invoice history',
-      ...(process.env.NODE_ENV === 'development' && { error: error.message })
-    });
+    res.status(500).json({ success: false, message: 'Error fetching invoice history', ...(process.env.NODE_ENV === 'development' && { error: error.message }) });
   }
 };
 
-// ... keep other existing functions (getInvoices, getInvoiceById, updateInvoiceStatus, etc.) the same ...
-
 /**
  * @desc Get paginated invoices
- * @route GET /api/invoices
- * @access Public
  */
 export const getInvoices = async (req, res) => {
   try {
@@ -480,235 +361,109 @@ export const getInvoices = async (req, res) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
 
     const query = {};
-    
-    // Status filter
-    if (status && ['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status)) {
-      query.status = status;
-    }
-    
-    // Search filter
-    if (search) {
-      query.$or = [
-        { customerName: { $regex: search, $options: 'i' } },
-        { customerEmail: { $regex: search, $options: 'i' } },
-        { planName: { $regex: search, $options: 'i' } },
-        { invoiceNumber: { $regex: search, $options: 'i' } }
-      ];
-    }
+    if (status && ['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status)) query.status = status;
+    if (search) query.$or = [
+      { customerName: { $regex: search, $options: 'i' } },
+      { customerEmail: { $regex: search, $options: 'i' } },
+      { planName: { $regex: search, $options: 'i' } },
+      { invoiceNumber: { $regex: search, $options: 'i' } }
+    ];
 
-    const invoices = await Invoice.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limitNum)
-      .skip((pageNum - 1) * limitNum);
-
+    const invoices = await Invoice.find(query).sort({ createdAt: -1 }).limit(limitNum).skip((pageNum - 1) * limitNum);
     const total = await Invoice.countDocuments(query);
 
-    res.json({
-      success: true,
-      count: invoices.length,
-      total,
-      pages: Math.ceil(total / limitNum),
-      currentPage: pageNum,
-      invoices,
-    });
+    res.json({ success: true, count: invoices.length, total, pages: Math.ceil(total / limitNum), currentPage: pageNum, invoices });
   } catch (error) {
     console.error('❌ Error fetching invoices:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching invoices',
-      ...(process.env.NODE_ENV === 'development' && { error: error.message })
-    });
+    res.status(500).json({ success: false, message: 'Error fetching invoices', ...(process.env.NODE_ENV === 'development' && { error: error.message }) });
   }
 };
 
 /**
  * @desc Get single invoice by ID
- * @route GET /api/invoices/:id
  */
 export const getInvoiceById = async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    const invoice = await Invoice.findById(id);
-    
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invoice not found',
-      });
-    }
-    
-    res.json({ 
-      success: true, 
-      invoice 
-    });
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+    res.json({ success: true, invoice });
   } catch (error) {
     console.error('❌ Error fetching invoice:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching invoice',
-      ...(process.env.NODE_ENV === 'development' && { error: error.message })
-    });
+    res.status(500).json({ success: false, message: 'Error fetching invoice', ...(process.env.NODE_ENV === 'development' && { error: error.message }) });
   }
 };
 
-// ... keep updateInvoiceStatus, resendInvoiceNotifications, deleteInvoice, getInvoiceStats the same ...
-
 /**
  * @desc Update invoice status
- * @route PATCH /api/invoices/:id/status
  */
 export const updateInvoiceStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    
-    if (!['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid status. Must be pending, paid, cancelled, completed, or overdue.',
-      });
-    }
+    if (!['pending', 'paid', 'cancelled', 'completed', 'overdue'].includes(status)) return res.status(400).json({ success: false, message: 'Invalid status' });
 
     const updateData = { status };
-    if (status === 'paid') {
-      updateData.paidAt = new Date();
-    }
+    if (status === 'paid') updateData.paidAt = new Date();
 
-    const invoice = await Invoice.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const invoice = await Invoice.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invoice not found',
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Invoice status updated successfully',
-      invoice,
-    });
+    res.json({ success: true, message: 'Invoice status updated successfully', invoice });
   } catch (error) {
     console.error('❌ Error updating invoice status:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error updating invoice status',
-      ...(process.env.NODE_ENV === 'development' && { error: error.message })
-    });
+    res.status(500).json({ success: false, message: 'Error updating invoice status', ...(process.env.NODE_ENV === 'development' && { error: error.message }) });
   }
 };
 
 /**
  * @desc Resend invoice notifications
- * @route POST /api/invoices/:id/resend
  */
 export const resendInvoiceNotifications = async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id);
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invoice not found',
-      });
-    }
+    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
-    const [emailResult, whatsappResult] = await Promise.allSettled([
-      sendInvoiceEmail(invoice),
-      sendWhatsAppInvoice(invoice),
-    ]);
-
+    const [emailResult, whatsappResult] = await Promise.allSettled([sendInvoiceEmail(invoice), sendWhatsAppInvoice(invoice)]);
     res.json({
       success: true,
       message: 'Notifications resent successfully',
       notifications: {
-        email: {
-          success: emailResult.status === 'fulfilled',
-          error: emailResult.status === 'rejected' ? emailResult.reason?.message : null
-        },
-        whatsapp: {
-          success: whatsappResult.status === 'fulfilled',
-          error: whatsappResult.status === 'rejected' ? whatsappResult.reason?.message : null
-        }
-      },
+        email: { success: emailResult.status === 'fulfilled', error: emailResult.status === 'rejected' ? emailResult.reason?.message : null },
+        whatsapp: { success: whatsappResult.status === 'fulfilled', error: whatsappResult.status === 'rejected' ? whatsappResult.reason?.message : null }
+      }
     });
   } catch (error) {
     console.error('❌ Error resending notifications:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error resending notifications',
-      ...(process.env.NODE_ENV === 'development' && { error: error.message })
-    });
+    res.status(500).json({ success: false, message: 'Error resending notifications', ...(process.env.NODE_ENV === 'development' && { error: error.message }) });
   }
 };
 
 /**
  * @desc Delete invoice
- * @route DELETE /api/invoices/:id
  */
 export const deleteInvoice = async (req, res) => {
   try {
     const invoice = await Invoice.findByIdAndDelete(req.params.id);
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invoice not found',
-      });
-    }
+    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
-    res.json({
-      success: true,
-      message: 'Invoice deleted successfully',
-    });
+    res.json({ success: true, message: 'Invoice deleted successfully' });
   } catch (error) {
     console.error('❌ Error deleting invoice:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting invoice',
-      ...(process.env.NODE_ENV === 'development' && { error: error.message })
-    });
+    res.status(500).json({ success: false, message: 'Error deleting invoice', ...(process.env.NODE_ENV === 'development' && { error: error.message }) });
   }
 };
 
 /**
  * @desc Get invoice statistics
- * @route GET /api/invoices/stats/summary
  */
 export const getInvoiceStats = async (req, res) => {
   try {
-    const stats = await Invoice.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          totalAmount: { $sum: '$planPrice' }
-        }
-      }
-    ]);
-
+    const stats = await Invoice.aggregate([{ $group: { _id: '$status', count: { $sum: 1 }, totalAmount: { $sum: '$planPrice' } } }]);
     const totalInvoices = await Invoice.countDocuments();
-    const totalRevenue = await Invoice.aggregate([
-      { $match: { status: 'paid' } },
-      { $group: { _id: null, total: { $sum: '$planPrice' } } }
-    ]);
+    const totalRevenue = await Invoice.aggregate([{ $match: { status: 'paid' } }, { $group: { _id: null, total: { $sum: '$planPrice' } } }]);
 
-    res.json({
-      success: true,
-      stats: {
-        byStatus: stats,
-        totalInvoices,
-        totalRevenue: totalRevenue[0]?.total || 0
-      }
-    });
+    res.json({ success: true, stats: { byStatus: stats, totalInvoices, totalRevenue: totalRevenue[0]?.total || 0 } });
   } catch (error) {
     console.error('❌ Error fetching invoice stats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching invoice statistics',
-      ...(process.env.NODE_ENV === 'development' && { error: error.message })
-    });
+    res.status(500).json({ success: false, message: 'Error fetching invoice statistics', ...(process.env.NODE_ENV === 'development' && { error: error.message }) });
   }
 };
