@@ -1,4 +1,4 @@
-// WifiPlans.jsx — UPDATED VERSION (Invoice Number Removed - Backend Handles It)
+// WifiPlans.jsx — UPDATED VERSION (WITH AUTHORIZATION HEADER FIX)
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { CheckCircle, X, Wifi, Star, Phone, Mail, MapPin, Zap, Smartphone, Download, Send } from "lucide-react";
 import { motion, AnimatePresence, useInView, useAnimation } from "framer-motion";
@@ -322,6 +322,11 @@ const WifiPlans = () => {
     return 'https://optimasfibre.onrender.com';
   };
 
+  // ✅ FIX: Get token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('token') || localStorage.getItem('authToken');
+  };
+
   const handleContactClick = () => {
     navigate('/contact');
   };
@@ -383,7 +388,7 @@ const WifiPlans = () => {
     }));
   };
 
-  // ✅ UPDATED: handleSubmit - REMOVED invoiceNumber generation
+  // ✅ UPDATED: handleSubmit - FIXED AUTHORIZATION HEADER
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -465,15 +470,26 @@ const WifiPlans = () => {
 
     try {
       const API_BASE_URL = getApiBaseUrl();
+      const authToken = getAuthToken(); // ✅ FIX: Get token
+      
       console.log('📤 Sending invoice request to:', `${API_BASE_URL}/api/invoices`);
+      console.log('🔐 Auth token available:', !!authToken);
       console.log('📦 Invoice payload (NO invoiceNumber):', invoicePayload);
+
+      // ✅ FIX: Added Authorization header
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+
+      // ✅ Add Authorization header if token exists
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify(invoicePayload),
       });
 
@@ -485,6 +501,13 @@ const WifiPlans = () => {
           const errJson = await response.json();
           errorMsg = errJson.message || errJson.error || errorMsg;
           console.log('❌ Server error details:', errJson);
+          
+          // ✅ Handle 401 specifically
+          if (response.status === 401) {
+            errorMsg = 'Authentication failed. Please log in again.';
+            // Optionally redirect to login
+            // navigate('/login');
+          }
         } catch {
           const text = await response.text();
           if (text) errorMsg = text;
