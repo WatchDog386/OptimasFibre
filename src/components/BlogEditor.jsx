@@ -1,3 +1,4 @@
+// BlogEditor.jsx - FULLY UPDATED WITH BEAUTIFUL DESIGN & ENHANCED UX
 import React, { useState } from 'react';
 
 const BlogEditor = () => {
@@ -119,7 +120,7 @@ const BlogEditor = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#182B5C] focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003366] focus:border-transparent transition-colors"
               placeholder="Enter blog post title"
             />
           </div>
@@ -135,7 +136,7 @@ const BlogEditor = () => {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#182B5C] focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003366] focus:border-transparent transition-colors"
               placeholder="e.g., Technology, Networking, Fibre Optics"
             />
           </div>
@@ -152,13 +153,13 @@ const BlogEditor = () => {
               rows="12"
               required
               minLength="100"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#182B5C] focus:border-transparent transition-colors resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003366] focus:border-transparent transition-colors resize-none"
               placeholder="Write your blog content here..."
             ></textarea>
             <div className="flex justify-between mt-1">
               <span className="text-xs text-gray-500">Minimum 100 characters</span>
-              <span className={`text-xs ${
-                content.length < 100 ? 'text-red-500 font-medium' : 'text-gray-500'
+              <span className={`text-xs font-medium ${
+                content.length < 100 ? 'text-red-500' : content.length >= 1800 ? 'text-amber-600' : 'text-green-600'
               }`}>
                 {content.length}/2000 characters
               </span>
@@ -175,36 +176,55 @@ const BlogEditor = () => {
               type="url"
               value={imageUrl}
               onChange={handleImageChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#182B5C] focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003366] focus:border-transparent transition-colors"
               placeholder="https://example.com/image.jpg"
             />
-            <p className="text-xs text-gray-500 mt-1">Supports: JPG, PNG, GIF, WEBP (Max 5MB)</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Supports: JPG, PNG, GIF, WEBP • Max 5MB
+            </p>
           </div>
 
           {/* Image Preview */}
           {imageUrl && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Image Preview</h4>
-              <div className="relative group">
-                <img
-                  src={imageUrl}
-                  alt="Featured"
-                  className="max-w-full h-auto rounded-lg shadow-sm max-h-64 object-contain border border-gray-300"
-                  onError={handleImagePreviewError}
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                  <span className="text-white text-sm">Hover to preview</span>
+            <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200/60">
+              <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-[#003366]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Image Preview
+              </h4>
+              <div className="flex justify-center">
+                <div className="relative group max-w-md">
+                  <img
+                    src={imageUrl}
+                    alt="Featured blog image"
+                    className="w-full h-auto max-h-64 object-contain rounded-lg border border-gray-300/50 shadow-sm"
+                    onError={handleImagePreviewError}
+                  />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
+                    <div className="text-white text-center p-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      <span className="text-sm font-medium">Image Preview</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
           {/* Submit Button */}
-          <div className="pt-4 border-t border-gray-200">
+          <div className="pt-6 border-t border-gray-200/50">
             <button
               type="submit"
               disabled={publishing || !title.trim() || !content.trim() || !category.trim() || content.length < 100}
-              className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-[#182B5C] to-[#243C70] hover:from-[#15254a] hover:to-[#1d325d] disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-sm hover:shadow transition-all duration-200 flex items-center justify-center"
+              className={`w-full md:w-auto px-6 py-3 font-medium rounded-lg shadow-sm transition-all duration-300 flex items-center justify-center ${
+                publishing 
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-[#003366] to-[#01254a] hover:from-[#002a52] hover:to-[#001d3d] text-white hover:shadow-lg transform hover:-translate-y-0.5'
+              }`}
             >
               {publishing ? (
                 <span className="flex items-center">
@@ -218,7 +238,7 @@ const BlogEditor = () => {
                 'Publish Blog Post'
               )}
             </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p className="text-xs text-gray-600 mt-3 text-center">
               Your blog post will be published immediately and visible on your website.
             </p>
           </div>

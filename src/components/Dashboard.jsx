@@ -1,4 +1,4 @@
-// Dashboard.jsx - FULLY UPDATED WITH RESPONSIVE DESIGN & RECENT RECEIPTS
+// Dashboard.jsx - FULLY UPDATED WITH RESPONSIVE DESIGN & MODERN ANALYTICS
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, FileText, Image, LogOut, Plus, Edit, Trash2, Upload, Save, X, Menu, User, Settings, Search, Moon, Sun, Link, Download, Eye, Globe, AlertCircle, CheckCircle, Info, RefreshCw, Database, Server, Shield, Activity, HardDrive, Clock, Zap, TrendingUp, Users, Mail, MessageCircle, DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer
@@ -868,6 +868,106 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
   </button>
 );
 
+// New Component: Calendar Placeholder
+const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
+    // Generate a simple, static month view for placeholder
+    const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const dates = [
+        null, null, null, null, null, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
+        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 
+        26, 27, 28, 29, 30, null
+    ];
+    
+    return (
+        <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
+            <div className="flex justify-between items-center mb-4">
+                <h3 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>🗓️ Upcoming Schedule</h3>
+                <div className="text-sm font-medium text-[#003366] dark:text-[#FFCC00]">November 2025</div>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase">
+                {days.map(day => (
+                    <div key={day} className={darkMode ? 'text-gray-400' : 'text-gray-500'}>{day}</div>
+                ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1 mt-2">
+                {dates.map((date, index) => (
+                    <div
+                        key={index}
+                        className={`p-1 rounded-full text-sm flex items-center justify-center h-8 w-8 mx-auto ${
+                            !date ? 'text-transparent pointer-events-none' : 
+                            date === 15 ? (darkMode ? 'bg-[#FFCC00] text-[#003366] font-bold shadow-lg' : 'bg-[#003366] text-white font-bold shadow-lg') : 
+                            (darkMode ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-800 hover:bg-gray-100/50')
+                        }`}
+                    >
+                        {date}
+                    </div>
+                ))}
+            </div>
+            <div className={`mt-4 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <h4 className={`text-sm font-semibold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Events Summary:</h4>
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <span className="font-bold mr-1">Nov 18:</span> Project Alpha Deadline
+                </p>
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <span className="font-bold mr-1">Nov 25:</span> Client Meeting (Optimas)
+                </p>
+            </div>
+        </div>
+    );
+};
+
+// New Component: Receipt Status Pie Chart
+const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
+    // Determine receipt statuses
+    const statusCounts = {
+        processed: receipts.filter(r => r.status === 'processed' || r.status === 'paid').length,
+        pending: receipts.filter(r => r.status === 'pending' || r.status === 'draft' || r.status === 'unprocessed').length,
+        rejected: receipts.filter(r => r.status === 'rejected' || r.status === 'canceled').length,
+    };
+
+    const receiptStatusData = {
+        labels: ['Processed/Paid', 'Pending/Draft', 'Rejected/Canceled'],
+        datasets: [{
+            data: [statusCounts.processed, statusCounts.pending, statusCounts.rejected],
+            backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+            borderColor: darkMode ? '#1f2937' : '#fff',
+            borderWidth: 2,
+        }],
+    };
+
+    const receiptStatusOptions = {
+        responsive: true,
+        maintainAspectRatio: false, // Allows chart to fit container height/width better
+        plugins: {
+            legend: { 
+                position: 'bottom', 
+                labels: { 
+                    color: darkMode ? '#e5e7eb' : '#374151', 
+                    padding: 15, // Reduced padding for compactness
+                    font: { size: 10 } 
+                } 
+            },
+            title: { display: true, text: 'Receipt Status Distribution', color: darkMode ? '#f9fafb' : '#111827', font: { size: 14, weight: 'bold' } },
+        },
+    };
+
+    return (
+        <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full flex flex-col`}>
+            <div className="flex-grow flex items-center justify-center min-h-[200px]">
+                {receipts.length > 0 ? (
+                    <Pie data={receiptStatusData} options={receiptStatusOptions} />
+                ) : (
+                    <div className="flex flex-col items-center justify-center">
+                        <Receipt size={40} className="text-gray-400 mb-3" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No receipt data available yet.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+
 // ✅ UPDATED DASHBOARD OVERVIEW WITH CHARTS & RECENT RECEIPTS
 const DashboardOverview = ({ 
   blogPosts, 
@@ -945,25 +1045,29 @@ const DashboardOverview = ({
       data: monthlyRevenue.map(v => v || 0),
       backgroundColor: 'rgba(0, 51, 102, 0.7)',
       borderColor: '#003366',
-      borderWidth: 2,
-      borderRadius: 4,
+      tension: 0.4, // Added tension for a smoother line
+      borderWidth: 3,
+      pointRadius: 5,
+      pointBackgroundColor: '#FFCC00',
     }],
   };
 
   const revenueChartOptions = {
     responsive: true,
+    maintainAspectRatio: false, // Crucial for making the chart responsive in height
     plugins: {
       legend: { position: 'top', labels: { color: darkMode ? '#e5e7eb' : '#374151', font: { size: 12 } } },
-      title: { display: true, text: 'Revenue Over Last 6 Months', color: darkMode ? '#f9fafb' : '#111827', font: { size: 14, weight: 'bold' } },
+      title: { display: true, text: 'Revenue Trend Over Last 6 Months', color: darkMode ? '#f9fafb' : '#111827', font: { size: 14, weight: 'bold' } },
+      tooltip: { mode: 'index', intersect: false }
     },
     scales: {
       x: { ticks: { color: darkMode ? '#d1d5db' : '#4b5563' }, grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' } },
-      y: { ticks: { color: darkMode ? '#d1d5db' : '#4b5563' }, grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' } },
+      y: { beginAtZero: true, ticks: { color: darkMode ? '#d1d5db' : '#4b5563' }, grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' } },
     },
   };
 
   // Invoice Status (Pie)
-  const statusCounts = {
+  const invoiceStatusCounts = {
     paid: invoices.filter(i => i.status === 'paid').length,
     pending: invoices.filter(i => i.status === 'pending' || i.status === 'draft').length,
     other: invoices.filter(i => !['paid', 'pending', 'draft'].includes(i.status)).length,
@@ -972,7 +1076,7 @@ const DashboardOverview = ({
   const invoiceStatusData = {
     labels: ['Paid', 'Pending/Draft', 'Other'],
     datasets: [{
-      data: [statusCounts.paid, statusCounts.pending, statusCounts.other],
+      data: [invoiceStatusCounts.paid, invoiceStatusCounts.pending, invoiceStatusCounts.other],
       backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(156, 163, 175, 0.8)'],
       borderColor: darkMode ? '#1f2937' : '#fff',
       borderWidth: 2,
@@ -981,8 +1085,16 @@ const DashboardOverview = ({
 
   const invoiceStatusOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom', labels: { color: darkMode ? '#e5e7eb' : '#374151', padding: 20, font: { size: 11 } } },
+      legend: { 
+        position: 'bottom', 
+        labels: { 
+            color: darkMode ? '#e5e7eb' : '#374151', 
+            padding: 15,
+            font: { size: 10 } 
+        } 
+      },
       title: { display: true, text: 'Invoice Status Distribution', color: darkMode ? '#f9fafb' : '#111827', font: { size: 14, weight: 'bold' } },
     },
   };
@@ -991,7 +1103,7 @@ const DashboardOverview = ({
   const contentData = {
     labels: ['Blog Posts', 'Portfolio', 'Invoices', 'Receipts'],
     datasets: [{
-      label: 'Items Count',
+      label: 'Total Count',
       data: [blogPosts.length, portfolioItems.length, invoices.length, receipts.length],
       backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(139, 92, 246, 0.7)'],
       borderColor: darkMode ? '#1f2937' : '#fff',
@@ -1001,6 +1113,7 @@ const DashboardOverview = ({
 
   const contentOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       title: { display: true, text: 'Content & Transaction Overview', color: darkMode ? '#f9fafb' : '#111827', font: { size: 14, weight: 'bold' } },
@@ -1016,7 +1129,7 @@ const DashboardOverview = ({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Dashboard Overview</h2>
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Welcome back! Here's what's happening with your content.</p>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Welcome back! Here's what's happening with your **real-time data**.</p>
         </div>
         <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
           <button 
@@ -1085,22 +1198,45 @@ const DashboardOverview = ({
         />
       </div>
 
-      {/* ✅ CHARTS SECTION — ADDED AS REQUESTED */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm`}>
-          <Bar data={contentData} options={contentOptions} />
+      {/* ✅ Charts Section - Organized into 3 columns (1 Bar, 2 Pies - smaller size) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Content Overview - Bar Chart */}
+        <div className="lg:col-span-1 h-80">
+             <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
+                <Bar data={contentData} options={contentOptions} />
+             </div>
         </div>
-        <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm`}>
-          <Pie data={invoiceStatusData} options={invoiceStatusOptions} />
+
+        {/* Invoice Status Distribution (Pie Chart) - Reduced size by restricting column span */}
+        <div className="lg:col-span-1 h-80">
+            <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
+                <Pie data={invoiceStatusData} options={invoiceStatusOptions} />
+            </div>
+        </div>
+
+        {/* ✅ Receipt Status Distribution (Pie Chart) - Reduced size by restricting column span */}
+        <div className="lg:col-span-1 h-80">
+            <ReceiptStatusPieChart receipts={receipts} darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
 
-      <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm mb-6`}>
-        <Line data={revenueChartData} options={revenueChartOptions} />
+      {/* ✅ Revenue Chart and Calendar - Stretched Revenue, Calendar fills gap */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Revenue Chart - Takes up 2/3rds of the space (Wider) */}
+          <div className="lg:col-span-2 h-96">
+            <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
+              <Line data={revenueChartData} options={revenueChartOptions} />
+            </div>
+          </div>
+          
+          {/* ✅ Calendar Placeholder - Takes up 1/3rd of the space */}
+          <div className="lg:col-span-1 h-96">
+              <CalendarPlaceholder darkMode={darkMode} themeClasses={themeClasses} />
+          </div>
       </div>
-
-      {/* ✅ RECENT ITEMS GRID - NOW WITH 3 COLUMNS INCLUDING RECEIPTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      {/* ✅ RECENT ITEMS GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <RecentList 
           title="Recent Blog Posts" 
           items={blogPosts.slice(0, 5)}
@@ -1121,7 +1257,6 @@ const DashboardOverview = ({
           onDelete={onDelete}
           type="invoices"
         />
-        {/* ✅ RECENT RECEIPTS SECTION - ADDED AS REQUESTED */}
         <RecentList 
           title="Recent Receipts" 
           items={receipts.slice(0, 5)}
@@ -1195,8 +1330,8 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
             <div>
               <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                 {type === 'invoices' ? (item.invoiceNumber || `INV-${item._id}`) : 
-                 type === 'receipts' ? (item.receiptNumber || `RCP-${item._id}`) : 
-                 item.title}
+                  type === 'receipts' ? (item.receiptNumber || `RCP-${item._id}`) : 
+                  item.title}
               </h4>
               <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 {type === 'invoices' || type === 'receipts' ? item.customerName : new Date(item.publishedAt || item.createdAt).toLocaleDateString()}

@@ -1,6 +1,13 @@
+// BlogList.jsx - FULLY UPDATED WITH ANALYTICS & BEAUTIFUL DESIGN
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+
+// ✅ ADDED: Recharts for analytics
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
 
 // ✅ UPDATED BUTTON STYLES — SHORTER, NO ICONS, NATURAL WIDTH
 const BUTTON_STYLES = {
@@ -154,8 +161,6 @@ const BlogDetailViewer = ({ blogPost, onClose }) => {
               </motion.div>
             )}
 
-            {/* REMOVED: Download PDF Section */}
-
             {/* Back to Blog */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -225,6 +230,34 @@ const BlogList = () => {
     fetchBlogs();
   }, []);
 
+  // ✅ PREPARE ANALYTICS DATA
+  const analyticsData = useMemo(() => {
+    if (!blogPosts.length) return { categoryData: [], trendData: [] };
+    
+    // Category distribution
+    const categoryMap = {};
+    blogPosts.forEach(post => {
+      const cat = post.category || 'General';
+      categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+    });
+    const categoryData = Object.entries(categoryMap).map(([name, value]) => ({ name, value }));
+
+    // Monthly trend (last 6 months)
+    const now = new Date();
+    const trendData = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = date.toLocaleString('default', { month: 'short' });
+      const count = blogPosts.filter(post => {
+        const postDate = new Date(post.publishedAt || post.createdAt);
+        return postDate.getMonth() === date.getMonth() && postDate.getFullYear() === date.getFullYear();
+      }).length;
+      trendData.push({ name: monthKey, posts: count });
+    }
+
+    return { categoryData, trendData };
+  }, [blogPosts]);
+
   // Filter posts based on search and category
   const filteredPosts = blogPosts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -291,6 +324,50 @@ const BlogList = () => {
           </div>
         </div>
       </section>
+
+      {/* Analytics Section */}
+      {blogPosts.length > 0 && (
+        <div className="container mx-auto px-4 md:px-6 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Category Distribution */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Posts by Category</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={analyticsData.categoryData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={60}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {analyticsData.categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#015B97' : '#d0b216'} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Monthly Trend */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Posts Over Time</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={analyticsData.trendData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="posts" fill="#015B97" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
@@ -408,7 +485,6 @@ const BlogList = () => {
                         >
                           Learn More
                         </button>
-                        {/* REMOVED: Download PDF Button from blog list cards */}
                       </div>
                     </div>
                   </article>

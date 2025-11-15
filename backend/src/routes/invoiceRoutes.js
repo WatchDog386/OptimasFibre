@@ -1,54 +1,54 @@
-// backend/src/routes/invoiceRoutes.js - COMPLETELY UPDATED (Full Feature Set)
+// backend/src/routes/invoiceRoutes.js - COMPLETELY UPDATED & FIXED
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
 import {
-    // ✅ Basic CRUD Operations
+    // Basic CRUD Operations
     createInvoice,
     getInvoices,
     getInvoiceById,
     updateInvoice,
     deleteInvoice,
-    
-    // ✅ Enhanced Status Management
+
+    // Status Management
     updateInvoiceStatus,
     markInvoiceAsPaid,
     markInvoiceAsOverdue,
-    
-    // ✅ Customer Operations
+
+    // Customer Operations
     getCustomerInvoices,
     checkExistingActiveInvoices,
-    
-    // ✅ Notification & Communication
+
+    // Notifications & Communication
     sendInvoiceToCustomer,
     resendInvoiceNotifications,
     sendConnectionRequestToOwner,
-    
-    // ✅ Export & Download
+
+    // Export & Download
     exportInvoicePDF,
     exportInvoicesExcel,
     downloadInvoiceAttachment,
-    
-    // ✅ Statistics & Analytics
+
+    // Statistics & Analytics
     getInvoiceStats,
     getInvoiceAnalytics,
     getRevenueReports,
-    
-    // ✅ Search & Filtering
+
+    // Search & Filtering
     searchInvoices,
     getInvoicesByDateRange,
     getInvoicesByStatus,
-    
-    // ✅ Bulk Operations
+
+    // Bulk Operations
     bulkUpdateInvoices,
     bulkDeleteInvoices,
     bulkSendInvoices,
-    
-    // ✅ System Operations
+
+    // System Operations
     getInvoiceTemplates,
     validateInvoiceData,
     cleanupInvoices,
-    
-    // ✅ Temporary Cleanup Routes
+
+    // Temporary Cleanup Routes
     removeInvoiceNumberIndex,
     checkIndexes,
     getSystemStatus
@@ -56,219 +56,112 @@ import {
 
 const router = express.Router();
 
-// =============================================
+// =========================================================
 // 📊 PUBLIC ROUTES (Customer Facing)
-// =============================================
+// =========================================================
 
-// ✅ Create or update invoice
+// Create invoice
 router.post('/', createInvoice);
 
-// ✅ Get a single invoice by ID
-router.get('/:id', getInvoiceById);
-
-// ✅ Get all invoices for a specific customer
+// GET invoices for a specific customer
 router.get('/customer/:email', getCustomerInvoices);
 
-// ✅ Check for existing active invoices
+// Check active invoices
 router.get('/check/existing', checkExistingActiveInvoices);
 
-// ✅ Send connection request to owner (marks invoice as completed)
-router.post('/:id/send-connection-request', sendConnectionRequestToOwner);
-
-// ✅ Validate invoice data before creation
+// Validate before creation
 router.post('/validate', validateInvoiceData);
 
-// =============================================
-// 🔐 PROTECTED ROUTES (Admin/Staff Only)
-// =============================================
+// Connection request
+router.post('/:id/send-connection-request', sendConnectionRequestToOwner);
 
-// ✅ Get all invoices (with advanced filtering, pagination & search)
+// =========================================================
+// 🔐 PROTECTED ROUTES (Admin/Staff)
+// =========================================================
+
+// Search, filtering, pagination
 router.get('/', protect, getInvoices);
-
-// ✅ Search invoices with multiple criteria
 router.get('/search/advanced', protect, searchInvoices);
-
-// ✅ Get invoices by status
 router.get('/status/:status', protect, getInvoicesByStatus);
-
-// ✅ Get invoices by date range
 router.get('/date-range/:startDate/:endDate', protect, getInvoicesByDateRange);
 
-// ✅ Update invoice (full update)
+// Update & Status
 router.put('/:id', protect, updateInvoice);
-
-// ✅ Update invoice status
 router.patch('/:id/status', protect, updateInvoiceStatus);
 
-// ✅ Mark invoice as paid
+// Mark invoice as paid / overdue
 router.patch('/:id/mark-paid', protect, markInvoiceAsPaid);
-
-// ✅ Mark invoice as overdue
 router.patch('/:id/mark-overdue', protect, markInvoiceAsOverdue);
 
-// ✅ Send invoice to customer via email
+// Send or resend notifications
 router.post('/:id/send', protect, sendInvoiceToCustomer);
-
-// ✅ Resend email & WhatsApp notifications
 router.post('/:id/resend', protect, resendInvoiceNotifications);
 
-// ✅ Delete an invoice
-router.delete('/:id', protect, deleteInvoice);
-
-// =============================================
-// 📈 STATISTICS & ANALYTICS
-// =============================================
-
-// ✅ Get invoice statistics and summary
-router.get('/stats/summary', protect, getInvoiceStats);
-
-// ✅ Get advanced analytics
-router.get('/analytics/advanced', protect, getInvoiceAnalytics);
-
-// ✅ Get revenue reports
-router.get('/reports/revenue', protect, getRevenueReports);
-
-// =============================================
-// 📤 EXPORT & DOWNLOAD
-// =============================================
-
-// ✅ Export single invoice as PDF
-router.get('/:id/export/pdf', protect, exportInvoicePDF);
-
-// ✅ Export all invoices as Excel
+// Export & Downloads
 router.get('/export/excel', protect, exportInvoicesExcel);
-
-// ✅ Download invoice attachment
+router.get('/:id/export/pdf', protect, exportInvoicePDF);
 router.get('/:id/download', protect, downloadInvoiceAttachment);
 
-// =============================================
-// 🔄 BULK OPERATIONS
-// =============================================
-
-// ✅ Bulk update invoices (status, due dates, etc.)
+// Bulk operations
 router.patch('/bulk/update', protect, bulkUpdateInvoices);
-
-// ✅ Bulk delete invoices
 router.delete('/bulk/delete', protect, bulkDeleteInvoices);
-
-// ✅ Bulk send invoices to customers
 router.post('/bulk/send', protect, bulkSendInvoices);
 
-// =============================================
-// ⚙️ SYSTEM & TEMPLATES
-// =============================================
+// Statistics & analytics
+router.get('/stats/summary', protect, getInvoiceStats);
+router.get('/analytics/advanced', protect, getInvoiceAnalytics);
+router.get('/reports/revenue', protect, getRevenueReports);
 
-// ✅ Get invoice templates
+// Templates & cleanup
 router.get('/templates/available', protect, getInvoiceTemplates);
-
-// ✅ Cleanup old or invalid invoices
 router.post('/cleanup/old-invoices', protect, cleanupInvoices);
 
-// =============================================
-// 🛠️ TEMPORARY CLEANUP ROUTES (Debugging)
-// =============================================
-
-// ✅ Remove problematic invoiceNumber index
+// Debug + maintenance
 router.delete('/cleanup/remove-invoiceNumber-index', removeInvoiceNumberIndex);
-
-// ✅ Check current indexes
 router.get('/cleanup/check-indexes', checkIndexes);
-
-// ✅ Get system status
 router.get('/cleanup/system-status', getSystemStatus);
 
-// =============================================
-// 🔍 DEBUG & MONITORING ROUTES
-// =============================================
+// =========================================================
+// ⚠️ PLACE /:id ROUTE AT THE END (VERY IMPORTANT!)
+// Prevents route collisions
+// =========================================================
 
-// ✅ Health check for invoice system
+// MUST BE LAST among invoice routes
+router.get('/:id', getInvoiceById);
+
+// Delete invoice
+router.delete('/:id', protect, deleteInvoice);
+
+// =========================================================
+// 🔍 DEBUG ROUTES
+// =========================================================
+
 router.get('/health/status', (req, res) => {
     res.json({
         success: true,
-        message: '✅ Invoice system is healthy and running',
+        message: 'Invoice system healthy',
         timestamp: new Date().toISOString(),
-        version: '2.0.0',
-        features: {
-            crud: true,
-            search: true,
-            export: true,
-            analytics: true,
-            bulk_operations: true,
-            email_integration: true
-        }
+        version: '2.0.0'
     });
 });
 
-// ✅ Route information endpoint
 router.get('/routes/info', (req, res) => {
     res.json({
-        message: 'Optimas Fibre Invoice Management API',
-        version: '2.0.0',
-        endpoints: {
-            public: {
-                'POST /': 'Create invoice',
-                'GET /:id': 'Get invoice by ID',
-                'GET /customer/:email': 'Get customer invoices',
-                'GET /check/existing': 'Check existing invoices',
-                'POST /:id/send-connection-request': 'Send connection request',
-                'POST /validate': 'Validate invoice data'
-            },
-            protected: {
-                'GET /': 'Get all invoices (with filters)',
-                'GET /search/advanced': 'Advanced search',
-                'GET /status/:status': 'Get by status',
-                'GET /date-range/:start/:end': 'Get by date range',
-                'PUT /:id': 'Update invoice',
-                'PATCH /:id/status': 'Update status',
-                'PATCH /:id/mark-paid': 'Mark as paid',
-                'POST /:id/send': 'Send to customer',
-                'DELETE /:id': 'Delete invoice'
-            },
-            analytics: {
-                'GET /stats/summary': 'Basic statistics',
-                'GET /analytics/advanced': 'Advanced analytics',
-                'GET /reports/revenue': 'Revenue reports'
-            },
-            export: {
-                'GET /:id/export/pdf': 'Export PDF',
-                'GET /export/excel': 'Export Excel',
-                'GET /:id/download': 'Download attachment'
-            },
-            bulk: {
-                'PATCH /bulk/update': 'Bulk update',
-                'DELETE /bulk/delete': 'Bulk delete',
-                'POST /bulk/send': 'Bulk send'
-            }
-        }
+        message: 'Optimas Fibre Invoice API',
+        version: '2.0.0'
     });
 });
 
-// =============================================
-// 🎯 CATCH-ALL ROUTE FOR UNDEFINED ENDPOINTS (Express 5 Compatible)
-// =============================================
+// =========================================================
+// 🎯 EXPRESS 5 CATCH-ALL
+// =========================================================
 
 router.use((req, res) => {
     res.status(404).json({
         success: false,
         message: '❌ Invoice API endpoint not found',
-        requested: {
-            method: req.method,
-            path: req.originalUrl
-        },
-        available_endpoints: [
-            'GET    /api/invoices',
-            'POST   /api/invoices',
-            'GET    /api/invoices/:id',
-            'PUT    /api/invoices/:id',
-            'DELETE /api/invoices/:id',
-            'GET    /api/invoices/stats/summary',
-            'GET    /api/invoices/search/advanced',
-            'GET    /api/invoices/export/excel',
-            'GET    /api/invoices/:id/export/pdf',
-            'POST   /api/invoices/:id/send',
-            'GET    /api/invoices/routes/info'
-        ],
-        documentation: 'Visit /api/invoices/routes/info for complete API documentation'
+        requested: { method: req.method, path: req.originalUrl },
+        documentation: '/api/invoices/routes/info'
     });
 });
 
