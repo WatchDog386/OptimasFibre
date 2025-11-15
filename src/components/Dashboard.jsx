@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, FileText, Image, LogOut, Plus, Edit, Trash2, Upload, Save, X, Menu, User, Settings, Search, Moon, Sun, Link, Download, Eye, Globe, AlertCircle, CheckCircle, Info, RefreshCw, Database, Server, Shield, Activity, HardDrive, Clock, Zap, TrendingUp, Users, Mail, MessageCircle, DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer
 } from 'lucide-react';
+// Import updated managers with charts and WhatsApp
 import InvoiceManager from './InvoiceManager';
 import ReceiptManager from './ReceiptManager';
 
@@ -509,7 +510,6 @@ const Dashboard = () => {
         </div>
       );
     }
-
     switch (activeTab) {
       case 'dashboard':
         return (
