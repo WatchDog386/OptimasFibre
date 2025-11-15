@@ -1,4 +1,4 @@
-// Dashboard.jsx - FULLY UPDATED WITH REAL-TIME CHARTS
+// Dashboard.jsx - FULLY UPDATED WITH RESPONSIVE DESIGN & RECENT RECEIPTS
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, FileText, Image, LogOut, Plus, Edit, Trash2, Upload, Save, X, Menu, User, Settings, Search, Moon, Sun, Link, Download, Eye, Globe, AlertCircle, CheckCircle, Info, RefreshCw, Database, Server, Shield, Activity, HardDrive, Clock, Zap, TrendingUp, Users, Mail, MessageCircle, DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer
@@ -21,7 +21,7 @@ import {
 } from 'chart.js';
 import { Bar, Pie, Line } from 'react-chartjs-2';
 
-// Register Chart.js
+// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -178,7 +178,7 @@ const Dashboard = () => {
           setPortfolioItems(portfolioData);
         }
 
-        // Fetch invoices
+        // Fetch invoices with proper error handling
         let fetchedInvoices = [];
         try {
           const invoicesRes = await fetch(`${API_BASE_URL}/api/invoices`, { headers });
@@ -194,7 +194,7 @@ const Dashboard = () => {
         }
         setInvoices(fetchedInvoices);
 
-        // Fetch receipts
+        // Fetch receipts with proper error handling
         let fetchedReceipts = [];
         try {
           const receiptsRes = await fetch(`${API_BASE_URL}/api/receipts`, { headers });
@@ -210,7 +210,7 @@ const Dashboard = () => {
         }
         setReceipts(fetchedReceipts);
 
-        // Calculate stats
+        // Calculate stats from fetched data
         const calculatedStats = {
           totalInvoices: fetchedInvoices.length,
           totalReceipts: fetchedReceipts.length,
@@ -451,6 +451,7 @@ const Dashboard = () => {
     setIsEditing(true);
     setUploadMethod('url');
     setError('');
+    // Switch to the correct tab if editing from dashboard
     if (item.title && blogPosts.some(post => post._id === item._id)) {
         setActiveTab('blog');
     } else if (item.title && portfolioItems.some(port => port._id === item._id)) {
@@ -693,41 +694,110 @@ const Dashboard = () => {
             </div>
             <h1 className="text-lg font-bold ml-2 text-[#003366]">Admin Panel</h1>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="md:hidden text-gray-500 hover:text-gray-700">
+          <button 
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden text-gray-500 hover:text-gray-700"
+          >
             <X size={20} />
           </button>
         </div>
         <nav className="mt-6 px-3 space-y-1">
-          <NavItem icon={<BarChart3 size={18} />} text="Dashboard" active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }} darkMode={darkMode} />
-          <NavItem icon={<FileText size={18} />} text="Blog Posts" active={activeTab === 'blog'} onClick={() => { setActiveTab('blog'); setSidebarOpen(false); }} darkMode={darkMode} />
-          <NavItem icon={<Image size={18} />} text="Portfolio" active={activeTab === 'portfolio'} onClick={() => { setActiveTab('portfolio'); setSidebarOpen(false); }} darkMode={darkMode} />
-          <NavItem icon={<CreditCard size={18} />} text="Invoices" active={activeTab === 'invoices'} onClick={() => { setActiveTab('invoices'); setSidebarOpen(false); }} darkMode={darkMode} />
-          <NavItem icon={<Receipt size={18} />} text="Receipts" active={activeTab === 'receipts'} onClick={() => { setActiveTab('receipts'); setSidebarOpen(false); }} darkMode={darkMode} />
-          <NavItem icon={<Settings size={18} />} text="Settings" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }} darkMode={darkMode} />
+          <NavItem 
+            icon={<BarChart3 size={18} />} 
+            text="Dashboard" 
+            active={activeTab === 'dashboard'} 
+            onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
+            icon={<FileText size={18} />} 
+            text="Blog Posts" 
+            active={activeTab === 'blog'} 
+            onClick={() => { setActiveTab('blog'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
+            icon={<Image size={18} />} 
+            text="Portfolio" 
+            active={activeTab === 'portfolio'} 
+            onClick={() => { setActiveTab('portfolio'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
+            icon={<CreditCard size={18} />} 
+            text="Invoices" 
+            active={activeTab === 'invoices'} 
+            onClick={() => { setActiveTab('invoices'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
+            icon={<Receipt size={18} />} 
+            text="Receipts" 
+            active={activeTab === 'receipts'} 
+            onClick={() => { setActiveTab('receipts'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
+          <NavItem 
+            icon={<Settings size={18} />} 
+            text="Settings" 
+            active={activeTab === 'settings'} 
+            onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }} 
+            darkMode={darkMode}
+          />
         </nav>
         <div className="mt-8 px-3 pb-4">
           <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
-          <button onClick={() => { setActiveTab('blog'); setIsEditing(false); setEditingItem(null); setSidebarOpen(false); }} className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 text-sm font-medium ${darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'}`}>
-            <div className={`p-1.5 rounded-md mr-2 bg-[#003366]/10`}><Plus size={16} className="text-[#003366]" /></div>
+          <button 
+            onClick={() => { setActiveTab('blog'); setIsEditing(false); setEditingItem(null); setSidebarOpen(false); }}
+            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
+              darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
+            }`}
+          >
+            <div className={`p-1.5 rounded-md mr-2 bg-[#003366]/10`}>
+              <Plus size={16} className="text-[#003366]" />
+            </div>
             New Blog Post
           </button>
-          <button onClick={() => { setActiveTab('portfolio'); setIsEditing(false); setEditingItem(null); setSidebarOpen(false); }} className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'}`}>
-            <div className={`p-1.5 rounded-md mr-2 bg-[#FFCC00]/20`}><Plus size={16} className="text-[#003366]" /></div>
+          <button 
+            onClick={() => { setActiveTab('portfolio'); setIsEditing(false); setEditingItem(null); setSidebarOpen(false); }}
+            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
+              darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
+            }`}
+          >
+            <div className={`p-1.5 rounded-md mr-2 bg-[#FFCC00]/20`}>
+              <Plus size={16} className="text-[#003366]" />
+            </div>
             New Portfolio Item
           </button>
-          <button onClick={() => { setActiveTab('invoices'); setSidebarOpen(false); }} className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'}`}>
-            <div className={`p-1.5 rounded-md mr-2 bg-green-500/20`}><Plus size={16} className="text-green-600" /></div>
+          <button 
+            onClick={() => { setActiveTab('invoices'); setSidebarOpen(false); }}
+            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
+              darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
+            }`}
+          >
+            <div className={`p-1.5 rounded-md mr-2 bg-green-500/20`}>
+              <Plus size={16} className="text-green-600" />
+            </div>
             New Invoice
           </button>
-          <button onClick={() => { setActiveTab('receipts'); setSidebarOpen(false); }} className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'}`}>
-            <div className={`p-1.5 rounded-md mr-2 bg-blue-500/20`}><Plus size={16} className="text-blue-600" /></div>
+          <button 
+            onClick={() => { setActiveTab('receipts'); setSidebarOpen(false); }}
+            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
+              darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
+            }`}
+          >
+            <div className={`p-1.5 rounded-md mr-2 bg-blue-500/20`}>
+              <Plus size={16} className="text-blue-600" />
+            </div>
             New Receipt
           </button>
         </div>
         <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 text-sm font-medium ${darkMode ? 'bg-red-700 hover:bg-red-600 text-white shadow hover:shadow-lg' : 'bg-red-600 hover:bg-red-700 text-white shadow hover:shadow-lg'}`}
+            className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
+              darkMode ? 'bg-red-700 hover:bg-red-600 text-white shadow hover:shadow-lg' : 'bg-red-600 hover:bg-red-700 text-white shadow hover:shadow-lg'
+            }`}
           >
             <LogOut size={18} className="mr-2" />
             Sign Out
@@ -747,11 +817,17 @@ const Dashboard = () => {
           <div className="flex items-center space-x-3">
             <div className="relative hidden md:block">
               <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-              <input type="text" placeholder="Search..." className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003366] focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`} />
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003366] focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`}
+              />
             </div>
             <button
               onClick={toggleDarkMode}
-              className={`p-2.5 rounded-xl transition-all duration-300 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300 hover:shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'}`}
+              className={`p-2.5 rounded-xl transition-all duration-300 ${
+                darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300 hover:shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'
+              }`}
               aria-label="Toggle theme"
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -792,7 +868,7 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
   </button>
 );
 
-// Dashboard Overview Component with Charts
+// ✅ UPDATED DASHBOARD OVERVIEW WITH CHARTS & RECENT RECEIPTS
 const DashboardOverview = ({ 
   blogPosts, 
   portfolioItems, 
@@ -812,7 +888,9 @@ const DashboardOverview = ({
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/invoices/export/excel`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (response.ok) {
         const blob = await response.blob();
@@ -834,7 +912,7 @@ const DashboardOverview = ({
     }
   };
 
-  // === CHART HELPERS ===
+  // ✅ CHART DATA — REAL-TIME FROM DATABASE
   const getLast6Months = () => {
     const months = [];
     const now = new Date();
@@ -859,7 +937,7 @@ const DashboardOverview = ({
     }
   });
 
-  // ✅ REVENUE CHART
+  // Revenue Trend (Line)
   const revenueChartData = {
     labels: monthLabels,
     datasets: [{
@@ -869,23 +947,14 @@ const DashboardOverview = ({
       borderColor: '#003366',
       borderWidth: 2,
       borderRadius: 4,
-      borderSkipped: false,
     }],
   };
 
   const revenueChartOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: 'top',
-        labels: { color: darkMode ? '#e5e7eb' : '#374151', font: { size: 12 } },
-      },
-      title: {
-        display: true,
-        text: 'Revenue Over Last 6 Months',
-        color: darkMode ? '#f9fafb' : '#111827',
-        font: { size: 14, weight: 'bold' },
-      },
+      legend: { position: 'top', labels: { color: darkMode ? '#e5e7eb' : '#374151', font: { size: 12 } } },
+      title: { display: true, text: 'Revenue Over Last 6 Months', color: darkMode ? '#f9fafb' : '#111827', font: { size: 14, weight: 'bold' } },
     },
     scales: {
       x: { ticks: { color: darkMode ? '#d1d5db' : '#4b5563' }, grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' } },
@@ -893,7 +962,7 @@ const DashboardOverview = ({
     },
   };
 
-  // ✅ INVOICE STATUS CHART
+  // Invoice Status (Pie)
   const statusCounts = {
     paid: invoices.filter(i => i.status === 'paid').length,
     pending: invoices.filter(i => i.status === 'pending' || i.status === 'draft').length,
@@ -904,11 +973,7 @@ const DashboardOverview = ({
     labels: ['Paid', 'Pending/Draft', 'Other'],
     datasets: [{
       data: [statusCounts.paid, statusCounts.pending, statusCounts.other],
-      backgroundColor: [
-        'rgba(34, 197, 94, 0.8)',
-        'rgba(245, 158, 11, 0.8)',
-        'rgba(156, 163, 175, 0.8)',
-      ],
+      backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(156, 163, 175, 0.8)'],
       borderColor: darkMode ? '#1f2937' : '#fff',
       borderWidth: 2,
     }],
@@ -918,27 +983,17 @@ const DashboardOverview = ({
     responsive: true,
     plugins: {
       legend: { position: 'bottom', labels: { color: darkMode ? '#e5e7eb' : '#374151', padding: 20, font: { size: 11 } } },
-      title: {
-        display: true,
-        text: 'Invoice Status Distribution',
-        color: darkMode ? '#f9fafb' : '#111827',
-        font: { size: 14, weight: 'bold' },
-      },
+      title: { display: true, text: 'Invoice Status Distribution', color: darkMode ? '#f9fafb' : '#111827', font: { size: 14, weight: 'bold' } },
     },
   };
 
-  // ✅ CONTENT OVERVIEW CHART
+  // Content Overview (Bar)
   const contentData = {
     labels: ['Blog Posts', 'Portfolio', 'Invoices', 'Receipts'],
     datasets: [{
       label: 'Items Count',
       data: [blogPosts.length, portfolioItems.length, invoices.length, receipts.length],
-      backgroundColor: [
-        'rgba(59, 130, 246, 0.7)',
-        'rgba(245, 158, 11, 0.7)',
-        'rgba(16, 185, 129, 0.7)',
-        'rgba(139, 92, 246, 0.7)',
-      ],
+      backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(139, 92, 246, 0.7)'],
       borderColor: darkMode ? '#1f2937' : '#fff',
       borderWidth: 1,
     }],
@@ -948,12 +1003,7 @@ const DashboardOverview = ({
     responsive: true,
     plugins: {
       legend: { display: false },
-      title: {
-        display: true,
-        text: 'Content & Transaction Overview',
-        color: darkMode ? '#f9fafb' : '#111827',
-        font: { size: 14, weight: 'bold' },
-      },
+      title: { display: true, text: 'Content & Transaction Overview', color: darkMode ? '#f9fafb' : '#111827', font: { size: 14, weight: 'bold' } },
     },
     scales: {
       x: { ticks: { color: darkMode ? '#d1d5db' : '#4b5563' }, grid: { display: false } },
@@ -969,29 +1019,73 @@ const DashboardOverview = ({
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Welcome back! Here's what's happening with your content.</p>
         </div>
         <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
-          <button onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('blog'); }} className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}>
-            <Plus size={16} className="mr-1.5" /> <span>New Blog Post</span>
+          <button 
+            onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('blog'); }}
+            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
+          >
+            <Plus size={16} className="mr-1.5" />
+            <span>New Blog Post</span>
           </button>
-          <button onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('portfolio'); }} className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}>
-            <Plus size={16} className="mr-1.5" /> <span>New Portfolio</span>
+          <button 
+            onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('portfolio'); }}
+            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}
+          >
+            <Plus size={16} className="mr-1.5" />
+            <span>New Portfolio</span>
           </button>
-          <button onClick={() => { setActiveTab('invoices'); }} className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}>
-            <Plus size={16} className="mr-1.5" /> <span>Manage Invoices</span>
+          <button 
+            onClick={() => { setActiveTab('invoices'); }}
+            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
+          >
+            <Plus size={16} className="mr-1.5" />
+            <span>Manage Invoices</span>
           </button>
-          <button onClick={exportInvoicesToExcel} className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}>
-            <FileSpreadsheet size={16} className="mr-1.5" /> <span>Export Invoices</span>
+          <button 
+            onClick={exportInvoicesToExcel}
+            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}
+          >
+            <FileSpreadsheet size={16} className="mr-1.5" />
+            <span>Export Invoices</span>
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard title="Blog Posts" value={blogPosts.length} change={`${blogPosts.length} published`} icon={<FileText size={20} />} color="blue" darkMode={darkMode} />
-        <StatCard title="Portfolio Items" value={portfolioItems.length} change={`${portfolioItems.length} published`} icon={<Image size={20} />} color="gold" darkMode={darkMode} />
-        <StatCard title="Total Invoices" value={stats.totalInvoices || invoices.length} change={`${stats.pendingInvoices || invoices.filter(inv => inv.status === 'pending').length} pending`} icon={<CreditCard size={20} />} color="green" darkMode={darkMode} />
-        <StatCard title="Total Revenue" value={`Ksh ${formatPrice(stats.totalRevenue || 0)}`} change={`${stats.paidInvoices || invoices.filter(inv => inv.status === 'paid').length} paid`} icon={<DollarSign size={20} />} color="purple" darkMode={darkMode} />
+        <StatCard 
+          title="Blog Posts" 
+          value={blogPosts.length} 
+          change={`${blogPosts.length} published`} 
+          icon={<FileText size={20} />}
+          color="blue"
+          darkMode={darkMode}
+        />
+        <StatCard 
+          title="Portfolio Items" 
+          value={portfolioItems.length} 
+          change={`${portfolioItems.length} published`} 
+          icon={<Image size={20} />}
+          color="gold"
+          darkMode={darkMode}
+        />
+        <StatCard 
+          title="Total Invoices" 
+          value={stats.totalInvoices || invoices.length} 
+          change={`${stats.pendingInvoices || invoices.filter(inv => inv.status === 'pending').length} pending`} 
+          icon={<CreditCard size={20} />}
+          color="green"
+          darkMode={darkMode}
+        />
+        <StatCard 
+          title="Total Revenue" 
+          value={`Ksh ${formatPrice(stats.totalRevenue || 0)}`} 
+          change={`${stats.paidInvoices || invoices.filter(inv => inv.status === 'paid').length} paid`} 
+          icon={<DollarSign size={20} />}
+          color="purple"
+          darkMode={darkMode}
+        />
       </div>
 
-      {/* === CHARTS SECTION === */}
+      {/* ✅ CHARTS SECTION — ADDED AS REQUESTED */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm`}>
           <Bar data={contentData} options={contentOptions} />
@@ -1005,8 +1099,8 @@ const DashboardOverview = ({
         <Line data={revenueChartData} options={revenueChartOptions} />
       </div>
 
-      {/* RECENT LISTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* ✅ RECENT ITEMS GRID - NOW WITH 3 COLUMNS INCLUDING RECEIPTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <RecentList 
           title="Recent Blog Posts" 
           items={blogPosts.slice(0, 5)}
@@ -1026,6 +1120,17 @@ const DashboardOverview = ({
           onEdit={onEdit}
           onDelete={onDelete}
           type="invoices"
+        />
+        {/* ✅ RECENT RECEIPTS SECTION - ADDED AS REQUESTED */}
+        <RecentList 
+          title="Recent Receipts" 
+          items={receipts.slice(0, 5)}
+          viewAllLink="/admin/receipts"
+          darkMode={darkMode}
+          themeClasses={themeClasses}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          type="receipts"
         />
       </div>
     </div>
@@ -1064,7 +1169,7 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   );
 };
 
-// Recent List Component
+// Recent List Component - UPDATED TO SUPPORT RECEIPTS
 const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete, type }) => (
   <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
     <div className="flex justify-between items-center mb-4">
@@ -1077,19 +1182,26 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
       {items.map(item => (
         <li key={item._id} className="py-3 flex justify-between items-center">
           <div className="flex items-center">
-            {item.imageUrl && type !== 'invoices' && (
-              <img src={item.imageUrl} alt={item.title} className="w-12 h-12 object-cover rounded-md mr-3 flex-shrink-0" onError={(e) => {
-                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UzZTdlOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiM2NTc1ODI5Ij5OTyBJTUFHRTwvdGV4dD48L3N2Zz4=';
-              }} />
+            {item.imageUrl && type === 'blog' && (
+              <img 
+                src={item.imageUrl} 
+                alt={item.title} 
+                className="w-12 h-12 object-cover rounded-md mr-3 flex-shrink-0" 
+                onError={(e) => {
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UzZTdlOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiM2NTc1ODI5Ij5OTyBJTUFHRTwvdGV4dD48L3N2Zz4=';
+                }}
+              />
             )}
             <div>
               <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                {type === 'invoices' ? (item.invoiceNumber || `INV-${item._id}`) : item.title}
+                {type === 'invoices' ? (item.invoiceNumber || `INV-${item._id}`) : 
+                 type === 'receipts' ? (item.receiptNumber || `RCP-${item._id}`) : 
+                 item.title}
               </h4>
               <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {type === 'invoices' ? item.customerName : new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
+                {type === 'invoices' || type === 'receipts' ? item.customerName : new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
               </p>
-              {type === 'invoices' && (
+              {(type === 'invoices' || type === 'receipts') && (
                 <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${
                   item.status === 'paid' 
                     ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -1100,35 +1212,398 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
                   {item.status || 'pending'}
                 </span>
               )}
-              {type === 'invoices' && item.planPrice && (
+              {(type === 'invoices' || type === 'receipts') && (item.planPrice || item.amount) && (
                 <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Ksh {formatPrice(item.planPrice)}
+                  Ksh {formatPrice(item.planPrice || item.amount)}
                 </p>
               )}
             </div>
           </div>
           <div className="flex space-x-2 flex-shrink-0">
-            <button onClick={() => onEdit(item)} className="p-1.5 rounded-lg text-gray-500 hover:text-[#003366] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <button 
+              onClick={() => onEdit(item)}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-[#003366] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
               <Edit size={16} />
             </button>
-            <button onClick={() => onDelete(item._id, type)} className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <button
+              onClick={() => onDelete(item._id, type)}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
               <Trash2 size={16} />
             </button>
           </div>
         </li>
       ))}
       {items.length === 0 && (
-        <li className="py-3 text-center text-sm text-gray-500 dark:text-gray-400">No recent items.</li>
+        <li className="py-3 text-center text-sm text-gray-500 dark:text-gray-400">
+          No recent {type === 'receipts' ? 'receipts' : type === 'invoices' ? 'invoices' : 'items'}.
+        </li>
       )}
     </ul>
   </div>
 );
 
-// Content Manager, SettingsPanel, InputGroup remain unchanged from original (omitted for brevity but assumed present)
+// Content Manager Component
+const ContentManager = ({
+  title,
+  items,
+  onEdit,
+  onDelete,
+  formData,
+  onInputChange,
+  onImageChange,
+  onImageUrlChange,
+  onSave,
+  onCancel,
+  isEditing,
+  uploadMethod,
+  setUploadMethod,
+  darkMode,
+  themeClasses,
+  error,
+  contentType
+}) => {
+  const isPortfolio = contentType === 'portfolio';
+  return (
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <h2 className="text-2xl font-bold capitalize bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">{isEditing ? `Edit ${isPortfolio ? 'Portfolio Item' : 'Blog Post'}` : `Create New ${isPortfolio ? 'Portfolio Item' : 'Blog Post'}`}</h2>
+        {isEditing && (
+          <button 
+            onClick={onCancel}
+            className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light} mt-4 md:mt-0`}
+          >
+            <X size={16} className="inline-block mr-1.5" />
+            Cancel Edit
+          </button>
+        )}
+      </div>
+      <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border mb-8 backdrop-blur-sm`}>
+        <div className="space-y-6">
+          <InputGroup 
+            label="Title"
+            name="title"
+            value={formData.title}
+            onChange={onInputChange}
+            placeholder={`Enter ${isPortfolio ? 'portfolio item' : 'blog post'} title`}
+            darkMode={darkMode}
+            themeClasses={themeClasses}
+            icon={<FileText size={18} />}
+          />
+          <InputGroup
+            label="Category"
+            name="category"
+            value={formData.category}
+            onChange={onInputChange}
+            placeholder="e.g., Technology, Design, Lifestyle"
+            darkMode={darkMode}
+            themeClasses={themeClasses}
+            icon={<Globe size={18} />}
+          />
+          <div className="flex flex-col space-y-4">
+            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
+            <div className={`flex items-center space-x-4 p-2 rounded-lg ${darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gray-100 border border-gray-200'}`}>
+              <button
+                type="button"
+                onClick={() => setUploadMethod('url')}
+                className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  uploadMethod === 'url' 
+                    ? (darkMode ? 'bg-[#003366] text-white shadow-md' : 'bg-[#003366] text-white shadow-md') 
+                    : (darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200')
+                }`}
+              >
+                <Link size={16} className="inline-block mr-1.5" /> Use URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadMethod('upload')}
+                className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  uploadMethod === 'upload' 
+                    ? (darkMode ? 'bg-[#003366] text-white shadow-md' : 'bg-[#003366] text-white shadow-md') 
+                    : (darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200')
+                }`}
+              >
+                <Upload size={16} className="inline-block mr-1.5" /> Upload File
+              </button>
+            </div>
+            {uploadMethod === 'url' ? (
+              <div className="relative">
+                <input
+                  type="url"
+                  name="imageUrl"
+                  value={formData.imageUrl || ''}
+                  onChange={(e) => onImageUrlChange(e.target.value)}
+                  placeholder="Paste image URL here..."
+                  className={`w-full p-3 pl-10 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                />
+                <Link size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              </div>
+            ) : (
+              <div 
+                className={`flex justify-center items-center w-full border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-200 ${
+                  darkMode ? 'border-gray-600 hover:border-[#003366] bg-gray-700' : 'border-gray-300 hover:border-[#003366] bg-gray-50'
+                }`}
+                onClick={() => document.getElementById('file-upload').click()}
+              >
+                <input 
+                  type="file" 
+                  id='file-upload' 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={(e) => onImageChange(e.target.files[0])}
+                />
+                <div className={`flex flex-col items-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <Upload size={24} className="mb-2" />
+                  <p className="text-sm font-medium">Click or drag & drop to upload</p>
+                  <p className="text-xs">PNG, JPG, GIF up to 5MB</p>
+                </div>
+              </div>
+            )}
+            {formData.imageUrl && (
+              <div className="flex items-center space-x-3 mt-4">
+                <img src={formData.imageUrl} alt="Preview" className="w-24 h-auto rounded-lg shadow-md" />
+                <div>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Image Preview</p>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formData.image ? formData.image.name : 'Image URL'}</p>
+                </div>
+              </div>
+            )}
+          </div>
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{isPortfolio ? 'Description' : 'Content'}</label>
+            <textarea
+              name="content"
+              value={formData.content}
+              onChange={onInputChange}
+              rows="8"
+              placeholder={`Write the content for your ${isPortfolio ? 'portfolio item' : 'blog post'} here...`}
+              className={`w-full p-4 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent resize-y ${themeClasses.input}`}
+            ></textarea>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
+            {isEditing && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light}`}
+              >
+                <X size={16} className="inline-block mr-1.5" />
+                Cancel
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onSave}
+              className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center justify-center`}
+            >
+              <Save size={16} className="inline-block mr-1.5" />
+              {isEditing ? `Save Changes` : `Publish ${isPortfolio ? 'Item' : 'Post'}`}
+            </button>
+          </div>
+        </div>
+      </div>
+      <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+        Existing {isPortfolio ? 'Portfolio Items' : 'Blog Posts'}
+      </h3>
+      <div className={`${themeClasses.card} p-5 rounded-xl shadow-lg border backdrop-blur-sm overflow-x-auto`}>
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {isPortfolio ? 'Item' : 'Post'}
+              </th>
+              <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Category
+              </th>
+              <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Published
+              </th>
+              <th className={`px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan="4" className={`px-6 py-4 text-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  No {isPortfolio ? 'portfolio items' : 'blog posts'} found.
+                </td>
+              </tr>
+            ) : (
+              items.map(item => (
+                <tr key={item._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <img
+                        className="h-10 w-10 rounded-md object-cover mr-4 flex-shrink-0"
+                        src={item.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YwZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiNhYmJjZDAiPk88L3RleHQ+PC9zdmc+'}
+                        alt={item.title}
+                        onError={(e) => {
+                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwLy93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iI2FiYmNkMCI+TzwvdGV4dD48L3N2Zz4=';
+                          e.target.onerror = null;
+                        }}
+                      />
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</div>
+                    </div>
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap hidden md:table-cell text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {item.category || 'N/A'}
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => onEdit(item)}
+                        className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-100'} transition-colors`}
+                        aria-label="Edit"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => onDelete(item._id, contentType)}
+                        className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-100'} transition-colors`}
+                        aria-label="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
-// Reuse original ContentManager, SettingsPanel, InputGroup — they remain unchanged
-const ContentManager = ({ /* ...props */ }) => { /* ... */ };
-const SettingsPanel = ({ /* ...props */ }) => { /* ... */ };
-const InputGroup = ({ /* ...props */ }) => { /* ... */ };
+// Settings Panel Component
+const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => (
+  <div>
+    <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Site & System Settings</h2>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
+        <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Site Configuration</h3>
+        <div className="space-y-6">
+          <InputGroup
+            label="Site Title"
+            name="siteTitle"
+            value={settingsData.siteTitle}
+            onChange={handleSettingsChange}
+            placeholder="e.g., My Awesome Site"
+            darkMode={darkMode}
+            themeClasses={themeClasses}
+            icon={<Globe size={18} />}
+          />
+          <InputGroup
+            label="Admin Email"
+            name="adminEmail"
+            value={settingsData.adminEmail}
+            onChange={handleSettingsChange}
+            placeholder="contact@example.com"
+            type="email"
+            darkMode={darkMode}
+            themeClasses={themeClasses}
+            icon={<User size={18} />}
+          />
+          <div className="flex items-center justify-between">
+            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} htmlFor="notifications">
+              Enable Notifications
+              <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Receive alerts for new activity.</p>
+            </label>
+            <input
+              type="checkbox"
+              id="notifications"
+              name="notifications"
+              checked={settingsData.notifications}
+              onChange={handleSettingsChange}
+              className="h-5 w-10 rounded-full appearance-none transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 checked:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#003366] cursor-pointer"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} htmlFor="autoSave">
+              Enable Auto-Save
+              <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Automatically save your work every few minutes.</p>
+            </label>
+            <input
+              type="checkbox"
+              id="autoSave"
+              name="autoSave"
+              checked={settingsData.autoSave}
+              onChange={handleSettingsChange}
+              className="h-5 w-10 rounded-full appearance-none transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 checked:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#003366] cursor-pointer"
+            />
+          </div>
+          <div className="pt-4 flex justify-end">
+            <button
+              onClick={saveSettings}
+              className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center`}
+            >
+              <Save size={16} className="mr-1.5" />
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
+        <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">System Health Monitoring</h3>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Database size={20} className="text-green-500" />
+            <span className="font-medium">Database: <span className="text-green-500">Connected</span></span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <HardDrive size={20} className="text-yellow-500" />
+            <span className="font-medium">Disk Usage: <span>85% (Warning)</span></span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RefreshCw size={20} className="text-blue-500" />
+            <span className="font-medium">Last Backup: <span>3 hours ago</span></span>
+          </div>
+          <div className="flex items-center space-x-2 mt-4">
+            <Server size={20} className="text-green-500" />
+            <span className="font-medium">Server: <span className="text-green-500">Active</span></span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Activity size={20} className="text-blue-500" />
+            <span className="font-medium">API Latency: <span className="text-blue-500">25ms</span></span>
+          </div>
+          <div className="flex items-center space-x-2 mt-4">
+            <Shield size={20} className="text-green-500" />
+            <span className="font-medium">Security: <span className="text-green-500">Up to date</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Input Group Component
+const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', darkMode, themeClasses, icon }) => (
+  <div>
+    <label htmlFor={name} className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      {label}
+    </label>
+    <div className="relative">
+      <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+        {icon}
+      </div>
+      <input
+        type={type}
+        id={name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full p-3 pl-10 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+      />
+    </div>
+  </div>
+);
 
 export default Dashboard;
