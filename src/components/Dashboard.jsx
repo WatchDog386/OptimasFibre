@@ -31,7 +31,6 @@ ChartJS.register(
   Legend,
   Title
 );
-
 // Utility function for consistent price formatting
 const formatPrice = (price) => {
   if (price === undefined || price === null) return '0';
@@ -39,7 +38,6 @@ const formatPrice = (price) => {
   const num = parseInt(cleanStr, 10);
   return isNaN(num) ? price : num.toLocaleString();
 };
-
 // ✅ COMPACT BUTTON STYLES
 const BUTTON_STYLES = {
   primary: {
@@ -63,7 +61,6 @@ const BUTTON_STYLES = {
     dark: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
   }
 };
-
 // Main Dashboard Component
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -99,15 +96,12 @@ const Dashboard = () => {
   const [uploadMethod, setUploadMethod] = useState('url');
   const [darkMode, setDarkMode] = useState(false);
   const [error, setError] = useState('');
-
   // NEW STATE FOR CENTRALIZED NOTIFICATIONS AND LOADING POPUP
   const [notification, setNotification] = useState({ show: false, message: '', type: 'info', title: 'Info' });
   const [loadingPopup, setLoadingPopup] = useState({ show: false, message: 'Loading data...' });
-
   // Refs for popups to handle clicks outside
   const notificationRef = useRef(null);
   const loadingPopupRef = useRef(null);
-
   // Handle clicks outside popups to close them
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -118,13 +112,11 @@ const Dashboard = () => {
         // Loading popup should not close manually, only after loading finishes
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [notification, loadingPopup]);
-
   // ✅ DYNAMIC API URL
   const getApiBaseUrl = () => {
     if (import.meta.env.VITE_API_BASE_URL) {
@@ -136,7 +128,6 @@ const Dashboard = () => {
     return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
   };
   const API_BASE_URL = getApiBaseUrl();
-
   // Show centralized notification
   const showNotification = (message, type = 'info') => {
     let emoji = 'ℹ️';
@@ -160,26 +151,21 @@ const Dashboard = () => {
       emoji = '🔄';
       title = 'Data Refreshed';
     }
-
     setNotification({ show: true, message: `${emoji} ${message}`, type, title });
     // Auto-hide notification after 5 seconds
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'info', title: 'Info' });
     }, 5000);
   };
-
   // Show centralized loading popup
   const showLoadingPopup = (message = 'Loading dashboard data...') => {
     setLoadingPopup({ show: true, message });
   };
-
   // Hide centralized loading popup
   const hideLoadingPopup = () => {
     setLoadingPopup({ show: false, message: '' });
   };
-
   const toggleDarkMode = () => setDarkMode(!darkMode);
-
   const themeClasses = {
     background: darkMode ? 'bg-gray-900' : 'bg-gray-50',
     text: darkMode ? 'text-gray-100' : 'text-gray-800',
@@ -189,7 +175,6 @@ const Dashboard = () => {
       : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500 focus:border-[#003366]',
     button: BUTTON_STYLES
   };
-
   // Load data from backend
   useEffect(() => {
     const fetchData = async () => {
@@ -205,7 +190,6 @@ const Dashboard = () => {
         const headers = {
           'Authorization': `Bearer ${token}`
         };
-
         // Fetch blog posts
         const blogRes = await fetch(`${API_BASE_URL}/api/blog`, { headers });
         if (!blogRes.ok) {
@@ -213,7 +197,6 @@ const Dashboard = () => {
         }
         const blogResponse = await blogRes.json();
         setBlogPosts(blogResponse.data || []);
-
         // Fetch portfolio items
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
@@ -226,7 +209,6 @@ const Dashboard = () => {
             : (portfolioResponse.data || portfolioResponse.items || []);
           setPortfolioItems(portfolioData);
         }
-
         // Fetch invoices with proper error handling
         let fetchedInvoices = [];
         try {
@@ -242,7 +224,6 @@ const Dashboard = () => {
           console.warn('Error fetching invoices:', invoiceError);
         }
         setInvoices(fetchedInvoices);
-
         // Fetch receipts with proper error handling
         let fetchedReceipts = [];
         try {
@@ -258,7 +239,6 @@ const Dashboard = () => {
           console.warn('Error fetching receipts:', receiptError);
         }
         setReceipts(fetchedReceipts);
-
         // Calculate stats from fetched data
         const calculatedStats = {
           totalInvoices: fetchedInvoices.length,
@@ -268,7 +248,6 @@ const Dashboard = () => {
           totalRevenue: fetchedInvoices.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0)
         };
         setStats(calculatedStats);
-
         // Fetch settings
         try {
           const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
@@ -279,7 +258,6 @@ const Dashboard = () => {
         } catch (settingsError) {
           console.warn('Settings endpoint not available');
         }
-
         // Show success notification after data load
         showNotification('Dashboard data loaded successfully!', 'success');
       } catch (err) {
@@ -297,10 +275,8 @@ const Dashboard = () => {
         hideLoadingPopup();
       }
     };
-
     fetchData();
   }, [API_BASE_URL]);
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     showNotification('You have been logged out successfully.', 'success');
@@ -308,7 +284,6 @@ const Dashboard = () => {
       window.location.href = '/admin/login';
     }, 1500);
   };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -316,7 +291,6 @@ const Dashboard = () => {
       [name]: value
     });
   };
-
   const handleSettingsChange = (e) => {
     const { name, value, type, checked } = e.target;
     setSettingsData({
@@ -324,7 +298,6 @@ const Dashboard = () => {
       [name]: type === 'checkbox' ? checked : value
     });
   };
-
   const saveSettings = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -351,7 +324,6 @@ const Dashboard = () => {
       showNotification(`Error: ${err.message}`, 'error');
     }
   };
-
   const handleImageChange = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -394,7 +366,6 @@ const Dashboard = () => {
       }));
     }
   };
-
   const handleImageUrlChange = (url) => {
     setFormData({
       ...formData,
@@ -402,7 +373,6 @@ const Dashboard = () => {
       image: null
     });
   };
-
   const handleSave = async () => {
     try {
       setError('');
@@ -432,7 +402,6 @@ const Dashboard = () => {
           delete payload[key];
         }
       });
-
       if (activeTab === 'blog') {
         endpoint = `${API_BASE_URL}/api/blog`;
         if (isEditing && editingItem && editingItem._id) {
@@ -450,7 +419,6 @@ const Dashboard = () => {
           endpoint = `${endpoint}/${editingItem._id}`;
         }
       }
-
       const method = isEditing && editingItem && editingItem._id ? 'PUT' : 'POST';
       const res = await fetch(endpoint, {
         method: method,
@@ -464,7 +432,6 @@ const Dashboard = () => {
       if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
-
       if (activeTab === 'blog') {
         if (isEditing) {
           setBlogPosts(prev => prev.map(item =>
@@ -483,7 +450,6 @@ const Dashboard = () => {
           setPortfolioItems(prev => [...prev, newItem]);
         }
       }
-
       setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
       setEditingItem(null);
       setIsEditing(false);
@@ -497,7 +463,6 @@ const Dashboard = () => {
       showNotification(err.message, 'error');
     }
   };
-
   const handleEdit = (item) => {
     setFormData({
       title: item.title || '',
@@ -521,7 +486,6 @@ const Dashboard = () => {
         setActiveTab('receipts');
     }
   };
-
   const handleDelete = async (id, type) => {
     let typeString = '';
     let endpoint = '';
@@ -541,7 +505,6 @@ const Dashboard = () => {
        showNotification('Invalid item type for deletion.', 'error');
        return;
     }
-
     if (!window.confirm(`Are you sure you want to delete this ${typeString}? This action cannot be undone.`)) {
       return;
     }
@@ -576,7 +539,6 @@ const Dashboard = () => {
       showNotification(err.message, 'error');
     }
   };
-
   const cancelEdit = () => {
     setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
     setEditingItem(null);
@@ -584,7 +546,6 @@ const Dashboard = () => {
     setUploadMethod('url');
     setError('');
   };
-
   const renderContent = () => {
     // Loading state is now handled by the popup, so return empty div or placeholder if needed for other tabs during initial load
     if (loading && activeTab === 'dashboard') {
@@ -611,7 +572,6 @@ const Dashboard = () => {
         </div>
       );
     }
-
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -730,7 +690,6 @@ const Dashboard = () => {
         );
     }
   };
-
   return (
     <div className={`flex h-screen ${themeClasses.background} ${themeClasses.text} transition-colors duration-300`}>
       {/* Centralized Loading Popup */}
@@ -743,28 +702,21 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
       {/* Centralized Notification Popup */}
       {notification.show && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40">
           <div ref={notificationRef} className={`rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-transform duration-300 ${
-            notification.type === 'success' ? 'bg-green-600' :
-            notification.type === 'error' ? 'bg-red-600' :
-            notification.type === 'info' ? 'bg-blue-600' : 'bg-gray-600'
-          } text-white flex flex-col items-center`}>
+            notification.type === 'success' ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100' :
+            notification.type === 'error' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-100' :
+            notification.type === 'info' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100'
+          } flex flex-col items-center`}>
             <div className="text-3xl mb-2">{notification.message.split(' ')[0]}</div> {/* Display emoji */}
             <h3 className="text-lg font-bold mb-1">{notification.title}</h3> {/* Display professional title */}
             <p className="text-center text-sm font-medium">{notification.message.substring(2)}</p> {/* Display message without emoji */}
-            <button
-              onClick={() => setNotification({ ...notification, show: false })}
-              className="mt-4 px-4 py-2 bg-black bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors"
-            >
-              Dismiss
-            </button>
+            {/* Removed Dismiss Button */}
           </div>
         </div>
       )}
-
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -936,7 +888,6 @@ const Dashboard = () => {
     </div>
   );
 };
-
 // Navigation Item Component
 const NavItem = ({ icon, text, active, onClick, darkMode }) => (
   <button
@@ -953,7 +904,6 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
     {text}
   </button>
 );
-
 // New Component: Calendar Placeholder
 const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
     // Generate a simple, static month view for placeholder
@@ -1000,7 +950,6 @@ const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
         </div>
     );
 };
-
 // New Component: Receipt Status Pie Chart
 const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
     // Determine receipt statuses
@@ -1012,7 +961,7 @@ const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
     const receiptStatusData = {
         labels: ['Processed/Paid', 'Pending/Draft', 'Rejected/Canceled'],
         datasets: [{
-            data: [statusCounts.processed, statusCounts.pending, statusCounts.rejected],
+            data: [statusCounts.processed, statusCounts.pending, statusCounts.rejected], // Fixed syntax error here
             backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(239, 68, 68, 0.8)'],
             borderColor: darkMode ? '#1f2937' : '#fff',
             borderWidth: 2,
@@ -1048,7 +997,6 @@ const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
         </div>
     );
 }
-
 // NEW COMPONENT: Blog Status Pie Chart
 const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
     // Determine blog post statuses (assuming 'published' field or similar exists, using a placeholder logic)
@@ -1097,7 +1045,6 @@ const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
         </div>
     );
 };
-
 // NEW COMPONENT: Portfolio Category Bar Chart
 const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) => {
     // Determine category counts
@@ -1108,13 +1055,22 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
     });
     const categories = Object.keys(categoryMap);
     const counts = Object.values(categoryMap);
-
+    // Generate distinct colors for each category
+    const generateColors = (numCategories) => {
+        const colors = [];
+        for (let i = 0; i < numCategories; i++) {
+            // Use HSL to generate distinct hues
+            const hue = (i * 360) / numCategories;
+            colors.push(`hsla(${hue}, 70%, 50%, 0.7)`); // Saturation: 70%, Lightness: 50%
+        }
+        return colors;
+    };
     const portfolioCategoryData = {
         labels: categories,
         datasets: [{
             label: 'Number of Items',
             data: counts,
-            backgroundColor: 'rgba(245, 158, 11, 0.7)', // Gold color
+            backgroundColor: generateColors(categories.length), // Use dynamically generated colors
             borderColor: darkMode ? '#1f2937' : '#fff',
             borderWidth: 1,
         }],
@@ -1146,7 +1102,6 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
         </div>
     );
 };
-
 // ✅ UPDATED DASHBOARD OVERVIEW WITH CHARTS & RECENT RECEIPTS
 const DashboardOverview = ({
   blogPosts,
@@ -1190,7 +1145,6 @@ const DashboardOverview = ({
       showNotification('Error exporting invoices to Excel', 'error');
     }
   };
-
   // ✅ CHART DATA — REAL-TIME FROM DATABASE
   const getLast6Months = () => {
     const months = [];
@@ -1213,7 +1167,6 @@ const DashboardOverview = ({
       }
     }
   });
-
   // Revenue Trend (Line)
   const revenueChartData = {
     labels: monthLabels,
@@ -1241,7 +1194,6 @@ const DashboardOverview = ({
       y: { beginAtZero: true, ticks: { color: darkMode ? '#d1d5db' : '#4b5563' }, grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' } },
     },
   };
-
   // Invoice Status (Pie)
   const invoiceStatusCounts = {
     paid: invoices.filter(i => i.status === 'paid').length,
@@ -1251,7 +1203,7 @@ const DashboardOverview = ({
   const invoiceStatusData = {
     labels: ['Paid', 'Pending/Draft', 'Other'],
     datasets: [{
-      data: [invoiceStatusCounts.paid, invoiceStatusCounts.pending, invoiceStatusCounts.other],
+       data: [invoiceStatusCounts.paid, invoiceStatusCounts.pending, invoiceStatusCounts.other],
       backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(156, 163, 175, 0.8)'],
       borderColor: darkMode ? '#1f2937' : '#fff',
       borderWidth: 2,
@@ -1272,7 +1224,6 @@ const DashboardOverview = ({
       title: { display: true, text: 'Invoice Status Distribution', color: darkMode ? '#f9fafb' : '#111827', font: { size: 14, weight: 'bold' } },
     },
   };
-
   // Content Overview (Bar)
   const contentData = {
     labels: ['Blog Posts', 'Portfolio', 'Invoices', 'Receipts'],
@@ -1296,7 +1247,6 @@ const DashboardOverview = ({
       y: { beginAtZero: true, ticks: { color: darkMode ? '#d1d5db' : '#4b5563' }, grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' } },
     },
   };
-
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -1448,7 +1398,6 @@ const DashboardOverview = ({
     </div>
   );
 };
-
 // Stat Card Component
 const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   const colorClasses = {
@@ -1480,7 +1429,6 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
     </div>
   );
 };
-
 // Recent List Component - UPDATED TO SUPPORT RECEIPTS
 const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete, type }) => (
   <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
@@ -1555,7 +1503,6 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
     </ul>
   </div>
 );
-
 // Content Manager Component
 const ContentManager = ({
   title,
@@ -1793,7 +1740,6 @@ const ContentManager = ({
     </div>
   );
 };
-
 // Settings Panel Component
 const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => (
   <div>
@@ -1894,7 +1840,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
     </div>
   </div>
 );
-
 // Input Group Component
 const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', darkMode, themeClasses, icon }) => (
   <div>
@@ -1917,5 +1862,4 @@ const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', 
     </div>
   </div>
 );
-
 export default Dashboard;

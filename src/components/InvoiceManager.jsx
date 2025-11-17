@@ -551,7 +551,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         pdfContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
         pdfContainer.style.fontSize = '12px';
         document.body.appendChild(pdfContainer);
-
         // Populate the container with the enhanced HTML template
         pdfContainer.innerHTML = `
           <div id="pdf-invoice-content" style="margin: 0 auto; padding: 15px; max-width: 100%;">
@@ -660,7 +659,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </div>
           </div>
         `;
-
         // --- PDF Generation using html2pdf.js ---
         const opt = {
           margin: [10, 10, 10, 10], // Slightly reduced margins
@@ -678,7 +676,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           enableLinks: false // Disable internal links in PDF for cleaner output
         };
-
         // Use the container element
         html2pdf().from(pdfContainer).set(opt).outputPdf('blob').then((blob) => {
           showNotification('✅ PDF generated successfully!', 'success');
@@ -732,22 +729,16 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     const amount = formatPrice(invoice.totalAmount);
     const dueDate = invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A';
     const totalDue = formatPrice(invoice.balanceDue);
-
     return `Hello ${customerName},
-
 Your Optimas Fiber invoice is ready. Please find the details below:
-
 *Invoice #: ${invoiceNumber}*
 *Total Amount: Ksh ${amount}*
 *Balance Due: Ksh ${totalDue}*
 *Due Date: ${dueDate}*
-
 The full invoice details are attached as a PDF.
-
 Payment via Mobile Money:
 - *Paybill:* ${COMPANY_INFO.paybill}
 - *Account No:* ${invoice.customerPhone || customerName.split(' ')[0]}
-
 Thank you for choosing Optimas Fiber!`;
   };
   // Send invoice to client via Email with PDF attachment
@@ -759,24 +750,19 @@ Thank you for choosing Optimas Fiber!`;
         showNotification('⚠️ Customer email address is invalid or missing', 'warning');
         return;
       }
-
       const subject = `Invoice ${invoice.invoiceNumber || 'N/A'} from ${COMPANY_INFO.name}`;
       const body = encodeURIComponent(generateEmailBody(invoice));
-
       // Generate the PDF blob
       const pdfBlob = await generateClientSidePDF(invoice);
       const pdfUrl = URL.createObjectURL(pdfBlob);
-
       // Construct the mailto link with the PDF as an attachment
       // Note: mailto: links have limitations and may not work perfectly with attachments across all email clients.
       // The most reliable way is to let the user download the PDF and attach it manually.
       // However, we can try to open the mail client with the body pre-filled.
       // For attachment, the user will likely need to download and attach manually.
       const mailtoLink = `mailto:${customerEmail}?subject=${encodeURIComponent(subject)}&body=${body}`;
-
       // Inform the user that the PDF is ready and they need to attach it
       showNotification('📄 PDF ready. Please attach the downloaded invoice to your email.', 'info');
-
       // Download the PDF first so the user can attach it
       const a = document.createElement('a');
       a.href = pdfUrl;
@@ -784,10 +770,8 @@ Thank you for choosing Optimas Fiber!`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-
       // Then open the email client with the body filled
       window.open(mailtoLink, '_blank');
-
     } catch (error) {
       console.error('Error preparing email with PDF:', error);
       showNotification(`🚨 Error: ${error.message}`, 'error');
@@ -795,7 +779,7 @@ Thank you for choosing Optimas Fiber!`;
       setSendingInvoice(null);
     }
   };
-  // Export all invoices to Excel (Placeholder implementation, relies on working backend)
+  // Export all invoices to Excel (Updated implementation with fixed regex)
   const exportInvoicesToExcel = async () => {
     try {
       setExportLoading(true);
@@ -803,35 +787,50 @@ Thank you for choosing Optimas Fiber!`;
       if (!token) {
           throw new Error('Authentication session expired. Please log in again.');
       }
-      // Assuming your backend /api/invoices/export/excel is fully implemented
+
+      // Assuming your backend /api/invoices/export/excel is implemented to return an Excel file
       const response = await fetch(`${API_BASE_URL}/api/invoices/export/excel`, {
+        method: 'GET', // Typically an export endpoint is a GET request
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' // Backend might expect this, though not always necessary for file downloads
         }
       });
-      if (response.ok) {
-        // Correctly handle the Excel file download
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        // Get filename from header if available, otherwise use default
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = `invoices-${new Date().toISOString().split('T')[0]}.xlsx`;
-        if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename="?(.+?)"?$/);
-            if (filenameMatch) filename = filenameMatch[1];
-        }
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        showNotification('✅ Invoices exported to Excel successfully!', 'success');
-      } else {
+
+      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to export Excel');
+        throw new Error(errorData.message || `Failed to export Excel: ${response.status} ${response.statusText}`);
       }
+
+      // Handle the Excel file download
+      const blob = await response.blob(); // Get the response as a binary blob
+      const disposition = response.headers.get('Content-Disposition'); // Try to get filename from header
+      let filename = `invoices-${new Date().toISOString().split('T')[0]}.xlsx`; // Default filename
+
+      if (disposition && disposition.includes('filename=')) {
+        // Fixed Regex: Properly escaped parentheses and quotes
+        const filenameMatch = disposition.match(/filename[^;=\n]*=(([\'\"])((?:.(?!\2|\\|\n))*.)?\2|([^;\n]*))/);
+        if (filenameMatch && filenameMatch[3]) {
+          filename = filenameMatch[3];
+        } else if (filenameMatch && filenameMatch[5]) {
+          filename = filenameMatch[5];
+        }
+      }
+
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename; // Set the desired filename
+      // Append the link to the body, click it to trigger download, then remove it
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      // Clean up the temporary URL
+      window.URL.revokeObjectURL(url);
+
+      showNotification('✅ Invoices exported to Excel successfully!', 'success');
     } catch (error) {
       console.error('Error exporting to Excel:', error);
       showNotification(`🚨 Error exporting invoices to Excel: ${error.message}`, 'error');

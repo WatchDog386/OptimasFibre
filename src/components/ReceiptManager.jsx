@@ -1,4 +1,5 @@
 // ReceiptManager.jsx - UPDATED: sendReceiptToClient sends PDF via email
+// ReceiptManager.jsx - UPDATED: exportReceiptsToExcel fetches from backend API
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -80,6 +81,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [sendingReceipt, setSendingReceipt] = useState(null); // Tracks which receipt is being sent
   const [searchInvoiceTerm, setSearchInvoiceTerm] = useState('');
   const [showInvoiceSearch, setShowInvoiceSearch] = useState(false);
+
   // Form state for creating/editing receipts
   const [receiptForm, setReceiptForm] = useState({
     receiptNumber: '',
@@ -296,6 +298,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!receiptForm.customerEmail?.trim()) {
         throw new Error('Customer email is required');
       }
+
       const receiptData = {
         receiptNumber: receiptForm.receiptNumber || generateReceiptNumber(),
         invoiceNumber: receiptForm.invoiceNumber || '',
@@ -340,6 +343,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(receiptData)
       });
+
       const responseData = await response.json();
       if (response.ok) {
         const newReceipt = responseData.receipt || responseData.data || responseData;
@@ -367,6 +371,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
+
       const receiptData = {
         receiptNumber: receiptForm.receiptNumber,
         invoiceNumber: receiptForm.invoiceNumber,
@@ -411,6 +416,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(receiptData)
       });
+
       const responseData = await response.json();
       if (response.ok) {
         const updatedReceipt = responseData.receipt || responseData.data || responseData;
@@ -444,12 +450,14 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
+
       const response = await fetch(`${API_BASE_URL}/api/receipts/${receiptId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+
       if (response.ok) {
         setReceipts(prev => prev.filter(rec => rec._id !== receiptId));
         showNotification('✅ Receipt deleted successfully!', 'success');
@@ -655,6 +663,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
+
     html2pdf().from(element).set(opt).save().then(() => {
       showNotification('✅ PDF generated successfully!', 'success');
     }).catch(err => {
@@ -670,12 +679,10 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     try {
       setSendingReceipt(receipt._id);
       const customerEmail = receipt.customerEmail?.trim();
-
       if (!customerEmail) {
         showNotification('⚠️ Customer email address not available', 'warning');
         return;
       }
-
       // Generate the PDF content in memory (without saving)
       const element = document.createElement('div');
       element.innerHTML = `
@@ -836,7 +843,6 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
       showNotification('✅ PDF receipt downloaded. Please attach it to your email.', 'success');
       showNotification('📧 Please open your email client and attach the downloaded PDF to send to: ' + customerEmail, 'info');
-
     } catch (error) {
       console.error('Error generating PDF for sending:', error);
       showNotification(`🚨 Error: ${error.message}`, 'error');
@@ -845,17 +851,23 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }
   };
 
-
-  // Export all receipts to Excel
+  // NEW: Updated function to export all receipts to Excel via backend API
   const exportReceiptsToExcel = async () => {
     try {
       setExportLoading(true);
       const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication session expired. Please log in again.');
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/receipts/export/excel`, {
+        method: 'GET', // Or 'POST' if your backend expects it
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' // Optional, but good practice
         }
       });
+
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -868,11 +880,23 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         window.URL.revokeObjectURL(url);
         showNotification('✅ Receipts exported to Excel successfully!', 'success');
       } else {
-        throw new Error('Failed to export Excel');
+        // Try to read the error message from the response body
+        let errorMessage = 'Failed to export Excel';
+        try {
+          const errorData = await response.json();
+          if (errorData && errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (e) {
+          console.error("Error parsing error response JSON:", e);
+          // If parsing fails, use the status text or default message
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error exporting to Excel:', error);
-      showNotification('🚨 Error exporting receipts to Excel', 'error');
+      showNotification(`🚨 Error exporting receipts to Excel: ${error.message}`, 'error');
     } finally {
       setExportLoading(false);
     }
@@ -980,31 +1004,37 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   // ✅ REAL-TIME CHART DATA
   const prepareChartData = () => {
     if (!receipts || receipts.length === 0) return { statusData: [], revenueData: [], trendData: [] };
+
     const statusData = [
       { name: 'Paid', value: receipts.filter(r => r.status === 'paid').length, color: BRAND.colors.success },
       { name: 'Issued', value: receipts.filter(r => r.status === 'issued').length, color: BRAND.colors.warning },
       { name: 'Refunded', value: receipts.filter(r => r.status === 'refunded').length, color: BRAND.colors.danger }
     ];
+
     const now = new Date();
     const monthly = receipts.filter(r => {
       const date = new Date(r.receiptDate || r.createdAt);
       return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
     }).reduce((sum, r) => sum + (r.total || 0), 0);
+
     const quarterly = receipts.filter(r => {
       const date = new Date(r.receiptDate || r.createdAt);
       const currentQuarter = Math.floor(now.getMonth() / 3);
       const receiptQuarter = Math.floor(date.getMonth() / 3);
       return date.getFullYear() === now.getFullYear() && receiptQuarter === currentQuarter;
     }).reduce((sum, r) => sum + (r.total || 0), 0);
+
     const annually = receipts.filter(r => {
       const date = new Date(r.receiptDate || r.createdAt);
       return date.getFullYear() === now.getFullYear();
     }).reduce((sum, r) => sum + (r.total || 0), 0);
+
     const revenueData = [
       { name: 'Monthly', value: monthly },
       { name: 'Quarterly', value: quarterly },
       { name: 'Annually', value: annually }
     ];
+
     const trendData = [];
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -1017,8 +1047,10 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         .reduce((sum, r) => sum + (r.total || 0), 0);
       trendData.push({ name: monthKey, revenue: amount });
     }
+
     return { statusData, revenueData, trendData };
   };
+
   const { statusData, revenueData, trendData } = prepareChartData();
 
   if (loading) {
@@ -1690,6 +1722,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
+
       {/* Invoice Search Modal */}
       {showInvoiceSearch && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1778,6 +1811,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
+
       {/* Receipt Details Modal */}
       {showReceiptModal && selectedReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1923,6 +1957,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
+
       {/* PDF Preview Modal */}
       {showPDFModal && selectedReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
