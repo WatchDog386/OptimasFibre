@@ -1,4 +1,4 @@
-// Redesigned Navbar Matching Provided Layout Style (Top Contact Bar + Social Icons + Main Navbar Card) without WiFi Plans
+// Clean and Simplified Navbar
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Menu, X, Sun, Moon } from "lucide-react";
@@ -9,11 +9,17 @@ import "../index.css";
 
 const RISA_STYLES = {
   primaryColor: '#015B97',
+  secondaryColor: '#d0b216',
   button: {
     small: {
       base: 'px-3 py-1.5 text-sm font-medium border rounded-full transition-colors',
       light: 'border-gray-300 text-gray-700 bg-white hover:bg-gray-100',
       dark: 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700',
+    },
+    primary: {
+      base: 'px-4 py-2 rounded-full font-medium transition-all duration-300 shadow-sm',
+      light: 'bg-[#d0b216] text-white hover:bg-[#b89c0f]',
+      dark: 'bg-[#d0b216] text-white hover:bg-[#b89c0f]',
     }
   },
   typography: {
@@ -56,12 +62,15 @@ export default function Navbar() {
 
   const currentPath = location.pathname === "/" ? "home" : location.pathname.slice(1);
 
+  // Simplified menu items
   const menuItems = useMemo(
     () => [
       { label: "Home", route: "/", id: "home" },
-      { label: "About Us", route: "/about", id: "about" },
-      { label: "Blog", route: "/blog", id: "blog" },
+      { label: "About", route: "/about", id: "about" },
+      { label: "Services", route: "/services", id: "services" },
       { label: "Coverage", route: "/coverage", id: "coverage" },
+      { label: "Blog", route: "/blog", id: "blog" },
+      { label: "FAQs", route: "/faqs", id: "faqs" },
     ],
     []
   );
@@ -108,8 +117,9 @@ export default function Navbar() {
       ref={navRef}
       className={`fixed top-0 left-0 w-full z-[999] px-4 transition-all duration-300 ${
         darkMode ? "bg-gray-900 py-3" : "bg-white py-3"
-      } ${scrolled && "shadow-md"}`}
+      } ${scrolled && "shadow-lg"}`}
     >
+      {/* Main Navigation */}
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <NavLink to="/" className={`${RISA_STYLES.typography.logo.container} flex-shrink-0`}>
           <img
@@ -133,12 +143,14 @@ export default function Navbar() {
           </div>
         </NavLink>
 
-        <div className="hidden lg:flex items-center gap-8">
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center gap-6">
           {menuItems.map((item) => (
             <NavItem key={item.id} item={item} />
           ))}
         </div>
 
+        {/* Right side controls */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <button
             onClick={toggleDarkMode}
@@ -164,6 +176,7 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Mobile Navigation */}
       <AnimatePresence>
         {isOpen && (
           <motion.div

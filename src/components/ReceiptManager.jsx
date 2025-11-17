@@ -1,4 +1,4 @@
-// ReceiptManager.jsx - FULLY UPDATED & FIXED
+// ReceiptManager.jsx - UPDATED: sendReceiptToClient sends PDF via email
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -36,7 +36,6 @@ import {
 } from 'recharts';
 // Import html2pdf for client-side PDF generation
 import html2pdf from 'html2pdf.js';
-
 // Utility function for consistent price formatting in KSH
 const formatPrice = (price) => {
   if (price === undefined || price === null) return '0';
@@ -49,7 +48,7 @@ const formatPrice = (price) => {
 const BRAND = {
   name: "OPTIMAS FIBER",
   tagline: "High-Speed Internet Solutions",
-  logoUrl: "/oppo.jpg",
+  logoUrl: "/public/oppo.jpg", // Updated path to logo
   colors: {
     primary: '#003366',
     accent: '#FFCC00',
@@ -78,10 +77,9 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState(null);
   const [exportLoading, setExportLoading] = useState(false);
-  const [sendingReceipt, setSendingReceipt] = useState(null);
+  const [sendingReceipt, setSendingReceipt] = useState(null); // Tracks which receipt is being sent
   const [searchInvoiceTerm, setSearchInvoiceTerm] = useState('');
   const [showInvoiceSearch, setShowInvoiceSearch] = useState(false);
-
   // Form state for creating/editing receipts
   const [receiptForm, setReceiptForm] = useState({
     receiptNumber: '',
@@ -333,6 +331,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         transactionId: receiptForm.transactionId?.trim() || '',
         bankReference: receiptForm.bankReference?.trim() || ''
       };
+
       const response = await fetch(`${API_BASE_URL}/api/receipts`, {
         method: 'POST',
         headers: {
@@ -403,6 +402,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         transactionId: receiptForm.transactionId?.trim() || '',
         bankReference: receiptForm.bankReference?.trim() || ''
       };
+
       const response = await fetch(`${API_BASE_URL}/api/receipts/${editingReceipt._id}`, {
         method: 'PUT',
         headers: {
@@ -514,37 +514,39 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     setShowCreateModal(true);
   };
 
-  // ✅ FIXED: PDF Generation with complete, styled HTML
+  // ✅ FIXED: PDF Generation with complete, styled HTML and proper layout
   const exportReceiptPDF = (receipt) => {
     const element = document.createElement('div');
     element.innerHTML = `
-      <div id="receipt-pdf" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; max-width: 800px; margin: 0 auto; background: white; color: #333;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid ${BRAND.colors.primary}; padding-bottom: 20px; margin-bottom: 30px;">
+      <div id="receipt-pdf" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: white; color: #333; font-size: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid ${BRAND.colors.primary}; padding-bottom: 15px; margin-bottom: 20px;">
           <div>
-            <img src="${BRAND.logoUrl}" alt="${BRAND.name}" style="height: 60px; margin-right: 20px;" />
-            <div style="display: inline-block; vertical-align: top;">
-              <h1 style="font-size: 28px; font-weight: bold; color: ${BRAND.colors.primary}; margin: 0;">${BRAND.name}</h1>
-              <p style="font-size: 14px; color: #666; margin: 5px 0 0 0;">${BRAND.tagline}</p>
+            <h1 style="font-size: 22px; font-weight: bold; color: ${BRAND.colors.primary}; margin: 0;">${BRAND.name}</h1>
+            <p style="font-size: 11px; color: #666; margin: 5px 0 0 0;">${BRAND.tagline}</p>
+            <div style="font-size: 10px; color: #666; margin-top: 5px;">
+                <p style="margin: 0;">Email: ${BRAND.contact.email}</p>
+                <p style="margin: 0;">Phone: ${BRAND.contact.phone}</p>
             </div>
           </div>
-          <div style="text-align: right;">
-            <h1 style="font-size: 36px; font-weight: bold; color: ${BRAND.colors.accent}; margin: 0;">OFFICIAL RECEIPT</h1>
-            <p style="font-size: 18px; color: ${BRAND.colors.primary}; margin: 5px 0 0 0;">#${receipt.receiptNumber || 'N/A'}</p>
+          <div style="text-align: right; min-width: 130px;">
+            <img src="${BRAND.logoUrl}" alt="${BRAND.name}" style="max-height: 50px; max-width: 90px; object-fit: contain; margin-bottom: 5px;" />
+            <h1 style="font-size: 28px; font-weight: bold; color: ${BRAND.colors.accent}; margin: 0;">RECEIPT</h1>
+            <p style="font-size: 14px; color: ${BRAND.colors.primary}; margin: 5px 0 0 0;">#${receipt.receiptNumber || 'N/A'}</p>
           </div>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #eee; padding: 12px; border-radius: 5px;">
           <div style="flex: 1;">
-            <h3 style="font-size: 16px; font-weight: bold; color: #333; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 1px solid #eee;">Bill To:</h3>
-            <p style="margin: 8px 0; line-height: 1.4;"><strong>${receipt.customerName || 'N/A'}</strong></p>
-            <p style="margin: 8px 0; line-height: 1.4;">${receipt.customerEmail || 'N/A'}</p>
-            <p style="margin: 8px 0; line-height: 1.4;">${receipt.customerPhone || 'N/A'}</p>
-            <p style="margin: 8px 0; line-height: 1.4;">${receipt.customerLocation || receipt.customerAddress || 'N/A'}</p>
+            <h3 style="font-size: 13px; font-weight: bold; color: #333; margin: 0 0 5px 0; padding-bottom: 5px; border-bottom: 1px solid #eee;">Bill To:</h3>
+            <p style="margin: 2px 0; line-height: 1.4;"><strong>${receipt.customerName || 'N/A'}</strong></p>
+            <p style="margin: 2px 0; line-height: 1.4;">${receipt.customerEmail || 'N/A'}</p>
+            <p style="margin: 2px 0; line-height: 1.4;">${receipt.customerPhone || 'N/A'}</p>
+            <p style="margin: 2px 0; line-height: 1.4;">${receipt.customerLocation || receipt.customerAddress || 'N/A'}</p>
           </div>
           <div style="flex: 1; text-align: right;">
-            <p style="margin: 8px 0;"><strong>Receipt Date:</strong> ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin: 8px 0;"><strong>Payment Date:</strong> ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin: 8px 0;"><strong>Payment Method:</strong> ${receipt.paymentMethod?.replace('_', ' ')?.toUpperCase() || 'CASH'}</p>
-            <p style="margin: 8px 0;">
+            <p style="margin: 2px 0;"><strong>Receipt Date:</strong> ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A'}</p>
+            <p style="margin: 2px 0;"><strong>Payment Date:</strong> ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
+            <p style="margin: 2px 0;"><strong>Payment Method:</strong> ${receipt.paymentMethod?.replace('_', ' ')?.toUpperCase() || 'CASH'}</p>
+            <p style="margin: 2px 0;">
               <strong>Status:</strong> 
               <span style="color: ${
                 receipt.status === 'paid' ? BRAND.colors.success :
@@ -556,14 +558,14 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </p>
           </div>
         </div>
-        <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
-          <table style="width: 100%; border-collapse: collapse;">
+        <div style="border: 1px solid #ddd; border-radius: 5px; overflow: hidden; margin-bottom: 20px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
             <thead style="background-color: ${BRAND.colors.primary}; color: white;">
               <tr>
-                <th style="padding: 12px; text-align: left;">Description</th>
-                <th style="padding: 12px; text-align: center;">Qty</th>
-                <th style="padding: 12px; text-align: right;">Unit Price</th>
-                <th style="padding: 12px; text-align: right;">Amount</th>
+                <th style="padding: 8px 12px; text-align: left; width: 45%;">Description</th>
+                <th style="padding: 8px 12px; text-align: center; width: 10%;">Qty</th>
+                <th style="padding: 8px 12px; text-align: right; width: 20%;">Unit Price</th>
+                <th style="padding: 8px 12px; text-align: right; width: 25%;">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -574,66 +576,83 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 amount: receipt.total || 0
               }]).map(item => `
                 <tr style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 12px;">${item.description || 'Service'}</td>
-                  <td style="padding: 12px; text-align: center;">${item.quantity || 1}</td>
-                  <td style="padding: 12px; text-align: right;">Ksh ${formatPrice(item.unitPrice || 0)}</td>
-                  <td style="padding: 12px; text-align: right;">Ksh ${formatPrice(item.amount || 0)}</td>
+                  <td style="padding: 8px 12px;">${item.description || 'Service'}</td>
+                  <td style="padding: 8px 12px; text-align: center;">${item.quantity || 1}</td>
+                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(item.unitPrice || 0)}</td>
+                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(item.amount || 0)}</td>
                 </tr>
               `).join('')}
             </tbody>
             <tfoot>
               <tr style="background-color: #f8f9fa; font-weight: bold;">
-                <td colspan="3" style="padding: 12px; text-align: right;">Subtotal:</td>
-                <td style="padding: 12px; text-align: right;">Ksh ${formatPrice(receipt.subtotal || receipt.total || 0)}</td>
+                <td colspan="3" style="padding: 8px 12px; text-align: right;">Subtotal:</td>
+                <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.subtotal || receipt.total || 0)}</td>
               </tr>
               <tr style="background-color: #f8f9fa; font-weight: bold;">
-                <td colspan="3" style="padding: 12px; text-align: right;">Tax ( ${receipt.taxRate || 0}% ):</td>
-                <td style="padding: 12px; text-align: right;">Ksh ${formatPrice(receipt.taxAmount || 0)}</td>
+                <td colspan="3" style="padding: 8px 12px; text-align: right;">Tax ( ${receipt.taxRate || 0}% ):</td>
+                <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.taxAmount || 0)}</td>
               </tr>
               <tr style="background-color: #f8f9fa; font-weight: bold; border-top: 2px solid #333;">
-                <td colspan="3" style="padding: 12px; text-align: right;">TOTAL:</td>
-                <td style="padding: 12px; text-align: right;">Ksh ${formatPrice(receipt.total || 0)}</td>
+                <td colspan="3" style="padding: 8px 12px; text-align: right;">TOTAL:</td>
+                <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.total || 0)}</td>
               </tr>
               <tr style="background-color: #e8f5e8; font-weight: bold; color: ${BRAND.colors.success};">
-                <td colspan="3" style="padding: 12px; text-align: right;">AMOUNT PAID:</td>
-                <td style="padding: 12px; text-align: right;">Ksh ${formatPrice(receipt.amountPaid || 0)}</td>
+                <td colspan="3" style="padding: 8px 12px; text-align: right;">AMOUNT PAID:</td>
+                <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.amountPaid || 0)}</td>
               </tr>
               ${receipt.balance > 0 ? `
                 <tr style="background-color: #ffe8e8; font-weight: bold; color: ${BRAND.colors.danger};">
-                  <td colspan="3" style="padding: 12px; text-align: right;">BALANCE DUE:</td>
-                  <td style="padding: 12px; text-align: right;">Ksh ${formatPrice(receipt.balance || 0)}</td>
+                  <td colspan="3" style="padding: 8px 12px; text-align: right;">BALANCE DUE:</td>
+                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.balance || 0)}</td>
                 </tr>
               ` : ''}
             </tfoot>
           </table>
         </div>
-        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 30px; background-color: #f8f9fa;">
-          <h3 style="font-size: 16px; font-weight: bold; color: #333; margin: 0 0 15px 0;">Payment Instructions:</h3>
-          <div style="margin-bottom: 15px;">
-            <h4 style="font-size: 14px; font-weight: bold; color: #333; margin: 0 0 8px 0;">Bank Transfer:</h4>
-            <p style="margin: 5px 0;"><strong>Bank:</strong> ${BRAND.contact.bank.name}</p>
-            <p style="margin: 5px 0;"><strong>Account Name:</strong> ${BRAND.contact.bank.accountName}</p>
-            <p style="margin: 5px 0;"><strong>Account Number:</strong> ${BRAND.contact.bank.accountNumber}</p>
-          </div>
-          <div>
-            <h4 style="font-size: 14px; font-weight: bold; color: #333; margin: 0 0 8px 0;">Mobile Money:</h4>
-            <p style="margin: 5px 0;"><strong>Paybill:</strong> 123456</p>
-            <p style="margin: 5px 0;"><strong>Account:</strong> ${receipt.customerName?.split(' ')[0] || 'Customer'}</p>
-          </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px;">
+            <div style="flex: 1; padding-right: 20px;">
+                <h3 style="font-size: 13px; font-weight: bold; color: #333; margin: 0 0 5px 0;">Notes:</h3>
+                <p style="margin: 0; white-space: pre-wrap; line-height: 1.4;">${receipt.notes || 'N/A'}</p>
+            </div>
+            <div style="width: 220px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    <tr>
+                        <td colspan="2" style="padding: 5px 0; font-size: 12px; font-weight: bold; text-align: center; background-color: #f8f9fa; border-bottom: 2px solid #333;">Payment Instructions</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0; font-size: 11px; text-align: left; vertical-align: top;">
+                            <p style="margin: 3px 0;"><strong>Bank:</strong> ${BRAND.contact.bank.name}</p>
+                            <p style="margin: 3px 0;"><strong>Acc Name:</strong> ${BRAND.contact.bank.accountName}</p>
+                            <p style="margin: 3px 0;"><strong>Acc No:</strong> ${BRAND.contact.bank.accountNumber}</p>
+                        </td>
+                        <td style="padding: 5px 0; font-size: 11px; text-align: left; vertical-align: top;">
+                            <p style="margin: 3px 0;"><strong>Paybill:</strong> 123456</p>
+                            <p style="margin: 3px 0;"><strong>Account:</strong> ${receipt.customerName?.split(' ')[0] || 'Customer'}</p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </div>
-        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px;">
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 10px;">
           <p style="margin: 5px 0;"><strong>Thank you for choosing ${BRAND.name}!</strong></p>
           <p style="margin: 5px 0;">For support: <a href="mailto:${BRAND.contact.email}" style="color: ${BRAND.colors.primary};">${BRAND.contact.email}</a> | <a href="tel:${BRAND.contact.phone}" style="color: ${BRAND.colors.primary};">${BRAND.contact.phone}</a></p>
-          <p style="margin: 5px 0; font-size: 12px; color: #999;">Receipt generated on ${new Date().toLocaleString()}</p>
+          <p style="margin: 5px 0; font-size: 10px; color: #999;">Receipt generated on ${new Date().toLocaleString()}</p>
         </div>
       </div>
     `;
+
     document.body.appendChild(element);
     const opt = {
-      margin: 10,
+      margin: [10, 10, 10, 10],
       filename: `receipt-${receipt.receiptNumber || 'N/A'}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        allowTaint: true,
+        windowWidth: 800, // Set a specific width to avoid dynamic viewport issues
+        width: 800, // Explicitly set width for canvas
+      },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
     html2pdf().from(element).set(opt).save().then(() => {
@@ -646,43 +665,186 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     });
   };
 
-  // Helper function to generate WhatsApp message
-  const generateWhatsAppMessage = (receipt) => {
-    const customerName = receipt.customerName || 'Customer';
-    const receiptNumber = receipt.receiptNumber || 'N/A';
-    const amount = formatPrice(receipt.amountPaid);
-    const receiptDate = receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A';
-    return `Hello ${customerName},
-This is your receipt from Optimas Fiber.
-Receipt #: ${receiptNumber}
-Amount Paid: Ksh ${amount}
-Receipt Date: ${receiptDate}
-You can pay via:
-- Bank Transfer to Equity Bank, Account: Optimas Fiber Ltd, Acc No: 1234567890
-- Mobile Money Paybill: 123456, Account: ${customerName.split(' ')[0]}
-Thank you for choosing Optimas Fiber!`;
-  };
-
-  // Send receipt to client via WhatsApp
+  // NEW: Function to send receipt as PDF via email
   const sendReceiptToClient = async (receipt) => {
     try {
       setSendingReceipt(receipt._id);
-      const customerPhone = receipt.customerPhone?.replace(/\D/g, '');
-      if (!customerPhone) {
-        showNotification('⚠️ Customer phone number not available', 'warning');
+      const customerEmail = receipt.customerEmail?.trim();
+
+      if (!customerEmail) {
+        showNotification('⚠️ Customer email address not available', 'warning');
         return;
       }
-      const message = encodeURIComponent(generateWhatsAppMessage(receipt));
-      const whatsappUrl = `https://wa.me/${customerPhone}?text=${message}`;
-      window.open(whatsappUrl, '_blank');
-      showNotification('✅ WhatsApp chat opened with receipt details!', 'success');
+
+      // Generate the PDF content in memory (without saving)
+      const element = document.createElement('div');
+      element.innerHTML = `
+        <div id="receipt-pdf" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: white; color: #333; font-size: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid ${BRAND.colors.primary}; padding-bottom: 15px; margin-bottom: 20px;">
+            <div>
+              <h1 style="font-size: 22px; font-weight: bold; color: ${BRAND.colors.primary}; margin: 0;">${BRAND.name}</h1>
+              <p style="font-size: 11px; color: #666; margin: 5px 0 0 0;">${BRAND.tagline}</p>
+              <div style="font-size: 10px; color: #666; margin-top: 5px;">
+                  <p style="margin: 0;">Email: ${BRAND.contact.email}</p>
+                  <p style="margin: 0;">Phone: ${BRAND.contact.phone}</p>
+              </div>
+            </div>
+            <div style="text-align: right; min-width: 130px;">
+              <img src="${BRAND.logoUrl}" alt="${BRAND.name}" style="max-height: 50px; max-width: 90px; object-fit: contain; margin-bottom: 5px;" />
+              <h1 style="font-size: 28px; font-weight: bold; color: ${BRAND.colors.accent}; margin: 0;">RECEIPT</h1>
+              <p style="font-size: 14px; color: ${BRAND.colors.primary}; margin: 5px 0 0 0;">#${receipt.receiptNumber || 'N/A'}</p>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #eee; padding: 12px; border-radius: 5px;">
+            <div style="flex: 1;">
+              <h3 style="font-size: 13px; font-weight: bold; color: #333; margin: 0 0 5px 0; padding-bottom: 5px; border-bottom: 1px solid #eee;">Bill To:</h3>
+              <p style="margin: 2px 0; line-height: 1.4;"><strong>${receipt.customerName || 'N/A'}</strong></p>
+              <p style="margin: 2px 0; line-height: 1.4;">${receipt.customerEmail || 'N/A'}</p>
+              <p style="margin: 2px 0; line-height: 1.4;">${receipt.customerPhone || 'N/A'}</p>
+              <p style="margin: 2px 0; line-height: 1.4;">${receipt.customerLocation || receipt.customerAddress || 'N/A'}</p>
+            </div>
+            <div style="flex: 1; text-align: right;">
+              <p style="margin: 2px 0;"><strong>Receipt Date:</strong> ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A'}</p>
+              <p style="margin: 2px 0;"><strong>Payment Date:</strong> ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
+              <p style="margin: 2px 0;"><strong>Payment Method:</strong> ${receipt.paymentMethod?.replace('_', ' ')?.toUpperCase() || 'CASH'}</p>
+              <p style="margin: 2px 0;">
+                <strong>Status:</strong> 
+                <span style="color: ${
+                  receipt.status === 'paid' ? BRAND.colors.success :
+                  receipt.status === 'issued' ? BRAND.colors.warning :
+                  BRAND.colors.danger
+                };">
+                  ${receipt.status?.toUpperCase() || 'ISSUED'}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div style="border: 1px solid #ddd; border-radius: 5px; overflow: hidden; margin-bottom: 20px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+              <thead style="background-color: ${BRAND.colors.primary}; color: white;">
+                <tr>
+                  <th style="padding: 8px 12px; text-align: left; width: 45%;">Description</th>
+                  <th style="padding: 8px 12px; text-align: center; width: 10%;">Qty</th>
+                  <th style="padding: 8px 12px; text-align: right; width: 20%;">Unit Price</th>
+                  <th style="padding: 8px 12px; text-align: right; width: 25%;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(receipt.items && receipt.items.length > 0 ? receipt.items : [{
+                  description: receipt.serviceDescription || (receipt.planName ? `${receipt.planName} - ${receipt.planSpeed}` : 'Internet Service'),
+                  quantity: 1,
+                  unitPrice: receipt.planPrice || receipt.total || 0,
+                  amount: receipt.total || 0
+                }]).map(item => `
+                  <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px 12px;">${item.description || 'Service'}</td>
+                    <td style="padding: 8px 12px; text-align: center;">${item.quantity || 1}</td>
+                    <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(item.unitPrice || 0)}</td>
+                    <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(item.amount || 0)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+              <tfoot>
+                <tr style="background-color: #f8f9fa; font-weight: bold;">
+                  <td colspan="3" style="padding: 8px 12px; text-align: right;">Subtotal:</td>
+                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.subtotal || receipt.total || 0)}</td>
+                </tr>
+                <tr style="background-color: #f8f9fa; font-weight: bold;">
+                  <td colspan="3" style="padding: 8px 12px; text-align: right;">Tax ( ${receipt.taxRate || 0}% ):</td>
+                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.taxAmount || 0)}</td>
+                </tr>
+                <tr style="background-color: #f8f9fa; font-weight: bold; border-top: 2px solid #333;">
+                  <td colspan="3" style="padding: 8px 12px; text-align: right;">TOTAL:</td>
+                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.total || 0)}</td>
+                </tr>
+                <tr style="background-color: #e8f5e8; font-weight: bold; color: ${BRAND.colors.success};">
+                  <td colspan="3" style="padding: 8px 12px; text-align: right;">AMOUNT PAID:</td>
+                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.amountPaid || 0)}</td>
+                </tr>
+                ${receipt.balance > 0 ? `
+                  <tr style="background-color: #ffe8e8; font-weight: bold; color: ${BRAND.colors.danger};">
+                    <td colspan="3" style="padding: 8px 12px; text-align: right;">BALANCE DUE:</td>
+                    <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.balance || 0)}</td>
+                  </tr>
+                ` : ''}
+              </tfoot>
+            </table>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px;">
+              <div style="flex: 1; padding-right: 20px;">
+                  <h3 style="font-size: 13px; font-weight: bold; color: #333; margin: 0 0 5px 0;">Notes:</h3>
+                  <p style="margin: 0; white-space: pre-wrap; line-height: 1.4;">${receipt.notes || 'N/A'}</p>
+              </div>
+              <div style="width: 220px;">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                      <tr>
+                          <td colspan="2" style="padding: 5px 0; font-size: 12px; font-weight: bold; text-align: center; background-color: #f8f9fa; border-bottom: 2px solid #333;">Payment Instructions</td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 5px 0; font-size: 11px; text-align: left; vertical-align: top;">
+                              <p style="margin: 3px 0;"><strong>Bank:</strong> ${BRAND.contact.bank.name}</p>
+                              <p style="margin: 3px 0;"><strong>Acc Name:</strong> ${BRAND.contact.bank.accountName}</p>
+                              <p style="margin: 3px 0;"><strong>Acc No:</strong> ${BRAND.contact.bank.accountNumber}</p>
+                          </td>
+                          <td style="padding: 5px 0; font-size: 11px; text-align: left; vertical-align: top;">
+                              <p style="margin: 3px 0;"><strong>Paybill:</strong> 123456</p>
+                              <p style="margin: 3px 0;"><strong>Account:</strong> ${receipt.customerName?.split(' ')[0] || 'Customer'}</p>
+                          </td>
+                      </tr>
+                  </table>
+              </div>
+          </div>
+          <div style="text-align: center; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 10px;">
+            <p style="margin: 5px 0;"><strong>Thank you for choosing ${BRAND.name}!</strong></p>
+            <p style="margin: 5px 0;">For support: <a href="mailto:${BRAND.contact.email}" style="color: ${BRAND.colors.primary};">${BRAND.contact.email}</a> | <a href="tel:${BRAND.contact.phone}" style="color: ${BRAND.colors.primary};">${BRAND.contact.phone}</a></p>
+            <p style="margin: 5px 0; font-size: 10px; color: #999;">Receipt generated on ${new Date().toLocaleString()}</p>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(element);
+
+      // Configure html2pdf options for PDF generation (without saving)
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `receipt-${receipt.receiptNumber || 'N/A'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          allowTaint: true,
+          windowWidth: 800,
+          width: 800,
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      // Generate the PDF as a blob
+      const pdfBlob = await html2pdf().from(element).set(opt).outputPdf('blob');
+
+      // Create a download link for the blob
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt-${receipt.receiptNumber || 'N/A'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up
+      document.body.removeChild(element);
+      URL.revokeObjectURL(url);
+
+      showNotification('✅ PDF receipt downloaded. Please attach it to your email.', 'success');
+      showNotification('📧 Please open your email client and attach the downloaded PDF to send to: ' + customerEmail, 'info');
+
     } catch (error) {
-      console.error('Error sending receipt via WhatsApp:', error);
+      console.error('Error generating PDF for sending:', error);
       showNotification(`🚨 Error: ${error.message}`, 'error');
     } finally {
       setSendingReceipt(null);
     }
   };
+
 
   // Export all receipts to Excel
   const exportReceiptsToExcel = async () => {
@@ -857,7 +1019,6 @@ Thank you for choosing Optimas Fiber!`;
     }
     return { statusData, revenueData, trendData };
   };
-
   const { statusData, revenueData, trendData } = prepareChartData();
 
   if (loading) {
@@ -943,7 +1104,6 @@ Thank you for choosing Optimas Fiber!`;
               </RechartsPie>
             </ResponsiveContainer>
           </div>
-
           <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <DollarSign size={18} className="mr-2" /> Revenue Overview
@@ -959,7 +1119,6 @@ Thank you for choosing Optimas Fiber!`;
               </BarChart>
             </ResponsiveContainer>
           </div>
-
           <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <TrendingUp size={18} className="mr-2" /> Revenue Trend (6 Months)
@@ -1094,7 +1253,7 @@ Thank you for choosing Optimas Fiber!`;
                           className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
                             sendingReceipt === receipt._id ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
-                          title="Send to Client"
+                          title="Send to Client (Downloads PDF)"
                         >
                           <Share2 size={16} />
                         </button>
@@ -1123,7 +1282,6 @@ Thank you for choosing Optimas Fiber!`;
       </div>
 
       {/* ALL YOUR MODALS REMAIN EXACTLY AS IN YOUR ORIGINAL FILE — NO CHANGES MADE TO MODAL LOGIC */}
-
       {/* Create/Edit Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1532,7 +1690,6 @@ Thank you for choosing Optimas Fiber!`;
           </div>
         </div>
       )}
-
       {/* Invoice Search Modal */}
       {showInvoiceSearch && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1621,7 +1778,6 @@ Thank you for choosing Optimas Fiber!`;
           </div>
         </div>
       )}
-
       {/* Receipt Details Modal */}
       {showReceiptModal && selectedReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1750,7 +1906,7 @@ Thank you for choosing Optimas Fiber!`;
                   }`}
                 >
                   <Share2 size={16} className="mr-1.5" />
-                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send to Client'}
+                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send to Client (PDF)'}
                 </button>
                 <button
                   onClick={() => {
@@ -1767,7 +1923,6 @@ Thank you for choosing Optimas Fiber!`;
           </div>
         </div>
       )}
-
       {/* PDF Preview Modal */}
       {showPDFModal && selectedReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1886,7 +2041,7 @@ Thank you for choosing Optimas Fiber!`;
                   }`}
                 >
                   <Share2 size={16} className="mr-1.5" />
-                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send to Client'}
+                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send to Client (PDF)'}
                 </button>
               </div>
             </div>

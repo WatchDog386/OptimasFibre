@@ -512,185 +512,210 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   };
   // Client-side PDF generation using html2pdf.js - **FIXED LAYOUT AND STYLED**
   const generateClientSidePDF = (invoice) => {
-    showNotification('📄 Generating PDF...', 'info');
-    // --- Dynamic Content Generation for PDF ---
-    // Get the primary item or list all items
-    const primaryItem = invoice.items?.[0] || {
-        description: invoice.planName ? `${invoice.planName} - ${invoice.planSpeed}` : 'Internet Service', 
-        quantity: 1, 
-        unitPrice: invoice.planPrice || invoice.totalAmount || 0, 
-        amount: invoice.planPrice || invoice.totalAmount || 0
-    };
-    const itemsToDisplay = invoice.items && invoice.items.length > 0 ? invoice.items : [primaryItem];
-    const itemsHtml = itemsToDisplay.map(item => `
-      <tr style="border-bottom: 1px solid #f0f0f0;">
-        <td style="padding: 8px 12px; text-align: left; font-size: 13px; width: 45%; word-wrap: break-word;">${item.description || 'N/A'}</td>
-        <td style="padding: 8px 12px; text-align: right; font-size: 13px; width: 10%;">${item.quantity || 1}</td>
-        <td style="padding: 8px 12px; text-align: right; font-size: 13px; width: 20%;">Ksh ${formatPrice(item.unitPrice)}</td>
-        <td style="padding: 8px 12px; text-align: right; font-size: 13px; width: 25%; font-weight: bold;">Ksh ${formatPrice(item.amount)}</td>
-      </tr>
-    `).join('');
-    const featureHtml = (invoice.features || WIFI_PLANS.find(p => p.name === invoice.planName)?.features || []).map(feature => `
-        <div style="display: inline-flex; align-items: center; gap: 5px; min-width: 200px; margin-bottom: 5px; font-size: 12px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2" style="flex-shrink: 0;">
-            <path d="M20 6L9 17l-5-5"></path>
-          </svg>
-          <span style="color: #333;">${feature}</span>
-        </div>
-    `).join('');
-    const statusColor = invoice.status === 'paid' ? '#28a745' : invoice.status === 'pending' ? '#ffc107' : '#dc3545';
-    const totalColor = invoice.balanceDue > 0 ? '#dc3545' : '#28a745';
-    // Create a temporary hidden container for HTML to be rendered to PDF
-    const pdfContainer = document.createElement('div');
-    pdfContainer.id = 'pdf-container';
-    pdfContainer.style.width = '210mm'; // A4 width
-    pdfContainer.style.padding = '15px';
-    pdfContainer.style.boxSizing = 'border-box';
-    pdfContainer.style.backgroundColor = '#ffffff';
-    pdfContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
-    pdfContainer.style.fontSize = '12px';
-    document.body.appendChild(pdfContainer);
-    // Populate the container with the enhanced HTML template
-    pdfContainer.innerHTML = `
-      <div id="pdf-invoice-content" style="margin: 0 auto; padding: 15px; max-width: 100%;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #003366; padding-bottom: 10px; margin-bottom: 15px;">
-          <div style="flex-grow: 1;">
-            <h1 style="font-size: 24px; font-weight: 900; color: #003366; margin: 0;">${COMPANY_INFO.name}</h1>
-            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">${COMPANY_INFO.tagline}</p>
-            <div style="font-size: 11px; color: #666; margin-top: 8px;">
-                <p style="margin: 0;">Email: ${COMPANY_INFO.supportEmail}</p>
-                <p style="margin: 0;">Phone: ${COMPANY_INFO.supportPhone}</p>
+    return new Promise((resolve, reject) => {
+        showNotification('📄 Preparing PDF for sending...', 'info');
+        // --- Dynamic Content Generation for PDF ---
+        // Get the primary item or list all items
+        const primaryItem = invoice.items?.[0] || {
+            description: invoice.planName ? `${invoice.planName} - ${invoice.planSpeed}` : 'Internet Service', 
+            quantity: 1, 
+            unitPrice: invoice.planPrice || invoice.totalAmount || 0, 
+            amount: invoice.planPrice || invoice.totalAmount || 0
+        };
+        const itemsToDisplay = invoice.items && invoice.items.length > 0 ? invoice.items : [primaryItem];
+        const itemsHtml = itemsToDisplay.map(item => `
+          <tr style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 8px 12px; text-align: left; font-size: 13px; width: 45%; word-wrap: break-word;">${item.description || 'N/A'}</td>
+            <td style="padding: 8px 12px; text-align: right; font-size: 13px; width: 10%;">${item.quantity || 1}</td>
+            <td style="padding: 8px 12px; text-align: right; font-size: 13px; width: 20%;">Ksh ${formatPrice(item.unitPrice)}</td>
+            <td style="padding: 8px 12px; text-align: right; font-size: 13px; width: 25%; font-weight: bold;">Ksh ${formatPrice(item.amount)}</td>
+          </tr>
+        `).join('');
+        const featureHtml = (invoice.features || WIFI_PLANS.find(p => p.name === invoice.planName)?.features || []).map(feature => `
+            <div style="display: inline-flex; align-items: center; gap: 5px; min-width: 200px; margin-bottom: 5px; font-size: 12px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2" style="flex-shrink: 0;">
+                <path d="M20 6L9 17l-5-5"></path>
+              </svg>
+              <span style="color: #333;">${feature}</span>
             </div>
-          </div>
-          <div style="text-align: right; min-width: 130px;">
-            <img src="${COMPANY_INFO.logoUrl}" alt="Company Logo" style="max-height: 50px; max-width: 90px; object-fit: contain; margin-bottom: 5px;" />
-            <h2 style="font-size: 28px; font-weight: 700; color: #FFCC00; margin: 0;">INVOICE</h2>
-            <p style="font-size: 14px; font-weight: bold; color: #003366; margin: 5px 0 0 0;"># ${invoice.invoiceNumber || 'DRAFT'}</p>
-          </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #eee; padding: 12px; border-radius: 5px;">
-          <div style="flex: 1;">
-            <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 5px 0;">Bill To:</h3>
-            <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">${invoice.customerName || 'N/A'}</p>
-            <p style="margin: 2px 0; font-size: 12px;">${invoice.customerEmail || 'N/A'}</p>
-            <p style="margin: 2px 0; font-size: 12px;">${invoice.customerPhone || 'N/A'}</p>
-            <p style="margin: 2px 0; font-size: 12px;">${invoice.customerLocation || 'N/A'}</p>
-          </div>
-          <div style="flex: 1; text-align: right;">
-            <p style="margin: 2px 0; font-size: 12px;"><strong>Invoice Date:</strong> ${invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin: 2px 0; font-size: 12px;"><strong>Due Date:</strong> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin: 2px 0; font-size: 12px;">
-                <strong>Status:</strong> 
-                <span style="font-weight: bold; color: ${statusColor}; text-transform: uppercase;">${invoice.status || 'DRAFT'}</span>
-            </p>
-          </div>
-        </div>
-        <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-            <thead style="background-color: #f5f5f5; color: #003366;">
-              <tr>
-                <th style="padding: 8px 12px; text-align: left; font-size: 12px; font-weight: bold; width: 45%;">Description</th>
-                <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold; width: 10%;">Qty</th>
-                <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold; width: 20%;">Unit Price</th>
-                <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold; width: 25%;">Amount (Ksh)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 12px;">
-            <div style="flex: 1; padding-right: 20px;">
-                <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 5px 0;">Notes:</h3>
-                <p style="margin: 0; white-space: pre-wrap; line-height: 1.4;">${invoice.notes || 'N/A'}</p>
-                <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 10px 0 5px 0;">Features:</h3>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                    ${featureHtml}
+        `).join('');
+        const statusColor = invoice.status === 'paid' ? '#28a745' : invoice.status === 'pending' ? '#ffc107' : '#dc3545';
+        const totalColor = invoice.balanceDue > 0 ? '#dc3545' : '#28a745';
+        // Create a temporary hidden container for HTML to be rendered to PDF
+        const pdfContainer = document.createElement('div');
+        pdfContainer.id = 'pdf-container';
+        pdfContainer.style.width = '210mm'; // A4 width
+        pdfContainer.style.padding = '15px';
+        pdfContainer.style.boxSizing = 'border-box';
+        pdfContainer.style.backgroundColor = '#ffffff';
+        pdfContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
+        pdfContainer.style.fontSize = '12px';
+        document.body.appendChild(pdfContainer);
+
+        // Populate the container with the enhanced HTML template
+        pdfContainer.innerHTML = `
+          <div id="pdf-invoice-content" style="margin: 0 auto; padding: 15px; max-width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #003366; padding-bottom: 10px; margin-bottom: 15px;">
+              <div style="flex-grow: 1;">
+                <h1 style="font-size: 24px; font-weight: 900; color: #003366; margin: 0;">${COMPANY_INFO.name}</h1>
+                <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">${COMPANY_INFO.tagline}</p>
+                <div style="font-size: 11px; color: #666; margin-top: 8px;">
+                    <p style="margin: 0;">Email: ${COMPANY_INFO.supportEmail}</p>
+                    <p style="margin: 0;">Phone: ${COMPANY_INFO.supportPhone}</p>
+                </div>
+              </div>
+              <div style="text-align: right; min-width: 130px;">
+                <img src="${COMPANY_INFO.logoUrl}" alt="Company Logo" style="max-height: 50px; max-width: 90px; object-fit: contain; margin-bottom: 5px;" />
+                <h2 style="font-size: 28px; font-weight: 700; color: #FFCC00; margin: 0;">INVOICE</h2>
+                <p style="font-size: 14px; font-weight: bold; color: #003366; margin: 5px 0 0 0;"># ${invoice.invoiceNumber || 'DRAFT'}</p>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #eee; padding: 12px; border-radius: 5px;">
+              <div style="flex: 1;">
+                <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 5px 0;">Bill To:</h3>
+                <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">${invoice.customerName || 'N/A'}</p>
+                <p style="margin: 2px 0; font-size: 12px;">${invoice.customerEmail || 'N/A'}</p>
+                <p style="margin: 2px 0; font-size: 12px;">${invoice.customerPhone || 'N/A'}</p>
+                <p style="margin: 2px 0; font-size: 12px;">${invoice.customerLocation || 'N/A'}</p>
+              </div>
+              <div style="flex: 1; text-align: right;">
+                <p style="margin: 2px 0; font-size: 12px;"><strong>Invoice Date:</strong> ${invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 'N/A'}</p>
+                <p style="margin: 2px 0; font-size: 12px;"><strong>Due Date:</strong> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</p>
+                <p style="margin: 2px 0; font-size: 12px;">
+                    <strong>Status:</strong> 
+                    <span style="font-weight: bold; color: ${statusColor}; text-transform: uppercase;">${invoice.status || 'DRAFT'}</span>
+                </p>
+              </div>
+            </div>
+            <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <thead style="background-color: #f5f5f5; color: #003366;">
+                  <tr>
+                    <th style="padding: 8px 12px; text-align: left; font-size: 12px; font-weight: bold; width: 45%;">Description</th>
+                    <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold; width: 10%;">Qty</th>
+                    <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold; width: 20%;">Unit Price</th>
+                    <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold; width: 25%;">Amount (Ksh)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                </tbody>
+              </table>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                <div style="flex: 1; padding-right: 20px;">
+                    <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 5px 0;">Notes:</h3>
+                    <p style="margin: 0; white-space: pre-wrap; line-height: 1.4;">${invoice.notes || 'N/A'}</p>
+                    <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 10px 0 5px 0;">Features:</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        ${featureHtml}
+                    </div>
+                </div>
+                <div style="width: 220px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 5px 0; font-size: 12px; text-align: right;">Subtotal:</td>
+                            <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold;">Ksh ${formatPrice(invoice.subtotal)}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 5px 0; font-size: 12px; text-align: right;">Tax (${invoice.taxRate || 0}%):</td>
+                            <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold;">Ksh ${formatPrice(invoice.taxAmount)}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 5px 0; font-size: 12px; text-align: right;">Discount:</td>
+                            <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold;">- Ksh ${formatPrice(invoice.subtotal - (invoice.subtotal + invoice.taxAmount - invoice.totalAmount) + invoice.taxAmount)}</td>
+                        </tr>
+                        <tr style="border-bottom: 2px solid #003366; margin-top: 8px;">
+                            <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right;">TOTAL DUE:</td>
+                            <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: #003366;">Ksh ${formatPrice(invoice.totalAmount)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0; font-size: 12px; text-align: right; color: #28a745;">Amount Paid:</td>
+                            <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold; color: #28a745;">Ksh ${formatPrice(invoice.amountPaid)}</td>
+                        </tr>
+                        <tr style="border-top: 2px solid ${totalColor};">
+                            <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: ${totalColor};">BALANCE:</td>
+                            <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: ${totalColor};">Ksh ${formatPrice(invoice.balanceDue)}</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
-            <div style="width: 220px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 5px 0; font-size: 12px; text-align: right;">Subtotal:</td>
-                        <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold;">Ksh ${formatPrice(invoice.subtotal)}</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 5px 0; font-size: 12px; text-align: right;">Tax (${invoice.taxRate || 0}%):</td>
-                        <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold;">Ksh ${formatPrice(invoice.taxAmount)}</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 5px 0; font-size: 12px; text-align: right;">Discount:</td>
-                        <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold;">- Ksh ${formatPrice(invoice.subtotal - (invoice.subtotal + invoice.taxAmount - invoice.totalAmount) + invoice.taxAmount)}</td>
-                    </tr>
-                    <tr style="border-bottom: 2px solid #003366; margin-top: 8px;">
-                        <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right;">TOTAL DUE:</td>
-                        <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: #003366;">Ksh ${formatPrice(invoice.totalAmount)}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0; font-size: 12px; text-align: right; color: #28a745;">Amount Paid:</td>
-                        <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold; color: #28a745;">Ksh ${formatPrice(invoice.amountPaid)}</td>
-                    </tr>
-                    <tr style="border-top: 2px solid ${totalColor};">
-                        <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: ${totalColor};">BALANCE:</td>
-                        <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: ${totalColor};">Ksh ${formatPrice(invoice.balanceDue)}</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-        <div style="margin-top: 30px; border-top: 1px dashed #ddd; padding-top: 15px;">
-            <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 8px 0;">Payment Options:</h3>
-            <div style="display: flex; gap: 20px; font-size: 11px;">
-                <div style="flex: 1; border-right: 1px solid #eee; padding-right: 10px;">
-                    <p style="font-weight: bold; margin: 0 0 3px 0;">Bank Transfer:</p>
-                    <p style="margin: 0;">Bank: ${COMPANY_INFO.bankName}</p>
-                    <p style="margin: 0;">Account Name: ${COMPANY_INFO.accountName}</p>
-                    <p style="margin: 0;">Account No: ${COMPANY_INFO.accountNumber}</p>
+            <div style="margin-top: 30px; border-top: 1px dashed #ddd; padding-top: 15px;">
+                <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 8px 0;">Payment Options:</h3>
+                <div style="display: flex; gap: 20px; font-size: 11px;">
+                    <div style="flex: 1; border-right: 1px solid #eee; padding-right: 10px;">
+                        <p style="font-weight: bold; margin: 0 0 3px 0;">Bank Transfer:</p>
+                        <p style="margin: 0;">Bank: ${COMPANY_INFO.bankName}</p>
+                        <p style="margin: 0;">Account Name: ${COMPANY_INFO.accountName}</p>
+                        <p style="margin: 0;">Account No: ${COMPANY_INFO.accountNumber}</p>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="font-weight: bold; margin: 0 0 3px 0;">Mobile Money (M-Pesa):</p>
+                        <p style="margin: 0;">Paybill: ${COMPANY_INFO.paybill}</p>
+                        <p style="margin: 0;">Account No: **${invoice.customerPhone || 'N/A'}**</p>
+                    </div>
                 </div>
-                <div style="flex: 1;">
-                    <p style="font-weight: bold; margin: 0 0 3px 0;">Mobile Money (M-Pesa):</p>
-                    <p style="margin: 0;">Paybill: ${COMPANY_INFO.paybill}</p>
-                    <p style="margin: 0;">Account No: **${invoice.customerPhone || 'N/A'}**</p>
-                </div>
+                <p style="text-align: center; margin-top: 20px; font-size: 10px; color: #999;">${invoice.terms}</p>
+                <p style="text-align: center; margin-top: 8px; font-size: 11px; font-weight: bold; color: #003366;">THANK YOU FOR YOUR BUSINESS!</p>
             </div>
-            <p style="text-align: center; margin-top: 20px; font-size: 10px; color: #999;">${invoice.terms}</p>
-            <p style="text-align: center; margin-top: 8px; font-size: 11px; font-weight: bold; color: #003366;">THANK YOU FOR YOUR BUSINESS!</p>
-        </div>
-      </div>
-    `;
-    // --- PDF Generation using html2pdf.js ---
-    const opt = {
-      margin: [10, 10, 10, 10], // Slightly reduced margins
-      filename: `${invoice.invoiceNumber || 'DRAFT'}-invoice.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2, // Reduced scale for better fit
-        logging: false, 
-        dpi: 192, 
-        letterRendering: true, 
-        useCORS: true, // Crucial for loading external images like the logo
-        windowWidth: 800, // Set a specific width to avoid dynamic viewport issues
-        width: 800, // Explicitly set width for canvas
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    // Use the container element
-    html2pdf().from(pdfContainer).set(opt).save().then(() => {
-      showNotification('✅ PDF generated successfully!', 'success');
-      // Clean up the temporary container
-      document.body.removeChild(pdfContainer);
-    }).catch(err => {
-      console.error('PDF generation error:', err);
-      showNotification('🚨 Failed to generate PDF', 'error');
-      // Ensure cleanup even on error
-      if (document.body.contains(pdfContainer)) {
+          </div>
+        `;
+
+        // --- PDF Generation using html2pdf.js ---
+        const opt = {
+          margin: [10, 10, 10, 10], // Slightly reduced margins
+          filename: `${invoice.invoiceNumber || 'DRAFT'}-invoice.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { 
+            scale: 2, // Reduced scale for better fit
+            logging: false, 
+            dpi: 192, 
+            letterRendering: true, 
+            useCORS: true, // Crucial for loading external images like the logo
+            windowWidth: 800, // Set a specific width to avoid dynamic viewport issues
+            width: 800, // Explicitly set width for canvas
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          enableLinks: false // Disable internal links in PDF for cleaner output
+        };
+
+        // Use the container element
+        html2pdf().from(pdfContainer).set(opt).outputPdf('blob').then((blob) => {
+          showNotification('✅ PDF generated successfully!', 'success');
+          // Clean up the temporary container
           document.body.removeChild(pdfContainer);
-      }
+          resolve(blob); // Resolve the promise with the PDF blob
+        }).catch(err => {
+          console.error('PDF generation error:', err);
+          showNotification('🚨 Failed to generate PDF', 'error');
+          // Ensure cleanup even on error
+          if (document.body.contains(pdfContainer)) {
+              document.body.removeChild(pdfContainer);
+          }
+          reject(err); // Reject the promise on error
+        });
     });
   };
   // Export invoice as PDF - Using client-side generation
   const exportInvoicePDF = async (invoice) => {
-    generateClientSidePDF(invoice);
+    try {
+        const pdfBlob = await generateClientSidePDF(invoice);
+        // Create a URL for the blob
+        const url = URL.createObjectURL(pdfBlob);
+        // Create a link element
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${invoice.invoiceNumber || 'DRAFT'}-invoice.pdf`;
+        // Append to the body, click, and remove
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        // Clean up the object URL
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error exporting PDF:', error);
+        showNotification('🚨 Failed to download PDF', 'error');
+    }
   };
   // Preview PDF - Same as export, but typically for display only (we'll use the same function for simplicity)
   const previewPDF = (invoice) => {
@@ -700,42 +725,71 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     setSelectedInvoice(invoice);
     setShowPDFModal(true);
   };
-  // Helper function to generate WhatsApp message
-  const generateWhatsAppMessage = (invoice) => {
+  // Helper function to generate email body text (as a fallback or summary)
+  const generateEmailBody = (invoice) => {
     const customerName = invoice.customerName || 'Customer';
     const invoiceNumber = invoice.invoiceNumber || 'N/A';
     const amount = formatPrice(invoice.totalAmount);
     const dueDate = invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A';
     const totalDue = formatPrice(invoice.balanceDue);
-    // Using Paybill and Account Number as per your company info and model
+
     return `Hello ${customerName},
+
 Your Optimas Fiber invoice is ready. Please find the details below:
+
 *Invoice #: ${invoiceNumber}*
 *Total Amount: Ksh ${amount}*
 *Balance Due: Ksh ${totalDue}*
 *Due Date: ${dueDate}*
+
+The full invoice details are attached as a PDF.
+
 Payment via Mobile Money:
 - *Paybill:* ${COMPANY_INFO.paybill}
 - *Account No:* ${invoice.customerPhone || customerName.split(' ')[0]}
+
 Thank you for choosing Optimas Fiber!`;
   };
-  // Send invoice to client via WhatsApp
+  // Send invoice to client via Email with PDF attachment
   const sendInvoiceToClient = async (invoice) => {
     try {
       setSendingInvoice(invoice._id);
-      const customerPhone = invoice.customerPhone?.replace(/\D/g, ''); // Remove non-digits
-      if (!customerPhone || customerPhone.length < 9) {
-        showNotification('⚠️ Customer phone number is invalid or missing', 'warning');
+      const customerEmail = invoice.customerEmail;
+      if (!customerEmail || !customerEmail.includes('@')) {
+        showNotification('⚠️ Customer email address is invalid or missing', 'warning');
         return;
       }
-      const message = encodeURIComponent(generateWhatsAppMessage(invoice));
-      // Format number to international format (assuming Kenya)
-      const formattedPhone = customerPhone.startsWith('254') ? customerPhone : `254${customerPhone.slice(-9)}`;
-      const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
-      window.open(whatsappUrl, '_blank');
-      showNotification('✅ WhatsApp chat opened with invoice details!', 'success');
+
+      const subject = `Invoice ${invoice.invoiceNumber || 'N/A'} from ${COMPANY_INFO.name}`;
+      const body = encodeURIComponent(generateEmailBody(invoice));
+
+      // Generate the PDF blob
+      const pdfBlob = await generateClientSidePDF(invoice);
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+
+      // Construct the mailto link with the PDF as an attachment
+      // Note: mailto: links have limitations and may not work perfectly with attachments across all email clients.
+      // The most reliable way is to let the user download the PDF and attach it manually.
+      // However, we can try to open the mail client with the body pre-filled.
+      // For attachment, the user will likely need to download and attach manually.
+      const mailtoLink = `mailto:${customerEmail}?subject=${encodeURIComponent(subject)}&body=${body}`;
+
+      // Inform the user that the PDF is ready and they need to attach it
+      showNotification('📄 PDF ready. Please attach the downloaded invoice to your email.', 'info');
+
+      // Download the PDF first so the user can attach it
+      const a = document.createElement('a');
+      a.href = pdfUrl;
+      a.download = `${invoice.invoiceNumber || 'DRAFT'}-invoice.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Then open the email client with the body filled
+      window.open(mailtoLink, '_blank');
+
     } catch (error) {
-      console.error('Error sending invoice via WhatsApp:', error);
+      console.error('Error preparing email with PDF:', error);
       showNotification(`🚨 Error: ${error.message}`, 'error');
     } finally {
       setSendingInvoice(null);
@@ -1215,9 +1269,9 @@ Thank you for choosing Optimas Fiber!`;
                           className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
                             sendingInvoice === invoice._id ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
-                          title="Send to Client (WhatsApp)"
+                          title="Send to Client (Email)"
                         >
-                          <Share2 size={16} />
+                          <Send size={16} /> {/* Changed icon to Send */}
                         </button>
                         {invoice.status !== 'paid' && (
                           <button
@@ -1813,7 +1867,7 @@ Thank you for choosing Optimas Fiber!`;
                     sendingInvoice === selectedInvoice._id ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
-                  <Share2 size={16} className="mr-1.5" />
+                  <Send size={16} className="mr-1.5" /> {/* Changed icon to Send */}
                   {sendingInvoice === selectedInvoice._id ? 'Sending...' : 'Send to Client'}
                 </button>
                 {selectedInvoice.status !== 'paid' && (
