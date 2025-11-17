@@ -1,5 +1,7 @@
+// Footer.jsx - UPDATED WITH ADMIN LOGIN BUTTON
 import React from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom"; // Import Link for navigation
 
 // Define RISA's core styles as constants for consistency
 const RISA_STYLES = {
@@ -90,7 +92,7 @@ export default function Footer({ darkMode = false }) {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
+            <h3 className={`${RISA_STYLES.typography.h3} mb-2`}>
               Quick Links
             </h3>
             <ul className="space-y-2">
@@ -112,7 +114,7 @@ export default function Footer({ darkMode = false }) {
 
           {/* Services */}
           <div className="space-y-4">
-            <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
+            <h3 className={`${RISA_STYLES.typography.h3} mb-2`}>
               Services
             </h3>
             <ul className="space-y-2">
@@ -134,7 +136,7 @@ export default function Footer({ darkMode = false }) {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
+            <h3 className={`${RISA_STYLES.typography.h3} mb-2`}>
               Contact Us
             </h3>
             <div className="space-y-3 text-sm" style={{ color: colors.textSecondary }}>
@@ -167,14 +169,26 @@ export default function Footer({ darkMode = false }) {
             &copy; {new Date().getFullYear()} Optimas fiber. All rights reserved.
           </p>
 
-          <motion.button
-            onClick={scrollToTop}
-            className={`${RISA_STYLES.button.primary.base} ${RISA_STYLES.button.primary.hover} hidden md:inline-flex items-center`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            ↑ Back to Top
-          </motion.button>
+          {/* Admin Login Button and Back to Top Button */}
+          <div className="flex flex-wrap justify-center gap-4 md:justify-end"> {/* Added flex container for buttons */}
+            <Link
+              to="/admin/login" // Link to the admin login route
+              className={`${RISA_STYLES.button.secondary.base} ${RISA_STYLES.button.secondary.hover} inline-flex items-center`}
+              // Removed motion.button specific props as Link doesn't support them directly
+              style={{ textDecoration: 'none' }} // Optional: remove underline if Link is used
+            >
+              Admin Login
+            </Link>
+
+            <motion.button
+              onClick={scrollToTop}
+              className={`${RISA_STYLES.button.primary.base} ${RISA_STYLES.button.primary.hover} hidden md:inline-flex items-center`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              ↑ Back to Top
+            </motion.button>
+          </div>
         </div>
       </div>
     </motion.footer>
