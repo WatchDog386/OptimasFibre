@@ -1,3 +1,4 @@
+// Redesigned Navbar Matching Provided Layout Style (Top Contact Bar + Social Icons + Main Navbar Card) without WiFi Plans
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Menu, X, Sun, Moon } from "lucide-react";
@@ -6,12 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
 import "../index.css";
 
-// Define RISA's core styles as constants for consistency
 const RISA_STYLES = {
   primaryColor: '#015B97',
   button: {
     small: {
-      base: 'px-3 py-1.5 text-sm font-medium border rounded-[50px] transition-colors',
+      base: 'px-3 py-1.5 text-sm font-medium border rounded-full transition-colors',
       light: 'border-gray-300 text-gray-700 bg-white hover:bg-gray-100',
       dark: 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700',
     }
@@ -40,7 +40,6 @@ export default function Navbar() {
   const navRef = useRef(null);
   const { darkMode, toggleDarkMode } = useTheme();
 
-  // Scroll handler with throttle
   const handleScroll = useCallback(
     throttle(() => setScrolled(window.scrollY > 50), 100),
     []
@@ -51,7 +50,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setIsOpen(false);
   }, [location]);
@@ -63,7 +61,6 @@ export default function Navbar() {
       { label: "Home", route: "/", id: "home" },
       { label: "About Us", route: "/about", id: "about" },
       { label: "Blog", route: "/blog", id: "blog" },
-      { label: "WiFi Plans", route: "/wifi-plans", id: "wifi-plans" },
       { label: "Coverage", route: "/coverage", id: "coverage" },
     ],
     []
@@ -101,26 +98,19 @@ export default function Navbar() {
     );
   };
 
-  // Apply dark mode class to <html> element
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
   }, [darkMode]);
 
   return (
     <nav
       ref={navRef}
       className={`fixed top-0 left-0 w-full z-[999] px-4 transition-all duration-300 ${
-        darkMode 
-          ? "bg-gray-900 py-3" 
-          : "bg-white py-3"
+        darkMode ? "bg-gray-900 py-3" : "bg-white py-3"
       } ${scrolled && "shadow-md"}`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo */}
         <NavLink to="/" className={`${RISA_STYLES.typography.logo.container} flex-shrink-0`}>
           <img
             src="/oppo.jpg"
@@ -143,16 +133,13 @@ export default function Navbar() {
           </div>
         </NavLink>
 
-        {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-8">
           {menuItems.map((item) => (
             <NavItem key={item.id} item={item} />
           ))}
         </div>
 
-        {/* Theme Toggle + Mobile Menu Button */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {/* Theme Toggle */}
           <button
             onClick={toggleDarkMode}
             className={`${RISA_STYLES.button.small.base} ${
@@ -163,7 +150,6 @@ export default function Navbar() {
             {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
 
-          {/* Mobile Menu Button */}
           <button
             className={`lg:hidden p-2.5 rounded-full transition-colors ${
               darkMode 
@@ -178,27 +164,12 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{
-              opacity: 1,
-              height: "auto",
-              transition: {
-                opacity: { duration: 0.2 },
-                height: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
-              },
-            }}
-            exit={{
-              opacity: 0,
-              height: 0,
-              transition: {
-                opacity: { duration: 0.1 },
-                height: { duration: 0.2, ease: [0.16, 1, 0.3, 1] },
-              },
-            }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
             className={`lg:hidden overflow-hidden mt-2 rounded-lg shadow-xl border ${
               darkMode ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"
             }`}

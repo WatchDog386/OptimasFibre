@@ -1,0 +1,3 @@
+127.0.0.1 - - [17/Nov/2025:11:10:22 +0000] "POST /api/invoices HTTP/1.1" 401 63 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" -
+127.0.0.1 - - [17/Nov/2025:11:17:54 +0000] "POST /api/invoices HTTP/1.1" 401 63 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" -
+127.0.0.1 - - [17/Nov/2025:11:29:12 +0000] "POST /api/invoices HTTP/1.1" 401 63 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" -

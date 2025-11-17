@@ -1,4 +1,4 @@
-// InvoiceManager.jsx - FINAL UPDATED VERSION
+// InvoiceManager.jsx - FINAL UPDATED VERSION WITH FIXED LAYOUT, LOGO, AND CORRECT API URL
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -38,7 +38,6 @@ import {
 } from 'recharts';
 // Import html2pdf for client-side PDF generation
 import html2pdf from 'html2pdf.js';
-
 // Utility function for consistent price formatting in KSH
 const formatPrice = (price) => {
   if (price === undefined || price === null) return '0.00';
@@ -46,7 +45,6 @@ const formatPrice = (price) => {
   const num = parseFloat(price);
   return isNaN(num) ? price : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
-
 // WiFi Plans data from your wifiplans.jsx
 const WIFI_PLANS = [
   { 
@@ -104,12 +102,11 @@ const WIFI_PLANS = [
     popular: false 
   },
 ];
-
 // Mock company info to match wifiplans.jsx
 const COMPANY_INFO = {
   name: "OPTIMAS FIBER",
   tagline: "High-Speed Internet Solutions",
-  logoUrl: "/path/to/optimas-fiber-logo.png", // Replace with actual path or base64
+  logoUrl: "/public/oppo.jpg", // Updated path to logo
   bankName: "Equity Bank",
   accountName: "Optimas Fiber Ltd",
   accountNumber: "1234567890",
@@ -118,7 +115,6 @@ const COMPANY_INFO = {
   supportPhone: "+254 741 874 200",
   paybill: "123456" // Added paybill for payment instructions
 };
-
 const initialFormState = {
   invoiceNumber: '',
   customerName: '',
@@ -148,7 +144,6 @@ const initialFormState = {
   terms: 'Payment due within 30 days. Late payments subject to fees.',
   billingCycle: 'monthly'
 };
-
 const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification, invoices, setInvoices, receipts, setReceipts }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -162,22 +157,18 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [sendingInvoice, setSendingInvoice] = useState(null);
   const [showPlanSelection, setShowPlanSelection] = useState(false);
   const [invoiceForm, setInvoiceForm] = useState(initialFormState);
-
   // Reset form
   const resetForm = () => {
     setInvoiceForm(initialFormState);
   };
-
   // Calculate totals based on your model structure (Ensures consistency)
   const calculateTotals = (items, taxRate = 0, discount = 0, discountType = 'none') => {
     // 1. Calculate Subtotal from items
     const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
     const numericSubtotal = parseFloat(subtotal) || 0;
-
     // 2. Calculate Tax
     const numericTaxRate = parseFloat(taxRate) || 0;
     const taxAmount = (numericSubtotal * numericTaxRate) / 100;
-    
     // 3. Calculate Discount
     let discountAmount = 0;
     const numericDiscount = parseFloat(discount) || 0;
@@ -186,10 +177,8 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     } else if (discountType === 'fixed') {
       discountAmount = numericDiscount;
     }
-    
     // 4. Calculate Total
     const totalAmount = numericSubtotal + taxAmount - discountAmount;
-    
     return { 
       subtotal: numericSubtotal, 
       taxAmount: taxAmount, 
@@ -197,7 +186,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       totalAmount: Math.max(0, totalAmount) 
     };
   };
-  
   // Effect to recalculate totals when form changes (simulating mongoose pre-save hook)
   useEffect(() => {
       const { subtotal, taxAmount, totalAmount } = calculateTotals(
@@ -210,7 +198,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           const amountPaid = parseFloat(prev.amountPaid) || 0;
           const newBalanceDue = Math.max(0, totalAmount - amountPaid);
           let newStatus = prev.status;
-
           // Auto-update status based on payment
           if (amountPaid > 0) {
               if (amountPaid >= totalAmount) {
@@ -221,7 +208,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           } else if (prev.status !== 'draft') {
               newStatus = 'pending';
           }
-          
           return {
               ...prev,
               subtotal,
@@ -232,8 +218,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           };
       });
   }, [invoiceForm.items, invoiceForm.taxRate, invoiceForm.discount, invoiceForm.discountType, invoiceForm.amountPaid]);
-
-
   // Fetch invoices from backend
   const fetchInvoices = async () => {
     try {
@@ -251,9 +235,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         throw new Error(`Failed to fetch invoices: ${response.status}`);
       }
       const data = await response.json();
-      
       let invoicesData = data.invoices || data.data || [];
-      
       console.log('📄 Fetched invoices:', invoicesData);
       setInvoices(invoicesData);
     } catch (error) {
@@ -264,7 +246,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setLoading(false);
     }
   };
-
   useEffect(() => {
     if (!invoices || invoices.length === 0) {
       fetchInvoices();
@@ -272,7 +253,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setLoading(false);
     }
   }, []);
-
   // Generate sequential invoice number (Client-side estimate)
   const generateInvoiceNumber = () => {
     if (!invoices || invoices.length === 0) return 'INV-0001';
@@ -286,7 +266,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }, 0);
     return `INV-${String(latestNumber + 1).padStart(4, '0')}`;
   };
-
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -295,7 +274,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       [name]: value
     }));
   };
-
   // Select WiFi plan
   const selectPlan = (plan) => {
     const planPrice = parseFloat(plan.price) || 0;
@@ -305,7 +283,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       unitPrice: planPrice,
       amount: planPrice
     }];
-    
     // Calculate totals for the new plan items
     const { subtotal, taxAmount, totalAmount } = calculateTotals(
       items, 
@@ -313,7 +290,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       invoiceForm.discount, 
       invoiceForm.discountType
     );
-    
     setInvoiceForm(prev => ({
       ...prev,
       planName: plan.name,
@@ -329,16 +305,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     setShowPlanSelection(false);
     showNotification(`✅ ${plan.name} plan selected!`, 'success');
   };
-
   // Handle item changes
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...invoiceForm.items];
     const item = updatedItems[index];
-    
     if (field === 'quantity' || field === 'unitPrice') {
       const quantity = field === 'quantity' ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
       const unitPrice = field === 'unitPrice' ? parseFloat(value) || 0 : parseFloat(item.unitPrice) || 0;
-      
       updatedItems[index] = {
         ...item,
         [field]: parseFloat(value) || 0,
@@ -350,14 +323,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         [field]: value
       };
     }
-    
     // The useEffect hook will automatically recalculate totals based on the new items state
     setInvoiceForm(prev => ({
       ...prev,
       items: updatedItems
     }));
   };
-
   // Add new item
   const addItem = () => {
     setInvoiceForm(prev => ({
@@ -365,12 +336,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, amount: 0 }]
     }));
   };
-
   // Remove item
   const removeItem = (index) => {
     if (invoiceForm.items.length > 0) {
       const updatedItems = invoiceForm.items.filter((_, i) => i !== index);
-      
       // The useEffect hook will automatically recalculate totals based on the new items state
       setInvoiceForm(prev => ({
         ...prev,
@@ -378,7 +347,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       }));
     }
   };
-
   // Mark invoice as paid
   const markAsPaid = async (invoiceId) => {
     try {
@@ -386,13 +354,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
-      
       // Fetch the latest invoice data to get the totalAmount for payment
       const invoiceToPay = invoices.find(inv => inv._id === invoiceId);
       if (!invoiceToPay) {
           throw new Error('Invoice not found in local state.');
       }
-
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/paid`, {
         method: 'PATCH', // Using the dedicated 'markInvoiceAsPaid' route from controller
         headers: {
@@ -417,7 +383,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
-
   // Create new invoice
   const createInvoice = async () => {
     try {
@@ -425,12 +390,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
-      
       // Basic client-side validation for required fields
       if (!invoiceForm.customerName?.trim() || !invoiceForm.customerEmail?.trim() || !invoiceForm.planName?.trim()) {
         throw new Error('Customer Name, Email, and Plan Name are required.');
       }
-
       // Final data preparation, ensuring date objects for backend
       const invoiceData = {
         ...invoiceForm,
@@ -447,7 +410,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
         balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
       };
-
       console.log('📤 Creating invoice:', invoiceData);
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
@@ -457,7 +419,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(invoiceData)
       });
-      
       if (response.ok) {
         const newInvoice = await response.json();
         setInvoices(prev => [...prev, newInvoice.invoice || newInvoice.data || newInvoice]);
@@ -474,7 +435,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
-
   // Update invoice
   const updateInvoice = async () => {
     try {
@@ -482,7 +442,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
-
       const invoiceData = {
         ...invoiceForm,
         invoiceDate: new Date(invoiceForm.invoiceDate),
@@ -496,7 +455,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
         balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
       };
-
       const response = await fetch(`${API_BASE_URL}/api/invoices/${editingInvoice._id}`, {
         method: 'PUT',
         headers: {
@@ -505,7 +463,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(invoiceData)
       });
-      
       if (response.ok) {
         const updatedInvoice = await response.json();
         setInvoices(prev => prev.map(inv => 
@@ -525,7 +482,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
-
   // Delete invoice
   const deleteInvoice = async (invoiceId) => {
     if (!window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
@@ -554,13 +510,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
-
-  // Client-side PDF generation using html2pdf.js - **FIXED AND STYLED**
+  // Client-side PDF generation using html2pdf.js - **FIXED LAYOUT AND STYLED**
   const generateClientSidePDF = (invoice) => {
     showNotification('📄 Generating PDF...', 'info');
-
     // --- Dynamic Content Generation for PDF ---
-    
     // Get the primary item or list all items
     const primaryItem = invoice.items?.[0] || {
         description: invoice.planName ? `${invoice.planName} - ${invoice.planSpeed}` : 'Internet Service', 
@@ -568,84 +521,78 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         unitPrice: invoice.planPrice || invoice.totalAmount || 0, 
         amount: invoice.planPrice || invoice.totalAmount || 0
     };
-    
     const itemsToDisplay = invoice.items && invoice.items.length > 0 ? invoice.items : [primaryItem];
-
     const itemsHtml = itemsToDisplay.map(item => `
       <tr style="border-bottom: 1px solid #f0f0f0;">
-        <td style="padding: 10px 15px; text-align: left; font-size: 14px; width: 40%;">${item.description || 'N/A'}</td>
-        <td style="padding: 10px 15px; text-align: right; font-size: 14px;">${item.quantity || 1}</td>
-        <td style="padding: 10px 15px; text-align: right; font-size: 14px;">Ksh ${formatPrice(item.unitPrice)}</td>
-        <td style="padding: 10px 15px; text-align: right; font-size: 14px; font-weight: bold;">Ksh ${formatPrice(item.amount)}</td>
+        <td style="padding: 8px 12px; text-align: left; font-size: 13px; width: 45%; word-wrap: break-word;">${item.description || 'N/A'}</td>
+        <td style="padding: 8px 12px; text-align: right; font-size: 13px; width: 10%;">${item.quantity || 1}</td>
+        <td style="padding: 8px 12px; text-align: right; font-size: 13px; width: 20%;">Ksh ${formatPrice(item.unitPrice)}</td>
+        <td style="padding: 8px 12px; text-align: right; font-size: 13px; width: 25%; font-weight: bold;">Ksh ${formatPrice(item.amount)}</td>
       </tr>
     `).join('');
-    
     const featureHtml = (invoice.features || WIFI_PLANS.find(p => p.name === invoice.planName)?.features || []).map(feature => `
-        <div style="display: inline-flex; align-items: center; gap: 5px; min-width: 200px; margin-bottom: 5px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2" style="flex-shrink: 0;">
+        <div style="display: inline-flex; align-items: center; gap: 5px; min-width: 200px; margin-bottom: 5px; font-size: 12px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2" style="flex-shrink: 0;">
             <path d="M20 6L9 17l-5-5"></path>
           </svg>
-          <span style="font-size: 13px; color: #333;">${feature}</span>
+          <span style="color: #333;">${feature}</span>
         </div>
     `).join('');
-    
     const statusColor = invoice.status === 'paid' ? '#28a745' : invoice.status === 'pending' ? '#ffc107' : '#dc3545';
     const totalColor = invoice.balanceDue > 0 ? '#dc3545' : '#28a745';
-    
     // Create a temporary hidden container for HTML to be rendered to PDF
     const pdfContainer = document.createElement('div');
     pdfContainer.id = 'pdf-container';
     pdfContainer.style.width = '210mm'; // A4 width
-    pdfContainer.style.padding = '20px';
+    pdfContainer.style.padding = '15px';
     pdfContainer.style.boxSizing = 'border-box';
     pdfContainer.style.backgroundColor = '#ffffff';
+    pdfContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
+    pdfContainer.style.fontSize = '12px';
     document.body.appendChild(pdfContainer);
-
     // Populate the container with the enhanced HTML template
     pdfContainer.innerHTML = `
-      <div id="pdf-invoice-content" style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #333; margin: 0 auto; padding: 20px;">
-        
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #003366; padding-bottom: 15px; margin-bottom: 20px;">
+      <div id="pdf-invoice-content" style="margin: 0 auto; padding: 15px; max-width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #003366; padding-bottom: 10px; margin-bottom: 15px;">
           <div style="flex-grow: 1;">
-            <h1 style="font-size: 28px; font-weight: 900; color: #003366; margin: 0;">${COMPANY_INFO.name}</h1>
-            <p style="font-size: 14px; color: #666; margin: 5px 0 0 0;">${COMPANY_INFO.tagline}</p>
-            <div style="font-size: 12px; color: #666; margin-top: 10px;">
+            <h1 style="font-size: 24px; font-weight: 900; color: #003366; margin: 0;">${COMPANY_INFO.name}</h1>
+            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">${COMPANY_INFO.tagline}</p>
+            <div style="font-size: 11px; color: #666; margin-top: 8px;">
                 <p style="margin: 0;">Email: ${COMPANY_INFO.supportEmail}</p>
                 <p style="margin: 0;">Phone: ${COMPANY_INFO.supportPhone}</p>
             </div>
           </div>
-          <div style="text-align: right; min-width: 150px;">
-            <h2 style="font-size: 36px; font-weight: 700; color: #FFCC00; margin: 0;">INVOICE</h2>
-            <p style="font-size: 18px; font-weight: bold; color: #003366; margin: 5px 0 0 0;"># ${invoice.invoiceNumber || 'DRAFT'}</p>
+          <div style="text-align: right; min-width: 130px;">
+            <img src="${COMPANY_INFO.logoUrl}" alt="Company Logo" style="max-height: 50px; max-width: 90px; object-fit: contain; margin-bottom: 5px;" />
+            <h2 style="font-size: 28px; font-weight: 700; color: #FFCC00; margin: 0;">INVOICE</h2>
+            <p style="font-size: 14px; font-weight: bold; color: #003366; margin: 5px 0 0 0;"># ${invoice.invoiceNumber || 'DRAFT'}</p>
           </div>
         </div>
-
-        <div style="display: flex; justify-content: space-between; margin-bottom: 30px; border: 1px solid #eee; padding: 15px; border-radius: 5px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #eee; padding: 12px; border-radius: 5px;">
           <div style="flex: 1;">
-            <h3 style="font-size: 15px; font-weight: bold; color: #003366; margin: 0 0 8px 0;">Bill To:</h3>
-            <p style="margin: 3px 0; font-size: 13px; font-weight: bold;">${invoice.customerName || 'N/A'}</p>
-            <p style="margin: 3px 0; font-size: 13px;">${invoice.customerEmail || 'N/A'}</p>
-            <p style="margin: 3px 0; font-size: 13px;">${invoice.customerPhone || 'N/A'}</p>
-            <p style="margin: 3px 0; font-size: 13px;">${invoice.customerLocation || 'N/A'}</p>
+            <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 5px 0;">Bill To:</h3>
+            <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">${invoice.customerName || 'N/A'}</p>
+            <p style="margin: 2px 0; font-size: 12px;">${invoice.customerEmail || 'N/A'}</p>
+            <p style="margin: 2px 0; font-size: 12px;">${invoice.customerPhone || 'N/A'}</p>
+            <p style="margin: 2px 0; font-size: 12px;">${invoice.customerLocation || 'N/A'}</p>
           </div>
           <div style="flex: 1; text-align: right;">
-            <p style="margin: 3px 0; font-size: 13px;"><strong>Invoice Date:</strong> ${invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin: 3px 0; font-size: 13px;"><strong>Due Date:</strong> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin: 3px 0; font-size: 13px;">
+            <p style="margin: 2px 0; font-size: 12px;"><strong>Invoice Date:</strong> ${invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 'N/A'}</p>
+            <p style="margin: 2px 0; font-size: 12px;"><strong>Due Date:</strong> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</p>
+            <p style="margin: 2px 0; font-size: 12px;">
                 <strong>Status:</strong> 
                 <span style="font-weight: bold; color: ${statusColor}; text-transform: uppercase;">${invoice.status || 'DRAFT'}</span>
             </p>
           </div>
         </div>
-
-        <div style="margin-bottom: 30px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
-          <table style="width: 100%; border-collapse: collapse;">
+        <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
             <thead style="background-color: #f5f5f5; color: #003366;">
               <tr>
-                <th style="padding: 10px 15px; text-align: left; font-size: 13px; font-weight: bold; width: 40%;">Description</th>
-                <th style="padding: 10px 15px; text-align: right; font-size: 13px; font-weight: bold;">Qty</th>
-                <th style="padding: 10px 15px; text-align: right; font-size: 13px; font-weight: bold;">Unit Price</th>
-                <th style="padding: 10px 15px; text-align: right; font-size: 13px; font-weight: bold;">Amount (Ksh)</th>
+                <th style="padding: 8px 12px; text-align: left; font-size: 12px; font-weight: bold; width: 45%;">Description</th>
+                <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold; width: 10%;">Qty</th>
+                <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold; width: 20%;">Unit Price</th>
+                <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold; width: 25%;">Amount (Ksh)</th>
               </tr>
             </thead>
             <tbody>
@@ -653,80 +600,80 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </tbody>
           </table>
         </div>
-
-        <div style="display: flex; justify-content: space-between;">
-            <div style="flex: 1; padding-right: 30px;">
-                <h3 style="font-size: 15px; font-weight: bold; color: #003366; margin: 0 0 8px 0;">Notes:</h3>
-                <p style="font-size: 12px; margin: 0; white-space: pre-wrap;">${invoice.notes || 'N/A'}</p>
-                <h3 style="font-size: 15px; font-weight: bold; color: #003366; margin: 15px 0 8px 0;">Features:</h3>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px;">
+            <div style="flex: 1; padding-right: 20px;">
+                <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 5px 0;">Notes:</h3>
+                <p style="margin: 0; white-space: pre-wrap; line-height: 1.4;">${invoice.notes || 'N/A'}</p>
+                <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 10px 0 5px 0;">Features:</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                     ${featureHtml}
                 </div>
             </div>
-            
-            <div style="width: 250px;">
-                <table style="width: 100%; border-collapse: collapse;">
+            <div style="width: 220px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                     <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 5px 0; font-size: 14px; text-align: right;">Subtotal:</td>
-                        <td style="padding: 5px 0; font-size: 14px; text-align: right; font-weight: bold;">Ksh ${formatPrice(invoice.subtotal)}</td>
+                        <td style="padding: 5px 0; font-size: 12px; text-align: right;">Subtotal:</td>
+                        <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold;">Ksh ${formatPrice(invoice.subtotal)}</td>
                     </tr>
                     <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 5px 0; font-size: 14px; text-align: right;">Tax (${invoice.taxRate || 0}%):</td>
-                        <td style="padding: 5px 0; font-size: 14px; text-align: right; font-weight: bold;">Ksh ${formatPrice(invoice.taxAmount)}</td>
+                        <td style="padding: 5px 0; font-size: 12px; text-align: right;">Tax (${invoice.taxRate || 0}%):</td>
+                        <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold;">Ksh ${formatPrice(invoice.taxAmount)}</td>
                     </tr>
                     <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 5px 0; font-size: 14px; text-align: right;">Discount:</td>
-                        <td style="padding: 5px 0; font-size: 14px; text-align: right; font-weight: bold;">- Ksh ${formatPrice(invoice.subtotal - (invoice.subtotal + invoice.taxAmount - invoice.totalAmount) + invoice.taxAmount)}</td>
+                        <td style="padding: 5px 0; font-size: 12px; text-align: right;">Discount:</td>
+                        <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold;">- Ksh ${formatPrice(invoice.subtotal - (invoice.subtotal + invoice.taxAmount - invoice.totalAmount) + invoice.taxAmount)}</td>
                     </tr>
-                    <tr style="border-bottom: 2px solid #003366; margin-top: 10px;">
-                        <td style="padding: 10px 0; font-size: 16px; font-weight: bold; text-align: right;">TOTAL DUE:</td>
-                        <td style="padding: 10px 0; font-size: 16px; font-weight: bold; text-align: right; color: #003366;">Ksh ${formatPrice(invoice.totalAmount)}</td>
+                    <tr style="border-bottom: 2px solid #003366; margin-top: 8px;">
+                        <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right;">TOTAL DUE:</td>
+                        <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: #003366;">Ksh ${formatPrice(invoice.totalAmount)}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 5px 0; font-size: 14px; text-align: right; color: #28a745;">Amount Paid:</td>
-                        <td style="padding: 5px 0; font-size: 14px; text-align: right; font-weight: bold; color: #28a745;">Ksh ${formatPrice(invoice.amountPaid)}</td>
+                        <td style="padding: 5px 0; font-size: 12px; text-align: right; color: #28a745;">Amount Paid:</td>
+                        <td style="padding: 5px 0; font-size: 12px; text-align: right; font-weight: bold; color: #28a745;">Ksh ${formatPrice(invoice.amountPaid)}</td>
                     </tr>
                     <tr style="border-top: 2px solid ${totalColor};">
-                        <td style="padding: 10px 0; font-size: 16px; font-weight: bold; text-align: right; color: ${totalColor};">BALANCE:</td>
-                        <td style="padding: 10px 0; font-size: 16px; font-weight: bold; text-align: right; color: ${totalColor};">Ksh ${formatPrice(invoice.balanceDue)}</td>
+                        <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: ${totalColor};">BALANCE:</td>
+                        <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: ${totalColor};">Ksh ${formatPrice(invoice.balanceDue)}</td>
                     </tr>
                 </table>
             </div>
         </div>
-
-        <div style="margin-top: 40px; border-top: 1px dashed #ddd; padding-top: 20px;">
-            <h3 style="font-size: 15px; font-weight: bold; color: #003366; margin: 0 0 10px 0;">Payment Options:</h3>
-            <div style="display: flex; gap: 30px; font-size: 13px;">
-                <div style="flex: 1; border-right: 1px solid #eee; padding-right: 15px;">
-                    <p style="font-weight: bold; margin: 0 0 5px 0;">Bank Transfer:</p>
+        <div style="margin-top: 30px; border-top: 1px dashed #ddd; padding-top: 15px;">
+            <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 8px 0;">Payment Options:</h3>
+            <div style="display: flex; gap: 20px; font-size: 11px;">
+                <div style="flex: 1; border-right: 1px solid #eee; padding-right: 10px;">
+                    <p style="font-weight: bold; margin: 0 0 3px 0;">Bank Transfer:</p>
                     <p style="margin: 0;">Bank: ${COMPANY_INFO.bankName}</p>
                     <p style="margin: 0;">Account Name: ${COMPANY_INFO.accountName}</p>
                     <p style="margin: 0;">Account No: ${COMPANY_INFO.accountNumber}</p>
                 </div>
                 <div style="flex: 1;">
-                    <p style="font-weight: bold; margin: 0 0 5px 0;">Mobile Money (M-Pesa):</p>
+                    <p style="font-weight: bold; margin: 0 0 3px 0;">Mobile Money (M-Pesa):</p>
                     <p style="margin: 0;">Paybill: ${COMPANY_INFO.paybill}</p>
                     <p style="margin: 0;">Account No: **${invoice.customerPhone || 'N/A'}**</p>
                 </div>
             </div>
-            
-            <p style="text-align: center; margin-top: 25px; font-size: 11px; color: #999;">${invoice.terms}</p>
-            <p style="text-align: center; margin-top: 10px; font-size: 12px; font-weight: bold; color: #003366;">THANK YOU FOR YOUR BUSINESS!</p>
+            <p style="text-align: center; margin-top: 20px; font-size: 10px; color: #999;">${invoice.terms}</p>
+            <p style="text-align: center; margin-top: 8px; font-size: 11px; font-weight: bold; color: #003366;">THANK YOU FOR YOUR BUSINESS!</p>
         </div>
-        
       </div>
     `;
-    
     // --- PDF Generation using html2pdf.js ---
-
     const opt = {
-      margin: [10, 10, 10, 10],
+      margin: [10, 10, 10, 10], // Slightly reduced margins
       filename: `${invoice.invoiceNumber || 'DRAFT'}-invoice.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 3, logging: false, dpi: 192, letterRendering: true },
+      html2canvas: { 
+        scale: 2, // Reduced scale for better fit
+        logging: false, 
+        dpi: 192, 
+        letterRendering: true, 
+        useCORS: true, // Crucial for loading external images like the logo
+        windowWidth: 800, // Set a specific width to avoid dynamic viewport issues
+        width: 800, // Explicitly set width for canvas
+      },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-
     // Use the container element
     html2pdf().from(pdfContainer).set(opt).save().then(() => {
       showNotification('✅ PDF generated successfully!', 'success');
@@ -741,12 +688,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       }
     });
   };
-  
   // Export invoice as PDF - Using client-side generation
   const exportInvoicePDF = async (invoice) => {
     generateClientSidePDF(invoice);
   };
-  
   // Preview PDF - Same as export, but typically for display only (we'll use the same function for simplicity)
   const previewPDF = (invoice) => {
     // For a true preview, you'd render the HTML to an iframe/div, not download.
@@ -755,7 +700,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     setSelectedInvoice(invoice);
     setShowPDFModal(true);
   };
-
   // Helper function to generate WhatsApp message
   const generateWhatsAppMessage = (invoice) => {
     const customerName = invoice.customerName || 'Customer';
@@ -763,31 +707,32 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     const amount = formatPrice(invoice.totalAmount);
     const dueDate = invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A';
     const totalDue = formatPrice(invoice.balanceDue);
-    
     // Using Paybill and Account Number as per your company info and model
-    return `Hello ${customerName},\n\nYour Optimas Fiber invoice is ready. Please find the details below:\n\n*Invoice #: ${invoiceNumber}*\n*Total Amount: Ksh ${amount}*\n*Balance Due: Ksh ${totalDue}*\n*Due Date: ${dueDate}*\n\nPayment via Mobile Money:\n- *Paybill:* ${COMPANY_INFO.paybill}\n- *Account No:* ${invoice.customerPhone || customerName.split(' ')[0]}\n\nThank you for choosing Optimas Fiber!`;
+    return `Hello ${customerName},
+Your Optimas Fiber invoice is ready. Please find the details below:
+*Invoice #: ${invoiceNumber}*
+*Total Amount: Ksh ${amount}*
+*Balance Due: Ksh ${totalDue}*
+*Due Date: ${dueDate}*
+Payment via Mobile Money:
+- *Paybill:* ${COMPANY_INFO.paybill}
+- *Account No:* ${invoice.customerPhone || customerName.split(' ')[0]}
+Thank you for choosing Optimas Fiber!`;
   };
-
   // Send invoice to client via WhatsApp
   const sendInvoiceToClient = async (invoice) => {
     try {
       setSendingInvoice(invoice._id);
-      
       const customerPhone = invoice.customerPhone?.replace(/\D/g, ''); // Remove non-digits
-      
       if (!customerPhone || customerPhone.length < 9) {
         showNotification('⚠️ Customer phone number is invalid or missing', 'warning');
         return;
       }
-
       const message = encodeURIComponent(generateWhatsAppMessage(invoice));
-      
       // Format number to international format (assuming Kenya)
       const formattedPhone = customerPhone.startsWith('254') ? customerPhone : `254${customerPhone.slice(-9)}`;
-      
       const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
       window.open(whatsappUrl, '_blank');
-
       showNotification('✅ WhatsApp chat opened with invoice details!', 'success');
     } catch (error) {
       console.error('Error sending invoice via WhatsApp:', error);
@@ -796,7 +741,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setSendingInvoice(null);
     }
   };
-
   // Export all invoices to Excel (Placeholder implementation, relies on working backend)
   const exportInvoicesToExcel = async () => {
     try {
@@ -805,14 +749,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!token) {
           throw new Error('Authentication session expired. Please log in again.');
       }
-      
       // Assuming your backend /api/invoices/export/excel is fully implemented
       const response = await fetch(`${API_BASE_URL}/api/invoices/export/excel`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
       if (response.ok) {
         // Correctly handle the Excel file download
         const blob = await response.blob();
@@ -820,7 +762,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        
         // Get filename from header if available, otherwise use default
         const contentDisposition = response.headers.get('Content-Disposition');
         let filename = `invoices-${new Date().toISOString().split('T')[0]}.xlsx`;
@@ -828,12 +769,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             const filenameMatch = contentDisposition.match(/filename="?(.+?)"?$/);
             if (filenameMatch) filename = filenameMatch[1];
         }
-
         a.download = filename;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
-        
         showNotification('✅ Invoices exported to Excel successfully!', 'success');
       } else {
         const errorData = await response.json();
@@ -846,7 +785,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setExportLoading(false);
     }
   };
-
   // Edit invoice
   const editInvoice = (invoice) => {
     // Populate form with existing invoice data, ensuring dates are in correct format
@@ -887,13 +825,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     setEditingInvoice(invoice);
     setShowCreateModal(true);
   };
-
   // View invoice details
   const viewInvoice = (invoice) => {
     setSelectedInvoice(invoice);
     setShowInvoiceModal(true);
   };
-
   // Filter and search invoices
   const filteredInvoices = Array.isArray(invoices) 
     ? invoices.filter(invoice => {
@@ -903,7 +839,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                               (filter === 'pending' && invoice.status === 'pending') ||
                               (filter === 'overdue' && invoice.status === 'overdue') ||
                               (filter === 'partially_paid' && invoice.status === 'partially_paid');
-                              
         const lowerSearchTerm = searchTerm.toLowerCase();
         const matchesSearch = 
           (invoice.customerName?.toLowerCase() || '').includes(lowerSearchTerm) ||
@@ -911,11 +846,9 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           (invoice.customerEmail?.toLowerCase() || '').includes(lowerSearchTerm) ||
           (invoice.customerPhone?.toLowerCase() || '').includes(lowerSearchTerm) ||
           (invoice.planName?.toLowerCase() || '').includes(lowerSearchTerm);
-        
         return matchesFilter && matchesSearch;
       })
     : [];
-
   // Calculate stats for charts
   const stats = {
     totalInvoices: invoices.length,
@@ -928,7 +861,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     annualRevenue: invoices.filter(inv => inv.billingCycle === 'annually').reduce((sum, inv) => sum + (parseFloat(inv.totalAmount) || parseFloat(inv.planPrice) || 0), 0),
     oneTimeRevenue: invoices.filter(inv => inv.billingCycle === 'one_time').reduce((sum, inv) => sum + (parseFloat(inv.totalAmount) || parseFloat(inv.planPrice) || 0), 0)
   };
-
   // Data for charts
   const statusData = [
     { name: 'Paid', value: stats.paidInvoices, color: '#28a745' },
@@ -936,14 +868,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     { name: 'Overdue', value: stats.overdueInvoices, color: '#dc3545' },
     { name: 'Draft/Other', value: stats.totalInvoices - stats.paidInvoices - stats.pendingInvoices - stats.overdueInvoices, color: '#6c757d' }
   ].filter(d => d.value > 0);
-  
   const revenueData = [
     { name: 'Monthly', value: stats.monthlyRevenue },
     { name: 'Quarterly', value: stats.quarterlyRevenue },
     { name: 'Annually', value: stats.annualRevenue },
     { name: 'One Time', value: stats.oneTimeRevenue }
   ].filter(d => d.value > 0);
-  
   // Prepare time series data (e.g., monthly trend)
   const timeSeriesMap = invoices
     .filter(inv => inv.invoiceDate)
@@ -953,13 +883,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       acc[dateKey] = (acc[dateKey] || 0) + amount;
       return acc;
     }, {});
-    
   const timeSeriesData = Object.keys(timeSeriesMap).map(date => ({
     date,
     amount: timeSeriesMap[date]
   })).sort((a, b) => new Date(a.date) - new Date(b.date));
-
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -967,7 +894,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       </div>
     );
   }
-
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -1010,7 +936,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </button>
         </div>
       </div>
-
       {/* Charts Section - **Enhanced Graphics** */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Status Pie Chart */}
@@ -1039,7 +964,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </PieChart>
           </ResponsiveContainer>
         </div>
-
         {/* Revenue by Billing Cycle Bar Chart */}
         <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
           <h3 className="text-lg font-semibold mb-4">Revenue by Billing Cycle</h3>
@@ -1062,7 +986,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </BarChart>
           </ResponsiveContainer>
         </div>
-
         {/* Revenue Trend Line Chart */}
         <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
           <h3 className="text-lg font-semibold mb-4">Revenue Trend (Last {timeSeriesData.length} periods)</h3>
@@ -1088,7 +1011,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </ResponsiveContainer>
         </div>
       </div>
-
       {/* Filters and Search */}
       <div className={`${themeClasses.card} p-4 mb-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
         <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -1151,7 +1073,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       </div>
-
       {/* Invoices Table - UPDATED WITH KSH PRICING AND MORE DATA */}
       <div className={`${themeClasses.card} rounded-xl shadow-lg border backdrop-blur-sm overflow-hidden`}>
         <div className="overflow-x-auto">
@@ -1330,7 +1251,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </table>
         </div>
       </div>
-
       {/* Create/Edit Invoice Modal - UPDATED WITH ALL MODEL FIELDS */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1462,7 +1382,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   </select>
                 </div>
               </div>
-              
               {/* Plan Selection */}
               <h4 className={`font-bold border-b pb-1 pt-4 ${darkMode ? 'text-gray-300 border-gray-700' : 'text-gray-700 border-gray-200'}`}>Internet Plan Selection</h4>
               <div>
@@ -1481,7 +1400,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 </div>
                 {/* Note: Plan details are now primarily driven by items below, but we keep this for easy selection */}
               </div>
-              
               {/* Invoice Items */}
               <h4 className={`font-bold border-b pb-1 pt-4 ${darkMode ? 'text-gray-300 border-gray-700' : 'text-gray-700 border-gray-200'}`}>Itemized Billing</h4>
               <div>
@@ -1560,7 +1478,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   ))}
                 </div>
               </div>
-              
               {/* Financial Summary & Payment */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="space-y-4">
@@ -1605,7 +1522,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       </select>
                     </div>
                 </div>
-                
                 <div className={`${darkMode ? 'bg-gray-800' : 'bg-gray-100'} p-4 rounded-xl col-span-1 space-y-2`}>
                     <h4 className={`font-bold border-b pb-1 ${darkMode ? 'text-gray-300 border-gray-700' : 'text-gray-700 border-gray-200'}`}>Invoice Totals (Ksh)</h4>
                     <div className="flex justify-between text-sm">
@@ -1625,7 +1541,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         <div className="text-[#003366] dark:text-[#FFCC00]">{formatPrice(invoiceForm.totalAmount)}</div>
                     </div>
                 </div>
-                
                 <div className="space-y-4">
                     <h4 className={`font-bold border-b pb-1 ${darkMode ? 'text-gray-300 border-gray-700' : 'text-gray-700 border-gray-200'}`}>Payment</h4>
                     <div>
@@ -1666,7 +1581,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     </div>
                 </div>
               </div>
-              
               {/* Notes and Terms */}
               <h4 className={`font-bold border-b pb-1 pt-4 ${darkMode ? 'text-gray-300 border-gray-700' : 'text-gray-700 border-gray-200'}`}>Notes & Terms</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1697,7 +1611,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   ></textarea>
                 </div>
               </div>
-              
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   onClick={() => {
@@ -1720,7 +1633,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
-
       {/* Plan Selection Modal */}
       {showPlanSelection && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1783,7 +1695,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
-
       {/* Invoice Details Modal - UPDATED WITH REAL-TIME DATA & KSH PRICING */}
       {showInvoiceModal && selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1827,7 +1738,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   </p>
                 </div>
               </div>
-              
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center"><DollarSign size={16} className="mr-2"/>Financial Summary</h4>
                 <div className={`border rounded-lg ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -1859,7 +1769,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedInvoice.subtotal || selectedInvoice.totalAmount || 0)}</td>
                       </tr>
                       <tr>
-                        <td colSpan="2" className="px-4 py-2 text-sm font-bold text-right">Tax ({selectedInvoice.taxRate || 0}%)</td>
+                        <td colSpan="2" className="px-4 py-2 text-sm font-bold text-right">Tax ({selectedInvoice.taxRate || 0}%):</td>
                         <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedInvoice.taxAmount || 0)}</td>
                       </tr>
                       <tr className="border-t border-b">
@@ -1880,7 +1790,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   </table>
                 </div>
               </div>
-              
               {selectedInvoice.notes && (
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Notes</h4>
@@ -1889,7 +1798,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   </p>
                 </div>
               )}
-              
               <div className="flex flex-wrap gap-3 pt-4">
                 <button
                   onClick={() => exportInvoicePDF(selectedInvoice)}
@@ -1925,7 +1833,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
-
       {/* PDF Preview Modal - Uses the same logic as the new PDF generation for display consistency */}
       {showPDFModal && selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1962,6 +1869,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                                 <p className="text-xs text-gray-500">{COMPANY_INFO.tagline}</p>
                             </div>
                             <div className="text-right">
+                                <img src="${COMPANY_INFO.logoUrl}" alt="Company Logo" style="max-height: 50px; max-width: 90px; object-fit: contain; margin-bottom: 5px;" />
                                 <h2 className="text-4xl font-extrabold text-[#FFCC00] dark:text-gray-100">INVOICE</h2>
                                 <p className="text-lg font-bold text-[#003366] dark:text-gray-300"># {selectedInvoice.invoiceNumber || 'DRAFT'}</p>
                             </div>
@@ -2015,5 +1923,4 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     </div>
   );
 };
-
 export default InvoiceManager;

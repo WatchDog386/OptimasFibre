@@ -11,7 +11,7 @@ import {
 
     // Status Management
     updateInvoiceStatus,
-    markInvoiceAsPaid,
+    markInvoiceAsPaid, // This function handles marking as paid
     markInvoiceAsOverdue,
 
     // Customer Operations
@@ -89,8 +89,20 @@ router.get('/date-range/:startDate/:endDate', protect, getInvoicesByDateRange);
 router.put('/:id', protect, updateInvoice);
 router.patch('/:id/status', protect, updateInvoiceStatus);
 
-// Mark invoice as paid / overdue
+// =========================================================
+// 🔥 FIXED: ADD BOTH ENDPOINTS FOR MARKING PAID
+// Your previous backend used /mark-paid
+// Your frontend calls /paid
+// Now BOTH work.
+// =========================================================
+
+// ✔ Existing backend route
 router.patch('/:id/mark-paid', protect, markInvoiceAsPaid);
+
+// ✔ Added for frontend compatibility (fixes your 404 error)
+router.patch('/:id/paid', protect, markInvoiceAsPaid);
+
+// Mark invoice as overdue
 router.patch('/:id/mark-overdue', protect, markInvoiceAsOverdue);
 
 // Send or resend notifications
@@ -122,20 +134,16 @@ router.get('/cleanup/check-indexes', checkIndexes);
 router.get('/cleanup/system-status', getSystemStatus);
 
 // =========================================================
-// ⚠️ PLACE /:id ROUTE AT THE END (VERY IMPORTANT!)
-// Prevents route collisions
+// ⚠️ PLACE /:id ROUTES AT THE END
 // =========================================================
 
 // MUST BE LAST among invoice routes
 router.get('/:id', getInvoiceById);
-
-// Delete invoice
 router.delete('/:id', protect, deleteInvoice);
 
 // =========================================================
 // 🔍 DEBUG ROUTES
 // =========================================================
-
 router.get('/health/status', (req, res) => {
     res.json({
         success: true,
@@ -155,7 +163,6 @@ router.get('/routes/info', (req, res) => {
 // =========================================================
 // 🎯 EXPRESS 5 CATCH-ALL
 // =========================================================
-
 router.use((req, res) => {
     res.status(404).json({
         success: false,
