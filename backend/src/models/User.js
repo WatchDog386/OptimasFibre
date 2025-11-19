@@ -1,5 +1,4 @@
 // backend/src/models/User.js
-
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
@@ -24,8 +23,7 @@ const userSchema = new mongoose.Schema({
     match: [
       /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
       'Please enter a valid email address (e.g., user@optimafibre.com)'
-    ],
-    index: true // ✅ Improves lookup performance for login/forgot-password
+    ]
   },
   password: {
     type: String,
@@ -36,16 +34,15 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['user', 'admin'],
-    default: 'user',
-    index: true // ✅ Improves performance for role-based queries
+    default: 'user'
   },
   resetPasswordToken: {
     type: String,
-    select: false // ✅ Never expose reset token in API responses
+    select: false // Never expose reset token in API responses
   },
   resetPasswordExpires: {
     type: Date,
-    select: false // ✅ Never expose expiry in API responses
+    select: false // Never expose expiry in API responses
   }
 }, {
   timestamps: true,
@@ -59,9 +56,6 @@ userSchema.pre('save', async function (next) {
   this.password = await bcrypt.hash(this.password, 12); // Industry-standard cost factor
   next();
 });
-
-// 🚫 Prevent duplicate index warning
-userSchema.index({ email: 1 }, { unique: true });
 
 // 🔍 Instance method to compare passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
