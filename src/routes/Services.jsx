@@ -20,7 +20,8 @@ import {
   FaClock,
   FaShieldVirus,
   FaRocket,
-  FaInfinity
+  FaInfinity,
+  FaArrowRight
 } from 'react-icons/fa';
 import { ThemeContext } from '../contexts/ThemeContext';
 
@@ -35,11 +36,9 @@ const Services = () => {
   const handleCoverageClick = () => {
     navigate('/coverage');
   };
-
   const handleGetStartedClick = () => {
     navigate('/wifi-plans');
   };
-
   const handleContactClick = () => {
     navigate('/contact');
   };
@@ -77,7 +76,7 @@ const Services = () => {
           nodes: "Expandable with additional nodes",
           security: "Built-in network security",
           management: "Easy app-based network management",
-          features: [
+          benefits: [
             "Seamless roaming between access points",
             "Band steering for optimal performance",
             "Device prioritization settings",
@@ -97,7 +96,7 @@ const Services = () => {
           privacy: "Secure VPN for all devices",
           parental: "Advanced parental controls with scheduling",
           smartHome: "Dedicated IoT network for smart devices",
-          features: [
+          benefits: [
             "Ad blocking across your network",
             "Social media monitoring for kids",
             "Data breach alerts",
@@ -119,7 +118,7 @@ const Services = () => {
           sla: "99.9% uptime guarantee",
           support: "24/7 dedicated business support",
           staticIPs: "Options for 1, 5, or 13 static IP addresses",
-          features: [
+          benefits: [
             "No data caps or throttling",
             "Business-grade hardware included",
             "Advanced network monitoring",
@@ -139,7 +138,7 @@ const Services = () => {
           maintenance: "Proactive patches and updates",
           backup: "Cloud backup solutions",
           security: "Enterprise-grade firewall and security",
-          features: [
+          benefits: [
             "Dedicated account manager",
             "Regular performance reports",
             "On-demand IT support",
@@ -159,7 +158,7 @@ const Services = () => {
           optimization: "Application-aware routing",
           resilience: "Automatic failover between connections",
           security: "Integrated security with zero-trust architecture",
-          features: [
+          benefits: [
             "Real-time network analytics",
             "Bandwidth aggregation",
             "Quality of Service (QoS) controls",
@@ -181,7 +180,7 @@ const Services = () => {
           sla: "99.99% uptime SLA with financial guarantees",
           support: "24/7 dedicated NOC and account team",
           scalability: "Easily scalable as needs grow",
-          features: [
+          benefits: [
             "Diverse path routing options",
             "Customized latency optimization",
             "Carrier-neutral facilities",
@@ -201,7 +200,7 @@ const Services = () => {
           threat: "Advanced threat intelligence and hunting",
           compliance: "Industry-specific compliance support",
           consulting: "Strategic security consulting services",
-          features: [
+          benefits: [
             "SOC 2 Type II compliance support",
             "Zero-trust network architecture",
             "Security awareness training",
@@ -221,7 +220,7 @@ const Services = () => {
           control: "Complete control over lighting equipment",
           security: "Physically private infrastructure",
           lifespan: "25+ year infrastructure lifespan",
-          features: [
+          benefits: [
             "Custom wavelength services",
             "Low latency paths for financial services",
             "Research and education network support",
@@ -280,7 +279,7 @@ const Services = () => {
     }
   };
 
-  // Service Card Component
+  // Service Card Component (original style preserved)
   const ServiceCard = ({ service, index }) => (
     <motion.div
       variants={itemVariants}
@@ -313,7 +312,6 @@ const Services = () => {
           {service.description}
         </p>
       </div>
-      
       <ul className={`space-y-1 mb-4`}>
         {service.features.map((feature, featureIndex) => (
           <motion.li 
@@ -330,7 +328,6 @@ const Services = () => {
           </motion.li>
         ))}
       </ul>
-
       <motion.button 
         onClick={() => handleLearnMore(service)}
         className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light}`}
@@ -352,7 +349,53 @@ const Services = () => {
       transition={{ duration: 0.7 }}
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* Header Section */}
+      {/* ✅ HERO SECTION — FROM NEW VERSION, USING world.jpg */}
+      <section className="relative w-full min-h-[55vh] md:min-h-[60vh] flex items-center overflow-hidden bg-gray-900 pb-12">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=3870&auto=format&fit=crop" 
+            alt="Server Background" 
+            className="w-full h-full object-cover opacity-40"
+          />
+        </div>
+        <div className={`absolute inset-0 z-10 bg-gradient-to-r ${darkMode ? 'from-gray-950 via-gray-900/90' : 'from-blue-950 via-blue-900/90'} to-transparent`}></div>
+        <div className="relative z-20 w-full max-w-6xl mx-auto px-6 h-full flex flex-col md:flex-row items-center">
+          <div className="w-full md:w-1/2 pt-20 md:pt-0">
+            <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
+              <p className="text-[#d0b216] text-xs font-bold uppercase tracking-[0.2em] mb-2">Premium Solutions</p>
+              <h1 className="text-4xl md:text-5xl font-bold uppercase mb-2 text-white">
+                World Class <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d0b216] to-amber-400">Fiber Services</span>
+              </h1>
+              <p className="text-gray-300 text-xs md:text-sm max-w-sm mb-6 leading-relaxed">
+                Whether for home entertainment or enterprise operations, our dedicated fiber infrastructure delivers the speed and reliability you deserve.
+              </p>
+              <div className="flex gap-4">
+                <button onClick={handleGetStartedClick} className="bg-white hover:bg-gray-100 text-gray-900 px-6 py-3 font-bold uppercase text-[10px] tracking-widest rounded-full transition-all shadow-lg flex items-center gap-2">
+                  Get Started <FaArrowRight size={12}/>
+                </button>
+                <button onClick={handleContactClick} className="border border-white/30 hover:bg-white/10 text-white px-6 py-3 font-bold uppercase text-[10px] tracking-widest rounded-full transition-all">
+                  Contact Sales
+                </button>
+              </div>
+            </motion.div>
+          </div>
+          <div className="hidden md:flex w-1/2 h-full items-end justify-end mt-12 md:mt-0 relative">
+             {/* ✅ YOUR CUSTOM IMAGE: world.jpg */}
+             <motion.img 
+               initial={{ opacity: 0, y: 50 }} 
+               animate={{ opacity: 1, y: 0 }} 
+               transition={{ delay: 0.3, duration: 0.8 }} 
+               src="/world.jpg" 
+               alt="Services Graphic" 
+               className="w-full max-w-md object-contain relative z-20 opacity-90" 
+               style={{ maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }} 
+             />
+          </div>
+        </div>
+      </section>
+
+      {/* Header Section (Original) */}
       <section className="container mx-auto px-4 mb-4 md:mb-8 relative z-10">
         <motion.div 
           className="text-center"
@@ -437,7 +480,6 @@ const Services = () => {
         >
           {activeTab} Services
         </motion.h2>
-
         <motion.div 
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6"
           variants={containerVariants}
@@ -559,7 +601,6 @@ const Services = () => {
               Enhance your internet experience
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
             {[
               {
@@ -651,13 +692,11 @@ const Services = () => {
                     <FaTimes className="text-lg" />
                   </motion.button>
                 </div>
-
                 <p className={`text-xs md:text-sm mb-4 ${
                   darkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   {selectedService.description}
                 </p>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div>
                     <h3 className={`text-sm font-medium mb-2 flex items-center ${
@@ -683,7 +722,6 @@ const Services = () => {
                       ))}
                     </ul>
                   </div>
-
                   <div>
                     <h3 className={`text-sm font-medium mb-2 flex items-center ${
                       darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
@@ -702,7 +740,6 @@ const Services = () => {
                           <p className={darkMode ? 'text-gray-300 text-xs' : 'text-gray-700 text-xs'}>{selectedService.details.pricing}</p>
                         </div>
                       )}
-                      
                       {selectedService.details.sla && (
                         <div className="mb-2">
                           <h4 className={`font-medium text-xs ${
@@ -711,7 +748,6 @@ const Services = () => {
                           <p className={darkMode ? 'text-gray-300 text-xs' : 'text-gray-700 text-xs'}>{selectedService.details.sla}</p>
                         </div>
                       )}
-                      
                       {selectedService.details.speedTiers && (
                         <div className="mb-2">
                           <h4 className={`font-medium text-xs ${
@@ -723,7 +759,6 @@ const Services = () => {
                     </div>
                   </div>
                 </div>
-
                 {selectedService.details.benefits && (
                   <div className="mb-6">
                     <h3 className={`text-sm font-medium mb-2 flex items-center ${
@@ -752,7 +787,6 @@ const Services = () => {
                     </div>
                   </div>
                 )}
-
                 <div className="flex flex-col sm:flex-row gap-2 justify-center mt-6">
                   <motion.button 
                     className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light}`}

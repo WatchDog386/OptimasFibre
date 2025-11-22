@@ -1,29 +1,26 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, createContext } from "react";
 import { motion } from "framer-motion";
 import {
-  Phone, Mail, MapPin, Clock, MessageCircle, Wifi,
-  Send, ChevronRight
+  Phone, Mail, Ticket, ArrowRight, CheckCircle, AlertCircle
 } from "lucide-react";
-import { FaWhatsapp, FaFacebook, FaTwitter, FaInstagram } from "react-icons/fa";
-import { ThemeContext } from "../contexts/ThemeContext";
 
-const services = [
-  { value: "installation", label: "Fibre Installation", icon: <Wifi className="w-4 h-4" /> },
-  { value: "support", label: "Technical Support", icon: <MessageCircle className="w-4 h-4" /> },
-  { value: "billing", label: "Billing Inquiry", icon: <Mail className="w-4 h-4" /> },
-  { value: "coverage", label: "Coverage Check", icon: <MapPin className="w-4 h-4" /> },
-  { value: "other", label: "Other", icon: <MessageCircle className="w-4 h-4" /> },
-];
+// --- MOCK CONTEXT ---
+const ThemeContext = createContext({ darkMode: false });
 
 const Contact = () => {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    firstName: "",
+    lastName: "",
+    company: "",
     phone: "",
-    service: "",
+    email: "",
     message: "",
   });
-  const { darkMode } = useContext(ThemeContext);
+  
+  // Mock theme usage
+  const [darkModeState] = useState(false);
+  const { darkMode: contextDarkMode } = useContext(ThemeContext);
+  const darkMode = contextDarkMode !== undefined ? contextDarkMode : darkModeState;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,349 +29,267 @@ const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Thank you for your message. We'll get back to you soon!");
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      service: "",
-      message: "",
-    });
+    alert("Support ticket logged successfully.");
+  };
+
+  // Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
   };
 
   return (
-    <div className={`min-h-screen px-4 pt-20 pb-8 relative transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'
+    <div className={`min-h-screen relative font-sans selection:bg-[#d0b216] selection:text-white ${
+      darkMode ? 'bg-gray-950 text-white' : 'bg-white text-gray-900'
     }`} style={{ fontFamily: "'Poppins', sans-serif" }}>
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-4xl mx-auto"
-      >
-        {/* Header */}
-        <div className="text-center mb-8">
-          <motion.h1 
-            className={`text-2xl md:text-3xl font-semibold mb-3 ${
-              darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-            }`}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+      
+      {/* --- RIGHT SIDE BACKGROUND BLOCK (Desktop) --- */}
+      {/* This creates the split colored background effect */}
+      <div className={`hidden lg:block absolute top-0 right-0 w-[45%] h-full z-0 ${
+        darkMode ? 'bg-[#0a1220]' : 'bg-[#182b5c]'
+      }`}></div>
+
+      <div className="container mx-auto px-4 md:px-8 lg:px-12 relative z-10 max-w-7xl">
+        <div className="flex flex-col lg:flex-row min-h-screen">
+          
+          {/* --- LEFT COLUMN: INFO & CARDS --- */}
+          <motion.div 
+            className="w-full lg:w-[55%] py-12 lg:py-24 lg:pr-16 flex flex-col justify-center"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
           >
-            Contact Us
-          </motion.h1>
-          <motion.p 
-            className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-xl mx-auto text-sm`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            Get in touch for inquiries, support, or to learn more about our Fiber internet services
-          </motion.p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {/* Contact Info */}
-          <div className="space-y-4">
-            <motion.div 
-              className={`p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow ${
-                darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+            <motion.h1 
+              variants={itemVariants}
+              className={`text-4xl md:text-5xl lg:text-6xl font-bold mb-12 tracking-tight ${
+                darkMode ? 'text-white' : 'text-gray-900'
               }`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              whileHover={{ y: -3, transition: { duration: 0.2 } }}
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-[#182b5c] p-2 rounded-full">
-                  <Phone className="w-4 h-4 text-white" />
-                </div>
-                <h3 className={`font-medium text-base ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                }`}>Call Us</h3>
-              </div>
-              <div className="space-y-1 pl-11">
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>0741874200</p>
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>0117151741</p>
-              </div>
-            </motion.div>
+              Contact Support
+            </motion.h1>
 
-            <motion.div 
-              className={`p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow ${
-                darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-              }`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-              whileHover={{ y: -3, transition: { duration: 0.2 } }}
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-[#182b5c] p-2 rounded-full">
-                  <Mail className="w-4 h-4 text-white" />
-                </div>
-                <h3 className={`font-medium text-base ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                }`}>Email Us</h3>
-              </div>
-              <div className="space-y-1 pl-11">
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>info@optimafiber.co.ke</p>
-                <p className={`${darkMode ? 'text-gray-300 hover:text-[#d0b216]' : 'text-gray-700 hover:text-[#182b5c]'} transition-colors text-sm`}>support@optimafiber.co.ke</p>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              className={`p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow ${
-                darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-              }`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
-              whileHover={{ y: -3, transition: { duration: 0.2 } }}
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-[#182b5c] p-2 rounded-full">
-                  <MapPin className="w-4 h-4 text-white" />
-                </div>
-                <h3 className={`font-medium text-base ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                }`}>Visit Us</h3>
-              </div>
-              <div className="space-y-1 pl-11">
-                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}>Kahawa West,Nairobi</p>
-                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}></p>
-                <motion.a 
-                  href="#" 
-                  className={`text-xs inline-flex items-center gap-1 mt-2 group ${
-                    darkMode ? 'text-[#d0b216] hover:text-[#e0c226]' : 'text-[#182b5c] hover:text-[#3b5998]'
-                  }`}
-                  whileHover={{ x: 3 }}
-                >
-                  View on map 
-                  <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-                </motion.a>
-              </div>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <div className="space-y-3">
-              <motion.a
-                href="https://wa.me/254741874200"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white px-4 py-2.5 rounded-[1.25rem] hover:shadow-md transition-shadow text-xs font-medium"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
-                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-              >
-                <FaWhatsapp className="w-4 h-4" />
-                <span>Chat on WhatsApp</span>
-              </motion.a>
-
+            <div className="space-y-6">
+              {/* Card 1: Phone */}
               <motion.div 
-                className="flex gap-3 justify-center mt-3"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
+                variants={itemVariants}
+                className={`p-8 rounded-sm shadow-sm border-l-4 transition-all duration-300 hover:shadow-md group ${
+                  darkMode 
+                    ? 'bg-gray-900 border-l-[#d0b216] border-y border-r border-gray-800' 
+                    : 'bg-gray-50 border-l-[#d0b216] border-y border-r border-gray-100'
+                }`}
               >
-                {[
-                  { icon: <FaFacebook className="w-4 h-4" />, href: "#", label: "Facebook" },
-                  { icon: <FaTwitter className="w-4 h-4" />, href: "#", label: "Twitter" },
-                  { icon: <FaInstagram className="w-4 h-4" />, href: "#", label: "Instagram" }
-                ].map((social, index) => (
-                  <motion.a
-                    key={index}
-                    href={social.href}
-                    className="p-2.5 bg-[#182b5c] text-white rounded-xl hover:shadow-md transition-shadow"
-                    whileHover={{ scale: 1.1, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    aria-label={social.label}
-                  >
-                    {social.icon}
-                  </motion.a>
-                ))}
+                <h3 className="text-xl font-bold mb-2">Call Support (Mon-Fri 9-5:30)</h3>
+                <a href="tel:+254741874200" className={`flex items-center gap-2 font-bold text-lg group-hover:underline ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]' // Using Navy text on light mode like reference uses Red
+                }`}>
+                  +254 741 874 200 <ArrowRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${darkMode ? 'text-[#d0b216]' : 'text-[#d0b216]'}`} />
+                </a>
+              </motion.div>
+
+              {/* Card 2: Ticket */}
+              <motion.div 
+                variants={itemVariants}
+                className={`p-8 rounded-sm shadow-sm border-l-4 transition-all duration-300 hover:shadow-md group ${
+                  darkMode 
+                    ? 'bg-gray-900 border-l-[#d0b216] border-y border-r border-gray-800' 
+                    : 'bg-gray-50 border-l-[#d0b216] border-y border-r border-gray-100'
+                }`}
+              >
+                <h3 className="text-xl font-bold mb-2">Log a Support Ticket</h3>
+                <a href="#" className={`flex items-center gap-2 font-bold text-lg group-hover:underline ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                }`}>
+                  support.optimas.co.ke <ArrowRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${darkMode ? 'text-[#d0b216]' : 'text-[#d0b216]'}`} />
+                </a>
+              </motion.div>
+
+              {/* Card 3: Email */}
+              <motion.div 
+                variants={itemVariants}
+                className={`p-8 rounded-sm shadow-sm border-l-4 transition-all duration-300 hover:shadow-md group ${
+                  darkMode 
+                    ? 'bg-gray-900 border-l-[#d0b216] border-y border-r border-gray-800' 
+                    : 'bg-gray-50 border-l-[#d0b216] border-y border-r border-gray-100'
+                }`}
+              >
+                <h3 className="text-xl font-bold mb-2">Email Support</h3>
+                <a href="mailto:hotdesk@optimas.co.ke" className={`flex items-center gap-2 font-bold text-lg group-hover:underline ${
+                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+                }`}>
+                  hotdesk@optimas.co.ke <ArrowRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${darkMode ? 'text-[#d0b216]' : 'text-[#d0b216]'}`} />
+                </a>
               </motion.div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Contact Form */}
-          <motion.form
-            onSubmit={handleSubmit}
-            className={`p-5 rounded-xl shadow-md space-y-4 ${
-              darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-            }`}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
+          {/* --- RIGHT COLUMN: FORM --- */}
+          {/* This sits ON TOP of the dark background on desktop */}
+          <motion.div 
+            className="w-full lg:w-[45%] py-12 lg:py-24 lg:pl-12 flex flex-col justify-center"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <h3 className={`text-xl font-semibold mb-1 ${
-              darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
+            <div className={`p-8 md:p-10 rounded-sm shadow-2xl relative ${
+              darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
             }`}>
-              Send us a message
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Your Name"
-                  className={`w-full px-3 py-2.5 rounded-xl transition-all text-sm ${
-                    darkMode 
-                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
-                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
-                  } focus:outline-none focus:ring-1 focus:border-transparent`}
-                  required
-                />
+              
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">Experiencing an issue? We can help!</h2>
+                <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Our friendly support team is on hand to help you resolve any issues you may be experiencing with your system.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Email Address"
-                  className={`px-3 py-2.5 rounded-xl transition-all text-sm ${
-                    darkMode 
-                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
-                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
-                  } focus:outline-none focus:ring-1 focus:border-transparent`}
-                  required
-                />
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="Phone Number"
-                  className={`px-3 py-2.5 rounded-xl transition-all text-sm ${
-                    darkMode 
-                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
-                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
-                  } focus:outline-none focus:ring-1 focus:border-transparent`}
-                  required
-                />
-              </div>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Row 1 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex gap-1">
+                      First name <span className="text-[#d0b216]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                      className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
+                        darkMode 
+                          ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
+                          : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
+                      }`}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex gap-1">
+                      Last name <span className="text-[#d0b216]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                      className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
+                        darkMode 
+                          ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
+                          : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
+                      }`}
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <select
-                  name="service"
-                  value={formData.service}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2.5 rounded-xl transition-all text-sm appearance-none ${
-                    darkMode 
-                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
-                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
-                  } focus:outline-none focus:ring-1 focus:border-transparent`}
-                  required
-                >
-                  <option value="">Select service type</option>
-                  {services.map((service) => (
-                    <option key={service.value} value={service.value}>
-                      {service.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                {/* Row 2 */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium flex gap-1">
+                    Company name <span className="text-[#d0b216]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="company"
+                    value={formData.company}
+                    onChange={handleChange}
+                    required
+                    className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
+                      darkMode 
+                        ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
+                        : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
+                    }`}
+                  />
+                </div>
 
-              <div>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  placeholder="How can we help you?"
-                  rows="4"
-                  className={`w-full px-3 py-2.5 rounded-xl transition-all text-sm ${
-                    darkMode 
-                      ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:ring-[#d0b216]' 
-                      : 'border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c]'
-                  } focus:outline-none focus:ring-1 focus:border-transparent`}
-                  required
-                />
-              </div>
+                {/* Row 3 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Phone number</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
+                        darkMode 
+                          ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
+                          : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
+                      }`}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex gap-1">
+                      Email <span className="text-[#d0b216]">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
+                        darkMode 
+                          ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
+                          : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
+                      }`}
+                    />
+                  </div>
+                </div>
 
-              <motion.button
-                type="submit"
-                className="w-full bg-[#182b5c] hover:bg-[#0f1f45] text-white font-medium py-2.5 px-4 rounded-[1.25rem] transition-all flex items-center justify-center gap-2 text-sm"
-                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Send className="w-4 h-4" />
-                Send Message
-              </motion.button>
+                {/* Row 4 */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Message</label>
+                  <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    rows="4"
+                    className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm resize-none ${
+                      darkMode 
+                        ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
+                        : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
+                    }`}
+                  ></textarea>
+                </div>
+
+                {/* Footer Info */}
+                <div className="space-y-4 pt-2">
+                  <p className={`text-xs leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Optimas will use your information to communicate any future events and services. You may unsubscribe at any time. For further details please review our privacy policy.
+                  </p>
+                  
+                  {/* Fake ReCaptcha */}
+                  <div className={`p-3 rounded border w-fit flex items-center gap-4 shadow-sm ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                     <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-gray-300 rounded bg-white"></div>
+                        <span className="text-xs font-medium">I'm not a robot</span>
+                     </div>
+                     <div className="flex flex-col items-center">
+                        <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" alt="captcha" className="w-6 opacity-50"/>
+                        <span className="text-[8px] opacity-50">reCAPTCHA</span>
+                     </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className={`px-10 py-4 font-bold rounded-sm transition-all shadow-lg flex items-center gap-2 uppercase tracking-wider text-sm hover:shadow-xl active:scale-95 ${
+                      darkMode 
+                        ? 'bg-[#d0b216] hover:bg-[#b89c0f] text-gray-900' 
+                        : 'bg-[#182b5c] hover:bg-[#0f1f45] text-white' // Red replaced with Navy
+                    }`}
+                  >
+                    Submit <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
             </div>
-          </motion.form>
+          </motion.div>
+
         </div>
-
-        {/* Business Hours */}
-        <motion.div 
-          className={`p-5 rounded-xl shadow-md text-center mb-6 ${
-            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-          }`}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Clock className="w-4 h-4 text-[#182b5c]" />
-            <h3 className={`font-medium text-base ${
-              darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-            }`}>Business Hours</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div className={`p-2.5 rounded-lg ${
-              darkMode ? 'bg-gray-700' : 'bg-blue-50'
-            }`}>
-              <p className={`font-medium ${
-                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-              }`}>Mon - Fri</p>
-              <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>8:00 AM - 5:00 PM</p>
-            </div>
-            <div className={`p-2.5 rounded-lg ${
-              darkMode ? 'bg-gray-700' : 'bg-blue-50'
-            }`}>
-              <p className={`font-medium ${
-                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-              }`}>Saturday</p>
-              <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>9:00 AM - 2:00 PM</p>
-            </div>
-            <div className={`p-2.5 rounded-lg ${
-              darkMode ? 'bg-gray-700' : 'bg-blue-50'
-            }`}>
-              <p className={`font-medium ${
-                darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-              }`}>Sunday</p>
-              <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Closed</p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Location Link */}
-        <motion.div 
-          className="text-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          <motion.a
-            href="#"
-            className={`inline-flex items-center gap-1 font-medium group text-sm ${
-              darkMode ? 'text-[#d0b216] hover:text-[#e0c226]' : 'text-[#182b5c] hover:text-[#3b5998]'
-            }`}
-            whileHover={{ scale: 1.05 }}
-          >
-            <MapPin className="w-4 h-4" />
-            Find us on Google Maps
-            <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-          </motion.a>
-        </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 };

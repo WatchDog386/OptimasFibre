@@ -1,219 +1,209 @@
-// Clean and Simplified Navbar
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Menu, X, Sun, Moon } from "lucide-react";
-import { throttle } from "lodash-es";
+import { 
+  Menu, X, Phone, Mail, 
+  MapPin, Wifi, ArrowRight, User, Globe, Laptop
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../contexts/ThemeContext";
-import "../index.css";
 
-const RISA_STYLES = {
-  primaryColor: '#015B97',
-  secondaryColor: '#d0b216',
-  button: {
-    small: {
-      base: 'px-3 py-1.5 text-sm font-medium border rounded-full transition-colors',
-      light: 'border-gray-300 text-gray-700 bg-white hover:bg-gray-100',
-      dark: 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700',
-    },
-    primary: {
-      base: 'px-4 py-2 rounded-full font-medium transition-all duration-300 shadow-sm',
-      light: 'bg-[#d0b216] text-white hover:bg-[#b89c0f]',
-      dark: 'bg-[#d0b216] text-white hover:bg-[#b89c0f]',
-    }
-  },
-  typography: {
-    navLink: 'text-sm md:text-base font-medium transition-all duration-300',
-    logo: {
-      container: 'flex items-center gap-2 md:gap-3',
-      image: {
-        base: 'h-10 w-10 md:h-12 md:w-12',
-      },
-      text: {
-        main: 'text-lg md:text-xl font-bold leading-tight tracking-tight',
-        highlight: 'text-[#d0b216]',
-        base: 'text-[#182B5C]',
-      },
-    },
-    mobileNavLink: 'block px-4 py-3 rounded-lg font-medium text-base',
-  }
+// --- CONFIGURATION ---
+const COLORS = {
+  primary: '#015B97',
+  primaryDark: '#004a7c',
+  accent: '#d0b216',
+  accentHover: '#b89c0f',
 };
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
-  const navRef = useRef(null);
-  const { darkMode, toggleDarkMode } = useTheme();
-
-  const handleScroll = useCallback(
-    throttle(() => setScrolled(window.scrollY > 50), 100),
-    []
-  );
 
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+  }, []);
 
   useEffect(() => {
     setIsOpen(false);
   }, [location]);
 
-  const currentPath = location.pathname === "/" ? "home" : location.pathname.slice(1);
-
-  // Simplified menu items
-  const menuItems = useMemo(
-    () => [
-      { label: "Home", route: "/", id: "home" },
-      { label: "About", route: "/about", id: "about" },
-      { label: "Services", route: "/services", id: "services" },
-      { label: "Coverage", route: "/coverage", id: "coverage" },
-      { label: "Blog", route: "/blog", id: "blog" },
-      { label: "FAQs", route: "/faqs", id: "faqs" },
-    ],
-    []
+  // --- TOP UTILITY BAR ---
+  // Changed 'hidden lg:flex' to 'hidden xl:flex' so it hides on laptops
+  // Increased text size from text-[10px] to text-xs
+  const TopUtilityBar = () => (
+    <div className="hidden xl:flex justify-between items-center py-2 px-6 text-xs uppercase tracking-wider font-bold text-white transition-all duration-300 z-[1001] relative"
+         style={{ backgroundColor: COLORS.primary }}>
+      <div className="flex items-center gap-6">
+        <a href="tel:+254741874200" className="flex items-center gap-2 hover:text-[#d0b216] transition-colors">
+          <Phone size={12} fill="currentColor" /> +254 741 874200
+        </a>
+        <a href="mailto:support@optimasfiber.com" className="flex items-center gap-2 hover:text-[#d0b216] transition-colors">
+          <Mail size={12} /> support@optimasfiber.com
+        </a>
+      </div>
+      <div className="flex items-center gap-4">
+        <NavLink to="/admin/login" className="flex items-center gap-2 hover:text-[#d0b216] transition-colors">
+          <User size={12} /> Admin portal
+        </NavLink>
+        <span className="opacity-30">|</span>
+        <a href="/coverage" className="flex items-center gap-2 hover:text-[#d0b216] transition-colors">
+          <MapPin size={12} /> Check Coverage
+        </a>
+      </div>
+    </div>
   );
 
-  const NavItem = ({ item }) => {
+  const DesktopNavItem = ({ label, route }) => {
+    const isActive = location.pathname === route;
+    
     return (
-      <div className="relative group">
+      <div className="relative h-full flex items-center">
         <NavLink
-          to={item.route}
-          className={({ isActive }) =>
-            `${RISA_STYLES.typography.navLink} ${
-              isActive || (item.id === "home" && currentPath === "home")
-                ? "text-[#d0b216]"
-                : darkMode 
-                  ? "text-white hover:text-[#d0b216]" 
-                  : "text-[#182B5C] hover:text-[#d0b216]"
-            }`
-          }
+          to={route}
+          // Increased text size to text-sm
+          className={`relative z-10 flex items-center gap-1 px-4 py-2 text-sm font-bold uppercase tracking-wide transition-colors duration-200 rounded-md group
+            ${isActive ? "text-[#015B97]" : "text-gray-600 hover:text-[#015B97]"}`}
         >
-          {({ isActive }) => (
-            <>
-              <span>{item.label}</span>
-              <span
-                className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-[#d0b216] transition-all duration-300 ${
-                  isActive || (item.id === "home" && currentPath === "home")
-                    ? "w-full"
-                    : "group-hover:w-full"
-                }`}
-              />
-            </>
-          )}
+          {label}
+          
+          {/* Hover Underline Animation */}
+          <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-[#015B97] transform origin-left transition-transform duration-300 ${isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
         </NavLink>
       </div>
     );
   };
 
-  useEffect(() => {
-    if (darkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  }, [darkMode]);
-
   return (
-    <nav
-      ref={navRef}
-      className={`fixed top-0 left-0 w-full z-[999] px-4 transition-all duration-300 ${
-        darkMode ? "bg-gray-900 py-3" : "bg-white py-3"
-      } ${scrolled && "shadow-lg"}`}
-    >
-      {/* Main Navigation */}
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <NavLink to="/" className={`${RISA_STYLES.typography.logo.container} flex-shrink-0`}>
-          <img
-            src="/oppo.jpg"
-            alt="Optimas Home Fiber Logo"
-            className={`${RISA_STYLES.typography.logo.image.base} object-contain rounded-full`}
-            style={{
-              filter: "brightness(1.2) contrast(1.2)",
-              border: "2px solid #d0b216",
-              padding: "2px",
-              background: "rgba(255, 255, 255, 0.1)",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)"
-            }}
-          />
-          <div className="flex flex-col">
-            <span className={RISA_STYLES.typography.logo.text.main}>
-              <span className={RISA_STYLES.typography.logo.text.highlight}>OPTIMAS</span>
-              <span className={darkMode ? "text-white" : RISA_STYLES.typography.logo.text.base}> HOME</span>
-              <span className={RISA_STYLES.typography.logo.text.highlight}> FIBER</span>
-            </span>
+    <>
+      {/* --- UTILITY BAR --- */}
+      <motion.div 
+        animate={{ height: scrolled ? 0 : 'auto', opacity: scrolled ? 0 : 1 }} 
+        className="overflow-hidden bg-[#015B97]"
+      >
+        <TopUtilityBar />
+      </motion.div>
+      
+      {/* --- MAIN NAVBAR --- */}
+      <nav
+        className={`
+          sticky top-0 z-[1000] w-full transition-all duration-300 border-b
+          ${scrolled 
+            ? "bg-white/90 backdrop-blur-md shadow-sm border-gray-200 py-2" 
+            : "bg-white border-transparent py-3"
+          }
+        `}
+      >
+        <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between">
+          
+          {/* BRANDING */}
+          <NavLink to="/" className="flex items-center gap-3 group">
+            <div className={`relative rounded-full overflow-hidden border p-0.5 transition-all duration-300 ${scrolled ? 'w-9 h-9' : 'w-11 h-11'}`}
+                 style={{ borderColor: COLORS.accent }}>
+              <img src="/oppo.jpg" alt="Logo" className="h-full w-full object-cover rounded-full" />
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className={`font-black tracking-tighter transition-all ${scrolled ? 'text-xl' : 'text-2xl'}`} style={{ color: COLORS.primary }}>
+                OPTIMAS
+              </span>
+              <div className="flex items-center gap-1">
+                <span className="h-0.5 w-3 bg-[#d0b216] rounded-full"></span>
+                <span className="text-[10px] font-bold tracking-widest text-[#d0b216]">FIBER</span>
+              </div>
+            </div>
+          </NavLink>
+
+          {/* DESKTOP NAV LINKS */}
+          {/* Changed from hidden lg:flex to hidden xl:flex */}
+          <div className="hidden xl:flex items-center gap-2">
+            <DesktopNavItem label="Home" route="/" />
+            <DesktopNavItem label="About" route="/about" />
+            <DesktopNavItem label="Services" route="/services" />
+            <DesktopNavItem label="Blog" route="/blog" />
+            <DesktopNavItem label="FAQs" route="/faqs" />
+            <DesktopNavItem label="Contact" route="/contact" />
           </div>
-        </NavLink>
 
-        {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-6">
-          {menuItems.map((item) => (
-            <NavItem key={item.id} item={item} />
-          ))}
+          {/* RIGHT ACTIONS */}
+          <div className="flex items-center gap-3">
+            {/* Changed from hidden lg:flex to hidden xl:flex */}
+            <div className="hidden xl:flex">
+              <NavLink
+                to="/coverage"
+                // Increased text size to text-sm
+                className="relative overflow-hidden px-6 py-2.5 rounded-sm font-bold text-white shadow-md transform transition-all hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2 group text-sm uppercase tracking-widest"
+                style={{ backgroundColor: COLORS.accent }}
+              >
+                <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></span>
+                <span>Get Connected</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              </NavLink>
+            </div>
+
+            {/* Hamburger Button - Shows on lg and below (laptop and mobile) */}
+            {/* Changed lg:hidden to xl:hidden */}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="xl:hidden p-2 rounded-md text-[#015B97] hover:bg-blue-50 transition-colors"
+            >
+              {isOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
         </div>
+      </nav>
 
-        {/* Right side controls */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <button
-            onClick={toggleDarkMode}
-            className={`${RISA_STYLES.button.small.base} ${
-              darkMode ? RISA_STYLES.button.small.dark : RISA_STYLES.button.small.light
-            }`}
-            aria-label="Toggle theme"
-          >
-            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-
-          <button
-            className={`lg:hidden p-2.5 rounded-full transition-colors ${
-              darkMode 
-                ? "bg-gray-700 hover:bg-gray-600" 
-                : "bg-[#182B5C] hover:bg-[#0f1c3f]"
-            }`}
-            onClick={() => setIsOpen(!isOpen)}
-            aria-label={isOpen ? "Close menu" : "Open menu"}
-          >
-            {isOpen ? <X className="h-5 w-5 text-white" /> : <Menu className="h-5 w-5 text-white" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Navigation */}
+      {/* --- MOBILE DRAWER --- */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className={`lg:hidden overflow-hidden mt-2 rounded-lg shadow-xl border ${
-              darkMode ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"
-            }`}
-          >
-            <div className="flex flex-col gap-1 p-4">
-              {menuItems.map((item) => (
-                <div
-                  key={item.id}
-                  className={`border-b ${darkMode ? "border-gray-700" : "border-gray-200"} last:border-b-0`}
-                >
-                  <NavLink
-                    to={item.route}
-                    className={({ isActive }) =>
-                      `${RISA_STYLES.typography.mobileNavLink} ${
-                        isActive
-                          ? "bg-[#182B5C] text-white font-semibold"
-                          : darkMode 
-                            ? "text-white hover:bg-gray-800" 
-                            : "text-[#182B5C] hover:bg-gray-100"
-                      }`
-                    }
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {item.label}
-                  </NavLink>
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1002] xl:hidden"
+            />
+            <motion.div
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed top-0 right-0 h-full w-[85%] max-w-xs bg-white z-[1003] shadow-2xl xl:hidden flex flex-col"
+            >
+              <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                <span className="text-base font-black uppercase tracking-widest text-[#015B97]">Menu</span>
+                <button onClick={() => setIsOpen(false)} className="p-2 bg-white border border-gray-200 rounded-md text-gray-600">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-5 space-y-3">
+                <NavLink to="/" className="flex items-center gap-3 p-3 rounded-lg text-base font-bold text-gray-800 hover:bg-blue-50 hover:text-[#015B97] transition-colors">Home</NavLink>
+                <NavLink to="/about" className="flex items-center gap-3 p-3 rounded-lg text-base font-bold text-gray-800 hover:bg-blue-50 hover:text-[#015B97] transition-colors">About Us</NavLink>
+                <NavLink to="/services" className="flex items-center gap-3 p-3 rounded-lg text-base font-bold text-gray-800 hover:bg-blue-50 hover:text-[#015B97] transition-colors">Services</NavLink>
+                <NavLink to="/blog" className="flex items-center gap-3 p-3 rounded-lg text-base font-bold text-gray-800 hover:bg-blue-50 hover:text-[#015B97] transition-colors">Blog</NavLink>
+                <NavLink to="/faqs" className="flex items-center gap-3 p-3 rounded-lg text-base font-bold text-gray-800 hover:bg-blue-50 hover:text-[#015B97] transition-colors">FAQs</NavLink>
+                <NavLink to="/contact" className="flex items-center gap-3 p-3 rounded-lg text-base font-bold text-gray-800 hover:bg-blue-50 hover:text-[#015B97] transition-colors">Contact</NavLink>
+                
+                {/* Admin Link in Mobile Menu */}
+                <div className="pt-4 mt-4 border-t border-gray-100">
+                   <NavLink to="/admin/login" className="flex items-center gap-3 p-3 rounded-lg text-sm font-bold text-gray-500 hover:text-[#015B97] transition-colors">
+                      <User size={16} /> Admin Portal
+                   </NavLink>
                 </div>
-              ))}
-            </div>
-          </motion.div>
+              </div>
+
+              <div className="p-5 border-t border-gray-100 bg-gray-50">
+                <NavLink
+                  to="/coverage"
+                  className="flex w-full justify-center items-center gap-2 py-4 rounded-md text-white text-sm font-bold uppercase tracking-widest shadow-lg active:scale-95 transition-transform"
+                  style={{ backgroundColor: COLORS.accent }}
+                >
+                  <Wifi size={18} />
+                  Get Connected
+                </NavLink>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
-    </nav>
+    </>
   );
 }
