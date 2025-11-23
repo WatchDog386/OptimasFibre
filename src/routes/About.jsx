@@ -1,31 +1,99 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
-// import { ThemeContext } from '../contexts/ThemeContext'; // REMOVED
+import { 
+  CheckCircle, X, ArrowRight, Users, ChevronRight, Star, Send, 
+  Gauge, Activity, Server, Lock, Smartphone, Wifi
+} from 'lucide-react';
 
-// Consistent styles (simplified for light mode)
-const CARD_STYLES = {
-  base: 'shadow-sm transition-all duration-300',
-  // Removed dark property
-  light: 'bg-white border border-gray-200',
+// --- THEME CONFIG (MATCHES Hero.jsx) ---
+const cardThemes = {
+  blue: {
+    gradient: "bg-gradient-to-br from-blue-700 via-blue-600 to-cyan-500",
+    buttonBg: "bg-gray-900 text-white hover:bg-gray-800",
+    featureIcon: "text-blue-600",
+    shadow: "shadow-blue-500/20 hover:shadow-blue-500/40",
+    border: "border-blue-200",
+    softBg: "bg-blue-50",
+    textColor: "text-blue-900"
+  }
 };
 
-const BUTTON_STYLES = {
-  primary: {
-    base: 'py-2 px-5 rounded transition-colors duration-300 font-medium text-sm whitespace-nowrap',
-    // Consolidated light mode classes
-    light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
-  },
-  secondary: {
-    base: 'py-2 px-5 rounded transition-colors duration-300 font-medium text-sm whitespace-nowrap',
-    // Consolidated light mode classes
-    light: 'border border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white',
-  },
+// --- UTILS ---
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+  if (import.meta.env.DEV) return 'http://localhost:10000';
+  return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 };
+
+// --- CUSTOM COMPONENTS (MATCH Hero.jsx STYLE) ---
+
+const StatCard = ({ icon: Icon, value, label }) => (
+  <motion.div 
+    whileHover={{ y: -5 }}
+    className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm text-center"
+  >
+    <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
+      <Icon size={16} className="text-blue-600" />
+    </div>
+    <h4 className="font-black text-lg text-gray-900">{value}</h4>
+    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-1">{label}</p>
+  </motion.div>
+);
+
+const ServiceCard = ({ title, description, icon }) => (
+  <motion.div 
+    whileHover={{ y: -5, scale: 1.02 }}
+    className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm h-full"
+  >
+    <div className="text-2xl mb-3">{icon}</div>
+    <h3 className="font-bold text-gray-900 mb-2 text-sm">{title}</h3>
+    <p className="text-xs text-gray-600 leading-relaxed">{description}</p>
+  </motion.div>
+);
+
+const PortfolioCard = ({ item, onClick }) => (
+  <motion.div 
+    whileHover={{ y: -5, scale: 1.02 }}
+    className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden cursor-pointer"
+    onClick={onClick}
+  >
+    <div className="h-32 overflow-hidden">
+      {item.imageUrl ? (
+        <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+          <Wifi size={24} className="text-gray-400" />
+        </div>
+      )}
+    </div>
+    <div className="p-4">
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="font-bold text-gray-900 text-sm">{item.title}</h3>
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-blue-600">
+          {item.category || 'Project'}
+        </span>
+      </div>
+      <p className="text-xs text-gray-600 mb-3 line-clamp-2">{item.description || 'No description'}</p>
+      <div className="flex justify-between items-center">
+        <span className="text-[10px] text-gray-500">
+          {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 'N/A'}
+        </span>
+        <motion.button 
+          whileHover={{ scale: 1.05 }} 
+          whileTap={{ scale: 0.95 }}
+          className="text-[10px] font-bold text-blue-600 flex items-center gap-1"
+        >
+          View <ChevronRight size={12} />
+        </motion.button>
+      </div>
+    </div>
+  </motion.div>
+);
 
 const About = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -34,34 +102,16 @@ const About = () => {
   const [error, setError] = useState('');
   const [selectedPortfolioItem, setSelectedPortfolioItem] = useState(null);
   const navigate = useNavigate();
-  // const { darkMode } = useContext(ThemeContext); // REMOVED
 
-  const handleAddPortfolio = () => {
-    navigate('/admin/login');
-  };
-
-  const handleServicesClick = () => {
-    navigate('/services');
-  };
-
-  const handlePortfolioClick = (item) => {
-    setSelectedPortfolioItem(item);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedPortfolioItem(null);
-  };
-
-  const goToContact = () => {
-    navigate('/contact');
-  };
+  const handleServicesClick = () => navigate('/services');
+  const handleAddPortfolio = () => navigate('/admin/login');
+  const handleCloseModal = () => setSelectedPortfolioItem(null);
+  const goToContact = () => navigate('/contact');
 
   const getCarouselImages = () => {
-    if (portfolioItems && portfolioItems.length > 0) {
-      const itemsWithImages = portfolioItems.filter(item => item.imageUrl);
-      if (itemsWithImages.length > 0) {
-        return itemsWithImages.slice(0, 5).map(item => item.imageUrl);
-      }
+    if (portfolioItems.length > 0) {
+      const withImg = portfolioItems.filter(i => i.imageUrl).slice(0, 5);
+      if (withImg.length > 0) return withImg.map(i => i.imageUrl);
     }
     return [
       "/connection.jpg",
@@ -73,38 +123,25 @@ const About = () => {
   };
 
   const services = [
-    { title: "Fibre Internet", description: "High-speed connectivity solutions for homes and businesses", icon: "📡" },
-    { title: "Network Design", description: "Custom network architecture tailored to your needs", icon: "🔧" },
-    { title: "Installation", description: "Professional implementation of fibre infrastructure", icon: "⚡" },
-    { title: "Maintenance", description: "Ongoing support and optimization services", icon: "🛠️" }
+    { title: "Fibre Internet", description: "High-speed connectivity for homes and businesses", icon: "📡" },
+    { title: "Network Design", description: "Custom architecture for your needs", icon: "🔧" },
+    { title: "Installation", description: "Professional fibre infrastructure setup", icon: "⚡" },
+    { title: "Maintenance", description: "Ongoing support and optimization", icon: "🛠️" }
   ];
-
-  const getApiBaseUrl = () => {
-    if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-    if (import.meta.env.DEV) return 'http://localhost:10000';
-    return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-  };
 
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
         setLoading(true);
         setError('');
-        const API_BASE_URL = getApiBaseUrl();
-        const res = await fetch(`${API_BASE_URL}/api/portfolio`);
-        if (!res.ok) throw new Error(`Failed to load portfolio items: ${res.status} ${res.statusText}`);
-        const responseData = await res.json();
-
-        let items = [];
-        if (Array.isArray(responseData)) items = responseData;
-        else if (responseData && Array.isArray(responseData.data)) items = responseData.data;
-        else if (responseData && Array.isArray(responseData.items)) items = responseData.items;
-        else console.warn('Unexpected API response structure:', responseData);
-
+        const res = await fetch(`${getApiBaseUrl()}/api/portfolio`);
+        if (!res.ok) throw new Error('Failed to load portfolio');
+        const data = await res.json();
+        const items = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
         setPortfolioItems(items);
-      } catch (error) {
-        console.error('Error fetching portfolio:', error);
-        setError('Unable to load portfolio items. Please check your internet connection and try again.');
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load portfolio. Please try again.');
         setPortfolioItems([]);
       } finally {
         setLoading(false);
@@ -120,67 +157,26 @@ const About = () => {
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100, damping: 12 } }
-  };
-
-  const portfolioCardVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: (index) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: index * 0.1, duration: 0.5 }
-    })
+    visible: { y: 0, opacity: 1 }
   };
 
   return (
-    <div 
-      // Replaced conditional dark mode class with light mode default
-      className={`about-page min-h-screen py-6 md:py-8 overflow-hidden transition-colors duration-300 bg-gray-50`}
-      style={{ fontFamily: "'Poppins', sans-serif" }}
-    >
-      {/* Header */}
-      <header className={`fixed top-0 w-full z-50 transition-colors duration-300 bg-white shadow-sm`}>
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      {/* Header (matches Hero.jsx navbar style) */}
+      <header className="fixed top-0 w-full z-50 bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <motion.img 
-                src="/oppo.jpg" 
-                alt="Optimas Fibre" 
-                className="h-10 w-10 object-contain rounded-full border-2 border-[#d0b216]"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                whileHover={{ scale: 1.05, rotate: 2 }}
-              />
-              <motion.div 
-                className="flex flex-col ml-3"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                {/* Used light mode text color */}
-                <span className={`text-lg md:text-xl font-bold leading-tight text-[#182B5C]`}>OPTIMAS</span>
-                <span className="text-lg md:text-xl font-bold text-[#d0b216] leading-tight">FIBRE</span>
-              </motion.div>
-            </div>
-            <nav className="hidden md:flex space-x-4">
-              {['Home', 'Services', 'About', 'Portfolio', 'Contact'].map((item) => (
-                <motion.a 
-                  key={item} 
-                  href="#" 
-                  // Used light mode text color
-                  className={`text-xs md:text-sm font-medium transition-colors text-[#182B5C] hover:text-[#d0b216]`}
-                  whileHover={{ y: -2 }}
-                >
-                  {item}
-                </motion.a>
-              ))}
-            </nav>
+            <motion.div 
+              className="font-black text-lg text-gray-900 tracking-tighter drop-shadow-sm"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+            >
+              OPTIMAS<span className="text-blue-400">FIBER</span>
+            </motion.div>
             <motion.button 
-              // Used light mode button style
-              className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              className="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 font-bold uppercase text-[10px] tracking-widest rounded-full shadow-sm"
             >
               Get Quote
             </motion.button>
@@ -189,59 +185,43 @@ const About = () => {
       </header>
 
       {/* Hero Section */}
-      {/* Used light mode background */}
-      <section className={`pt-32 pb-16 md:pb-20 relative overflow-hidden transition-colors duration-300 bg-white`}>
-        <div 
-          className="absolute inset-0 z-0 opacity-5"
-          style={{
-            backgroundImage: `radial-gradient(circle at 30% 30%, #d0b216, transparent 40%), radial-gradient(circle at 70% 70%, #e5c845, transparent 50%)`,
-          }}
-        ></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center max-w-3xl mx-auto">
-            <motion.h1 
-              // Used light mode text color
-              className={`text-3xl md:text-4xl font-bold mb-6 text-[#182B5C]`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              About Optimas Fibre
-            </motion.h1>
-            <motion.p 
-              // Used light mode text color
-              className={`text-lg md:text-xl mb-10 font-light text-gray-700`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              Leading Kenya's digital transformation with cutting-edge fibre solutions
-            </motion.p>
-          </div>
+      <section className="pt-32 pb-16 bg-white relative">
+        <div className="container mx-auto px-4 text-center">
+          <motion.h1 
+            className="text-3xl md:text-4xl font-bold mb-4 text-gray-900"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            About Optimas Fibre
+          </motion.h1>
+          <motion.p 
+            className="text-gray-600 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            Leading Kenya's digital transformation with cutting-edge fibre solutions
+          </motion.p>
         </div>
       </section>
 
       {/* Tab Navigation */}
-      {/* Used light mode background and border */}
-      <section className={`py-6 border-t transition-colors duration-300 bg-white border-gray-100`}>
+      <section className="py-6 bg-white border-t border-gray-100">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
-            {/* Used light mode background */}
-            <div className={`rounded-lg shadow-sm p-1 flex flex-wrap justify-center gap-1 bg-white`}>
+            <div className="flex rounded-full bg-gray-100 p-1">
               {['overview', 'portfolio'].map((tab) => (
                 <motion.button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded font-medium transition-all duration-300 text-sm ${
+                  className={`px-5 py-2 rounded-full text-[12px] font-bold uppercase tracking-wider ${
                     activeTab === tab
-                      ? 'bg-[#182b5c] text-white shadow-md'
-                      // Used light mode tab style
-                      : 'text-gray-600 hover:text-[#182b5c] hover:bg-gray-100'
+                      ? 'bg-blue-900 text-white'
+                      : 'text-gray-600 hover:text-blue-900'
                   }`}
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab}
                 </motion.button>
               ))}
             </div>
@@ -249,244 +229,129 @@ const About = () => {
         </div>
       </section>
 
-      {/* Overview Content */}
+      {/* Overview Tab */}
       {activeTab === 'overview' && (
-        // Used light mode background
-        <section className={`py-12 md:py-16 transition-colors duration-300 bg-white`}>
+        <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row gap-12 md:gap-16">
-              <div className="w-full lg:w-1/2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              {/* Text Content */}
+              <div>
                 <motion.h2 
-                  className={`text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-[#182B5C]`}
+                  className="text-2xl md:text-3xl font-bold mb-6 text-gray-900"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
                 >
                   Who We Are
                 </motion.h2>
-                {/* Used light mode text color */}
-                <div className={`space-y-4 md:space-y-6 text-gray-700`}>
-                  <p className="text-sm md:text-base leading-relaxed">
-                    Optimas Fibre is a premier Kenyan systems integrator with a distinguished reputation in telecommunications. 
-                    We deliver comprehensive end-to-end solutions including innovative design, premium supply, precision installation, 
-                    expert commissioning, and reliable maintenance of cutting-edge fibre optic systems.
-                  </p>
-                  <p className="text-sm md:text-base leading-relaxed">
-                    Our expertise has evolved from foundational infrastructure design to encompass comprehensive Internet Service Provision, 
-                    advanced network configuration, and sophisticated management services, positioning us as leaders in Kenya's digital transformation.
-                  </p>
-                  <p className="text-sm md:text-base leading-relaxed">
-                    Our team of seasoned professionals maintains strategic relationships with technology vendors across the region, 
-                    ensuring exceptional service delivery that consistently meets time constraints and exceeds quality expectations.
-                  </p>
+                <div className="space-y-4 text-gray-600 mb-8">
+                  <p>Optimas Fibre is a premier Kenyan systems integrator with a distinguished reputation in telecommunications.</p>
+                  <p>We deliver comprehensive end-to-end solutions including design, supply, installation, and maintenance of fibre optic systems.</p>
+                  <p>Our expertise spans from infrastructure design to Internet Service Provision, advanced network configuration, and management services.</p>
                 </div>
-                <div className="mt-8 md:mt-12">
-                  <h3 className={`text-xl md:text-2xl font-bold mb-4 md:mb-6 text-[#182B5C]`}>
-                    Integrated Fibre Solutions
-                  </h3>
-                  {/* Used light mode text color */}
-                  <p className={'text-gray-700 mb-4 md:mb-6 text-sm md:text-base'}>
-                    We provide comprehensive fibre optics solutions with specialized expertise in FTTX design, network optimization, 
-                    cross-vendor product integration, rigorous testing protocols, and professional commissioning services.
-                  </p>
-                  <div className="mt-6 md:mt-8">
-                    <motion.button 
-                      onClick={handleServicesClick}
-                      // Used light mode button style
-                      className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      View All Services
-                    </motion.button>
-                  </div>
-                </div>
+
+                <h3 className="text-xl font-bold mb-4 text-gray-900">Integrated Fibre Solutions</h3>
+                <p className="text-gray-600 mb-6">
+                  We provide comprehensive fibre optics solutions with specialized expertise in FTTX design, network optimization, and professional commissioning.
+                </p>
+
+                <motion.button 
+                  onClick={handleServicesClick}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-gray-900 text-white px-6 py-3 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-sm flex items-center gap-2"
+                >
+                  View All Services <ArrowRight size={14} />
+                </motion.button>
               </div>
-              <div className="w-full lg:w-1/2">
-                <div className="sticky top-24">
-                  <h3 className={`text-xl md:text-2xl font-bold mb-6 md:mb-8 text-[#182B5C]`}>
-                    Our Work
-                  </h3>
-                  <Swiper
-                    modules={[Autoplay, Pagination]}
-                    spaceBetween={16}
-                    slidesPerView={1}
-                    pagination={{ 
-                      clickable: true, 
-                      el: '.swiper-pagination',
-                      // Used light mode pagination styles
-                      bulletClass: `swiper-pagination-bullet bg-gray-300 opacity-50`,
-                      bulletActiveClass: 'swiper-pagination-bullet-active !bg-[#182B5C] !opacity-100'
-                    }}
-                    autoplay={{ delay: 5000 }}
-                    loop={true}
-                    className="rounded overflow-hidden shadow-xl"
-                  >
-                    {getCarouselImages().map((image, index) => (
-                      <SwiperSlide key={index}>
-                        <motion.div 
-                          className="h-64 md:h-80 lg:h-96 w-full relative"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ duration: 0.5 }}
-                        >
-                          <img 
-                            src={image} 
-                            alt={`Optimas Fibre project ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.src = "/word.jpg"
-                              e.target.onerror = null;
-                            }}
-                          />
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6">
-                            <h4 className="text-white text-base md:text-lg font-semibold">Project {index + 1}</h4>
-                            <p className="text-gray-200 text-xs md:text-sm">Fibre optic installation</p>
-                          </div>
-                        </motion.div>
-                      </SwiperSlide>
-                    ))}
-                    <div className="swiper-pagination mt-3 md:mt-4"></div>
-                  </Swiper>
-                </div>
+
+              {/* Image Carousel */}
+              <div className="sticky top-24">
+                <h3 className="text-xl font-bold mb-6 text-gray-900">Our Work</h3>
+                <Swiper
+                  modules={[Autoplay, Pagination]}
+                  spaceBetween={16}
+                  slidesPerView={1}
+                  pagination={{ clickable: true }}
+                  autoplay={{ delay: 5000 }}
+                  loop={true}
+                  className="rounded-xl overflow-hidden shadow-xl"
+                >
+                  {getCarouselImages().map((image, index) => (
+                    <SwiperSlide key={index}>
+                      <div className="h-64 md:h-80 w-full relative">
+                        <img 
+                          src={image} 
+                          alt={`Project ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.src = "/word.jpg"; e.target.onerror = null; }}
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                          <h4 className="text-white font-bold">Project {index + 1}</h4>
+                        </div>
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
               </div>
             </div>
 
-            {/* Mission & Vision */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-12 md:mt-20">
+            {/* Mission & Vision (as in Hero.jsx style cards) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="bg-gradient-to-br from-[#182B5C] to-[#0f1e42] p-5 md:p-8 rounded text-white"
                 whileHover={{ y: -5 }}
+                className="relative h-48 bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl shadow-lg flex flex-col justify-end p-6 text-white overflow-hidden"
               >
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center mb-3 md:mb-6">
-                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                  </svg>
-                </div>
-                <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Our Mission</h3>
-                <p className="opacity-90 text-sm md:text-base">
-                  Deliver cost-effective, detail-oriented fibre solutions that exceed client expectations through innovation and technical excellence.
-                </p>
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
+                <h3 className="text-xl font-black mb-2">Our Mission</h3>
+                <p className="text-sm opacity-90">Deliver cost-effective, detail-oriented fibre solutions that exceed client expectations.</p>
               </motion.div>
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="bg-gradient-to-br from-[#d0b216] to-[#e5c845] p-5 md:p-8 rounded text-[#182B5C]"
                 whileHover={{ y: -5 }}
+                className="relative h-48 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl shadow-lg flex flex-col justify-end p-6 text-gray-900 overflow-hidden"
               >
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-white/30 rounded-full flex items-center justify-center mb-3 md:mb-6">
-                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                  </svg>
-                </div>
-                <h3 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Our Vision</h3>
-                <p className="text-sm md:text-base">
-                  To become Africa's leading technology solutions provider, delivering world-class digital infrastructure that transforms communities and empowers businesses.
-                </p>
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, black 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
+                <h3 className="text-xl font-black mb-2">Our Vision</h3>
+                <p className="text-sm">To become Africa's leading technology solutions provider.</p>
               </motion.div>
             </div>
 
-            {/* Services */}
-            <div className="mt-12 md:mt-20">
-              <motion.h2 
-                className={`text-2xl md:text-3xl font-bold mb-4 text-center text-[#182B5C]`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-              >
-                Our Services
-              </motion.h2>
-              {/* Used light mode text color */}
-              <p className={`text-center mb-8 md:mb-12 max-w-2xl mx-auto text-gray-600 text-sm md:text-base`}>
-                Comprehensive fibre solutions tailored to meet the evolving needs of businesses and communities across Kenya.
-              </p>
+            {/* Services Grid */}
+            <div className="mt-16">
+              <h2 className="text-2xl md:text-3xl font-bold mb-2 text-center text-gray-900">Our Services</h2>
+              <p className="text-gray-500 text-sm max-w-lg mx-auto mb-8">Comprehensive fibre solutions for businesses and communities.</p>
               <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
                 variants={containerVariants}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={{ once: true }}
               >
-                {services.map((service, index) => (
-                  <motion.div
-                    key={index}
-                    // Used light mode card style
-                    className={`${CARD_STYLES.base} ${CARD_STYLES.light} p-4 rounded`}
-                    whileHover={{ y: -3 }}
-                    variants={itemVariants}
-                  >
-                    <div className="text-2xl md:text-3xl mb-2">{service.icon}</div>
-                    {/* Used light mode text color */}
-                    <h3 className={`text-sm md:text-base font-bold mb-1 text-[#182B5C]`}>{service.title}</h3>
-                    {/* Used light mode text color */}
-                    <p className={'text-gray-600 text-xs'}>{service.description}</p>
-                  </motion.div>
+                {services.map((s, i) => (
+                  <ServiceCard key={i} title={s.title} description={s.description} icon={s.icon} />
                 ))}
               </motion.div>
             </div>
 
-            {/* Bio */}
-            <div className="mt-12 md:mt-20">
-              <motion.h2 
-                className={`text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-[#182B5C]`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-              >
-                Optimas Bio
-              </motion.h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-                {/* Used light mode text color */}
-                <div className={'text-gray-700'}>
-                  <p className="mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
-                    Optimas Fibre was founded by a team of telecommunications experts with over a decade of industry experience, 
-                    united by a vision to bridge the gap between user expectations and provider capabilities in Kenya's rapidly evolving digital landscape.
-                  </p>
-                  <p className="text-sm md:text-base leading-relaxed">
-                    We questioned the status quo of internet connectivity in our region and committed to implementing 
-                    projects with higher standards, focusing on creativity, innovation, and technical excellence to deliver 
-                    superior convenience and unparalleled client satisfaction.
-                  </p>
-                  <p className="mt-6 text-sm md:text-base leading-relaxed">
-                    Today, Optimas Fibre stands as a testament to our commitment to quality, with a growing portfolio of successful 
-                    projects that have transformed connectivity for businesses, institutions, and communities across Kenya.
-                  </p>
-                </div>
-                {/* Used light mode background and text color */}
-                <div className={`p-5 md:p-8 rounded bg-gray-50`}>
-                  <h3 className={`text-xl md:text-2xl font-bold mb-4 md:mb-6 text-[#182B5C]`}>
-                    Our Expertise
-                  </h3>
-                  <div className="grid grid-cols-1 gap-3 md:gap-4 mb-6 md:mb-8">
-                    {['FTTX Design & Implementation', 'Network Optimization', 'Cross-Vendor Product Integration', 
-                      'Testing & Commissioning', 'Training & Certification', 'Ongoing Maintenance & Support'].map((item, index) => (
-                      <motion.div 
-                        key={index} 
-                        className="flex items-start"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                      >
-                        <div className="w-1.5 h-1.5 bg-[#d0b216] rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
-                        {/* Used light mode text color */}
-                        <span className={'text-gray-700 text-xs'}>{item}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="text-center">
-                    <motion.button 
-                      onClick={handleServicesClick}
-                      // Used light mode button style
-                      className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      View All Services
-                    </motion.button>
-                  </div>
+            {/* Stats Bar (matches Hero.jsx junction card) */}
+            <div className="mt-16 max-w-4xl mx-auto">
+              <div className="bg-white/95 backdrop-blur-md rounded-full shadow-xl py-4 px-6">
+                <div className="flex flex-wrap justify-between items-center divide-x divide-gray-200">
+                  {[
+                    { icon: Gauge, t: "99.9%", d: "Uptime" },
+                    { icon: Activity, t: "< 5ms", d: "Ping" },
+                    { icon: Server, t: "1:1", d: "Contention" },
+                    { icon: Lock, t: "AES-256", d: "Security" }
+                  ].map((f, i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-2">
+                      <div className="p-2 bg-blue-50 rounded-full">
+                        <f.icon size={16} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm text-gray-900">{f.t}</h4>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{f.d}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -494,182 +359,60 @@ const About = () => {
         </section>
       )}
 
-      {/* ✅ UPDATED PORTFOLIO SECTION */}
+      {/* Portfolio Tab */}
       {activeTab === 'portfolio' && (
-        // Used light mode background
-        <section className={`py-12 md:py-16 transition-colors duration-300 bg-white`}>
+        <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-8 md:mb-12">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
               <div>
-                <motion.h2 
-                  // Used light mode text color
-                  className={`text-2xl md:text-3xl font-bold mb-2 text-[#182B5C]`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  Our Portfolio
-                </motion.h2>
-                {/* Used light mode text color */}
-                <p className={`max-w-2xl text-gray-600 text-sm md:text-base`}>
-                  Explore our successful projects and see how we've helped businesses and communities with our fibre solutions.
-                </p>
+                <h2 className="text-2xl font-bold mb-2 text-gray-900">Our Portfolio</h2>
+                <p className="text-gray-600">Explore our successful fibre projects across Kenya.</p>
               </div>
               <motion.button 
                 onClick={handleAddPortfolio}
-                // Used light mode button style
-                className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light} flex items-center gap-1`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                className="bg-gray-900 text-white px-5 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-sm flex items-center gap-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Portfolio
+                <span>+</span> Add Portfolio
               </motion.button>
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded mb-6 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  {error}
-                </div>
-                <button 
-                  onClick={() => window.location.reload()} 
-                  className="inline-flex items-center px-3 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Try Again
-                </button>
+              <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded text-center mb-6">
+                {error}
               </div>
             )}
 
             {loading ? (
               <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#182B5C]"></div>
+                <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
               </div>
             ) : portfolioItems.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                <p className="text-base font-medium">No portfolio items yet.</p>
-                <p className="mt-1">Click "Add Portfolio" to upload your first project.</p>
+                <Wifi size={48} className="mx-auto mb-3 text-gray-400" />
+                <p className="font-medium">No portfolio items available.</p>
               </div>
             ) : (
               <motion.div 
-                className="space-y-8"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                 variants={containerVariants}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={{ once: true }}
               >
-                {portfolioItems.map((item, index) => (
-                  <motion.div
-                    key={item._id}
-                    className={`flex flex-col md:flex-row ${
-                      index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                    } gap-5 md:gap-6 p-4 bg-white border border-gray-200 rounded-sm shadow-sm`}
-                    variants={portfolioCardVariants}
-                    custom={index}
-                    whileHover={{ y: -3 }}
-                    onClick={() => handlePortfolioClick(item)}
-                  >
-                    {/* Image */}
-                    <div className="flex-shrink-0 w-full md:w-48 h-32 overflow-hidden rounded-sm">
-                      {item.imageUrl ? (
-                        <img 
-                          src={item.imageUrl} 
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzljYTBiZCI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+';
-                            e.target.onerror = null;
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        {/* Used light mode text color */}
-                        <h3 className={`text-base font-bold text-gray-900`}>
-                          {item.title}
-                        </h3>
-                        {/* Used light mode background/text color */}
-                        <span className={`text-xs px-2 py-1 rounded bg-gray-100 text-[#182b5c]`}>
-                          {item.category || 'General'}
-                        </span>
-                      </div>
-                      <p className={`mt-2 text-xs leading-relaxed text-gray-600`}>
-                        {item.description || item.content || 'No description available.'}
-                      </p>
-                      <div className="mt-3 flex justify-between items-center">
-                        {/* Used light mode text color */}
-                        <span className={`text-xs text-gray-400`}>
-                          {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
-                            item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
-                        </span>
-                        <motion.button 
-                          // Used light mode button style
-                          className={`text-xs font-medium px-3 py-1.5 rounded transition-colors bg-gray-100 text-gray-700 hover:bg-[#182b5c] hover:text-white`}
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          Learn More
-                        </motion.button>
-                      </div>
-                    </div>
-                  </motion.div>
+                {portfolioItems.map((item, i) => (
+                  <PortfolioCard key={item._id || i} item={item} onClick={() => setSelectedPortfolioItem(item)} />
                 ))}
               </motion.div>
             )}
 
             {/* Stats */}
             {portfolioItems.length > 0 && (
-              <div className="mt-12 md:mt-16">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-                  <motion.div 
-                    // Used light mode background/border
-                    className={`p-4 rounded text-center bg-white/80 border border-gray-200`}
-                    whileHover={{ y: -3 }}
-                  >
-                    <div className="text-2xl font-bold text-[#d0b216]">{portfolioItems.length}</div>
-                    {/* Used light mode text color */}
-                    <div className={`text-xs font-medium text-gray-700`}>Total Projects</div>
-                  </motion.div>
-                  <motion.div 
-                    // Used light mode background/border
-                    className={`p-4 rounded text-center bg-white/80 border border-gray-200`}
-                    whileHover={{ y: -3 }}
-                  >
-                    <div className="text-2xl font-bold text-[#d0b216]">
-                      {new Set(portfolioItems.map(item => item.category)).size}
-                    </div>
-                    {/* Used light mode text color */}
-                    <div className={`text-xs font-medium text-gray-700`}>Categories</div>
-                  </motion.div>
-                  <motion.div 
-                    // Used light mode background/border
-                    className={`p-4 rounded text-center bg-white/80 border border-gray-200`}
-                    whileHover={{ y: -3 }}
-                  >
-                    <div className="text-2xl font-bold text-[#d0b216]">{Math.floor(Math.random() * 50) + 10}+</div>
-                    {/* Used light mode text color */}
-                    <div className={`text-xs font-medium text-gray-700`}>Happy Clients</div>
-                  </motion.div>
-                </div>
+              <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <StatCard icon={Users} value={portfolioItems.length} label="Projects" />
+                <StatCard icon={Star} value={new Set(portfolioItems.map(i => i.category)).size || 1} label="Categories" />
+                <StatCard icon={CheckCircle} value="50+" label="Happy Clients" />
               </div>
             )}
           </div>
@@ -677,86 +420,84 @@ const About = () => {
       )}
 
       {/* Portfolio Modal */}
-      {selectedPortfolioItem && (
-        <motion.div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={handleCloseModal}
-        >
+      <AnimatePresence>
+        {selectedPortfolioItem && (
           <motion.div 
-            // Used light mode background
-            className={`max-w-2xl w-full rounded overflow-hidden max-h-[90vh] overflow-y-auto bg-white`}
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleCloseModal}
           >
-            <div className="relative h-48 md:h-64">
-              {selectedPortfolioItem.imageUrl ? (
-                <img 
-                  src={selectedPortfolioItem.imageUrl} 
-                  alt={selectedPortfolioItem.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                // Used light mode background
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                  <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                </div>
-              )}
-              <button 
-                onClick={handleCloseModal}
-                className="absolute top-3 right-3 w-7 h-7 rounded bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-5 md:p-6">
-              <h3 className={`text-xl font-bold mb-2 text-[#182B5C]`}>
-                {selectedPortfolioItem.title}
-              </h3>
-              <div className="flex items-center gap-3 mb-4">
-                {/* Used light mode background/text color */}
-                <span className={`text-xs px-2 py-1 rounded bg-gray-100 text-[#182b5c]`}>
-                  {selectedPortfolioItem.category || 'General'}
-                </span>
-                {/* Used light mode text color */}
-                <span className={`text-xs text-gray-600`}>
-                  {selectedPortfolioItem.publishedAt ? new Date(selectedPortfolioItem.publishedAt).toLocaleDateString() : 
-                    selectedPortfolioItem.uploadedAt ? new Date(selectedPortfolioItem.uploadedAt).toLocaleDateString() : 'Date not available'}
-                </span>
-              </div>
-              {/* Used light mode text color */}
-              <p className={`text-sm leading-relaxed text-gray-700`}>
-                {selectedPortfolioItem.description || selectedPortfolioItem.content || 'No description available.'}
-              </p>
-              <div className="mt-6 flex gap-3">
-                <motion.button 
-                  onClick={goToContact}
-                  className={`flex-1 py-2.5 rounded font-medium text-sm bg-[#182b5c] text-white hover:bg-[#0f1f45]`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Contact About Project
-                </motion.button>
-                <motion.button 
+            <motion.div 
+              className="w-full max-w-2xl bg-white rounded-3xl overflow-hidden shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="h-48 relative">
+                {selectedPortfolioItem.imageUrl ? (
+                  <img src={selectedPortfolioItem.imageUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <Wifi size={32} className="text-gray-400" />
+                  </div>
+                )}
+                <button 
                   onClick={handleCloseModal}
-                  // Used light mode button style
-                  className={`px-4 py-2.5 rounded font-medium text-sm border border-gray-300 text-gray-700 hover:border-[#182b5c] hover:text-[#182b5c]`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center"
                 >
-                  Close
-                </motion.button>
+                  <X size={18} />
+                </button>
               </div>
-            </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{selectedPortfolioItem.title}</h3>
+                <div className="flex gap-2 mb-4">
+                  <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-gray-100 text-blue-600">
+                    {selectedPortfolioItem.category || 'General'}
+                  </span>
+                  <span className="text-[10px] text-gray-500">
+                    {selectedPortfolioItem.publishedAt ? new Date(selectedPortfolioItem.publishedAt).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+                <p className="text-gray-600 mb-6">
+                  {selectedPortfolioItem.description || 'No description available.'}
+                </p>
+                <div className="flex gap-3">
+                  <motion.button 
+                    onClick={goToContact}
+                    whileHover={{ scale: 1.02 }}
+                    className="flex-1 py-3 bg-blue-900 text-white rounded-xl font-bold text-sm"
+                  >
+                    Contact About Project
+                  </motion.button>
+                  <motion.button 
+                    onClick={handleCloseModal}
+                    whileHover={{ scale: 1.02 }}
+                    className="px-5 py-3 border border-gray-300 text-gray-700 rounded-xl font-bold text-sm"
+                  >
+                    Close
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
+      </AnimatePresence>
+
+      {/* WhatsApp Button (matches Hero.jsx) */}
+      <motion.a 
+        initial={{ scale: 0 }} animate={{ scale: 1 }} 
+        whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+        href="https://wa.me/254741874200" 
+        target="_blank" 
+        className="fixed bottom-6 right-6 z-40 bg-[#25d366] text-white p-4 rounded-full shadow-2xl flex items-center justify-center ring-4 ring-white/20"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.472 14.382C17.112 14.022 15.344 13.153 14.984 13.064C14.624 12.974 14.384 13.153 14.144 13.513C13.904 13.873 13.243 14.653 13.003 14.893C12.763 15.133 12.523 15.193 12.163 15.013C11.803 14.833 10.642 14.453 9.26196 13.223C8.18196 12.263 7.45296 11.074 7.21296 10.654C6.97296 10.234 7.18796 10.012 7.36796 9.832C7.52496 9.676 7.71696 9.426 7.89696 9.186C8.07696 8.946 8.13696 8.766 8.25696 8.526C8.37696 8.286 8.31696 8.076 8.22696 7.896C8.13696 7.716 7.41696 5.946 7.11696 5.226C6.82396 4.529 6.53096 4.624 6.30996 4.636C6.10496 4.646 5.86496 4.646 5.62496 4.646C5.38496 4.646 4.99496 4.736 4.66496 5.096C4.33496 5.456 3.40496 6.326 3.40496 8.096C3.40496 9.866 4.69496 11.576 4.87496 11.816C5.05496 12.056 7.42496 15.716 11.055 17.276C11.918 17.647 12.593 17.868 13.12 18.035C14.075 18.338 14.95 18.297 15.642 18.194C16.415 18.079 18.025 17.219 18.355 16.289C18.685 15.359 18.685 14.579 18.595 14.429C18.505 14.279 18.265 14.149 17.905 13.969L17.472 14.382Z" />
+        </svg>
+      </motion.a>
     </div>
   );
 };
