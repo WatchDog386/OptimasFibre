@@ -342,7 +342,7 @@ const Services = () => {
       <section className="relative w-full min-h-[55vh] md:min-h-[60vh] flex items-center overflow-hidden bg-gray-900 pb-12">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=3870&auto=format&fit=crop" 
+            src="/worker2.jpg" 
             alt="Server Background" 
             className="w-full h-full object-cover opacity-40"
           />
