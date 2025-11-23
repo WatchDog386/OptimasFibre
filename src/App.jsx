@@ -3,9 +3,6 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ParallaxProvider } from "react-scroll-parallax";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 
-// Context
-import { ThemeProvider } from "./contexts/ThemeContext";
-
 // Layouts
 import MainLayout from "./layouts/MainLayout";
 
@@ -19,12 +16,12 @@ import WifiPlans from "./routes/WifiPlans";
 import Articles from "./routes/Articles";
 import ArticleDetail from "./routes/ArticleDetail";
 import CoverageMap from "./routes/CoverageMap";
-import BlogList from "./routes/BlogList"; // 👈 Added Blog List
+import BlogList from "./routes/BlogList";
 
 // Admin Components
 import Login from "./components/Login";
-import Dashboard from "./components/Dashboard"; // Default export
-import ReceiptManager from "./components/ReceiptManager"; // 👈 Added ReceiptManager
+import Dashboard from "./components/Dashboard";
+import ReceiptManager from "./components/ReceiptManager";
 import PrivateRoute from "./components/PrivateRoute";
 
 // Track page views with GA
@@ -66,12 +63,11 @@ function AppRoutes() {
         path="/admin/*"
         element={
           <PrivateRoute>
-            <Dashboard /> {/* Must include <Outlet /> inside Dashboard.jsx */}
+            <Dashboard />
           </PrivateRoute>
         }
       >
-        {/* Nested admin routes */}
-        <Route path="receipts" element={<ReceiptManager />} /> {/* 👈 Receipt Manager */}
+        <Route path="receipts" element={<ReceiptManager />} />
       </Route>
 
       {/* Catch-all */}
@@ -85,32 +81,32 @@ export default function App() {
   return (
     <HelmetProvider>
       <ParallaxProvider>
-        <ThemeProvider>
-          {/* Google Analytics Scripts */}
-          <Helmet>
-            <script
-              async
-              src="https://www.googletagmanager.com/gtag/js?id=G-6TTHG2D146"
-            />
-            <script>
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag() {
-                  dataLayer.push(arguments);
-                }
-                gtag('js', new Date());
-                gtag('config', 'G-6TTHG2D146');
-              `}
-            </script>
-            <body className="bg-white dark:bg-gray-900 text-[#182B5C] dark:text-white transition-colors duration-300" />
-          </Helmet>
+        {/* Google Analytics Scripts */}
+        <Helmet>
+          <script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=G-6TTHG2D146"
+          />
+          <script>
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag() {
+                dataLayer.push(arguments);
+              }
+              gtag('js', new Date());
+              gtag('config', 'G-6TTHG2D146');
+            `}
+          </script>
 
-          {/* Track page views */}
-          <TrackPageViews />
+          {/* PERMANENT LIGHT MODE */}
+          <body className="bg-white text-[#182B5C] transition-colors duration-300" />
+        </Helmet>
 
-          {/* Render all routes */}
-          <AppRoutes />
-        </ThemeProvider>
+        {/* Track page views */}
+        <TrackPageViews />
+
+        {/* Render routes */}
+        <AppRoutes />
       </ParallaxProvider>
     </HelmetProvider>
   );
