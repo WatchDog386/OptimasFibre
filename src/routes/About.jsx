@@ -1,28 +1,28 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import { ThemeContext } from '../contexts/ThemeContext';
+// import { ThemeContext } from '../contexts/ThemeContext'; // REMOVED
 
-// Consistent styles
+// Consistent styles (simplified for light mode)
 const CARD_STYLES = {
   base: 'shadow-sm transition-all duration-300',
-  dark: 'bg-gray-800 border border-gray-700',
+  // Removed dark property
   light: 'bg-white border border-gray-200',
 };
 
 const BUTTON_STYLES = {
   primary: {
     base: 'py-2 px-5 rounded transition-colors duration-300 font-medium text-sm whitespace-nowrap',
-    dark: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
+    // Consolidated light mode classes
     light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
   },
   secondary: {
     base: 'py-2 px-5 rounded transition-colors duration-300 font-medium text-sm whitespace-nowrap',
-    dark: 'border border-gray-600 text-gray-300 hover:border-[#182b5c] hover:text-[#182b5c]',
+    // Consolidated light mode classes
     light: 'border border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white',
   },
 };
@@ -34,7 +34,7 @@ const About = () => {
   const [error, setError] = useState('');
   const [selectedPortfolioItem, setSelectedPortfolioItem] = useState(null);
   const navigate = useNavigate();
-  const { darkMode } = useContext(ThemeContext);
+  // const { darkMode } = useContext(ThemeContext); // REMOVED
 
   const handleAddPortfolio = () => {
     navigate('/admin/login');
@@ -134,15 +134,12 @@ const About = () => {
 
   return (
     <div 
-      className={`about-page min-h-screen py-6 md:py-8 overflow-hidden transition-colors duration-300 ${
-        darkMode ? 'bg-gray-900' : 'bg-gray-50'
-      }`}
+      // Replaced conditional dark mode class with light mode default
+      className={`about-page min-h-screen py-6 md:py-8 overflow-hidden transition-colors duration-300 bg-gray-50`}
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       {/* Header */}
-      <header className={`fixed top-0 w-full z-50 transition-colors duration-300 ${
-        darkMode ? 'bg-gray-900 border-b border-gray-700' : 'bg-white shadow-sm'
-      }`}>
+      <header className={`fixed top-0 w-full z-50 transition-colors duration-300 bg-white shadow-sm`}>
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
@@ -161,9 +158,8 @@ const About = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <span className={`text-lg md:text-xl font-bold leading-tight ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                }`}>OPTIMAS</span>
+                {/* Used light mode text color */}
+                <span className={`text-lg md:text-xl font-bold leading-tight text-[#182B5C]`}>OPTIMAS</span>
                 <span className="text-lg md:text-xl font-bold text-[#d0b216] leading-tight">FIBRE</span>
               </motion.div>
             </div>
@@ -172,11 +168,8 @@ const About = () => {
                 <motion.a 
                   key={item} 
                   href="#" 
-                  className={`text-xs md:text-sm font-medium transition-colors ${
-                    darkMode 
-                      ? 'text-gray-300 hover:text-[#d0b216]' 
-                      : 'text-[#182B5C] hover:text-[#d0b216]'
-                  }`}
+                  // Used light mode text color
+                  className={`text-xs md:text-sm font-medium transition-colors text-[#182B5C] hover:text-[#d0b216]`}
                   whileHover={{ y: -2 }}
                 >
                   {item}
@@ -184,7 +177,8 @@ const About = () => {
               ))}
             </nav>
             <motion.button 
-              className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light}`}
+              // Used light mode button style
+              className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -195,9 +189,8 @@ const About = () => {
       </header>
 
       {/* Hero Section */}
-      <section className={`pt-32 pb-16 md:pb-20 relative overflow-hidden transition-colors duration-300 ${
-        darkMode ? 'bg-gray-900' : 'bg-white'
-      }`}>
+      {/* Used light mode background */}
+      <section className={`pt-32 pb-16 md:pb-20 relative overflow-hidden transition-colors duration-300 bg-white`}>
         <div 
           className="absolute inset-0 z-0 opacity-5"
           style={{
@@ -207,9 +200,8 @@ const About = () => {
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
             <motion.h1 
-              className={`text-3xl md:text-4xl font-bold mb-6 ${
-                darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-              }`}
+              // Used light mode text color
+              className={`text-3xl md:text-4xl font-bold mb-6 text-[#182B5C]`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -217,9 +209,8 @@ const About = () => {
               About Optimas Fibre
             </motion.h1>
             <motion.p 
-              className={`text-lg md:text-xl mb-10 font-light ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}
+              // Used light mode text color
+              className={`text-lg md:text-xl mb-10 font-light text-gray-700`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -231,14 +222,12 @@ const About = () => {
       </section>
 
       {/* Tab Navigation */}
-      <section className={`py-6 border-t transition-colors duration-300 ${
-        darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-100'
-      }`}>
+      {/* Used light mode background and border */}
+      <section className={`py-6 border-t transition-colors duration-300 bg-white border-gray-100`}>
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
-            <div className={`rounded-lg shadow-sm p-1 flex flex-wrap justify-center gap-1 ${
-              darkMode ? 'bg-gray-800' : 'bg-white'
-            }`}>
+            {/* Used light mode background */}
+            <div className={`rounded-lg shadow-sm p-1 flex flex-wrap justify-center gap-1 bg-white`}>
               {['overview', 'portfolio'].map((tab) => (
                 <motion.button
                   key={tab}
@@ -246,9 +235,8 @@ const About = () => {
                   className={`px-4 py-2 rounded font-medium transition-all duration-300 text-sm ${
                     activeTab === tab
                       ? 'bg-[#182b5c] text-white shadow-md'
-                      : darkMode
-                        ? 'text-gray-400 hover:text-[#d0b216] hover:bg-gray-700'
-                        : 'text-gray-600 hover:text-[#182b5c] hover:bg-gray-100'
+                      // Used light mode tab style
+                      : 'text-gray-600 hover:text-[#182b5c] hover:bg-gray-100'
                   }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -263,26 +251,21 @@ const About = () => {
 
       {/* Overview Content */}
       {activeTab === 'overview' && (
-        // ... (keep existing Overview section unchanged)
-        <section className={`py-12 md:py-16 transition-colors duration-300 ${
-          darkMode ? 'bg-gray-900' : 'bg-white'
-        }`}>
+        // Used light mode background
+        <section className={`py-12 md:py-16 transition-colors duration-300 bg-white`}>
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row gap-12 md:gap-16">
               <div className="w-full lg:w-1/2">
                 <motion.h2 
-                  className={`text-2xl md:text-3xl font-bold mb-6 md:mb-8 ${
-                    darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                  }`}
+                  className={`text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-[#182B5C]`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
                 >
                   Who We Are
                 </motion.h2>
-                <div className={`space-y-4 md:space-y-6 ${
-                  darkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+                {/* Used light mode text color */}
+                <div className={`space-y-4 md:space-y-6 text-gray-700`}>
                   <p className="text-sm md:text-base leading-relaxed">
                     Optimas Fibre is a premier Kenyan systems integrator with a distinguished reputation in telecommunications. 
                     We deliver comprehensive end-to-end solutions including innovative design, premium supply, precision installation, 
@@ -298,19 +281,19 @@ const About = () => {
                   </p>
                 </div>
                 <div className="mt-8 md:mt-12">
-                  <h3 className={`text-xl md:text-2xl font-bold mb-4 md:mb-6 ${
-                    darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                  }`}>
+                  <h3 className={`text-xl md:text-2xl font-bold mb-4 md:mb-6 text-[#182B5C]`}>
                     Integrated Fibre Solutions
                   </h3>
-                  <p className={darkMode ? 'text-gray-300 mb-4 md:mb-6 text-sm md:text-base' : 'text-gray-700 mb-4 md:mb-6 text-sm md:text-base'}>
+                  {/* Used light mode text color */}
+                  <p className={'text-gray-700 mb-4 md:mb-6 text-sm md:text-base'}>
                     We provide comprehensive fibre optics solutions with specialized expertise in FTTX design, network optimization, 
                     cross-vendor product integration, rigorous testing protocols, and professional commissioning services.
                   </p>
                   <div className="mt-6 md:mt-8">
                     <motion.button 
                       onClick={handleServicesClick}
-                      className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light}`}
+                      // Used light mode button style
+                      className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -321,9 +304,7 @@ const About = () => {
               </div>
               <div className="w-full lg:w-1/2">
                 <div className="sticky top-24">
-                  <h3 className={`text-xl md:text-2xl font-bold mb-6 md:mb-8 ${
-                    darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                  }`}>
+                  <h3 className={`text-xl md:text-2xl font-bold mb-6 md:mb-8 text-[#182B5C]`}>
                     Our Work
                   </h3>
                   <Swiper
@@ -333,9 +314,8 @@ const About = () => {
                     pagination={{ 
                       clickable: true, 
                       el: '.swiper-pagination',
-                      bulletClass: `swiper-pagination-bullet ${
-                        darkMode ? 'bg-gray-600' : 'bg-gray-300'
-                      } opacity-50`,
+                      // Used light mode pagination styles
+                      bulletClass: `swiper-pagination-bullet bg-gray-300 opacity-50`,
                       bulletActiveClass: 'swiper-pagination-bullet-active !bg-[#182B5C] !opacity-100'
                     }}
                     autoplay={{ delay: 5000 }}
@@ -413,18 +393,15 @@ const About = () => {
             {/* Services */}
             <div className="mt-12 md:mt-20">
               <motion.h2 
-                className={`text-2xl md:text-3xl font-bold mb-4 text-center ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                }`}
+                className={`text-2xl md:text-3xl font-bold mb-4 text-center text-[#182B5C]`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
                 Our Services
               </motion.h2>
-              <p className={`text-center mb-8 md:mb-12 max-w-2xl mx-auto ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              } text-sm md:text-base`}>
+              {/* Used light mode text color */}
+              <p className={`text-center mb-8 md:mb-12 max-w-2xl mx-auto text-gray-600 text-sm md:text-base`}>
                 Comprehensive fibre solutions tailored to meet the evolving needs of businesses and communities across Kenya.
               </p>
               <motion.div 
@@ -436,15 +413,16 @@ const About = () => {
                 {services.map((service, index) => (
                   <motion.div
                     key={index}
-                    className={`${CARD_STYLES.base} ${darkMode ? CARD_STYLES.dark : CARD_STYLES.light} p-4 rounded`}
+                    // Used light mode card style
+                    className={`${CARD_STYLES.base} ${CARD_STYLES.light} p-4 rounded`}
                     whileHover={{ y: -3 }}
                     variants={itemVariants}
                   >
                     <div className="text-2xl md:text-3xl mb-2">{service.icon}</div>
-                    <h3 className={`text-sm md:text-base font-bold mb-1 ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                    }`}>{service.title}</h3>
-                    <p className={darkMode ? 'text-gray-400 text-xs' : 'text-gray-600 text-xs'}>{service.description}</p>
+                    {/* Used light mode text color */}
+                    <h3 className={`text-sm md:text-base font-bold mb-1 text-[#182B5C]`}>{service.title}</h3>
+                    {/* Used light mode text color */}
+                    <p className={'text-gray-600 text-xs'}>{service.description}</p>
                   </motion.div>
                 ))}
               </motion.div>
@@ -453,9 +431,7 @@ const About = () => {
             {/* Bio */}
             <div className="mt-12 md:mt-20">
               <motion.h2 
-                className={`text-2xl md:text-3xl font-bold mb-6 md:mb-8 ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                }`}
+                className={`text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-[#182B5C]`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
@@ -463,7 +439,8 @@ const About = () => {
                 Optimas Bio
               </motion.h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-                <div className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                {/* Used light mode text color */}
+                <div className={'text-gray-700'}>
                   <p className="mb-4 md:mb-6 text-sm md:text-base leading-relaxed">
                     Optimas Fibre was founded by a team of telecommunications experts with over a decade of industry experience, 
                     united by a vision to bridge the gap between user expectations and provider capabilities in Kenya's rapidly evolving digital landscape.
@@ -478,12 +455,9 @@ const About = () => {
                     projects that have transformed connectivity for businesses, institutions, and communities across Kenya.
                   </p>
                 </div>
-                <div className={`p-5 md:p-8 rounded ${
-                  darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50'
-                }`}>
-                  <h3 className={`text-xl md:text-2xl font-bold mb-4 md:mb-6 ${
-                    darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                  }`}>
+                {/* Used light mode background and text color */}
+                <div className={`p-5 md:p-8 rounded bg-gray-50`}>
+                  <h3 className={`text-xl md:text-2xl font-bold mb-4 md:mb-6 text-[#182B5C]`}>
                     Our Expertise
                   </h3>
                   <div className="grid grid-cols-1 gap-3 md:gap-4 mb-6 md:mb-8">
@@ -497,14 +471,16 @@ const About = () => {
                         transition={{ duration: 0.5, delay: index * 0.1 }}
                       >
                         <div className="w-1.5 h-1.5 bg-[#d0b216] rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
-                        <span className={darkMode ? 'text-gray-300 text-xs' : 'text-gray-700 text-xs'}>{item}</span>
+                        {/* Used light mode text color */}
+                        <span className={'text-gray-700 text-xs'}>{item}</span>
                       </motion.div>
                     ))}
                   </div>
                   <div className="text-center">
                     <motion.button 
                       onClick={handleServicesClick}
-                      className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light}`}
+                      // Used light mode button style
+                      className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -520,31 +496,29 @@ const About = () => {
 
       {/* ✅ UPDATED PORTFOLIO SECTION */}
       {activeTab === 'portfolio' && (
-        <section className={`py-12 md:py-16 transition-colors duration-300 ${
-          darkMode ? 'bg-gray-900' : 'bg-white'
-        }`}>
+        // Used light mode background
+        <section className={`py-12 md:py-16 transition-colors duration-300 bg-white`}>
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center mb-8 md:mb-12">
               <div>
                 <motion.h2 
-                  className={`text-2xl md:text-3xl font-bold mb-2 ${
-                    darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-                  }`}
+                  // Used light mode text color
+                  className={`text-2xl md:text-3xl font-bold mb-2 text-[#182B5C]`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
                   Our Portfolio
                 </motion.h2>
-                <p className={`max-w-2xl ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                } text-sm md:text-base`}>
+                {/* Used light mode text color */}
+                <p className={`max-w-2xl text-gray-600 text-sm md:text-base`}>
                   Explore our successful projects and see how we've helped businesses and communities with our fibre solutions.
                 </p>
               </div>
               <motion.button 
                 onClick={handleAddPortfolio}
-                className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center gap-1`}
+                // Used light mode button style
+                className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light} flex items-center gap-1`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -599,7 +573,7 @@ const About = () => {
                     key={item._id}
                     className={`flex flex-col md:flex-row ${
                       index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                    } gap-5 md:gap-6 p-4 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} rounded-sm shadow-sm`}
+                    } gap-5 md:gap-6 p-4 bg-white border border-gray-200 rounded-sm shadow-sm`}
                     variants={portfolioCardVariants}
                     custom={index}
                     whileHover={{ y: -3 }}
@@ -618,7 +592,7 @@ const About = () => {
                           }}
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                           <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                           </svg>
@@ -629,35 +603,27 @@ const About = () => {
                     {/* Content */}
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
-                        <h3 className={`text-base font-bold ${
-                          darkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
+                        {/* Used light mode text color */}
+                        <h3 className={`text-base font-bold text-gray-900`}>
                           {item.title}
                         </h3>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          darkMode ? 'bg-gray-700 text-[#d0b216]' : 'bg-gray-100 text-[#182b5c]'
-                        }`}>
+                        {/* Used light mode background/text color */}
+                        <span className={`text-xs px-2 py-1 rounded bg-gray-100 text-[#182b5c]`}>
                           {item.category || 'General'}
                         </span>
                       </div>
-                      <p className={`mt-2 text-xs leading-relaxed ${
-                        darkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
+                      <p className={`mt-2 text-xs leading-relaxed text-gray-600`}>
                         {item.description || item.content || 'No description available.'}
                       </p>
                       <div className="mt-3 flex justify-between items-center">
-                        <span className={`text-xs ${
-                          darkMode ? 'text-gray-500' : 'text-gray-400'
-                        }`}>
+                        {/* Used light mode text color */}
+                        <span className={`text-xs text-gray-400`}>
                           {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 
-                           item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
+                            item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : 'Date not available'}
                         </span>
                         <motion.button 
-                          className={`text-xs font-medium px-3 py-1.5 rounded transition-colors ${
-                            darkMode 
-                              ? 'bg-gray-700 text-gray-300 hover:bg-[#d0b216] hover:text-white' 
-                              : 'bg-gray-100 text-gray-700 hover:bg-[#182b5c] hover:text-white'
-                          }`}
+                          // Used light mode button style
+                          className={`text-xs font-medium px-3 py-1.5 rounded transition-colors bg-gray-100 text-gray-700 hover:bg-[#182b5c] hover:text-white`}
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.98 }}
                         >
@@ -675,39 +641,33 @@ const About = () => {
               <div className="mt-12 md:mt-16">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
                   <motion.div 
-                    className={`p-4 rounded text-center ${
-                      darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/80 border border-gray-200'
-                    }`}
+                    // Used light mode background/border
+                    className={`p-4 rounded text-center bg-white/80 border border-gray-200`}
                     whileHover={{ y: -3 }}
                   >
                     <div className="text-2xl font-bold text-[#d0b216]">{portfolioItems.length}</div>
-                    <div className={`text-xs font-medium ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>Total Projects</div>
+                    {/* Used light mode text color */}
+                    <div className={`text-xs font-medium text-gray-700`}>Total Projects</div>
                   </motion.div>
                   <motion.div 
-                    className={`p-4 rounded text-center ${
-                      darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/80 border border-gray-200'
-                    }`}
+                    // Used light mode background/border
+                    className={`p-4 rounded text-center bg-white/80 border border-gray-200`}
                     whileHover={{ y: -3 }}
                   >
                     <div className="text-2xl font-bold text-[#d0b216]">
                       {new Set(portfolioItems.map(item => item.category)).size}
                     </div>
-                    <div className={`text-xs font-medium ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>Categories</div>
+                    {/* Used light mode text color */}
+                    <div className={`text-xs font-medium text-gray-700`}>Categories</div>
                   </motion.div>
                   <motion.div 
-                    className={`p-4 rounded text-center ${
-                      darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/80 border border-gray-200'
-                    }`}
+                    // Used light mode background/border
+                    className={`p-4 rounded text-center bg-white/80 border border-gray-200`}
                     whileHover={{ y: -3 }}
                   >
                     <div className="text-2xl font-bold text-[#d0b216]">{Math.floor(Math.random() * 50) + 10}+</div>
-                    <div className={`text-xs font-medium ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>Happy Clients</div>
+                    {/* Used light mode text color */}
+                    <div className={`text-xs font-medium text-gray-700`}>Happy Clients</div>
                   </motion.div>
                 </div>
               </div>
@@ -726,9 +686,8 @@ const About = () => {
           onClick={handleCloseModal}
         >
           <motion.div 
-            className={`max-w-2xl w-full rounded overflow-hidden max-h-[90vh] overflow-y-auto ${
-              darkMode ? 'bg-gray-900' : 'bg-white'
-            }`}
+            // Used light mode background
+            className={`max-w-2xl w-full rounded overflow-hidden max-h-[90vh] overflow-y-auto bg-white`}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -742,7 +701,8 @@ const About = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                // Used light mode background
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                   <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                   </svg>
@@ -756,37 +716,28 @@ const About = () => {
               </button>
             </div>
             <div className="p-5 md:p-6">
-              <h3 className={`text-xl font-bold mb-2 ${
-                darkMode ? 'text-[#d0b216]' : 'text-[#182B5C]'
-              }`}>
+              <h3 className={`text-xl font-bold mb-2 text-[#182B5C]`}>
                 {selectedPortfolioItem.title}
               </h3>
               <div className="flex items-center gap-3 mb-4">
-                <span className={`text-xs px-2 py-1 rounded ${
-                  darkMode ? 'bg-gray-800 text-[#d0b216]' : 'bg-gray-100 text-[#182b5c]'
-                }`}>
+                {/* Used light mode background/text color */}
+                <span className={`text-xs px-2 py-1 rounded bg-gray-100 text-[#182b5c]`}>
                   {selectedPortfolioItem.category || 'General'}
                 </span>
-                <span className={`text-xs ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>
+                {/* Used light mode text color */}
+                <span className={`text-xs text-gray-600`}>
                   {selectedPortfolioItem.publishedAt ? new Date(selectedPortfolioItem.publishedAt).toLocaleDateString() : 
-                   selectedPortfolioItem.uploadedAt ? new Date(selectedPortfolioItem.uploadedAt).toLocaleDateString() : 'Date not available'}
+                    selectedPortfolioItem.uploadedAt ? new Date(selectedPortfolioItem.uploadedAt).toLocaleDateString() : 'Date not available'}
                 </span>
               </div>
-              <p className={`text-sm leading-relaxed ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              {/* Used light mode text color */}
+              <p className={`text-sm leading-relaxed text-gray-700`}>
                 {selectedPortfolioItem.description || selectedPortfolioItem.content || 'No description available.'}
               </p>
               <div className="mt-6 flex gap-3">
                 <motion.button 
                   onClick={goToContact}
-                  className={`flex-1 py-2.5 rounded font-medium text-sm ${
-                    darkMode 
-                      ? 'bg-[#182b5c] text-white hover:bg-[#0f1f45]' 
-                      : 'bg-[#182b5c] text-white hover:bg-[#0f1f45]'
-                  }`}
+                  className={`flex-1 py-2.5 rounded font-medium text-sm bg-[#182b5c] text-white hover:bg-[#0f1f45]`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -794,11 +745,8 @@ const About = () => {
                 </motion.button>
                 <motion.button 
                   onClick={handleCloseModal}
-                  className={`px-4 py-2.5 rounded font-medium text-sm border ${
-                    darkMode 
-                      ? 'border-gray-600 text-gray-300 hover:border-[#d0b216] hover:text-[#d0b216]' 
-                      : 'border-gray-300 text-gray-700 hover:border-[#182b5c] hover:text-[#182b5c]'
-                  }`}
+                  // Used light mode button style
+                  className={`px-4 py-2.5 rounded font-medium text-sm border border-gray-300 text-gray-700 hover:border-[#182b5c] hover:text-[#182b5c]`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

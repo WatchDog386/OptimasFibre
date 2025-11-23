@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, createContext } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -7,19 +7,15 @@ import {
   Sun, Moon, Gauge, Server, Activity, Lock, Send
 } from 'lucide-react';
 
-// --- MOCK CONTEXT ---
-const ThemeContext = createContext({ darkMode: false, toggleTheme: () => {} });
+// --- CONTEXT REMOVAL: ThemeContext is no longer used for dynamic theming ---
 
 const ThemeProvider = ({ children }) => {
-  const [darkMode, setDarkMode] = useState(false);
-  const toggleTheme = () => setDarkMode(!darkMode);
-  
+  // Theme logic removed: Page remains in light mode.
   return (
-    <ThemeContext.Provider value={{ darkMode, toggleTheme }}>
-      <div className={darkMode ? 'dark' : ''}>
-        {children}
-      </div>
-    </ThemeContext.Provider>
+    // Removed className={darkMode ? 'dark' : ''}
+    <div>
+      {children}
+    </div>
   );
 };
 
@@ -38,45 +34,45 @@ const cardThemes = {
     buttonBg: "bg-gray-900 text-white hover:bg-gray-800",
     featureIcon: "text-blue-600",
     shadow: "shadow-blue-500/20 hover:shadow-blue-500/40",
-    border: "border-blue-200 dark:border-blue-800",
-    softBg: "bg-blue-50 dark:bg-blue-900/20",
-    textColor: "text-blue-900 dark:text-blue-100"
+    border: "border-blue-200", // Removed dark:border-blue-800
+    softBg: "bg-blue-50", // Removed dark:bg-blue-900/20
+    textColor: "text-blue-900" // Removed dark:text-blue-100
   },
   green: {
     gradient: "bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-400",
     buttonBg: "bg-emerald-900 text-white hover:bg-emerald-800", 
     featureIcon: "text-emerald-600",
     shadow: "shadow-emerald-500/20 hover:shadow-emerald-500/40",
-    border: "border-emerald-200 dark:border-emerald-800",
-    softBg: "bg-emerald-50 dark:bg-emerald-900/20",
-    textColor: "text-emerald-900 dark:text-emerald-100"
+    border: "border-emerald-200", // Removed dark:border-emerald-800
+    softBg: "bg-emerald-50", // Removed dark:bg-emerald-900/20
+    textColor: "text-emerald-900" // Removed dark:text-emerald-100
   },
   orange: {
     gradient: "bg-gradient-to-br from-orange-600 via-orange-500 to-amber-400",
     buttonBg: "bg-gray-900 text-white hover:bg-gray-800",
     featureIcon: "text-orange-600",
     shadow: "shadow-orange-500/20 hover:shadow-orange-500/40",
-    border: "border-orange-200 dark:border-orange-800",
-    softBg: "bg-orange-50 dark:bg-orange-900/20",
-    textColor: "text-orange-900 dark:text-orange-100"
+    border: "border-orange-200", // Removed dark:border-orange-800
+    softBg: "bg-orange-50", // Removed dark:bg-orange-900/20
+    textColor: "text-orange-900" // Removed dark:text-orange-100
   },
   purple: {
     gradient: "bg-gradient-to-br from-purple-700 via-purple-600 to-fuchsia-500",
     buttonBg: "bg-purple-900 text-white hover:bg-purple-800",
     featureIcon: "text-purple-600",
     shadow: "shadow-purple-500/20 hover:shadow-purple-500/40",
-    border: "border-purple-200 dark:border-purple-800",
-    softBg: "bg-purple-50 dark:bg-purple-900/20",
-    textColor: "text-purple-900 dark:text-purple-100"
+    border: "border-purple-200", // Removed dark:border-purple-800
+    softBg: "bg-purple-50", // Removed dark:bg-purple-900/20
+    textColor: "text-purple-900" // Removed dark:text-purple-100
   },
   red: {
     gradient: "bg-gradient-to-br from-red-700 via-red-600 to-rose-500",
     buttonBg: "bg-gray-900 text-white hover:bg-gray-800",
     featureIcon: "text-red-600",
     shadow: "shadow-red-500/20 hover:shadow-red-500/40",
-    border: "border-red-200 dark:border-red-800",
-    softBg: "bg-rose-50 dark:bg-rose-900/20",
-    textColor: "text-rose-900 dark:text-rose-100"
+    border: "border-red-200", // Removed dark:border-red-800
+    softBg: "bg-rose-50", // Removed dark:bg-rose-900/20
+    textColor: "text-rose-900" // Removed dark:text-rose-100
   }
 };
 
@@ -101,7 +97,7 @@ const mobilePlans = [
 // --- COMPONENTS ---
 
 // 1. UPDATED COMPACT CARD WITH HOVER SHADOW EFFECT
-const VumaCard = ({ plan, onSelect, darkMode }) => {
+const VumaCard = ({ plan, onSelect }) => { // Removed darkMode prop
   const theme = cardThemes[plan.theme] || cardThemes.blue;
 
   return (
@@ -115,7 +111,8 @@ const VumaCard = ({ plan, onSelect, darkMode }) => {
         scale: 1.03,
         transition: { type: "spring", stiffness: 300 } 
       }}
-      className={`relative flex flex-col bg-white dark:bg-gray-800 rounded-3xl border-2 ${theme.border} transition-all duration-300 overflow-visible h-full mt-2 ${theme.shadow}`}
+      // Removed dark:bg-gray-800 from className
+      className={`relative flex flex-col bg-white rounded-3xl border-2 ${theme.border} transition-all duration-300 overflow-visible h-full mt-2 ${theme.shadow}`}
     >
       {/* HOVER SHADOW BEHIND CARD */}
       <motion.div 
@@ -164,7 +161,8 @@ const VumaCard = ({ plan, onSelect, darkMode }) => {
              whileHover={{ scale: 1.1 }}
              whileTap={{ scale: 0.95 }}
              onClick={() => onSelect(plan)}
-             className={`${theme.buttonBg} px-8 py-3 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-2 border-2 border-white dark:border-gray-800`}
+             // Removed dark:border-gray-800
+             className={`${theme.buttonBg} px-8 py-3 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-2 border-2 border-white`}
            >
              Get Connected <ChevronRight size={12} />
            </motion.button>
@@ -173,25 +171,28 @@ const VumaCard = ({ plan, onSelect, darkMode }) => {
 
       {/* BODY: Features */}
       <div className="pt-10 pb-6 px-4 flex-grow flex flex-col items-center">
-         <div className={`mb-4 flex items-center gap-2 text-[10px] font-bold px-3 py-1 rounded-full ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-500'}`}>
+          {/* Replaced conditional dark mode class with light mode default */}
+          <div className={`mb-4 flex items-center gap-2 text-[10px] font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-500`}>
             <Users size={12} /> {plan.users}
-         </div>
+          </div>
         
         <ul className="space-y-3 w-full max-w-[200px]">
-           {plan.features.map((feat, i) => (
-             <motion.li 
-               key={i} 
-               initial={{ opacity: 0, x: -10 }}
-               whileInView={{ opacity: 1, x: 0 }}
-               transition={{ delay: i * 0.1 }}
-               className="flex items-center gap-3 text-left"
-             >
-                <div className={`p-1 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                   <CheckCircle size={12} className={`${theme.featureIcon}`} />
-                </div>
-                <span className={`text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{feat}</span>
-             </motion.li>
-           ))}
+          {plan.features.map((feat, i) => (
+            <motion.li 
+              key={i} 
+              initial={{ opacity: 0, x: -10 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="flex items-center gap-3 text-left"
+            >
+              {/* Replaced conditional dark mode class with light mode default */}
+              <div className={`p-1 rounded-full bg-gray-50`}>
+                <CheckCircle size={12} className={`${theme.featureIcon}`} />
+              </div>
+              {/* Replaced conditional dark mode class with light mode default */}
+              <span className={`text-xs font-medium text-gray-600`}>{feat}</span>
+            </motion.li>
+          ))}
         </ul>
       </div>
     </motion.div>
@@ -199,7 +200,7 @@ const VumaCard = ({ plan, onSelect, darkMode }) => {
 };
 
 // 2. UPDATED DATA PASS CARD — WITH CLEAR BORDERS & HOVER GLOW
-const DataPassCard = ({ plan, onSelect, darkMode, index }) => {
+const DataPassCard = ({ plan, onSelect, index }) => { // Removed darkMode prop
   const theme = cardThemes[plan.theme] || cardThemes.blue;
 
   return (
@@ -214,31 +215,33 @@ const DataPassCard = ({ plan, onSelect, darkMode, index }) => {
         boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
         backgroundColor: `${theme.softBg.replace('bg-', 'bg-opacity-70 ')}`, // Glow effect
       }}
-      className={`relative cursor-pointer group overflow-hidden rounded-xl border-2 ${theme.border} transition-all duration-300 ${theme.softBg} ${darkMode ? 'hover:border-white/20' : 'shadow-sm'}`}
+      // Removed dark:border-white/20
+      className={`relative cursor-pointer group overflow-hidden rounded-xl border-2 ${theme.border} transition-all duration-300 ${theme.softBg} shadow-sm`}
       onClick={() => window.open(plan.link, '_blank')}
     >
       <div className="p-4 flex flex-col justify-between h-full relative z-10">
-         <div className="flex justify-between items-start mb-2">
-            <div className={`p-2 rounded-lg bg-white/50 dark:bg-black/20 ${theme.featureIcon} transition-colors duration-300`}>
+          <div className="flex justify-between items-start mb-2">
+            {/* Removed dark:bg-black/20 */}
+            <div className={`p-2 rounded-lg bg-white/50 ${theme.featureIcon} transition-colors duration-300`}>
                <Wifi size={16} />
             </div>
             {plan.popular && <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
               <span className={`relative inline-flex rounded-full h-2 w-2 ${theme.featureIcon} bg-current`}></span>
             </span>}
-         </div>
-         
-         <div>
+          </div>
+          
+          <div>
             <h4 className={`text-base font-black mb-1 leading-tight ${theme.textColor}`}>{plan.duration}</h4>
             <p className={`text-[10px] uppercase font-bold tracking-wider opacity-70 ${theme.textColor}`}>{plan.devices}</p>
-         </div>
+          </div>
 
-         <div className={`mt-3 pt-3 border-t border-dashed border-gray-400/30 flex justify-between items-center`}>
+          <div className={`mt-3 pt-3 border-t border-dashed border-gray-400/30 flex justify-between items-center`}>
             <span className={`font-bold text-sm ${theme.textColor}`}>Ksh {plan.price}</span>
             <motion.div whileHover={{ x: 3 }}>
                 <ArrowRight size={14} className={`${theme.featureIcon}`}/>
             </motion.div>
-         </div>
+          </div>
       </div>
       {/* Stronger Gradient Overlay on Hover */}
       <div className={`absolute inset-0 ${theme.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none`}></div>
@@ -247,7 +250,7 @@ const DataPassCard = ({ plan, onSelect, darkMode, index }) => {
 };
 
 // 3. BOOKING MODAL — UNCHANGED FROM PREVIOUS UPDATE
-const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoading, darkMode }) => {
+const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoading }) => { // Removed darkMode prop
   if (!show) return null;
 
   return (
@@ -256,78 +259,91 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
         initial={{ scale: 0.9, opacity: 0 }} 
         animate={{ scale: 1, opacity: 1 }} 
         exit={{ scale: 0.9, opacity: 0 }}
-        className={`w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl ${darkMode ? 'bg-gray-900' : 'bg-white'} p-6`}
+        // Replaced conditional dark mode class with light mode default
+        className={`w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl bg-white p-6`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Request Your Connection</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition"><X size={18} className={darkMode ? 'text-white' : 'text-black'}/></button>
+          {/* Replaced conditional dark mode class with light mode default */}
+          <h3 className={`text-xl font-bold text-gray-900`}>Request Your Connection</h3>
+          {/* Replaced conditional dark mode class with light mode default */}
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition"><X size={18} className={'text-black'}/></button>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-5">
           {/* Full Name */}
           <div className="space-y-1">
-            <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>Full Name *</label>
+            {/* Replaced conditional dark mode class with light mode default */}
+            <label className={`block text-sm font-semibold text-black`}>Full Name *</label>
             <input 
               type="text" 
               name="name" 
               value={formData.name} 
               onChange={onChange} 
               required 
-              className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-black placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-blue-500`} 
+              // Replaced conditional dark mode class with light mode default
+              className={`w-full px-4 py-3 rounded-lg border bg-white border-gray-300 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500`} 
               placeholder="Enter your full name" 
             />
           </div>
 
           {/* Phone Number */}
           <div className="space-y-1">
-            <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>Phone Number *</label>
+            {/* Replaced conditional dark mode class with light mode default */}
+            <label className={`block text-sm font-semibold text-black`}>Phone Number *</label>
             <input 
               type="tel" 
               name="phone" 
               value={formData.phone} 
               onChange={onChange} 
               required 
-              className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-black placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-blue-500`} 
+              // Replaced conditional dark mode class with light mode default
+              className={`w-full px-4 py-3 rounded-lg border bg-white border-gray-300 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500`} 
               placeholder="Enter your WhatsApp number" 
             />
           </div>
 
           {/* Email Address */}
           <div className="space-y-1">
-            <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>Email Address</label>
+            {/* Replaced conditional dark mode class with light mode default */}
+            <label className={`block text-sm font-semibold text-black`}>Email Address</label>
             <input 
               type="email" 
               name="email" 
               value={formData.email} 
               onChange={onChange} 
-              className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-black placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-blue-500`} 
+              // Replaced conditional dark mode class with light mode default
+              className={`w-full px-4 py-3 rounded-lg border bg-white border-gray-300 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500`} 
               placeholder="Enter your email address" 
             />
           </div>
 
           {/* Location */}
           <div className="space-y-1">
-            <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>Location *</label>
+            {/* Replaced conditional dark mode class with light mode default */}
+            <label className={`block text-sm font-semibold text-black`}>Location *</label>
             <input 
               type="text" 
               name="location" 
               value={formData.location} 
               onChange={onChange} 
               required 
-              className={`w-full px-4 py-3 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-black placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-blue-500`} 
+              // Replaced conditional dark mode class with light mode default
+              className={`w-full px-4 py-3 rounded-lg border bg-white border-gray-300 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500`} 
               placeholder="Enter your location" 
             />
           </div>
 
           {/* Package */}
           <div className="space-y-1">
-            <label className={`block text-sm font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>Package</label>
+            {/* Replaced conditional dark mode class with light mode default */}
+            <label className={`block text-sm font-semibold text-black`}>Package</label>
             <input 
               type="text" 
               value={plan?.name || 'Not Selected'}
               readOnly
-              className={`w-full px-4 py-3 rounded-lg bg-gray-100 ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-300 text-gray-600'} cursor-not-allowed`} 
+              // Replaced conditional dark mode class with light mode default
+              className={`w-full px-4 py-3 rounded-lg bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed`} 
             />
           </div>
 
@@ -364,13 +380,15 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
   );
 };
 
-const SuccessPopup = ({ onClose, darkMode }) => (
+const SuccessPopup = ({ onClose }) => ( // Removed darkMode prop
   <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[110]" onClick={onClose}>
-    <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`p-8 rounded-3xl text-center max-w-sm w-full shadow-2xl ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`} onClick={(e) => e.stopPropagation()}>
+    {/* Replaced conditional dark mode class with light mode default */}
+    <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`p-8 rounded-3xl text-center max-w-sm w-full shadow-2xl bg-white text-gray-900`} onClick={(e) => e.stopPropagation()}>
       <div className="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle size={40} /></div>
       <h3 className="text-2xl font-black mb-2">Order Received</h3>
       <p className="text-sm opacity-60 mb-8 leading-relaxed">Your connection request has been generated. Redirecting you to our WhatsApp channel.</p>
-      <button onClick={onClose} className="w-full py-3 rounded-xl bg-gray-100 dark:bg-gray-700 font-bold text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Dismiss</button>
+      {/* Replaced conditional dark mode class with light mode default */}
+      <button onClick={onClose} className="w-full py-3 rounded-xl bg-gray-100 font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition-colors">Dismiss</button>
     </motion.div>
   </div>
 );
@@ -378,7 +396,7 @@ const SuccessPopup = ({ onClose, darkMode }) => (
 // --- MAIN CONTENT ---
 const MainContent = () => {
   const navigate = useNavigate();
-  const { darkMode, toggleTheme } = useContext(ThemeContext);
+  // Removed ThemeContext useContext(ThemeContext) as dark mode is static (off)
   
   const [showForm, setShowForm] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -416,20 +434,15 @@ const MainContent = () => {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`} style={{ fontFamily: "'Poppins', sans-serif" }}>
+    // Replaced conditional dark mode class with light mode default (bg-gray-50)
+    <div className={`min-h-screen transition-colors duration-500 bg-gray-50`} style={{ fontFamily: "'Poppins', sans-serif" }}>
       
       {/* NAVBAR */}
       <div className="fixed top-0 left-0 right-0 z-50 p-4 flex justify-between items-center pointer-events-none">
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="font-black text-lg text-white tracking-tighter pointer-events-auto drop-shadow-md">
           OPTIMAS<span className="text-blue-400">FIBER</span>
         </motion.div>
-        <motion.button 
-          initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-          onClick={toggleTheme} 
-          className="p-2 bg-white/10 backdrop-blur-md rounded-full text-white pointer-events-auto hover:bg-white/20 transition shadow-lg border border-white/20"
-        >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-        </motion.button>
+        {/* REMOVED THEME TOGGLE BUTTON */}
       </div>
 
       {/* HERO SECTION — WITH WHITE, BLACK, AND YELLOW ACCENTS */}
@@ -470,9 +483,11 @@ const MainContent = () => {
       <div className={`relative z-30 -mt-12 md:-mt-10 px-4 mb-8`}>
         <motion.div 
             initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
-            className={`max-w-5xl mx-auto rounded-full shadow-2xl ${darkMode ? 'bg-gray-900/95 backdrop-blur-xl' : 'bg-white/95 backdrop-blur-md'} py-4 px-8 overflow-hidden`}
+            // Replaced conditional dark mode class with light mode default
+            className={`max-w-5xl mx-auto rounded-full shadow-2xl bg-white/95 backdrop-blur-md py-4 px-8 overflow-hidden`}
         >
-          <div className="flex flex-wrap justify-between items-center divide-x divide-gray-200 dark:divide-gray-700">
+          {/* Removed dark:divide-gray-700 */}
+          <div className="flex flex-wrap justify-between items-center divide-x divide-gray-200">
             {[
               { icon: Gauge, t: "99.9%", d: "Uptime" },
               { icon: Activity, t: "< 5ms", d: "Ping" },
@@ -480,12 +495,14 @@ const MainContent = () => {
               { icon: Lock, t: "AES-256", d: "Security" }
             ].map((f, i) => (
               <div key={i} className="flex-1 flex flex-col md:flex-row items-center justify-center gap-3 px-2 md:px-6 text-center md:text-left group">
-                <div className="p-2 bg-blue-50 dark:bg-gray-800 rounded-full group-hover:bg-blue-100 dark:group-hover:bg-gray-700 transition">
-                   <f.icon size={16} className="text-blue-600 dark:text-blue-400" />
+                {/* Replaced conditional dark mode class with light mode default */}
+                <div className="p-2 bg-blue-50 rounded-full group-hover:bg-blue-100 transition">
+                   <f.icon size={16} className="text-blue-600" />
                 </div>
                 <div>
-                    <h4 className={`font-black text-sm md:text-base leading-none ${darkMode ? 'text-white' : 'text-gray-900'}`}>{f.t}</h4>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">{f.d}</p>
+                  {/* Replaced conditional dark mode class with light mode default */}
+                   <h4 className={`font-black text-sm md:text-base leading-none text-gray-900`}>{f.t}</h4>
+                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">{f.d}</p>
                 </div>
               </div>
             ))}
@@ -494,12 +511,14 @@ const MainContent = () => {
       </div>
 
       {/* PRO PACKAGES SECTION */}
-      <section id="wifi-packages" className={`py-12 px-4 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
+      {/* Replaced conditional dark mode class with light mode default */}
+      <section id="wifi-packages" className={`py-12 px-4 bg-gray-50`}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
               <motion.h2 
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                className={`text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}
+                // Replaced conditional dark mode class with light mode default
+                className={`text-3xl font-black mb-2 text-gray-900`}
               >
                 Fiber <span className="text-blue-600">Plans</span>
               </motion.h2>
@@ -515,7 +534,8 @@ const MainContent = () => {
           >
             {plans.map((plan) => (
               <motion.div key={plan.id} variants={{ hidden: { opacity: 0, y: 50 }, visible: { opacity: 1, y: 0 } }}>
-                <VumaCard plan={plan} onSelect={handlePlanSelect} darkMode={darkMode} />
+                {/* Removed darkMode prop */}
+                <VumaCard plan={plan} onSelect={handlePlanSelect} />
               </motion.div>
             ))}
           </motion.div>
@@ -523,13 +543,15 @@ const MainContent = () => {
       </section>
 
       {/* DATA PASS SECTION */}
-      <section className={`py-12 px-4 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      {/* Replaced conditional dark mode class with light mode default */}
+      <section className={`py-12 px-4 bg-white`}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-             <div>
-                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Instant Data Passes</h2>
+              <div>
+                {/* Replaced conditional dark mode class with light mode default */}
+                <h2 className={`text-xl font-bold text-gray-900`}>Instant Data Passes</h2>
                 <p className="text-gray-500 text-xs mt-0.5">Short-term access for our public Wi-Fi zones.</p>
-             </div>
+              </div>
           </div>
           
           <motion.div 
@@ -538,19 +560,21 @@ const MainContent = () => {
             whileInView="visible"
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
           >
-             {mobilePlans.map((plan, i) => (
-               <motion.div key={plan.id} variants={{ hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1 } }}>
-                 <DataPassCard plan={plan} index={i} onSelect={(p) => window.open(p.link, '_blank')} darkMode={darkMode} />
-               </motion.div>
-             ))}
+              {mobilePlans.map((plan, i) => (
+                <motion.div key={plan.id} variants={{ hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1 } }}>
+                  {/* Removed darkMode prop */}
+                  <DataPassCard plan={plan} index={i} onSelect={(p) => window.open(p.link, '_blank')} />
+                </motion.div>
+              ))}
           </motion.div>
         </div>
       </section>
 
       {/* Modals & Floating Buttons */}
       <AnimatePresence>
-        {showForm && <BookingModal show={showForm} onClose={() => setShowForm(false)} plan={selectedPlan} formData={formData} onChange={(e) => setFormData({...formData, [e.target.name]: e.target.value})} onSubmit={handleSubmit} isLoading={isLoading} darkMode={darkMode} />}
-        {showSuccess && <SuccessPopup onClose={() => setShowSuccess(false)} darkMode={darkMode} />}
+        {/* Removed darkMode prop from modals */}
+        {showForm && <BookingModal show={showForm} onClose={() => setShowForm(false)} plan={selectedPlan} formData={formData} onChange={(e) => setFormData({...formData, [e.target.name]: e.target.value})} onSubmit={handleSubmit} isLoading={isLoading} />}
+        {showSuccess && <SuccessPopup onClose={() => setShowSuccess(false)} />}
       </AnimatePresence>
 
       <motion.a 
