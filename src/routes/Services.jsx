@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -23,14 +23,14 @@ import {
   FaInfinity,
   FaArrowRight
 } from 'react-icons/fa';
-import { ThemeContext } from '../contexts/ThemeContext';
+// import { ThemeContext } from '../contexts/ThemeContext'; // REMOVED
 
 const Services = () => {
   const [activeTab, setActiveTab] = useState('residential');
   const [selectedService, setSelectedService] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { darkMode } = useContext(ThemeContext);
+  // const { darkMode } = useContext(ThemeContext); // REMOVED
 
   // Navigation handlers
   const handleCoverageClick = () => {
@@ -265,50 +265,41 @@ const Services = () => {
     }
   };
 
-  // ✅ UPDATED BUTTON STYLES — SHORTER, NO ICONS
+  // ✅ UPDATED BUTTON STYLES (simplified for light mode)
   const BUTTON_STYLES = {
     primary: {
       base: 'py-2 px-6 rounded-full transition-colors duration-300 font-medium text-sm whitespace-nowrap',
-      dark: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
       light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
     },
     secondary: {
       base: 'py-2 px-6 rounded-full transition-colors duration-300 font-medium text-sm whitespace-nowrap',
-      dark: 'border border-gray-600 text-gray-300 hover:border-[#182b5c] hover:text-[#182b5c]',
       light: 'border border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white',
     }
   };
 
-  // Service Card Component (original style preserved)
+  // Service Card Component (modified for light mode)
   const ServiceCard = ({ service, index }) => (
     <motion.div
       variants={itemVariants}
-      className={`rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-4 group ${
-        darkMode 
-          ? 'bg-gray-800 border border-gray-700' 
-          : 'bg-white border border-gray-200'
-      }`}
+      // Replaced conditional dark mode class with light mode default
+      className={`rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-4 group bg-white border border-gray-200`}
       whileHover={{ y: -3 }}
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <div className="text-center mb-4">
         <motion.div 
-          className={`group-hover:text-[#d0b216] transition-colors duration-300 inline-block mb-2 ${
-            darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-          }`}
+          // Replaced conditional dark mode class with light mode default
+          className={`group-hover:text-[#d0b216] transition-colors duration-300 inline-block mb-2 text-[#182b5c]`}
           whileHover={{ rotate: 360 }}
           transition={{ duration: 0.5 }}
         >
           {service.icon}
         </motion.div>
-        <h3 className={`font-semibold mb-2 text-sm md:text-base ${
-          darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-        }`}>
+        <h3 className={`font-semibold mb-2 text-sm md:text-base text-[#182b5c]`}>
           {service.title}
         </h3>
-        <p className={`leading-relaxed mb-4 text-xs ${
-          darkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}>
+        {/* Replaced conditional dark mode class with light mode default */}
+        <p className={`leading-relaxed mb-4 text-xs text-gray-600`}>
           {service.description}
         </p>
       </div>
@@ -316,9 +307,7 @@ const Services = () => {
         {service.features.map((feature, featureIndex) => (
           <motion.li 
             key={featureIndex} 
-            className={`flex items-center text-xs ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}
+            className={`flex items-center text-xs text-gray-700`}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: featureIndex * 0.1 }}
@@ -330,7 +319,8 @@ const Services = () => {
       </ul>
       <motion.button 
         onClick={() => handleLearnMore(service)}
-        className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light}`}
+        // Used light mode button style
+        className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
@@ -341,15 +331,14 @@ const Services = () => {
 
   return (
     <motion.div 
-      className={`services-page min-h-screen py-4 md:py-8 overflow-hidden transition-colors duration-300 ${
-        darkMode ? 'bg-gray-900' : 'bg-gray-50'
-      }`}
+      // Replaced conditional dark mode class with light mode default
+      className={`services-page min-h-screen py-4 md:py-8 overflow-hidden transition-colors duration-300 bg-gray-50`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* ✅ HERO SECTION — FROM NEW VERSION, USING world.jpg */}
+      {/* ✅ HERO SECTION — FROM NEW VERSION, USING world.jpg (modified for light mode transition) */}
       <section className="relative w-full min-h-[55vh] md:min-h-[60vh] flex items-center overflow-hidden bg-gray-900 pb-12">
         <div className="absolute inset-0 z-0">
           <img 
@@ -358,7 +347,8 @@ const Services = () => {
             className="w-full h-full object-cover opacity-40"
           />
         </div>
-        <div className={`absolute inset-0 z-10 bg-gradient-to-r ${darkMode ? 'from-gray-950 via-gray-900/90' : 'from-blue-950 via-blue-900/90'} to-transparent`}></div>
+        {/* Set static light-mode-friendly gradient (or just use the blue-950 one) */}
+        <div className={`absolute inset-0 z-10 bg-gradient-to-r from-blue-950 via-blue-900/90 to-transparent`}></div>
         <div className="relative z-20 w-full max-w-6xl mx-auto px-6 h-full flex flex-col md:flex-row items-center">
           <div className="w-full md:w-1/2 pt-20 md:pt-0">
             <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
@@ -381,16 +371,16 @@ const Services = () => {
             </motion.div>
           </div>
           <div className="hidden md:flex w-1/2 h-full items-end justify-end mt-12 md:mt-0 relative">
-             {/* ✅ YOUR CUSTOM IMAGE: world.jpg */}
-             <motion.img 
-               initial={{ opacity: 0, y: 50 }} 
-               animate={{ opacity: 1, y: 0 }} 
-               transition={{ delay: 0.3, duration: 0.8 }} 
-               src="/world.jpg" 
-               alt="Services Graphic" 
-               className="w-full max-w-md object-contain relative z-20 opacity-90" 
-               style={{ maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }} 
-             />
+               {/* Note: I'm keeping the image tag/path as provided in the original code for file path accuracy */}
+               <motion.img 
+                initial={{ opacity: 0, y: 50 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ delay: 0.3, duration: 0.8 }} 
+                src="/world.jpg" 
+                alt="Services Graphic" 
+                className="w-full max-w-md object-contain relative z-20 opacity-90" 
+                style={{ maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }} 
+              />
           </div>
         </div>
       </section>
@@ -404,9 +394,8 @@ const Services = () => {
           transition={{ duration: 0.6 }}
         >
           <motion.h1 
-            className={`text-lg md:text-2xl font-semibold mb-2 ${
-              darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-            }`}
+            // Replaced conditional dark mode class with light mode default
+            className={`text-lg md:text-2xl font-semibold mb-2 text-[#182b5c]`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -414,9 +403,8 @@ const Services = () => {
             Our <span className="text-[#d0b216]">Fiber Services</span>
           </motion.h1>
           <motion.p 
-            className={`text-xs md:text-base max-w-3xl mx-auto ${
-              darkMode ? 'text-gray-300' : 'text-gray-600'
-            }`}
+            // Replaced conditional dark mode class with light mode default
+            className={`text-xs md:text-base max-w-3xl mx-auto text-gray-600`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -436,9 +424,8 @@ const Services = () => {
       <section className="container mx-auto px-4 mb-4 md:mb-8 relative z-10">
         <div className="flex justify-center">
           <motion.div 
-            className={`rounded-lg shadow-sm p-1 flex flex-wrap justify-center gap-1 ${
-              darkMode ? 'bg-gray-800' : 'bg-white'
-            }`}
+            // Replaced conditional dark mode class with light mode default
+            className={`rounded-lg shadow-sm p-1 flex flex-wrap justify-center gap-1 bg-white`}
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -450,9 +437,8 @@ const Services = () => {
                 className={`px-4 py-2 rounded-full font-medium transition-all duration-300 text-sm ${
                   activeTab === tab
                     ? 'bg-[#182b5c] text-white shadow-md'
-                    : darkMode
-                      ? 'text-gray-400 hover:text-[#d0b216] hover:bg-gray-700'
-                      : 'text-gray-600 hover:text-[#182b5c] hover:bg-gray-100'
+                    // Used light mode tab style
+                    : 'text-gray-600 hover:text-[#182b5c] hover:bg-gray-100'
                 }`}
                 variants={itemVariants}
                 whileHover={{ scale: 1.05 }}
@@ -471,9 +457,8 @@ const Services = () => {
       {/* Services Grid */}
       <section className="container mx-auto px-4 mb-6 md:mb-12 relative z-10">
         <motion.h2 
-          className={`text-base md:text-xl font-semibold text-center mb-3 md:mb-6 capitalize ${
-            darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-          }`}
+          // Replaced conditional dark mode class with light mode default
+          className={`text-base md:text-xl font-semibold text-center mb-3 md:mb-6 capitalize text-[#182b5c]`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -496,9 +481,8 @@ const Services = () => {
       {/* Coverage Map Section */}
       <section className="container mx-auto px-4 mb-6 md:mb-12 relative z-10">
         <motion.div 
-          className={`rounded-xl shadow-md overflow-hidden ${
-            darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-[#182b5c] to-[#0f1f45]'
-          }`}
+          // Replaced conditional dark mode class with light mode default
+          className={`rounded-xl shadow-md overflow-hidden bg-gradient-to-r from-[#182b5c] to-[#0f1f45]`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
@@ -547,13 +531,9 @@ const Services = () => {
                 Check Coverage
               </motion.button>
             </div>
-            <div className={`flex items-center justify-center p-4 ${
-              darkMode ? 'bg-gray-700' : 'bg-gray-200'
-            }`}>
+            <div className={`flex items-center justify-center p-4 bg-gray-200`}>
               <motion.div 
-                className={`rounded-lg p-4 text-center w-full h-40 md:h-56 flex flex-col items-center justify-center ${
-                  darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
-                }`}
+                className={`rounded-lg p-4 text-center w-full h-40 md:h-56 flex flex-col items-center justify-center bg-white text-gray-800`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
@@ -567,10 +547,8 @@ const Services = () => {
                   <FaMapMarkerAlt className="w-5 h-5 text-[#182b5c]" />
                 </motion.div>
                 <h3 className="text-sm md:text-lg font-medium mb-1">Coverage Map</h3>
-                <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 text-xs`}>Check availability</p>
-                <div className={`w-full h-2 rounded-full mb-1 overflow-hidden ${
-                  darkMode ? 'bg-gray-700' : 'bg-gray-300'
-                }`}>
+                <p className={`text-gray-600 mb-2 text-xs`}>Check availability</p>
+                <div className={`w-full h-2 rounded-full mb-1 overflow-hidden bg-gray-300`}>
                   <motion.div 
                     className="h-full bg-gradient-to-r from-green-400 to-[#182b5c] rounded-full"
                     initial={{ width: 0 }}
@@ -578,7 +556,7 @@ const Services = () => {
                     transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
                   />
                 </div>
-                <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>95% coverage</p>
+                <p className={`text-xs text-gray-500`}>95% coverage</p>
               </motion.div>
             </div>
           </div>
@@ -588,9 +566,8 @@ const Services = () => {
       {/* Value-Added Services Section */}
       <section className="container mx-auto px-4 mb-6 md:mb-12 relative z-10">
         <motion.div 
-          className={`rounded-xl p-4 ${
-            darkMode ? 'bg-gray-800' : 'bg-gradient-to-r from-[#182b5c] to-[#0f1f45]'
-          }`}
+          // Replaced conditional dark mode class with light mode default
+          className={`rounded-xl p-4 bg-gradient-to-r from-[#182b5c] to-[#0f1f45]`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
@@ -624,11 +601,8 @@ const Services = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`text-center p-3 rounded-lg backdrop-blur-sm border hover:bg-opacity-20 transition-all duration-300 ${
-                  darkMode 
-                    ? 'bg-gray-700 bg-opacity-50 border-gray-600 hover:bg-gray-600' 
-                    : 'bg-white bg-opacity-10 border-white border-opacity-20'
-                }`}
+                // Used light mode styles
+                className={`text-center p-3 rounded-lg backdrop-blur-sm border hover:bg-opacity-20 transition-all duration-300 bg-white bg-opacity-10 border-white border-opacity-20`}
                 whileHover={{ y: -3 }}
               >
                 <div className="text-[#d0b216] mb-2">
@@ -661,47 +635,37 @@ const Services = () => {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className={`rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto ${
-                darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-              }`}
+              // Used light mode background/text color
+              className={`rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white text-gray-900`}
               onClick={(e) => e.stopPropagation()}
               style={{ fontFamily: "'Poppins', sans-serif" }}
             >
               <div className="p-4">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center">
-                    <div className={`mr-3 text-lg ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                    }`}>
+                    <div className={`mr-3 text-lg text-[#182b5c]`}>
                       {selectedService.icon}
                     </div>
-                    <h2 className={`text-base md:text-xl font-semibold ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                    }`}>
+                    <h2 className={`text-base md:text-xl font-semibold text-[#182b5c]`}>
                       {selectedService.title}
                     </h2>
                   </div>
                   <motion.button 
                     onClick={closeModal}
-                    className={`transition-colors duration-300 p-1 rounded-full hover:bg-gray-200 ${
-                      darkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'
-                    }`}
+                    // Used light mode button style
+                    className={`transition-colors duration-300 p-1 rounded-full text-gray-500 hover:bg-gray-100`}
                     whileHover={{ rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
                   >
                     <FaTimes className="text-lg" />
                   </motion.button>
                 </div>
-                <p className={`text-xs md:text-sm mb-4 ${
-                  darkMode ? 'text-gray-300' : 'text-gray-600'
-                }`}>
+                <p className={`text-xs md:text-sm mb-4 text-gray-600`}>
                   {selectedService.description}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div>
-                    <h3 className={`text-sm font-medium mb-2 flex items-center ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                    }`}>
+                    <h3 className={`text-sm font-medium mb-2 flex items-center text-[#182b5c]`}>
                       <FaCheckCircle className="text-green-500 mr-2" />
                       Key Features
                     </h3>
@@ -714,46 +678,35 @@ const Services = () => {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <span className={`w-2 h-2 rounded-full mt-1.5 mr-2 flex-shrink-0 ${
-                            darkMode ? 'bg-[#d0b216]' : 'bg-[#182b5c]'
-                          }`}></span>
-                          <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{feature}</span>
+                          <span className={`w-2 h-2 rounded-full mt-1.5 mr-2 flex-shrink-0 bg-[#182b5c]`}></span>
+                          <span className={'text-gray-700'}>{feature}</span>
                         </motion.li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <h3 className={`text-sm font-medium mb-2 flex items-center ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                    }`}>
+                    <h3 className={`text-sm font-medium mb-2 flex items-center text-[#182b5c]`}>
                       <FaShieldVirus className="mr-2" />
                       Service Details
                     </h3>
-                    <div className={`rounded-lg p-3 ${
-                      darkMode ? 'bg-gray-700' : 'bg-gray-50'
-                    }`}>
+                    {/* Used light mode background */}
+                    <div className={`rounded-lg p-3 bg-gray-50`}>
                       {selectedService.details.pricing && (
                         <div className="mb-2">
-                          <h4 className={`font-medium text-xs ${
-                            darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                          }`}>Pricing</h4>
-                          <p className={darkMode ? 'text-gray-300 text-xs' : 'text-gray-700 text-xs'}>{selectedService.details.pricing}</p>
+                          <h4 className={`font-medium text-xs text-[#182b5c]`}>Pricing</h4>
+                          <p className={'text-gray-700 text-xs'}>{selectedService.details.pricing}</p>
                         </div>
                       )}
                       {selectedService.details.sla && (
                         <div className="mb-2">
-                          <h4 className={`font-medium text-xs ${
-                            darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                          }`}>Uptime Guarantee</h4>
-                          <p className={darkMode ? 'text-gray-300 text-xs' : 'text-gray-700 text-xs'}>{selectedService.details.sla}</p>
+                          <h4 className={`font-medium text-xs text-[#182b5c]`}>Uptime Guarantee</h4>
+                          <p className={'text-gray-700 text-xs'}>{selectedService.details.sla}</p>
                         </div>
                       )}
                       {selectedService.details.speedTiers && (
                         <div className="mb-2">
-                          <h4 className={`font-medium text-xs ${
-                            darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                          }`}>Speed Tiers</h4>
-                          <p className={darkMode ? 'text-gray-300 text-xs' : 'text-gray-700 text-xs'}>{selectedService.details.speedTiers.join(", ")}</p>
+                          <h4 className={`font-medium text-xs text-[#182b5c]`}>Speed Tiers</h4>
+                          <p className={'text-gray-700 text-xs'}>{selectedService.details.speedTiers.join(", ")}</p>
                         </div>
                       )}
                     </div>
@@ -761,9 +714,7 @@ const Services = () => {
                 </div>
                 {selectedService.details.benefits && (
                   <div className="mb-6">
-                    <h3 className={`text-sm font-medium mb-2 flex items-center ${
-                      darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                    }`}>
+                    <h3 className={`text-sm font-medium mb-2 flex items-center text-[#182b5c]`}>
                       <FaRocket className="mr-2" />
                       Benefits
                     </h3>
@@ -771,17 +722,13 @@ const Services = () => {
                       {selectedService.details.benefits.map((benefit, index) => (
                         <motion.div 
                           key={index} 
-                          className={`flex items-start p-2 rounded-lg text-xs ${
-                            darkMode ? 'bg-gray-700' : 'bg-blue-50'
-                          }`}
+                          className={`flex items-start p-2 rounded-lg text-xs bg-blue-50`}
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <FaInfinity className={`mt-0.5 mr-2 flex-shrink-0 ${
-                            darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                          }`} />
-                          <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{benefit}</span>
+                          <FaInfinity className={`mt-0.5 mr-2 flex-shrink-0 text-[#182b5c]`} />
+                          <span className={'text-gray-700'}>{benefit}</span>
                         </motion.div>
                       ))}
                     </div>
@@ -789,7 +736,7 @@ const Services = () => {
                 )}
                 <div className="flex flex-col sm:flex-row gap-2 justify-center mt-6">
                   <motion.button 
-                    className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light}`}
+                    className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleGetStartedClick}
@@ -797,7 +744,7 @@ const Services = () => {
                     Get This Service
                   </motion.button>
                   <motion.button 
-                    className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light}`}
+                    className={`${BUTTON_STYLES.secondary.base} ${BUTTON_STYLES.secondary.light}`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleContactClick}
@@ -817,23 +764,18 @@ const Services = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className={`rounded-xl p-4 ${
-            darkMode ? 'bg-gray-800' : 'bg-white shadow-md'
-          }`}
+          // Used light mode background/shadow
+          className={`rounded-xl p-4 bg-white shadow-md`}
         >
-          <h2 className={`text-base md:text-xl font-semibold mb-2 ${
-            darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-          }`}>
+          <h2 className={`text-base md:text-xl font-semibold mb-2 text-[#182b5c]`}>
             Ready to Experience True Fiber?
           </h2>
-          <p className={`text-xs md:text-base mb-4 max-w-2xl mx-auto ${
-            darkMode ? 'text-gray-300' : 'text-gray-600'
-          }`}>
+          <p className={`text-xs md:text-base mb-4 max-w-2xl mx-auto text-gray-600`}>
             Join thousands of satisfied customers enjoying lightning-fast internet.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
             <motion.button 
-              className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light}`}
+              className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleGetStartedClick}
@@ -841,7 +783,7 @@ const Services = () => {
               Get Started Now
             </motion.button>
             <motion.button 
-              className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light}`}
+              className={`${BUTTON_STYLES.secondary.base} ${BUTTON_STYLES.secondary.light}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleContactClick}
