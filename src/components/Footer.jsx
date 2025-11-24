@@ -1,35 +1,23 @@
-// Footer.jsx - UPDATED WITH ADMIN LOGIN BUTTON
 import React from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom"; // Import Link for navigation
+import { Link } from "react-router-dom"; 
 
 // Define RISA's core styles as constants for consistency
 const RISA_STYLES = {
   primaryColor: '#015B97',
   button: {
     primary: {
-      base: 'px-4 py-2 bg-white text-[#015B97] border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm',
+      base: 'px-4 py-2 bg-white text-[#015B97] border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm cursor-pointer',
       hover: 'hover:bg-[#015B97] hover:text-white hover:border-[#015B97]',
     },
     secondary: {
-      base: 'px-4 py-2 bg-[#015B97] text-white border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm',
+      base: 'px-4 py-2 bg-[#015B97] text-white border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm cursor-pointer',
       hover: 'hover:bg-white hover:text-[#015B97] hover:border-white',
-    },
-    small: {
-      base: 'px-3 py-1.5 text-sm font-medium border rounded-[50px] transition-colors',
-      active: 'bg-[#182B5C] text-white shadow-md',
-      light: 'text-gray-600 hover:text-[#182B5C] hover:bg-gray-50',
-      dark: 'text-gray-400 hover:text-[#d0b216] hover:bg-gray-800',
     },
   },
   typography: {
-    body: 'text-base',
     h3: 'text-xl font-bold',
-    link: 'text-sm font-medium transition-colors',
-    highlight: {
-      yellow: 'text-[#d0b216]',
-      blue: 'text-[#182B5C]',
-    },
+    link: 'text-sm font-medium transition-colors cursor-pointer',
   },
 };
 
@@ -38,7 +26,6 @@ export default function Footer({ darkMode = false }) {
     bg: darkMode ? '#111827' : '#182B5C',
     textPrimary: darkMode ? '#f9fafb' : '#ffffff',
     textSecondary: darkMode ? '#d1d5db' : '#9ca3af',
-    textHover: darkMode ? '#fbbf24' : '#d0b216',
     border: '#374151',
     linkHover: darkMode ? '#fbbf24' : '#d0b216',
   };
@@ -46,6 +33,23 @@ export default function Footer({ darkMode = false }) {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // Navigation Links Data
+  const quickLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'About Us', path: '/about' },
+    { name: 'Services', path: '/services' },
+    { name: 'Coverage', path: '/coverage' },
+    { name: 'Contact', path: '/contact' }
+  ];
+
+  const serviceLinks = [
+    { name: 'Internet Solutions', path: '/services' },
+    { name: 'Network Design', path: '/services' },
+    { name: 'Installation', path: '/services' },
+    { name: 'Maintenance', path: '/services' },
+    { name: 'Consultation', path: '/contact' }
+  ];
 
   return (
     <motion.footer
@@ -76,6 +80,8 @@ export default function Footer({ darkMode = false }) {
                 <a
                   key={idx}
                   href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={social.name}
                   className="transition-transform duration-200 hover:scale-110"
                   style={{ color: colors.textSecondary }}
@@ -92,43 +98,43 @@ export default function Footer({ darkMode = false }) {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className={`${RISA_STYLES.typography.h3} mb-2`}>
+            <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
               Quick Links
             </h3>
             <ul className="space-y-2">
-              {['Home', 'About Us', 'Services', 'Coverage', 'Contact'].map((link, idx) => (
+              {quickLinks.map((link, idx) => (
                 <li key={idx}>
-                  <a
-                    href="#"
+                  <Link
+                    to={link.path}
                     className={`${RISA_STYLES.typography.link} block hover:translate-x-1 transition-transform`}
                     style={{ color: colors.textSecondary }}
                     onMouseEnter={(e) => e.currentTarget.style.color = colors.linkHover}
                     onMouseLeave={(e) => e.currentTarget.style.color = colors.textSecondary}
                   >
-                    {link}
-                  </a>
+                    {link.name}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Services Links */}
           <div className="space-y-4">
-            <h3 className={`${RISA_STYLES.typography.h3} mb-2`}>
+            <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
               Services
             </h3>
             <ul className="space-y-2">
-              {['Internet Solutions', 'Network Design', 'Installation', 'Maintenance', 'Consultation'].map((service, idx) => (
+              {serviceLinks.map((service, idx) => (
                 <li key={idx}>
-                  <a
-                    href="#"
+                  <Link
+                    to={service.path}
                     className={`${RISA_STYLES.typography.link} block hover:translate-x-1 transition-transform`}
                     style={{ color: colors.textSecondary }}
                     onMouseEnter={(e) => e.currentTarget.style.color = colors.linkHover}
                     onMouseLeave={(e) => e.currentTarget.style.color = colors.textSecondary}
                   >
-                    {service}
-                  </a>
+                    {service.name}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -136,7 +142,7 @@ export default function Footer({ darkMode = false }) {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h3 className={`${RISA_STYLES.typography.h3} mb-2`}>
+            <h3 className={`${RISA_STYLES.typography.h3} mb-2`} style={{ color: colors.textPrimary }}>
               Contact Us
             </h3>
             <div className="space-y-3 text-sm" style={{ color: colors.textSecondary }}>
@@ -145,7 +151,7 @@ export default function Footer({ darkMode = false }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-                <span>kahawa west,Nairobi, Kenya</span>
+                <span>Kahawa West, Nairobi, Kenya</span>
               </p>
               <p className="flex items-center">
                 <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,12 +176,11 @@ export default function Footer({ darkMode = false }) {
           </p>
 
           {/* Admin Login Button and Back to Top Button */}
-          <div className="flex flex-wrap justify-center gap-4 md:justify-end"> {/* Added flex container for buttons */}
+          <div className="flex flex-wrap justify-center gap-4 md:justify-end items-center">
             <Link
-              to="/admin/login" // Link to the admin login route
+              to="/admin/login"
               className={`${RISA_STYLES.button.secondary.base} ${RISA_STYLES.button.secondary.hover} inline-flex items-center`}
-              // Removed motion.button specific props as Link doesn't support them directly
-              style={{ textDecoration: 'none' }} // Optional: remove underline if Link is used
+              style={{ textDecoration: 'none' }}
             >
               Admin Login
             </Link>
