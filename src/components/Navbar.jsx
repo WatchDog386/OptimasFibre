@@ -30,17 +30,15 @@ export default function Navbar() {
   }, [location]);
 
   // --- TOP UTILITY BAR ---
-  // Changed 'hidden lg:flex' to 'hidden xl:flex' so it hides on laptops
-  // Increased text size from text-[10px] to text-xs
   const TopUtilityBar = () => (
     <div className="hidden xl:flex justify-between items-center py-2 px-6 text-xs uppercase tracking-wider font-bold text-white transition-all duration-300 z-[1001] relative"
          style={{ backgroundColor: COLORS.primary }}>
       <div className="flex items-center gap-6">
         <a href="tel:+254741874200" className="flex items-center gap-2 hover:text-[#d0b216] transition-colors">
-          <Phone size={12} fill="currentColor" /> +254 741 874200
+          <Phone size={12} fill="currentColor" /> +254 741 874 200
         </a>
-        <a href="mailto:support@optimasfiber.com" className="flex items-center gap-2 hover:text-[#d0b216] transition-colors">
-          <Mail size={12} /> support@optimasfiber.com
+        <a href="mailto:support@optimaswifi.co.ke" className="flex items-center gap-2 hover:text-[#d0b216] transition-colors">
+          <Mail size={12} /> support@optimaswifi.co.ke
         </a>
       </div>
       <div className="flex items-center gap-4">
@@ -62,7 +60,6 @@ export default function Navbar() {
       <div className="relative h-full flex items-center">
         <NavLink
           to={route}
-          // Increased text size to text-sm
           className={`relative z-10 flex items-center gap-1 px-4 py-2 text-sm font-bold uppercase tracking-wide transition-colors duration-200 rounded-md group
             ${isActive ? "text-[#015B97]" : "text-gray-600 hover:text-[#015B97]"}`}
         >
@@ -109,13 +106,12 @@ export default function Navbar() {
               </span>
               <div className="flex items-center gap-1">
                 <span className="h-0.5 w-3 bg-[#d0b216] rounded-full"></span>
-                <span className="text-[10px] font-bold tracking-widest text-[#d0b216]">FIBER</span>
+                <span className="text-[10px] font-bold tracking-widest text-[#d0b216]">WIFI</span>
               </div>
             </div>
           </NavLink>
 
           {/* DESKTOP NAV LINKS */}
-          {/* Changed from hidden lg:flex to hidden xl:flex */}
           <div className="hidden xl:flex items-center gap-2">
             <DesktopNavItem label="Home" route="/" />
             <DesktopNavItem label="About" route="/about" />
@@ -127,11 +123,9 @@ export default function Navbar() {
 
           {/* RIGHT ACTIONS */}
           <div className="flex items-center gap-3">
-            {/* Changed from hidden lg:flex to hidden xl:flex */}
             <div className="hidden xl:flex">
               <NavLink
                 to="/coverage"
-                // Increased text size to text-sm
                 className="relative overflow-hidden px-6 py-2.5 rounded-sm font-bold text-white shadow-md transform transition-all hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2 group text-sm uppercase tracking-widest"
                 style={{ backgroundColor: COLORS.accent }}
               >
@@ -141,8 +135,7 @@ export default function Navbar() {
               </NavLink>
             </div>
 
-            {/* Hamburger Button - Shows on lg and below (laptop and mobile) */}
-            {/* Changed lg:hidden to xl:hidden */}
+            {/* Hamburger Button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="xl:hidden p-2 rounded-md text-[#015B97] hover:bg-blue-50 transition-colors"
@@ -182,7 +175,6 @@ export default function Navbar() {
                 <NavLink to="/faqs" className="flex items-center gap-3 p-3 rounded-lg text-base font-bold text-gray-800 hover:bg-blue-50 hover:text-[#015B97] transition-colors">FAQs</NavLink>
                 <NavLink to="/contact" className="flex items-center gap-3 p-3 rounded-lg text-base font-bold text-gray-800 hover:bg-blue-50 hover:text-[#015B97] transition-colors">Contact</NavLink>
                 
-                {/* Admin Link in Mobile Menu */}
                 <div className="pt-4 mt-4 border-t border-gray-100">
                    <NavLink to="/admin/login" className="flex items-center gap-3 p-3 rounded-lg text-sm font-bold text-gray-500 hover:text-[#015B97] transition-colors">
                       <User size={16} /> Admin Portal

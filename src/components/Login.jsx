@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Facebook, Twitter, Instagram, Youtube, 
-  Eye, EyeOff, Check, ArrowRight, Loader2, 
+  Eye, EyeOff, ArrowRight, Loader2, 
   Home, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,8 +22,7 @@ const Login = () => {
   const navigate = useNavigate();
   const API_BASE_URL = 'https://optimasfibre.onrender.com'; 
 
-  // Background Image (Mountain Sunset similar to reference)
-  const BG_IMAGE = "https://images.unsplash.com/photo-1491466424936-e304919aada7?q=80&w=2069&auto=format&fit=crop";
+  const BG_IMAGE = "https://media.istockphoto.com/id/1494073880/photo/a-man-holding-icon-virtual-24-7-support-services-for-worldwide-nonstop-and-full-time.jpg?s=612x612&w=0&k=20&c=4YF-otaX3n8OiPOC4L_-_pAX1ibayzdvpkK1Ih2-p50=";
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -124,7 +122,7 @@ const Login = () => {
       <div className="container mx-auto px-4 sm:px-6 relative z-10 w-full max-w-6xl">
         <div className="flex flex-col md:flex-row justify-between items-center min-h-[80vh] gap-8 md:gap-12 py-8">
           
-          {/* --- LEFT SIDE: WELCOME TEXT --- */}
+          {/* --- LEFT SIDE: WELCOME TEXT (No social icons) --- */}
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -138,20 +136,9 @@ const Login = () => {
             </div>
             
             <p className="text-white/80 text-sm md:text-base max-w-md leading-relaxed">
-              It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using our portal is seamless management.
+              Sign in to your admin portal to manage services, view customer data, and monitor network performance.
             </p>
-
-            <div className="flex gap-3 pt-4">
-              {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
-                <a 
-                  key={i} 
-                  href="#" 
-                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-white hover:text-black backdrop-blur-sm flex items-center justify-center transition-all duration-300 text-white"
-                >
-                  <Icon size={18} />
-                </a>
-              ))}
-            </div>
+            {/* ✅ Social icons removed */}
           </motion.div>
 
           {/* --- RIGHT SIDE: LOGIN FORM --- */}
@@ -213,7 +200,8 @@ const Login = () => {
                   onClick={() => setRememberMe(!rememberMe)}
                   className={`w-4 h-4 border flex items-center justify-center cursor-pointer transition-colors ${rememberMe ? 'bg-[#d0b216] border-[#d0b216]' : 'bg-transparent border-white'}`}
                 >
-                  {rememberMe && <Check size={12} className="text-black" />}
+                  {/* Visual checkmark — no external lib needed */}
+                  {rememberMe && <div className="w-2 h-2 bg-black rounded-sm"></div>}
                 </div>
                 <label onClick={() => setRememberMe(!rememberMe)} className="text-sm cursor-pointer select-none">
                   Remember Me
@@ -240,9 +228,9 @@ const Login = () => {
 
             </form>
 
+            {/* ✅ Simplified legal notice — no broken links */}
             <div className="mt-8 text-xs text-white/60 leading-relaxed text-center md:text-left">
-              By clicking on "Sign in now" you agree to our <br/>
-              <a href="#" className="underline hover:text-white">Terms of Service</a> | <a href="#" className="underline hover:text-white">Privacy Policy</a>
+              By signing in, you agree to Optimas WiFi's policies and terms of use.
             </div>
           </motion.div>
         </div>
@@ -277,7 +265,7 @@ const Login = () => {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     className="w-full px-4 py-3 rounded-sm bg-black/30 border border-white/10 text-white focus:border-[#d0b216] outline-none transition-colors text-base"
-                    placeholder="admin@optimas.com"
+                    placeholder="support@optimaswifi.co.ke"
                     required
                   />
                 </div>
