@@ -8,69 +8,29 @@ import {
   Search,
   ChevronDown,
   Phone,
-  Mail
+  Mail,
+  MessageSquare,
+  ArrowRight
 } from "lucide-react";
-// import { ThemeContext } from "../contexts/ThemeContext"; // REMOVED: No longer needed
 
-// Define RISA's core styles as constants for consistency
-const RISA_STYLES = {
-  primaryColor: '#015B97',
-  button: {
-    // Primary Button: White bg, blue border/text -> Inverts on hover
-    primary: {
-      base: 'px-4 py-2 bg-white text-[#015B97] border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm',
-      hover: 'hover:bg-[#015B97] hover:text-white hover:border-[#015B97]',
-    },
-    // Secondary Button: Blue bg, white text -> Inverts on hover
-    secondary: {
-      base: 'px-4 py-2 bg-[#015B97] text-white border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm',
-      hover: 'hover:bg-white hover:text-[#015B97] hover:border-white',
-    },
-    // Small Button (e.g., for tabs)
-    small: {
-      base: 'px-3 py-1.5 text-sm font-medium border rounded-[50px] transition-colors',
-      active: 'bg-[#182B5C] text-white shadow-md',
-      light: 'text-gray-600 hover:text-[#182B5C] hover:bg-gray-50',
-      // Removed dark variant
-    }
-  },
-  typography: {
-    // Base text styles
-    body: 'text-base',
-    // Headings
-    h1: 'text-3xl md:text-4xl font-bold',
-    h2: 'text-2xl md:text-3xl font-bold',
-    h3: 'text-xl md:text-2xl font-bold',
-    // Card and FAQ text
-    cardTitle: 'text-base md:text-lg font-medium',
-    cardText: 'text-xs md:text-sm',
-    // Special text
-    highlight: {
-      yellow: 'text-[#d0b216]',
-      blue: 'text-[#182B5C]',
-    },
-  }
-};
-
+// --- DATA: FAQ CONTENT ---
 const faqsData = {
-  "Account Management": {
-    icon: <User className="w-5 h-5 text-[#d0b216]" />,
+  "Account": {
+    icon: <User className="w-5 h-5" />,
     items: [
       {
         question: "How do I create a self-care account?",
         answer: (
           <div className="space-y-3">
             <p>To create your self-care account:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm">
-              <li>Visit our self-care portal at optimaswifi.co.ke</li>
-              <li>Click on 'Get Started'</li>
+            <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm font-medium text-gray-600">
+              <li>Visit our self-care portal at <span className="text-blue-600 font-bold">optimaswifi.co.ke</span></li>
+              <li>Click on <span className="font-bold text-blue-950">'Get Started'</span></li>
               <li>Enter your details as prompted</li>
               <li>Create a password and verify your identity via SMS</li>
-              <li>Complete your profile details</li>
             </ol>
-            {/* Removed dark mode classes */}
-            <div className="bg-blue-50 p-3 rounded border border-blue-200 text-xs md:text-sm">
-              <p>Note: Your account number can be found on your invoice or by contacting customer care.</p>
+            <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-600 text-xs md:text-sm">
+              <p className="text-blue-900 font-bold">Note: Your account number is on your invoice.</p>
             </div>
           </div>
         ),
@@ -80,15 +40,13 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>Password reset options:</p>
-            <ul className="list-disc pl-5 space-y-2 text-xs md:text-sm">
+            <ul className="list-disc pl-5 space-y-2 text-xs md:text-sm font-medium text-gray-600">
               <li>Click 'Forgot Password' on the login page</li>
               <li>Enter your registered email or phone number</li>
               <li>Follow the OTP verification process</li>
-              <li>Set a new strong password</li>
             </ul>
-            {/* Removed dark mode classes */}
-            <div className="bg-yellow-50 p-3 rounded border border-yellow-200 text-xs md:text-sm">
-              <p>Security Tip: Use a combination of letters, numbers and special characters for your password.</p>
+            <div className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-500 text-xs md:text-sm">
+              <p className="text-yellow-800 font-bold">Tip: Use a mix of numbers and symbols for security.</p>
             </div>
           </div>
         ),
@@ -98,38 +56,29 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>To update your account details:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm">
+            <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm font-medium text-gray-600">
               <li>Log in to your self-care account</li>
               <li>Go to 'Profile Settings'</li>
               <li>Edit the information you want to change</li>
-              <li>Save your changes</li>
             </ol>
-            {/* Removed dark mode classes */}
-            <div className="bg-green-50 p-3 rounded border border-green-200 text-xs md:text-sm">
-              <p>Important: Some changes may require verification for security purposes.</p>
-            </div>
           </div>
         ),
       },
     ],
   },
-  "Billing & Payments": {
-    icon: <CreditCard className="w-5 h-5 text-[#d0b216]" />,
+  "Billing": {
+    icon: <CreditCard className="w-5 h-5" />,
     items: [
       {
         question: "How can I view my current bill?",
         answer: (
           <div className="space-y-3">
             <p>View your bill through:</p>
-            <ul className="list-disc pl-5 space-y-2 text-xs md:text-sm">
+            <ul className="list-disc pl-5 space-y-2 text-xs md:text-sm font-medium text-gray-600">
               <li>Self-care portal dashboard</li>
               <li>Email notifications (if subscribed)</li>
               <li>Mobile app under 'Billing' section</li>
             </ul>
-            {/* Removed dark mode classes */}
-            <div className="bg-purple-50 p-3 rounded border border-purple-200 text-xs md:text-sm">
-              <p>Tip: Enable auto-notifications to receive bills directly to your email.</p>
-            </div>
           </div>
         ),
       },
@@ -139,65 +88,41 @@ const faqsData = {
           <div className="space-y-3">
             <p>We accept multiple payment options:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Removed dark mode classes */}
-              <div className="bg-gray-50 p-3 rounded border text-xs">
-                <h4 className="font-medium mb-2 text-xs">Online Payments</h4>
-                <ul className="space-y-1 text-xs">
-                  <li>• M-Pesa  paybill:4136553</li>
-                  <li>• Credit/Debit Cards</li>
-                  <li>• Bank Transfer</li>
+              <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                <h4 className="font-black text-blue-950 mb-2 text-xs uppercase tracking-wide">Online Payments</h4>
+                <ul className="space-y-1 text-xs text-gray-600 font-medium">
+                  <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-green-500 rounded-full"/> M-Pesa paybill: 4136553</li>
+                  <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"/> Credit/Debit Cards</li>
                 </ul>
               </div>
-              {/* Removed dark mode classes */}
-              <div className="bg-gray-50 p-3 rounded border text-xs">
-                <h4 className="font-medium mb-2 text-xs">Offline Payments</h4>
-                <ul className="space-y-1 text-xs">
-                  <li>• Optimas Payment Centers</li>
-                  <li>• Authorized Agents</li>
-                  <li>• Bank Deposit</li>
+              <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                <h4 className="font-black text-blue-950 mb-2 text-xs uppercase tracking-wide">Offline Payments</h4>
+                <ul className="space-y-1 text-xs text-gray-600 font-medium">
+                  <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-gray-500 rounded-full"/> Optimas Payment Centers</li>
+                  <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-gray-500 rounded-full"/> Authorized Agents</li>
                 </ul>
               </div>
-            </div>
-          </div>
-        ),
-      },
-      {
-        question: "How do I set up auto-pay?",
-        answer: (
-          <div className="space-y-3">
-            <p>To enable auto-payments:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm">
-              <li>Log in to your self-care account</li>
-              <li>Navigate to 'Payment Methods'</li>
-              <li>Select 'Set Up Auto-Pay'</li>
-              <li>Choose your preferred payment method</li>
-              <li>Set payment threshold and confirm</li>
-            </ol>
-            {/* Removed dark mode classes */}
-            <div className="bg-yellow-50 p-3 rounded border border-yellow-200 text-xs md:text-sm">
-              <p>Note: You'll receive notifications before each auto-payment is processed.</p>
             </div>
           </div>
         ),
       },
     ],
   },
-  "Service Management": {
-    icon: <Settings className="w-5 h-5 text-[#d0b216]" />,
+  "Service": {
+    icon: <Settings className="w-5 h-5" />,
     items: [
       {
         question: "How do I upgrade my internet package?",
         answer: (
           <div className="space-y-3">
             <p>Package upgrade options:</p>
-            <ul className="list-disc pl-5 space-y-2 text-xs md:text-sm">
+            <ul className="list-disc pl-5 space-y-2 text-xs md:text-sm font-medium text-gray-600">
               <li>Through self-care portal under 'Packages'</li>
               <li>Via mobile app by selecting new package</li>
               <li>By contacting customer support</li>
             </ul>
-            {/* Removed dark mode classes */}
-            <div className="bg-blue-50 p-3 rounded border border-blue-200 text-xs md:text-sm">
-              <p>Changes take effect immediately or at next billing cycle based on your selection.</p>
+            <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-600 text-xs md:text-sm">
+              <p className="text-blue-900 font-bold">Changes take effect immediately upon payment.</p>
             </div>
           </div>
         ),
@@ -207,67 +132,31 @@ const faqsData = {
         answer: (
           <div className="space-y-3">
             <p>Service suspension options:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm">
+            <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm font-medium text-gray-600">
               <li>Minimum suspension period: 7 days</li>
               <li>Maximum suspension period: 90 days</li>
-              <li>Reduced monthly charges during suspension</li>
               <li>Reactivate anytime through self-care</li>
             </ol>
-            {/* Removed dark mode classes */}
-            <div className="bg-purple-50 p-3 rounded border border-purple-200 text-xs md:text-sm">
-              <p>Note: Equipment must remain connected during suspension.</p>
-            </div>
-          </div>
-        ),
-      },
-      {
-        question: "How do I report service issues?",
-        answer: (
-          <div className="space-y-3">
-            <p>Service issue reporting channels:</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Removed dark mode classes */}
-              <div className="bg-red-50 p-3 rounded border text-xs">
-                <h4 className="font-medium mb-2 text-xs">Self-Service</h4>
-                <ul className="space-y-1 text-xs">
-                  <li>• Online troubleshooting</li>
-                  <li>• Service status check</li>
-                  <li>• Ticket submission</li>
-                </ul>
-              </div>
-              {/* Removed dark mode classes */}
-              <div className="bg-green-50 p-3 rounded border text-xs">
-                <h4 className="font-medium mb-2 text-xs">Support</h4>
-                <ul className="space-y-1 text-xs">
-                  <li>• Live chat (24/7)</li>
-                  <li>• Phone support</li>
-                  <li>• Technician dispatch</li>
-                </ul>
-              </div>
-            </div>
           </div>
         ),
       },
     ],
   },
-  "Technical Support": {
-    icon: <HelpCircle className="w-5 h-5 text-[#d0b216]" />,
+  "Tech Help": {
+    icon: <HelpCircle className="w-5 h-5" />,
     items: [
       {
         question: "What should I do if my internet is down?",
         answer: (
           <div className="space-y-3">
             <p>First troubleshooting steps:</p>
-            <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm">
+            <ol className="list-decimal pl-5 space-y-2 text-xs md:text-sm font-medium text-gray-600">
               <li>Check all cable connections</li>
-              <li>Restart your router/modem</li>
-              <li>Check for service alerts in your area</li>
+              <li>Restart your router/modem (Wait 30s)</li>
               <li>Run speed test from self-care portal</li>
-              <li>Submit trouble ticket if issue persists</li>
             </ol>
-            {/* Removed dark mode classes */}
-            <div className="bg-red-50 p-3 rounded border border-red-200 text-xs md:text-sm">
-              <p>Emergency: Call 0726896562 for immediate assistance with outages.</p>
+            <div className="bg-red-50 p-3 rounded-lg border-l-4 border-red-500 text-xs md:text-sm">
+              <p className="text-red-900 font-bold">Emergency: Call 0726896562 for outages.</p>
             </div>
           </div>
         ),
@@ -276,44 +165,22 @@ const faqsData = {
         question: "How do I optimize my Wi-Fi connection?",
         answer: (
           <div className="space-y-3">
-            <p>Wi-Fi optimization tips:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Removed dark mode classes */}
-              <div className="bg-blue-50 p-3 rounded border text-xs">
-                <h4 className="font-medium mb-2 text-xs">Placement</h4>
-                <ul className="space-y-1 text-xs">
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <h4 className="font-bold text-blue-900 mb-2 text-xs uppercase">Placement</h4>
+                <ul className="space-y-1 text-xs text-blue-800">
                   <li>• Central location</li>
                   <li>• Elevated position</li>
-                  <li>• Away from interference</li>
+                  <li>• Away from walls</li>
                 </ul>
               </div>
-              {/* Removed dark mode classes */}
-              <div className="bg-green-50 p-3 rounded border text-xs">
-                <h4 className="font-medium mb-2 text-xs">Settings</h4>
-                <ul className="space-y-1 text-xs">
-                  <li>• 5GHz for speed</li>
-                  <li>• 2.4GHz for range</li>
-                  <li>• Channel optimization</li>
+              <div className="bg-green-50 p-3 rounded-lg">
+                <h4 className="font-bold text-green-900 mb-2 text-xs uppercase">Settings</h4>
+                <ul className="space-y-1 text-xs text-green-800">
+                  <li>• Use 5GHz for speed</li>
+                  <li>• Use 2.4GHz for range</li>
                 </ul>
               </div>
-            </div>
-          </div>
-        ),
-      },
-      {
-        question: "How do I connect multiple devices?",
-        answer: (
-          <div className="space-y-3">
-            <p>Device connection options:</p>
-            <ul className="list-disc pl-5 space-y-2 text-xs md:text-sm">
-              <li>Standard routers support 10-15 devices</li>
-              <li>Upgrade to mesh system for larger homes</li>
-              <li>Use wired connections for stationary devices</li>
-              <li>Enable guest network for visitors</li>
-            </ul>
-            {/* Removed dark mode classes */}
-            <div className="bg-purple-50 p-3 rounded border border-purple-200 text-xs md:text-sm">
-              <p>Tip: Monitor connected devices through self-care portal.</p>
             </div>
           </div>
         ),
@@ -322,38 +189,13 @@ const faqsData = {
   },
 };
 
-// Animation variants (No changes needed here)
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 12
-    }
-  }
-};
-
-// Removed unused animation variants (fadeIn, slideUp, scaleUp, rotate)
+// --- COMPONENT ---
 
 export default function Faqs() {
-  const [activeCategory, setActiveCategory] = useState("Account Management");
+  const [activeCategory, setActiveCategory] = useState("Account");
   const [openIndex, setOpenIndex] = useState(null);
   const [search, setSearch] = useState("");
   const [isVisible, setIsVisible] = useState(false);
-  // const { darkMode } = useContext(ThemeContext); // REMOVED: Theme context use
 
   useEffect(() => {
     setIsVisible(true);
@@ -365,82 +207,65 @@ export default function Faqs() {
 
   return (
     <motion.section 
-      // Replaced conditional dark mode class with light mode default
-      className={`min-h-screen pt-32 pb-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300 bg-gray-50 text-gray-800`}
+      className="min-h-screen bg-slate-50 font-sans pb-20"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
     >
-      {/* Animated Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className={`absolute top-0 left-0 w-full h-full bg-[#182b5c]`}>
-          <motion.div 
-            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] opacity-10"
-            animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 0],
-            }}
-            transition={{
-              duration: 15,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-          />
-          <motion.div 
-            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] opacity-10"
-            animate={{
-              scale: [1.2, 1, 1.2],
-              rotate: [180, 270, 180],
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-          />
+      {/* ================= HEADER SECTION (HERO STYLE) ================= */}
+      <div className="relative w-full bg-blue-950 pt-32 pb-24 overflow-hidden px-6 text-center">
+        
+        {/* Abstract Background Shapes */}
+        <div className="absolute inset-0 z-0 opacity-10">
+            <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500 blur-3xl"></div>
+            <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-yellow-500 blur-3xl"></div>
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center">
+            {/* Tagline */}
+            <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-[0.25em] mb-3">
+                Knowledge Base
+            </p>
+
+            {/* Main Title */}
+            <h1 className="text-3xl md:text-5xl font-black uppercase mb-4 text-white tracking-tighter">
+                How can we <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">help you?</span>
+            </h1>
+
+            {/* Subtitle Highlight */}
+            <div className="inline-block bg-yellow-400 px-4 py-1 -skew-x-12 mb-8">
+                <h2 className="text-sm md:text-base font-black text-blue-950 tracking-wide uppercase skew-x-12">
+                   Answers to your common questions
+                </h2>
+            </div>
+
+            {/* Search Bar - Hero Style */}
+            <div className="w-full max-w-xl relative group">
+                <div className="absolute inset-0 bg-yellow-400 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
+                <div className="relative bg-white rounded-full flex items-center p-2 shadow-2xl">
+                    <div className="pl-4 text-gray-400">
+                        <Search size={20} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder={`Search ${activeCategory} FAQs...`}
+                      className="w-full px-4 py-2 text-sm md:text-base bg-transparent border-none focus:ring-0 text-blue-950 font-medium placeholder-gray-400 outline-none"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                    {search && (
+                      <button onClick={() => setSearch("")} className="pr-4 text-gray-400 hover:text-red-500"><X size={18}/></button>
+                    )}
+                </div>
+            </div>
         </div>
       </div>
-      
-      <div className="relative z-10 max-w-6xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-12"
-        >
-          <motion.h2 
-            className={`${RISA_STYLES.typography.h2} mb-2 ${RISA_STYLES.typography.highlight.yellow}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            Optimas Fiber - Self-Care Portal
-          </motion.h2>
-          <motion.p 
-            // Replaced conditional dark mode class with light mode default
-            className={'text-gray-600 text-sm md:text-base'}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
-            Manage your account, services, and get support 24/7
-          </motion.p>
-          <motion.div 
-            className="w-24 h-1 bg-[#d0b216] mx-auto mt-4"
-            initial={{ width: 0 }}
-            animate={{ width: 96 }}
-            transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
-          />
-        </motion.div>
 
+      {/* ================= CONTENT SECTION ================= */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-20">
+        
         {/* Category Tabs */}
-        <motion.div 
-          className="flex flex-wrap justify-center gap-2 mb-8"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
+        <div className="flex flex-wrap justify-center gap-2 mb-10">
           {Object.entries(faqsData).map(([key, { icon }]) => (
             <motion.button
               key={key}
@@ -449,128 +274,68 @@ export default function Faqs() {
                 setOpenIndex(null);
                 setSearch("");
               }}
-              className={`px-4 py-2 text-sm font-medium transition-all rounded-[50px] ${
-                activeCategory === key
-                  ? RISA_STYLES.button.small.active
-                  // Used the light variant as the default
-                  : RISA_STYLES.button.small.light
-              }`}
-              variants={itemVariants}
-              whileHover={{ 
-                scale: 1.05,
-                transition: { type: "spring", stiffness: 400, damping: 10 }
-              }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg transition-all duration-300 ${
+                activeCategory === key
+                  ? "bg-yellow-500 text-blue-950 ring-4 ring-yellow-500/20"
+                  : "bg-white text-gray-400 hover:text-blue-950 hover:bg-gray-50"
+              }`}
             >
-              <motion.span
-                animate={{ rotate: activeCategory === key ? 360 : 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                {icon}
-              </motion.span>
-              <span>{key}</span>
+              <span className={activeCategory === key ? "text-blue-950" : "text-gray-400"}>{icon}</span>
+              {key}
             </motion.button>
           ))}
-        </motion.div>
+        </div>
 
-        {/* Search Bar */}
-        <motion.div 
-          className="max-w-xl mx-auto mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          {/* Replaced conditional dark mode class with light mode default */}
-          <div className={`relative bg-white border border-gray-300 rounded-[50px]`}>
-            <motion.div
-              animate={{ rotate: search ? 90 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Used light mode text color */}
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5`} />
-            </motion.div>
-            <input
-              type="text"
-              placeholder={`Search ${activeCategory} FAQs...`}
-              // Replaced conditional dark mode class with light mode default
-              className={`w-full pl-10 pr-4 py-2 rounded-[50px] text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c] focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0 }}
-                // Used light mode text color
-                className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600`}
-                onClick={() => setSearch("")}
-              >
-                ×
-              </motion.button>
-            )}
-          </div>
-        </motion.div>
-
-        {/* FAQ List */}
+        {/* FAQ Grid */}
         <motion.div 
           className="grid md:grid-cols-2 gap-4"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          key={activeCategory}
+          layout
         >
           <AnimatePresence mode="popLayout">
             {filteredFaqs.map((faq, i) => (
               <motion.div
                 key={i}
                 layout
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-                // Replaced conditional dark mode class with light mode default
-                className={`rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 bg-white border border-gray-200`}
-                whileHover={{ y: -5 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.2, delay: i * 0.05 }}
+                className={`group bg-white rounded-2xl overflow-hidden border transition-all duration-300 ${
+                    openIndex === i 
+                    ? "border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.15)]" 
+                    : "border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200"
+                }`}
               >
-                <motion.button
+                <button
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full p-4 text-left flex justify-between items-center"
-                  whileTap={{ scale: 0.98 }}
+                  className="w-full p-5 text-left flex justify-between items-start gap-4"
                 >
-                  <h3 className={`${RISA_STYLES.typography.cardTitle} pr-4 text-[#182b5c]`}>{faq.question}</h3>
-                  <motion.span
-                    animate={{ rotate: openIndex === i ? 180 : 0 }}
-                    className="text-[#d0b216] flex-shrink-0"
-                    transition={{ duration: 0.3 }}
-                  >
-                    <ChevronDown className="h-5 w-5" />
-                  </motion.span>
-                </motion.button>
+                  <h3 className={`font-bold text-sm md:text-base transition-colors ${
+                      openIndex === i ? "text-blue-950" : "text-gray-700 group-hover:text-blue-900"
+                  }`}>
+                      {faq.question}
+                  </h3>
+                  <div className={`mt-1 p-1 rounded-full transition-all duration-300 ${
+                      openIndex === i ? "bg-yellow-400 rotate-180 text-blue-950" : "bg-gray-100 text-gray-400"
+                  }`}>
+                    <ChevronDown size={16} strokeWidth={3} />
+                  </div>
+                </button>
+
                 <AnimatePresence>
                   {openIndex === i && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ 
-                        opacity: 1, 
-                        height: "auto",
-                        transition: {
-                          height: { duration: 0.3 },
-                          opacity: { duration: 0.4, delay: 0.1 }
-                        }
-                      }}
-                      exit={{ 
-                        opacity: 0, 
-                        height: 0,
-                        transition: {
-                          height: { duration: 0.3 },
-                          opacity: { duration: 0.2 }
-                        }
-                      }}
-                      // Replaced conditional dark mode class with light mode default
-                      className={`px-4 pb-4 text-gray-700 text-xs md:text-sm overflow-hidden`}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
                     >
-                      {faq.answer}
+                      <div className="px-5 pb-5 pt-0 text-gray-500 text-sm leading-relaxed border-t border-gray-50 mt-2 pt-4">
+                        {faq.answer}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -579,61 +344,61 @@ export default function Faqs() {
           </AnimatePresence>
         </motion.div>
 
-        {/* Support CTA */}
+        {/* Empty State */}
+        {filteredFaqs.length === 0 && (
+             <div className="text-center py-12 text-gray-400">
+                 <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                 <p className="text-sm font-bold uppercase tracking-widest">No answers found</p>
+             </div>
+        )}
+
+        {/* ================= SUPPORT CTA ================= */}
         <motion.div 
-          // Replaced conditional dark mode class with light mode default
-          className={`mt-12 p-6 rounded-xl text-center bg-[#182b5c]`}
+          className="mt-16 bg-blue-950 rounded-3xl p-8 md:p-12 text-center relative overflow-hidden shadow-2xl"
           initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          whileHover={{ 
-            y: -5,
-            transition: { duration: 0.2 }
-          }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
         >
-          <motion.h3 
-            className={`${RISA_STYLES.typography.h3} mb-4 text-white`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            Need More Help?
-          </motion.h3>
-          <motion.p 
-            className="mb-6 opacity-90 text-white text-sm md:text-base"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.9 }}
-            transition={{ delay: 0.9 }}
-          >
-            Our support team is available 24/7 to assist you
-          </motion.p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <motion.a 
-              href="tel:+254726896562" 
-              className={`${RISA_STYLES.button.secondary.base} ${RISA_STYLES.button.secondary.hover} flex items-center justify-center gap-2`}
-              whileHover={{ 
-                scale: 1.05,
-                transition: { type: "spring", stiffness: 400, damping: 10 }
-              }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Phone className="w-4 h-4" />
-              Call Support: 0741874200
-            </motion.a>
-            <motion.a 
-              href="mailto:support@knoxvilletechnologies.com" 
-              className={`${RISA_STYLES.button.primary.base} ${RISA_STYLES.button.primary.hover} flex items-center justify-center gap-2`}
-              whileHover={{ 
-                scale: 1.05,
-                transition: { type: "spring", stiffness: 400, damping: 10 }
-              }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Mail className="w-4 h-4" />
-              Email Us
-            </motion.a>
-          </div>
+            {/* Background pattern */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500 rounded-full blur-[100px] opacity-10 translate-x-1/2 -translate-y-1/2"></div>
+            
+            <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 bg-blue-900/50 rounded-full px-4 py-1.5 border border-blue-800 mb-6">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">Live Support Online</span>
+                </div>
+
+                <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight mb-4">
+                    Still Need Help?
+                </h3>
+                <p className="text-blue-200 text-sm md:text-base max-w-lg mx-auto mb-8 font-light">
+                    Can't find what you're looking for? Our dedicated support team is available 24/7 to resolve your connectivity issues.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <motion.a 
+                        href="tel:+254726896562" 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-yellow-500 hover:bg-yellow-400 text-blue-950 px-8 py-4 rounded-full font-black text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-3 transition-colors"
+                    >
+                        <Phone size={18} />
+                        Call Support
+                    </motion.a>
+                    
+                    <motion.a 
+                        href="mailto:support@knoxvilletechnologies.com" 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-transparent border-2 border-white/20 hover:bg-white/10 text-white px-8 py-4 rounded-full font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-colors"
+                    >
+                        <Mail size={18} />
+                        Email Us
+                    </motion.a>
+                </div>
+            </div>
         </motion.div>
+
       </div>
     </motion.section>
   );
