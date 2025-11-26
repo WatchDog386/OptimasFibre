@@ -10,46 +10,11 @@ import {
   Phone,
   Mail
 } from "lucide-react";
-// import { ThemeContext } from "../contexts/ThemeContext"; // REMOVED: No longer needed
 
-// Define RISA's core styles as constants for consistency
-const RISA_STYLES = {
-  primaryColor: '#015B97',
-  button: {
-    // Primary Button: White bg, blue border/text -> Inverts on hover
-    primary: {
-      base: 'px-4 py-2 bg-white text-[#015B97] border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm',
-      hover: 'hover:bg-[#015B97] hover:text-white hover:border-[#015B97]',
-    },
-    // Secondary Button: Blue bg, white text -> Inverts on hover
-    secondary: {
-      base: 'px-4 py-2 bg-[#015B97] text-white border border-[#015B97] font-bold rounded-[50px] transition-all duration-150 ease-in-out text-sm',
-      hover: 'hover:bg-white hover:text-[#015B97] hover:border-white',
-    },
-    // Small Button (e.g., for tabs)
-    small: {
-      base: 'px-3 py-1.5 text-sm font-medium border rounded-[50px] transition-colors',
-      active: 'bg-[#182B5C] text-white shadow-md',
-      light: 'text-gray-600 hover:text-[#182B5C] hover:bg-gray-50',
-      // Removed dark variant
-    }
-  },
-  typography: {
-    // Base text styles
-    body: 'text-base',
-    // Headings
-    h1: 'text-3xl md:text-4xl font-bold',
-    h2: 'text-2xl md:text-3xl font-bold',
-    h3: 'text-xl md:text-2xl font-bold',
-    // Card and FAQ text
-    cardTitle: 'text-base md:text-lg font-medium',
-    cardText: 'text-xs md:text-sm',
-    // Special text
-    highlight: {
-      yellow: 'text-[#d0b216]',
-      blue: 'text-[#182B5C]',
-    },
-  }
+// Optimas Design System (aligned with Hero.jsx)
+const OPTIMAS_COLORS = {
+  primary: '#015B97',     // Deep blue
+  accent: '#d0b216',      // Gold/yellow
 };
 
 const faqsData = {
@@ -68,7 +33,6 @@ const faqsData = {
               <li>Create a password and verify your identity via SMS</li>
               <li>Complete your profile details</li>
             </ol>
-            {/* Removed dark mode classes */}
             <div className="bg-blue-50 p-3 rounded border border-blue-200 text-xs md:text-sm">
               <p>Note: Your account number can be found on your invoice or by contacting customer care.</p>
             </div>
@@ -86,7 +50,6 @@ const faqsData = {
               <li>Follow the OTP verification process</li>
               <li>Set a new strong password</li>
             </ul>
-            {/* Removed dark mode classes */}
             <div className="bg-yellow-50 p-3 rounded border border-yellow-200 text-xs md:text-sm">
               <p>Security Tip: Use a combination of letters, numbers and special characters for your password.</p>
             </div>
@@ -104,7 +67,6 @@ const faqsData = {
               <li>Edit the information you want to change</li>
               <li>Save your changes</li>
             </ol>
-            {/* Removed dark mode classes */}
             <div className="bg-green-50 p-3 rounded border border-green-200 text-xs md:text-sm">
               <p>Important: Some changes may require verification for security purposes.</p>
             </div>
@@ -126,7 +88,6 @@ const faqsData = {
               <li>Email notifications (if subscribed)</li>
               <li>Mobile app under 'Billing' section</li>
             </ul>
-            {/* Removed dark mode classes */}
             <div className="bg-purple-50 p-3 rounded border border-purple-200 text-xs md:text-sm">
               <p>Tip: Enable auto-notifications to receive bills directly to your email.</p>
             </div>
@@ -139,7 +100,6 @@ const faqsData = {
           <div className="space-y-3">
             <p>We accept multiple payment options:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Removed dark mode classes */}
               <div className="bg-gray-50 p-3 rounded border text-xs">
                 <h4 className="font-medium mb-2 text-xs">Online Payments</h4>
                 <ul className="space-y-1 text-xs">
@@ -148,7 +108,6 @@ const faqsData = {
                   <li>• Bank Transfer</li>
                 </ul>
               </div>
-              {/* Removed dark mode classes */}
               <div className="bg-gray-50 p-3 rounded border text-xs">
                 <h4 className="font-medium mb-2 text-xs">Offline Payments</h4>
                 <ul className="space-y-1 text-xs">
@@ -173,7 +132,6 @@ const faqsData = {
               <li>Choose your preferred payment method</li>
               <li>Set payment threshold and confirm</li>
             </ol>
-            {/* Removed dark mode classes */}
             <div className="bg-yellow-50 p-3 rounded border border-yellow-200 text-xs md:text-sm">
               <p>Note: You'll receive notifications before each auto-payment is processed.</p>
             </div>
@@ -195,7 +153,6 @@ const faqsData = {
               <li>Via mobile app by selecting new package</li>
               <li>By contacting customer support</li>
             </ul>
-            {/* Removed dark mode classes */}
             <div className="bg-blue-50 p-3 rounded border border-blue-200 text-xs md:text-sm">
               <p>Changes take effect immediately or at next billing cycle based on your selection.</p>
             </div>
@@ -213,7 +170,6 @@ const faqsData = {
               <li>Reduced monthly charges during suspension</li>
               <li>Reactivate anytime through self-care</li>
             </ol>
-            {/* Removed dark mode classes */}
             <div className="bg-purple-50 p-3 rounded border border-purple-200 text-xs md:text-sm">
               <p>Note: Equipment must remain connected during suspension.</p>
             </div>
@@ -226,7 +182,6 @@ const faqsData = {
           <div className="space-y-3">
             <p>Service issue reporting channels:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Removed dark mode classes */}
               <div className="bg-red-50 p-3 rounded border text-xs">
                 <h4 className="font-medium mb-2 text-xs">Self-Service</h4>
                 <ul className="space-y-1 text-xs">
@@ -235,7 +190,6 @@ const faqsData = {
                   <li>• Ticket submission</li>
                 </ul>
               </div>
-              {/* Removed dark mode classes */}
               <div className="bg-green-50 p-3 rounded border text-xs">
                 <h4 className="font-medium mb-2 text-xs">Support</h4>
                 <ul className="space-y-1 text-xs">
@@ -265,7 +219,6 @@ const faqsData = {
               <li>Run speed test from self-care portal</li>
               <li>Submit trouble ticket if issue persists</li>
             </ol>
-            {/* Removed dark mode classes */}
             <div className="bg-red-50 p-3 rounded border border-red-200 text-xs md:text-sm">
               <p>Emergency: Call 0726896562 for immediate assistance with outages.</p>
             </div>
@@ -278,7 +231,6 @@ const faqsData = {
           <div className="space-y-3">
             <p>Wi-Fi optimization tips:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Removed dark mode classes */}
               <div className="bg-blue-50 p-3 rounded border text-xs">
                 <h4 className="font-medium mb-2 text-xs">Placement</h4>
                 <ul className="space-y-1 text-xs">
@@ -287,7 +239,6 @@ const faqsData = {
                   <li>• Away from interference</li>
                 </ul>
               </div>
-              {/* Removed dark mode classes */}
               <div className="bg-green-50 p-3 rounded border text-xs">
                 <h4 className="font-medium mb-2 text-xs">Settings</h4>
                 <ul className="space-y-1 text-xs">
@@ -311,7 +262,6 @@ const faqsData = {
               <li>Use wired connections for stationary devices</li>
               <li>Enable guest network for visitors</li>
             </ul>
-            {/* Removed dark mode classes */}
             <div className="bg-purple-50 p-3 rounded border border-purple-200 text-xs md:text-sm">
               <p>Tip: Monitor connected devices through self-care portal.</p>
             </div>
@@ -322,14 +272,11 @@ const faqsData = {
   },
 };
 
-// Animation variants (No changes needed here)
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
+    transition: { staggerChildren: 0.1 }
   }
 };
 
@@ -338,22 +285,15 @@ const itemVariants = {
   visible: {
     y: 0,
     opacity: 1,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 12
-    }
+    transition: { type: "spring", stiffness: 100, damping: 12 }
   }
 };
-
-// Removed unused animation variants (fadeIn, slideUp, scaleUp, rotate)
 
 export default function Faqs() {
   const [activeCategory, setActiveCategory] = useState("Account Management");
   const [openIndex, setOpenIndex] = useState(null);
   const [search, setSearch] = useState("");
   const [isVisible, setIsVisible] = useState(false);
-  // const { darkMode } = useContext(ThemeContext); // REMOVED: Theme context use
 
   useEffect(() => {
     setIsVisible(true);
@@ -365,38 +305,23 @@ export default function Faqs() {
 
   return (
     <motion.section 
-      // Replaced conditional dark mode class with light mode default
-      className={`min-h-screen pt-32 pb-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300 bg-gray-50 text-gray-800`}
+      className="min-h-screen pt-32 pb-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300 bg-gray-50 text-gray-800"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
     >
-      {/* Animated Background Pattern */}
+      {/* Background Pattern (kept subtle) */}
       <div className="absolute inset-0 opacity-5">
-        <div className={`absolute top-0 left-0 w-full h-full bg-[#182b5c]`}>
+        <div className="absolute top-0 left-0 w-full h-full bg-[#015B97]">
           <motion.div 
             className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] opacity-10"
-            animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 0],
-            }}
-            transition={{
-              duration: 15,
-              repeat: Infinity,
-              ease: "linear"
-            }}
+            animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           />
           <motion.div 
             className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] opacity-10"
-            animate={{
-              scale: [1.2, 1, 1.2],
-              rotate: [180, 270, 180],
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              ease: "linear"
-            }}
+            animate={{ scale: [1.2, 1, 1.2], rotate: [180, 270, 180] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
           />
         </div>
       </div>
@@ -410,7 +335,7 @@ export default function Faqs() {
           className="text-center mb-12"
         >
           <motion.h2 
-            className={`${RISA_STYLES.typography.h2} mb-2 ${RISA_STYLES.typography.highlight.yellow}`}
+            className="text-2xl md:text-3xl font-bold mb-2 text-black"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -418,8 +343,7 @@ export default function Faqs() {
             Optimas Fiber - Self-Care Portal
           </motion.h2>
           <motion.p 
-            // Replaced conditional dark mode class with light mode default
-            className={'text-gray-600 text-sm md:text-base'}
+            className="text-gray-600 text-sm md:text-base"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -449,25 +373,16 @@ export default function Faqs() {
                 setOpenIndex(null);
                 setSearch("");
               }}
-              className={`px-4 py-2 text-sm font-medium transition-all rounded-[50px] ${
+              className={`px-4 py-2 text-sm font-medium rounded-[50px] transition-all flex items-center gap-2 ${
                 activeCategory === key
-                  ? RISA_STYLES.button.small.active
-                  // Used the light variant as the default
-                  : RISA_STYLES.button.small.light
+                  ? 'bg-yellow-400 text-[#015B97] shadow-md'
+                  : 'text-[#015B97] hover:bg-yellow-100'
               }`}
               variants={itemVariants}
-              whileHover={{ 
-                scale: 1.05,
-                transition: { type: "spring", stiffness: 400, damping: 10 }
-              }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <motion.span
-                animate={{ rotate: activeCategory === key ? 360 : 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                {icon}
-              </motion.span>
+              <span className="text-[#d0b216]">{icon}</span>
               <span>{key}</span>
             </motion.button>
           ))}
@@ -480,20 +395,12 @@ export default function Faqs() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
-          {/* Replaced conditional dark mode class with light mode default */}
-          <div className={`relative bg-white border border-gray-300 rounded-[50px]`}>
-            <motion.div
-              animate={{ rotate: search ? 90 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Used light mode text color */}
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5`} />
-            </motion.div>
+          <div className="relative bg-white border border-gray-300 rounded-[50px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder={`Search ${activeCategory} FAQs...`}
-              // Replaced conditional dark mode class with light mode default
-              className={`w-full pl-10 pr-4 py-2 rounded-[50px] text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c] focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300`}
+              className="w-full pl-10 pr-4 py-2 rounded-[50px] text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#015B97] focus:outline-none focus:ring-2 focus:border-transparent"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -502,8 +409,7 @@ export default function Faqs() {
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
-                // Used light mode text color
-                className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600`}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 onClick={() => setSearch("")}
               >
                 ×
@@ -529,8 +435,7 @@ export default function Faqs() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
-                // Replaced conditional dark mode class with light mode default
-                className={`rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 bg-white border border-gray-200`}
+                className="rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 bg-white border border-gray-200"
                 whileHover={{ y: -5 }}
               >
                 <motion.button
@@ -538,7 +443,8 @@ export default function Faqs() {
                   className="w-full p-4 text-left flex justify-between items-center"
                   whileTap={{ scale: 0.98 }}
                 >
-                  <h3 className={`${RISA_STYLES.typography.cardTitle} pr-4 text-[#182b5c]`}>{faq.question}</h3>
+                  {/* 🔥 Changed to BLACK to match Hero.jsx style */}
+                  <h3 className="text-base md:text-lg font-medium pr-4 text-black">{faq.question}</h3>
                   <motion.span
                     animate={{ rotate: openIndex === i ? 180 : 0 }}
                     className="text-[#d0b216] flex-shrink-0"
@@ -567,8 +473,7 @@ export default function Faqs() {
                           opacity: { duration: 0.2 }
                         }
                       }}
-                      // Replaced conditional dark mode class with light mode default
-                      className={`px-4 pb-4 text-gray-700 text-xs md:text-sm overflow-hidden`}
+                      className="px-4 pb-4 text-gray-700 text-xs md:text-sm"
                     >
                       {faq.answer}
                     </motion.div>
@@ -579,20 +484,16 @@ export default function Faqs() {
           </AnimatePresence>
         </motion.div>
 
-        {/* Support CTA */}
+        {/* Support CTA — Updated to match Hero color scheme */}
         <motion.div 
-          // Replaced conditional dark mode class with light mode default
-          className={`mt-12 p-6 rounded-xl text-center bg-[#182b5c]`}
+          className="mt-12 p-6 rounded-xl text-center bg-yellow-400"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
-          whileHover={{ 
-            y: -5,
-            transition: { duration: 0.2 }
-          }}
+          whileHover={{ y: -5 }}
         >
           <motion.h3 
-            className={`${RISA_STYLES.typography.h3} mb-4 text-white`}
+            className="text-xl md:text-2xl font-bold mb-4 text-[#015B97]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
@@ -600,21 +501,18 @@ export default function Faqs() {
             Need More Help?
           </motion.h3>
           <motion.p 
-            className="mb-6 opacity-90 text-white text-sm md:text-base"
+            className="mb-6 text-[#015B97] text-sm md:text-base"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.9 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}
           >
             Our support team is available 24/7 to assist you
           </motion.p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <motion.a 
-              href="tel:+254726896562" 
-              className={`${RISA_STYLES.button.secondary.base} ${RISA_STYLES.button.secondary.hover} flex items-center justify-center gap-2`}
-              whileHover={{ 
-                scale: 1.05,
-                transition: { type: "spring", stiffness: 400, damping: 10 }
-              }}
+              href="tel:+254741874200" 
+              className="px-4 py-2 bg-[#015B97] text-white border border-[#015B97] font-bold rounded-[50px] transition-all hover:bg-white hover:text-[#015B97] flex items-center justify-center gap-2"
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <Phone className="w-4 h-4" />
@@ -622,11 +520,8 @@ export default function Faqs() {
             </motion.a>
             <motion.a 
               href="mailto:support@knoxvilletechnologies.com" 
-              className={`${RISA_STYLES.button.primary.base} ${RISA_STYLES.button.primary.hover} flex items-center justify-center gap-2`}
-              whileHover={{ 
-                scale: 1.05,
-                transition: { type: "spring", stiffness: 400, damping: 10 }
-              }}
+              className="px-4 py-2 bg-white text-[#015B97] border border-[#015B97] font-bold rounded-[50px] transition-all hover:bg-[#015B97] hover:text-white flex items-center justify-center gap-2"
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <Mail className="w-4 h-4" />

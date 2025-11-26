@@ -21,97 +21,6 @@ const COLORS = {
   textLight: '#64748b'
 };
 
-const RISA_STYLES = {
-  h1: 'text-3xl md:text-4xl font-extrabold tracking-tight text-[#015B97]',
-  h2: 'text-xl md:text-2xl font-bold text-gray-900',
-  cardTitle: 'text-lg font-bold text-gray-900 group-hover:text-[#015B97] transition-colors line-clamp-2',
-  body: 'text-sm leading-relaxed text-gray-600',
-};
-
-// --- SUB-COMPONENTS ---
-
-// 1. Detail View Component (The "Story" View)
-const BlogDetailViewer = ({ blogPost, onClose }) => {
-  const navigate = useNavigate();
-  
-  // Scroll to top on mount
-  useEffect(() => window.scrollTo(0, 0), []);
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 overflow-y-auto bg-white"
-    >
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex justify-between items-center">
-        <button 
-          onClick={onClose}
-          className="flex items-center gap-2 text-sm font-bold text-[#015B97] hover:bg-blue-50 px-4 py-2 rounded-full transition-all"
-        >
-          <ChevronLeft size={18} /> Back to Feed
-        </button>
-        <div className="flex gap-2">
-            <span className="px-3 py-1 bg-blue-50 text-[#015B97] text-xs font-bold rounded-full uppercase tracking-wider">
-                {blogPost.category || 'News'}
-            </span>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
-        {/* Hero Image */}
-        <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="w-full h-64 md:h-[450px] rounded-2xl overflow-hidden shadow-xl mb-8 bg-gray-100 relative"
-        >
-            <img 
-                src={blogPost.imageUrl} 
-                alt={blogPost.title}
-                className="w-full h-full object-cover"
-                onError={(e) => e.target.src = 'https://placehold.co/800x400/015B97/FFFFFF?text=Optimas+Fiber'}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                <div className="p-6 md:p-10 text-white">
-                    <h1 className="text-3xl md:text-5xl font-black mb-4 leading-tight">{blogPost.title}</h1>
-                    <div className="flex flex-wrap items-center gap-4 text-sm font-medium opacity-90">
-                        <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(blogPost.publishedAt || blogPost.createdAt).toLocaleDateString()}</span>
-                        <span className="flex items-center gap-1"><User size={14} /> {blogPost.author?.email || 'Optimas Team'}</span>
-                    </div>
-                </div>
-            </div>
-        </motion.div>
-
-        {/* Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div className="lg:col-span-8">
-                <div className="prose prose-lg prose-blue max-w-none">
-                    {blogPost.content.split('\n').map((para, i) => (
-                        <p key={i} className="text-gray-700 leading-8 mb-4">{para}</p>
-                    ))}
-                </div>
-            </div>
-
-            {/* Sidebar in Detail View */}
-            <div className="lg:col-span-4 space-y-6">
-                <div className="bg-[#f8fafc] p-6 rounded-xl border border-gray-200">
-                    <h3 className="text-[#015B97] font-bold mb-3 uppercase text-xs tracking-widest">About Optimas</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                        Connecting you to the future with high-speed fiber internet. Reliable, fast, and secure.
-                    </p>
-                    <button onClick={onClose} className="w-full py-2 bg-[#015B97] text-white rounded-lg text-sm font-bold hover:bg-[#004a7c] transition-colors">
-                        Read More Articles
-                    </button>
-                </div>
-            </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-// 2. Main Blog List Component
 const BlogList = () => {
   const navigate = useNavigate();
   
@@ -125,7 +34,7 @@ const BlogList = () => {
   const [viewingBlog, setViewingBlog] = useState(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   
-  const postsPerPage = 6;
+  const postsPerPage = 3; // Reduced per "row" since alternating takes more space
 
   // Fetch Data
   useEffect(() => {
@@ -159,13 +68,13 @@ const BlogList = () => {
     });
     const categoryData = Object.entries(catMap).map(([name, value]) => ({ name, value }));
 
-    // Trends (Simulated monthly for visual density)
+    // Trends
     const trendData = Array.from({length: 6}, (_, i) => {
         const d = new Date();
         d.setMonth(d.getMonth() - (5 - i));
         return {
             name: d.toLocaleString('default', { month: 'short' }),
-            posts: Math.floor(Math.random() * 5) + 1 // Simulated for visual completeness if real dates represent sparse data
+            posts: Math.floor(Math.random() * 5) + 1
         };
     });
 
@@ -271,7 +180,7 @@ const BlogList = () => {
         </div>
       </div>
 
-      {/* ANALYTICS PANEL (Expandable) */}
+      {/* ANALYTICS PANEL */}
       <AnimatePresence>
         {showAnalytics && blogPosts.length > 0 && (
             <motion.div 
@@ -333,7 +242,7 @@ const BlogList = () => {
         )}
       </AnimatePresence>
 
-      {/* MAIN CONTENT GRID */}
+      {/* MAIN ALTERNATING CONTENT */}
       <div className="container mx-auto px-4 py-10">
         {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center mb-8 border border-red-100">
@@ -342,15 +251,19 @@ const BlogList = () => {
         )}
 
         {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[1,2,3].map(i => (
-                    <div key={i} className="animate-pulse">
-                        <div className="bg-gray-200 h-48 rounded-xl mb-4"></div>
-                        <div className="bg-gray-200 h-4 w-3/4 mb-2 rounded"></div>
-                        <div className="bg-gray-200 h-4 w-1/2 rounded"></div>
-                    </div>
-                ))}
-            </div>
+          <div className="space-y-16">
+            {[1,2,3].map(i => (
+              <div key={i} className="flex flex-col md:flex-row gap-8 animate-pulse">
+                <div className="md:w-1/2 h-64 bg-gray-200 rounded-xl"></div>
+                <div className="md:w-1/2 flex flex-col justify-center">
+                  <div className="bg-gray-200 h-6 w-3/4 rounded mb-4"></div>
+                  <div className="bg-gray-200 h-4 w-full rounded mb-2"></div>
+                  <div className="bg-gray-200 h-4 w-5/6 rounded mb-4"></div>
+                  <div className="bg-gray-200 h-10 w-32 rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : currentPosts.length === 0 ? (
             <div className="text-center py-20">
                 <div className="inline-flex justify-center items-center w-20 h-20 bg-gray-100 rounded-full mb-4">
@@ -360,59 +273,64 @@ const BlogList = () => {
                 <p className="text-gray-500 mt-2">Try adjusting your search or categories.</p>
             </div>
         ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {currentPosts.map((post, index) => (
-                    <motion.article 
-                        key={post._id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group flex flex-col"
-                    >
-                        {/* Image */}
-                        <div className="h-48 overflow-hidden relative bg-gray-100">
-                            <span className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur text-[#015B97] text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-widest shadow-sm">
-                                {post.category || 'News'}
-                            </span>
-                            <img 
-                                src={post.imageUrl} 
-                                alt={post.title}
-                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                                onError={(e) => e.target.src = 'https://placehold.co/600x400/f3f4f6/94a3b8?text=Optimas'}
-                            />
-                        </div>
+          <div className="space-y-16">
+            {currentPosts.map((post, index) => {
+              const isEven = index % 2 === 0;
+              return (
+                <motion.div
+                  key={post._id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex flex-col md:flex-row gap-8 md:gap-12 items-center"
+                >
+                  {/* Image (Left on even, Right on odd) */}
+                  <div className={`md:w-1/2 order-${isEven ? 1 : 2}`}>
+                    <div className="relative rounded-2xl overflow-hidden shadow-lg h-64 md:h-80 bg-gray-100">
+                      <img 
+                        src={post.imageUrl} 
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => e.target.src = 'https://placehold.co/600x400/015B97/d0b216?text=Optimas+Fiber'}
+                      />
+                      <span className="absolute top-4 left-4 z-10 bg-yellow-400 text-[#015B97] text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest shadow-sm">
+                        {post.category || 'News'}
+                      </span>
+                    </div>
+                  </div>
 
-                        {/* Content */}
-                        <div className="p-6 flex flex-col flex-grow">
-                            <div className="flex items-center text-xs text-gray-400 mb-3 gap-3">
-                                <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}</span>
-                            </div>
-                            
-                            <h3 className={RISA_STYLES.cardTitle}>
-                                {post.title}
-                            </h3>
-                            
-                            <p className="text-sm text-gray-500 mt-3 line-clamp-3 mb-4 flex-grow">
-                                {post.content}
-                            </p>
-                            
-                            <div className="pt-4 border-t border-gray-50 flex items-center justify-between mt-auto">
-                                <button 
-                                    onClick={() => handleLearnMore(post)}
-                                    className="text-sm font-bold text-[#015B97] flex items-center gap-1 hover:gap-2 transition-all"
-                                >
-                                    Read Full Story <ArrowRight size={14} />
-                                </button>
-                            </div>
-                        </div>
-                    </motion.article>
-                ))}
-            </div>
+                  {/* Content */}
+                  <div className={`md:w-1/2 order-${isEven ? 2 : 1} flex flex-col justify-center`}>
+                    <div className="flex items-center text-xs text-gray-500 mb-3 gap-3">
+                      <Calendar size={12} />
+                      {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+                    </div>
+
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 hover:text-[#015B97] transition-colors">
+                      {post.title}
+                    </h3>
+
+                    <p className="text-gray-600 mb-6 line-clamp-3">
+                      {post.content}
+                    </p>
+
+                    <button 
+                      onClick={() => handleLearnMore(post)}
+                      className="inline-flex items-center gap-2 font-bold text-[#015B97] hover:text-[#004a7c] group"
+                    >
+                      Read Full Story 
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
         )}
 
         {/* PAGINATION */}
         {totalPages > 1 && (
-            <div className="flex justify-center mt-12 gap-2">
+            <div className="flex justify-center mt-16 gap-2">
                 <button 
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
@@ -422,7 +340,6 @@ const BlogList = () => {
                 </button>
                 
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    // Simple pagination logic for display
                     let pageNum = i + 1; 
                     if (totalPages > 5 && currentPage > 3) pageNum = currentPage - 2 + i;
                     if (pageNum > totalPages) return null;
@@ -453,6 +370,84 @@ const BlogList = () => {
         )}
       </div>
     </div>
+  );
+};
+
+// --- SUB-COMPONENTS ---
+
+// Detail View (unchanged from your original — kept for completeness)
+const BlogDetailViewer = ({ blogPost, onClose }) => {
+  const navigate = useNavigate();
+  
+  useEffect(() => window.scrollTo(0, 0), []);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 overflow-y-auto bg-white"
+    >
+      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex justify-between items-center">
+        <button 
+          onClick={onClose}
+          className="flex items-center gap-2 text-sm font-bold text-[#015B97] hover:bg-blue-50 px-4 py-2 rounded-full transition-all"
+        >
+          <ChevronLeft size={18} /> Back to Feed
+        </button>
+        <div className="flex gap-2">
+            <span className="px-3 py-1 bg-blue-50 text-[#015B97] text-xs font-bold rounded-full uppercase tracking-wider">
+                {blogPost.category || 'News'}
+            </span>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
+        <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="w-full h-64 md:h-[450px] rounded-2xl overflow-hidden shadow-xl mb-8 bg-gray-100 relative"
+        >
+            <img 
+                src={blogPost.imageUrl} 
+                alt={blogPost.title}
+                className="w-full h-full object-cover"
+                onError={(e) => e.target.src = 'https://placehold.co/800x400/015B97/FFFFFF?text=Optimas+Fiber'}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                <div className="p-6 md:p-10 text-white">
+                    <h1 className="text-3xl md:text-5xl font-black mb-4 leading-tight">{blogPost.title}</h1>
+                    <div className="flex flex-wrap items-center gap-4 text-sm font-medium opacity-90">
+                        <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(blogPost.publishedAt || blogPost.createdAt).toLocaleDateString()}</span>
+                        <span className="flex items-center gap-1"><User size={14} /> {blogPost.author?.email || 'Optimas Team'}</span>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="lg:col-span-8">
+                <div className="prose prose-lg prose-blue max-w-none">
+                    {blogPost.content.split('\n').map((para, i) => (
+                        <p key={i} className="text-gray-700 leading-8 mb-4">{para}</p>
+                    ))}
+                </div>
+            </div>
+
+            <div className="lg:col-span-4 space-y-6">
+                <div className="bg-[#f8fafc] p-6 rounded-xl border border-gray-200">
+                    <h3 className="text-[#015B97] font-bold mb-3 uppercase text-xs tracking-widest">About Optimas</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                        Connecting you to the future with high-speed fiber internet. Reliable, fast, and secure.
+                    </p>
+                    <button onClick={onClose} className="w-full py-2 bg-[#015B97] text-white rounded-lg text-sm font-bold hover:bg-[#004a7c] transition-colors">
+                        Read More Articles
+                    </button>
+                </div>
+            </div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

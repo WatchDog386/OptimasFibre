@@ -118,18 +118,18 @@ const HeroSlider = () => {
               className="flex flex-col items-center md:items-start"
             >
               {/* TAGLINE: Tiny text */}
-              <p className="text-yellow-400 text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] mb-1 md:mb-3 pl-1 drop-shadow-md">
+              <p className="text-yellow-400 text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] mb-3 pl-1 drop-shadow-md">
                 {currentSlide.tagline}
               </p>
               
-              {/* TITLE: Reduced size significantly to avoid clash and keep one line */}
-              <h1 className="text-lg sm:text-xl md:text-3xl lg:text-4xl font-black uppercase mb-2 text-white tracking-tighter leading-tight drop-shadow-lg whitespace-nowrap">
+              {/* TITLE: Changed to BLACK as requested */}
+              <h1 className="text-lg sm:text-xl md:text-3xl lg:text-4xl font-black uppercase mb-4 text-black tracking-tighter leading-tight drop-shadow-lg whitespace-nowrap">
                 {currentSlide.title}
               </h1>
               
-              {/* SUBTITLE BOX: scaled down */}
+              {/* SUBTITLE BOX: Changed text to BLUE */}
               <div className="inline-block bg-yellow-400 px-2 py-0.5 md:px-2 md:py-1 mb-3 -skew-x-12 origin-left shadow-lg">
-                <h2 className="text-[9px] md:text-[11px] font-black text-blue-950 tracking-wide uppercase skew-x-12">
+                <h2 className="text-[9px] md:text-[11px] font-black text-blue-600 tracking-wide uppercase skew-x-12">
                    {currentSlide.subtitle}
                 </h2>
               </div>
@@ -304,7 +304,7 @@ const hotspotPlans = [
 
 const MainContent = () => {
   const navigate = useNavigate();
-   
+    
   const [showForm, setShowForm] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", location: "", connectionType: "" });
@@ -629,17 +629,19 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
                onChange={onChange} 
                required
                className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
-               placeholder="e.g. Near Main Market" 
+               placeholder="e.g. Near Market, Apartment Name" 
              />
           </div>
 
-          <button 
-             type="submit" 
-             disabled={isLoading}
-             className="w-full bg-blue-900 text-white font-bold py-4 rounded-xl shadow-lg mt-6 hover:bg-blue-800 transition-all flex items-center justify-center gap-2"
-          >
-             {isLoading ? "Processing..." : <>Confirm Request <ChevronRight size={16} /></>}
-          </button>
+          <div className="pt-2">
+            <button 
+              type="submit" 
+              disabled={isLoading}
+              className={`w-full py-4 rounded-xl font-black text-white uppercase tracking-widest shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 bg-[#015B97]`}
+            >
+              {isLoading ? "Processing..." : "Submit Request"} <Send size={16} />
+            </button>
+          </div>
         </form>
       </motion.div>
     </div>
@@ -649,16 +651,16 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
 const SuccessPopup = ({ onClose }) => (
   <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={onClose}>
     <motion.div 
-      initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-      className="bg-white rounded-2xl p-8 max-w-sm w-full text-center"
-      onClick={e => e.stopPropagation()}
+      initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+      className="bg-white rounded-2xl p-8 text-center max-w-sm shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <CheckCircle size={32} className="text-green-600" />
       </div>
-      <h3 className="text-2xl font-black text-gray-900 mb-2">Request Sent!</h3>
-      <p className="text-gray-500 text-sm mb-6">We have received your details. Our team will contact you shortly.</p>
-      <button onClick={onClose} className="bg-gray-900 text-white font-bold px-8 py-3 rounded-full hover:bg-black transition-all">
+      <h3 className="text-xl font-black text-blue-950 uppercase mb-2">Request Sent!</h3>
+      <p className="text-gray-500 text-sm mb-6">We have received your details. Our team will contact you shortly via WhatsApp/Phone.</p>
+      <button onClick={onClose} className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 px-8 rounded-xl uppercase text-xs tracking-widest transition-colors">
         Close
       </button>
     </motion.div>

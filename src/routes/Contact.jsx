@@ -1,11 +1,12 @@
-import React, { useState, useContext, createContext } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Phone, Mail, Ticket, ArrowRight, CheckCircle, AlertCircle
 } from "lucide-react";
 
-// --- MOCK CONTEXT (for theme, if not using real one) ---
-const ThemeContext = createContext({ darkMode: false });
+// Optimas Brand Colors
+const OPTIMAS_PRIMARY = '#015B97';
+const OPTIMAS_ACCENT = '#d0b216';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -16,11 +17,6 @@ const Contact = () => {
     email: "",
     message: "",
   });
-  
-  // Mock theme usage (fallback if no real ThemeProvider)
-  const [darkModeState] = useState(false);
-  const { darkMode: contextDarkMode } = useContext(ThemeContext);
-  const darkMode = contextDarkMode !== undefined ? contextDarkMode : darkModeState;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,7 +25,6 @@ const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // In production, this form will work with Netlify if you add `data-netlify="true"`
     alert("Support ticket submitted successfully! We'll get back to you soon.");
   };
 
@@ -45,14 +40,11 @@ const Contact = () => {
   };
 
   return (
-    <div className={`min-h-screen relative font-sans selection:bg-[#d0b216] selection:text-white ${
-      darkMode ? 'bg-gray-950 text-white' : 'bg-white text-gray-900'
-    }`} style={{ fontFamily: "'Poppins', sans-serif" }}>
+    <div className="min-h-screen relative font-sans selection:bg-[#d0b216] selection:text-white bg-white text-gray-900" style={{ fontFamily: "'Poppins', sans-serif" }}>
       
       {/* --- RIGHT SIDE BACKGROUND BLOCK (Desktop) --- */}
-      <div className={`hidden lg:block absolute top-0 right-0 w-[45%] h-full z-0 ${
-        darkMode ? 'bg-[#0a1220]' : 'bg-[#182b5c]'
-      }`}></div>
+      {/* Updated to Optimas primary */}
+      <div className="hidden lg:block absolute top-0 right-0 w-[45%] h-full z-0 bg-[#015B97]"></div>
 
       <div className="container mx-auto px-4 md:px-8 lg:px-12 relative z-10 max-w-7xl">
         <div className="flex flex-col lg:flex-row min-h-screen">
@@ -64,66 +56,49 @@ const Contact = () => {
             initial="hidden"
             animate="visible"
           >
+            {/* 🔥 Updated to BLACK text */}
             <motion.h1 
               variants={itemVariants}
-              className={`text-4xl md:text-5xl lg:text-6xl font-bold mb-12 tracking-tight ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              }`}
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-12 tracking-tight text-black"
             >
               Contact Support
             </motion.h1>
 
             <div className="space-y-6">
-              {/* Card 1: Phone */}
-              <motion.div 
-                variants={itemVariants}
-                className={`p-8 rounded-sm shadow-sm border-l-4 transition-all duration-300 hover:shadow-md group ${
-                  darkMode 
-                    ? 'bg-gray-900 border-l-[#d0b216] border-y border-r border-gray-800' 
-                    : 'bg-gray-50 border-l-[#d0b216] border-y border-r border-gray-100'
-                }`}
-              >
-                <h3 className="text-xl font-bold mb-2">Call Support (Mon-Fri 9–5:30)</h3>
-                <a href="tel:+254741874200" className={`flex items-center gap-2 font-bold text-lg group-hover:underline ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                }`}>
-                  +254 741 874 200 <ArrowRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${darkMode ? 'text-[#d0b216]' : 'text-[#d0b216]'}`} />
-                </a>
-              </motion.div>
-
-              {/* Card 2: Ticket */}
-              <motion.div 
-                variants={itemVariants}
-                className={`p-8 rounded-sm shadow-sm border-l-4 transition-all duration-300 hover:shadow-md group ${
-                  darkMode 
-                    ? 'bg-gray-900 border-l-[#d0b216] border-y border-r border-gray-800' 
-                    : 'bg-gray-50 border-l-[#d0b216] border-y border-r border-gray-100'
-                }`}
-              >
-                <h3 className="text-xl font-bold mb-2">Log a Support Ticket</h3>
-                <a href="https://optimaswifi.co.ke" className={`flex items-center gap-2 font-bold text-lg group-hover:underline ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                }`}>
-                  optimaswifi.co.ke <ArrowRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${darkMode ? 'text-[#d0b216]' : 'text-[#d0b216]'}`} />
-                </a>
-              </motion.div>
-
-              {/* Card 3: Email */}
-              <motion.div 
-                variants={itemVariants}
-                className={`p-8 rounded-sm shadow-sm border-l-4 transition-all duration-300 hover:shadow-md group ${
-                  darkMode 
-                    ? 'bg-gray-900 border-l-[#d0b216] border-y border-r border-gray-800' 
-                    : 'bg-gray-50 border-l-[#d0b216] border-y border-r border-gray-100'
-                }`}
-              >
-                <h3 className="text-xl font-bold mb-2">Email Support</h3>
-                <a href="mailto:support@optimaswifi.co.ke" className={`flex items-center gap-2 font-bold text-lg group-hover:underline ${
-                  darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
-                }`}>
-                  support@optimaswifi.co.ke <ArrowRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${darkMode ? 'text-[#d0b216]' : 'text-[#d0b216]'}`} />
-                </a>
-              </motion.div>
+              {[
+                { 
+                  title: "Call Support (Mon-Fri 9–5:30)", 
+                  content: "+254 741 874 200", 
+                  href: "tel:+254741874200",
+                  Icon: Phone
+                },
+                { 
+                  title: "Log a Support Ticket", 
+                  content: "optimaswifi.co.ke", 
+                  href: "https://optimaswifi.co.ke",
+                  Icon: Ticket
+                },
+                { 
+                  title: "Email Support", 
+                  content: "support@optimaswifi.co.ke", 
+                  href: "mailto:support@optimaswifi.co.ke",
+                  Icon: Mail
+                }
+              ].map((item, idx) => (
+                <motion.div 
+                  key={idx}
+                  variants={itemVariants}
+                  className="p-8 rounded-sm shadow-sm border-l-4 border-l-[#d0b216] border-y border-r border-gray-100 bg-gray-50 transition-all duration-300 hover:shadow-md group"
+                >
+                  <h3 className="text-xl font-bold mb-2 text-black">{item.title}</h3>
+                  <a 
+                    href={item.href} 
+                    className="flex items-center gap-2 font-bold text-lg text-[#015B97] group-hover:underline"
+                  >
+                    {item.content} <ArrowRight className="w-5 h-5 text-[#d0b216] transition-transform group-hover:translate-x-1" />
+                  </a>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
 
@@ -134,18 +109,16 @@ const Contact = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <div className={`p-8 md:p-10 rounded-sm shadow-2xl relative ${
-              darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-            }`}>
+            {/* Form Card: White background */}
+            <div className="p-8 md:p-10 rounded-sm shadow-2xl bg-white text-gray-900">
               
               <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Experiencing an issue? We can help!</h2>
-                <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <h2 className="text-2xl font-bold mb-4 text-black">Experiencing an issue? We can help!</h2>
+                <p className="text-sm leading-relaxed text-gray-700">
                   Our friendly support team is on hand to help you resolve any issues with your Optimas WiFi service.
                 </p>
               </div>
 
-              {/* ⚠️ Netlify form integration: add `data-netlify` and `name` */}
               <form 
                 name="contact" 
                 method="POST" 
@@ -153,7 +126,6 @@ const Contact = () => {
                 onSubmit={handleSubmit} 
                 className="space-y-5"
               >
-                {/* Hidden input for Netlify to recognize form */}
                 <input type="hidden" name="form-name" value="contact" />
 
                 {/* Row 1 */}
@@ -168,11 +140,7 @@ const Contact = () => {
                       value={formData.firstName}
                       onChange={handleChange}
                       required
-                      className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
-                        darkMode 
-                          ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
-                          : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
-                      }`}
+                      className="w-full px-4 py-3 rounded-sm bg-gray-50 border-0 outline-none text-sm focus:ring-1 focus:ring-[#015B97]"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -185,11 +153,7 @@ const Contact = () => {
                       value={formData.lastName}
                       onChange={handleChange}
                       required
-                      className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
-                        darkMode 
-                          ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
-                          : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
-                      }`}
+                      className="w-full px-4 py-3 rounded-sm bg-gray-50 border-0 outline-none text-sm focus:ring-1 focus:ring-[#015B97]"
                     />
                   </div>
                 </div>
@@ -205,11 +169,7 @@ const Contact = () => {
                     value={formData.company}
                     onChange={handleChange}
                     required
-                    className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
-                      darkMode 
-                        ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
-                        : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
-                    }`}
+                    className="w-full px-4 py-3 rounded-sm bg-gray-50 border-0 outline-none text-sm focus:ring-1 focus:ring-[#015B97]"
                   />
                 </div>
 
@@ -222,11 +182,7 @@ const Contact = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
-                        darkMode 
-                          ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
-                          : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
-                      }`}
+                      className="w-full px-4 py-3 rounded-sm bg-gray-50 border-0 outline-none text-sm focus:ring-1 focus:ring-[#015B97]"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -239,11 +195,7 @@ const Contact = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm ${
-                        darkMode 
-                          ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
-                          : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
-                      }`}
+                      className="w-full px-4 py-3 rounded-sm bg-gray-50 border-0 outline-none text-sm focus:ring-1 focus:ring-[#015B97]"
                     />
                   </div>
                 </div>
@@ -256,22 +208,18 @@ const Contact = () => {
                     value={formData.message}
                     onChange={handleChange}
                     rows="4"
-                    className={`w-full px-4 py-3 rounded-sm border-0 outline-none transition-all text-sm resize-none ${
-                      darkMode 
-                        ? 'bg-gray-700 focus:ring-1 focus:ring-[#d0b216]' 
-                        : 'bg-gray-50 focus:ring-1 focus:ring-[#182b5c]'
-                    }`}
+                    className="w-full px-4 py-3 rounded-sm bg-gray-50 border-0 outline-none text-sm resize-none focus:ring-1 focus:ring-[#015B97]"
                   ></textarea>
                 </div>
 
                 {/* Footer Info */}
                 <div className="space-y-4 pt-2">
-                  <p className={`text-xs leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className="text-xs leading-relaxed text-gray-500">
                     Optimas WiFi will use your information to respond to your inquiry. You may unsubscribe at any time. See our privacy policy for details.
                   </p>
                   
-                  {/* Fake reCAPTCHA (Netlify has built-in spam protection) */}
-                  <div className={`p-3 rounded border w-fit flex items-center gap-4 shadow-sm ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                  {/* Fake reCAPTCHA */}
+                  <div className="p-3 rounded border w-fit flex items-center gap-4 shadow-sm bg-gray-50 border-gray-200">
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 border-2 border-gray-300 rounded bg-white"></div>
                       <span className="text-xs font-medium">I'm not a robot</span>
@@ -282,13 +230,10 @@ const Contact = () => {
                     </div>
                   </div>
 
+                  {/* 🔥 Submit Button: Yellow bg + blue text */}
                   <button 
                     type="submit"
-                    className={`px-10 py-4 font-bold rounded-sm transition-all shadow-lg flex items-center gap-2 uppercase tracking-wider text-sm hover:shadow-xl active:scale-95 ${
-                      darkMode 
-                        ? 'bg-[#d0b216] hover:bg-[#b89c0f] text-gray-900' 
-                        : 'bg-[#182b5c] hover:bg-[#0f1f45] text-white'
-                    }`}
+                    className="px-10 py-4 font-bold rounded-sm transition-all shadow-lg flex items-center gap-2 uppercase tracking-wider text-sm hover:shadow-xl active:scale-95 bg-yellow-400 hover:bg-yellow-500 text-[#015B97]"
                   >
                     Submit <ArrowRight className="w-4 h-4" />
                   </button>
