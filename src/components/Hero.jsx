@@ -216,7 +216,7 @@ const plans = [
   {
     name: "Jumbo",
     price: "Ksh 1,500",
-    speed: "6 Mbps",
+    speed: "8 Mbps",
     image: PLAN_IMAGES["Jumbo"],
     features: [
       { text: "Uncapped Data", icon: Download },
@@ -229,7 +229,7 @@ const plans = [
   {
     name: "Buffalo",
     price: "Ksh 2,000",
-    speed: "12 Mbps",
+    speed: "15 Mbps",
     image: PLAN_IMAGES["Buffalo"],
     features: [
       { text: "HD Streaming", icon: MonitorPlay },
@@ -280,7 +280,7 @@ const plans = [
   },
   {
     name: "Chui",
-    price: "Ksh 6,000",
+    price: "Ksh 5,000",
     speed: "60 Mbps",
     image: PLAN_IMAGES["Chui"],
     features: [
