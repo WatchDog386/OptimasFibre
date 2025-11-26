@@ -33,7 +33,7 @@ const HERO_SLIDES = [
   },
   {
     id: 2,
-    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDmSrnKyvP5kyxygJxblpk5vtnWdSPz03hFDcsNlDxUZD6BmmpTnIHt1CiDXZMRqFoKL0&usqp=CAU",
+    image: "https://www.zipitwireless.com/hubfs/iStock-1421479531.jpg",
     tagline: "HIGH SPEED, LOW LATENCY",
     title: "FUTURE-PROOF CONNECTIVITY",
     subtitle: "Ideal for Streaming and Gaming",
@@ -44,7 +44,7 @@ const HERO_SLIDES = [
   },
   {
     id: 3,
-    image: "https://media.istockphoto.com/id/1494073880/photo/a-man-holding-icon-virtual-24-7-support-services-for-worldwide-nonstop-and-full-time.jpg?s=612x612&w=0&k=20&c=4YF-otaX3n8OiPOC4L_-_pAX1ibayzdvpkK1Ih2-p50=",
+    image: "https://www.malwarebytes.com/wp-content/uploads/sites/2/2025/06/247support_line.png",
     tagline: "24/7 DEDICATED SUPPORT",
     title: "RELIABILITY YOU CAN TRUST",
     subtitle: "We're Always Here For You",
@@ -105,9 +105,8 @@ const HeroSlider = () => {
         
       <div className="relative z-20 w-full max-w-6xl mx-auto px-6 h-full flex flex-col md:flex-row items-center justify-center md:justify-start">
         
-        {/* TEXT CONTENT - SHRINKED FOR MOBILE & CENTERED */}
-        {/* CHANGED: flex-col, items-center, text-center for mobile default */}
-        <div className="w-full md:w-1/2 pt-4 md:pt-0 flex flex-col items-center text-center md:items-start md:text-left">
+        {/* TEXT CONTENT - SHRINKED & PADDED TO AVOID OVERLAP */}
+        <div className="w-full md:w-[55%] lg:w-1/2 pt-4 md:pt-0 flex flex-col items-center text-center md:items-start md:text-left md:pr-12 relative z-30">
           <AnimatePresence initial={false} mode="wait">
             <motion.div
               key={currentSlide.id}
@@ -117,65 +116,54 @@ const HeroSlider = () => {
               exit="exit"
               className="flex flex-col items-center md:items-start"
             >
-              {/* TAGLINE: text-[9px] for mobile */}
-              <p className="text-yellow-400 text-[9px] md:text-xs font-bold uppercase tracking-[0.25em] mb-2 md:mb-3 pl-1 drop-shadow-md">
+              {/* TAGLINE: Tiny text */}
+              <p className="text-yellow-400 text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] mb-1 md:mb-3 pl-1 drop-shadow-md">
                 {currentSlide.tagline}
               </p>
               
-              {/* TITLE: text-2xl for mobile (much smaller) */}
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black uppercase mb-3 text-white tracking-tighter leading-tight drop-shadow-lg">
+              {/* TITLE: Reduced size significantly to avoid clash and keep one line */}
+              <h1 className="text-lg sm:text-xl md:text-3xl lg:text-4xl font-black uppercase mb-2 text-white tracking-tighter leading-tight drop-shadow-lg whitespace-nowrap">
                 {currentSlide.title}
               </h1>
               
               {/* SUBTITLE BOX: scaled down */}
-              <div className="inline-block bg-yellow-400 px-2 py-0.5 md:px-3 md:py-1 mb-4 -skew-x-12 origin-left shadow-lg">
-                <h2 className="text-[10px] md:text-sm font-black text-blue-950 tracking-wide uppercase skew-x-12">
+              <div className="inline-block bg-yellow-400 px-2 py-0.5 md:px-2 md:py-1 mb-3 -skew-x-12 origin-left shadow-lg">
+                <h2 className="text-[9px] md:text-[11px] font-black text-blue-950 tracking-wide uppercase skew-x-12">
                    {currentSlide.subtitle}
                 </h2>
               </div>
               
-              {/* DESCRIPTION: text-xs and max-width limited */}
-              <p className="text-gray-300 text-xs md:text-sm max-w-[280px] md:max-w-md mb-6 leading-relaxed font-light drop-shadow-md text-opacity-90">
+              {/* DESCRIPTION: Very small text */}
+              <p className="text-gray-300 text-[9px] md:text-xs max-w-[280px] md:max-w-sm mb-5 leading-relaxed font-light drop-shadow-md text-opacity-90">
                 {currentSlide.description}
               </p>
               
-              {/* BUTTON: Smaller padding and text on mobile */}
+              {/* BUTTON: Compact */}
               <motion.button 
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={currentSlide.ctaAction} 
-                className="bg-yellow-500 hover:bg-yellow-400 text-blue-950 px-5 py-2 md:px-8 md:py-3 font-bold uppercase text-[10px] md:text-xs tracking-widest rounded-full transition-all shadow-lg flex items-center gap-2"
+                className="bg-yellow-500 hover:bg-yellow-400 text-blue-950 px-4 py-1.5 md:px-6 md:py-2.5 font-bold uppercase text-[9px] md:text-[11px] tracking-widest rounded-full transition-all shadow-lg flex items-center gap-2"
               >
-                {currentSlide.isSupportSlide ? <WhatsAppIcon size={14}/> : <ArrowRight size={14}/>}
+                {currentSlide.isSupportSlide ? <WhatsAppIcon size={12}/> : <ArrowRight size={12}/>}
                 {currentSlide.isSupportSlide ? "TALK TO US NOW" : "VIEW PACKAGES"}
               </motion.button>
             </motion.div>
           </AnimatePresence>
         </div>
         
-        {/* IMAGE RIGHT - HIDDEN ON MOBILE */}
-        <div className="hidden md:flex w-1/2 h-full items-end justify-end mt-12 md:mt-0 relative">
+        {/* IMAGE RIGHT - SHRINKED & PUSHED RIGHT */}
+        {/* Changed max-w-md to max-w-sm and added justification/alignment ensuring it stays right */}
+        <div className="hidden md:flex w-full md:w-[45%] lg:w-1/2 h-full items-end justify-end mt-12 md:mt-0 relative">
           <motion.img 
             initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} 
             src={currentSlide.imageRight}
             alt="Optimas Team" 
-            className="w-full max-w-md object-contain rounded-t-xl shadow-2xl relative z-20" 
+            className="w-full max-w-[280px] lg:max-w-sm object-contain rounded-t-xl shadow-2xl relative z-20" 
             style={{ maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)' }} 
           />
         </div>
 
-        {/* DOTS NAVIGATION */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 md:bottom-10 z-30">
-          {HERO_SLIDES.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentSlideIndex(index)}
-              className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300 ${
-                index === currentSlideIndex ? 'bg-yellow-400 w-4 md:w-6' : 'bg-white/30 hover:bg-white'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
+        {/* DOTS NAVIGATION REMOVED */}
       </div>
     </section>
   );
@@ -627,35 +615,30 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
                  value={formData.email} 
                  onChange={onChange} 
                  className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
-                 placeholder="Optional" 
+                 placeholder="example@mail.com" 
                />
              </div>
           </div>
+          
           <div className="space-y-1">
-            <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Location *</label>
-            <input 
-              type="text" 
-              name="location" 
-              value={formData.location} 
-              onChange={onChange} 
-              required 
-              className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
-              placeholder="Building, Road, Estate" 
-            />
+             <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Location/Landmark</label>
+             <input 
+               type="text" 
+               name="location" 
+               value={formData.location} 
+               onChange={onChange} 
+               required
+               className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
+               placeholder="e.g. Near Main Market" 
+             />
           </div>
-          <div className="space-y-1">
-            <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Selected Package</label>
-            <div className="w-full px-4 py-3 rounded-lg bg-blue-50 border border-blue-100 flex justify-between items-center">
-               <span className="text-sm font-bold text-blue-900">{plan?.name || 'Not Selected'} - {plan?.speed || ''}</span>
-               <span className="text-sm font-black text-blue-600">{plan?.price || '0'}</span>
-            </div>
-          </div>
+
           <button 
-            type="submit" 
-            disabled={isLoading}
-            className={`w-full py-4 rounded-lg font-black text-white uppercase tracking-widest text-xs shadow-lg bg-blue-600 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 mt-2`}
+             type="submit" 
+             disabled={isLoading}
+             className="w-full bg-blue-900 text-white font-bold py-4 rounded-xl shadow-lg mt-6 hover:bg-blue-800 transition-all flex items-center justify-center gap-2"
           >
-            {isLoading ? "Processing..." : "Confirm via WhatsApp"} <Send size={16} />
+             {isLoading ? "Processing..." : <>Confirm Request <ChevronRight size={16} /></>}
           </button>
         </form>
       </motion.div>
@@ -664,18 +647,20 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
 };
 
 const SuccessPopup = ({ onClose }) => (
-  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[110]" onClick={onClose}>
+  <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={onClose}>
     <motion.div 
-       initial={{ scale: 0.5, opacity: 0 }} 
-       animate={{ scale: 1, opacity: 1 }}
-       className="bg-white rounded-2xl p-8 text-center max-w-sm w-full shadow-2xl"
+      initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+      className="bg-white rounded-2xl p-8 max-w-sm w-full text-center"
+      onClick={e => e.stopPropagation()}
     >
-       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
-          <CheckCircle size={32} />
-       </div>
-       <h3 className="text-xl font-black text-blue-950 uppercase mb-2">Request Sent!</h3>
-       <p className="text-gray-500 text-sm mb-6">Redirecting you to WhatsApp to finalize your booking...</p>
-       <button onClick={onClose} className="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-2 px-6 rounded-full text-xs uppercase tracking-widest">Close</button>
+      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <CheckCircle size={32} className="text-green-600" />
+      </div>
+      <h3 className="text-2xl font-black text-gray-900 mb-2">Request Sent!</h3>
+      <p className="text-gray-500 text-sm mb-6">We have received your details. Our team will contact you shortly.</p>
+      <button onClick={onClose} className="bg-gray-900 text-white font-bold px-8 py-3 rounded-full hover:bg-black transition-all">
+        Close
+      </button>
     </motion.div>
   </div>
 );
