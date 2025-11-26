@@ -85,15 +85,18 @@ export default function Navbar() {
           
           {/* LOGO */}
           <NavLink to="/" className="flex items-center gap-3 group">
-            <div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform overflow-hidden border"
-              style={{ borderColor: COLORS.accent }}
-            >
-              <img src="/oppo.jpg" alt="Optimas" className="w-full h-full object-cover rounded-xl" />
-            </div>
+            <img 
+              src="/oppo.jpg" 
+              alt="Optimas Home Fiber" 
+              className="w-10 h-10 rounded-xl object-cover group-hover:scale-105 transition-transform" 
+              onError={(e) => {
+                e.target.style.display = 'none'; // Hides image if broken
+                console.error("Logo failed to load. Check 'public/oppo.jpg' exists.");
+              }}
+            />
             <div className="flex flex-col">
               <span className="text-xl font-black text-slate-900 leading-none tracking-tight">OPTIMAS</span>
-              <span className="text-[10px] font-bold text-[#d0b216] uppercase tracking-widest">WIFI</span>
+              <span className="text-[10px] font-bold text-[#d0b216] uppercase tracking-widest whitespace-nowrap">HOME FIBER</span>
             </div>
           </NavLink>
 
@@ -174,7 +177,7 @@ export default function Navbar() {
                     >
                       <Wifi size={16} className="text-white" />
                     </div>
-                    <span className="font-bold text-slate-900">OPTIMAS WIFI</span>
+                    <span className="font-bold text-slate-900">OPTIMAS HOME FIBER</span>
                   </div>
                   <button 
                     onClick={() => setIsOpen(false)}
