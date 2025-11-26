@@ -69,11 +69,11 @@ const HeroSlider = () => {
   }, []);
 
   const contentVariants = {
-    enter: { opacity: 0, x: -50 },
+    enter: { opacity: 0, x: -20 },
     center: { opacity: 1, x: 0, transition: { duration: 0.8, delay: 0.3 } },
-    exit: { opacity: 0, x: -50, transition: { duration: 0.5 } }
+    exit: { opacity: 0, x: -20, transition: { duration: 0.5 } }
   };
-   
+    
   const imageVariants = {
     enter: { opacity: 0 },
     center: { opacity: 1, transition: { duration: 1.5, ease: "easeInOut" } },
@@ -81,7 +81,10 @@ const HeroSlider = () => {
   };
 
   return (
-    <section className="relative w-full min-h-[55vh] md:min-h-[60vh] flex items-center overflow-hidden bg-blue-950 pb-16">
+    // CHANGED: min-h reduced to 50vh on mobile to shrink it
+    <section className="relative w-full min-h-[50vh] md:min-h-[85vh] flex items-center overflow-hidden bg-blue-950 pb-8 pt-20 md:pt-32">
+      
+      {/* BACKGROUND IMAGE */}
       <div className="absolute inset-0 z-0">
         <AnimatePresence initial={false}>
           <motion.img
@@ -96,11 +99,15 @@ const HeroSlider = () => {
           />
         </AnimatePresence>
       </div>
-       
-      <div className="absolute inset-0 z-10 bg-gradient-to-r from-blue-950 via-blue-900/90 to-transparent"></div>
-       
-      <div className="relative z-20 w-full max-w-6xl mx-auto px-6 h-full flex flex-col md:flex-row items-center">
-        <div className="w-full md:w-1/2 pt-20 md:pt-0">
+        
+      {/* GRADIENT OVERLAY */}
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-blue-950 via-blue-950/60 to-transparent md:bg-gradient-to-r md:from-blue-950 md:via-blue-900/40 md:to-transparent"></div>
+        
+      <div className="relative z-20 w-full max-w-6xl mx-auto px-6 h-full flex flex-col md:flex-row items-center justify-center md:justify-start">
+        
+        {/* TEXT CONTENT - SHRINKED FOR MOBILE & CENTERED */}
+        {/* CHANGED: flex-col, items-center, text-center for mobile default */}
+        <div className="w-full md:w-1/2 pt-4 md:pt-0 flex flex-col items-center text-center md:items-start md:text-left">
           <AnimatePresence initial={false} mode="wait">
             <motion.div
               key={currentSlide.id}
@@ -108,44 +115,44 @@ const HeroSlider = () => {
               initial="enter"
               animate="center"
               exit="exit"
+              className="flex flex-col items-center md:items-start"
             >
-              {/* TAGLINE: Small, Yellow, Spaced out */}
-              <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-[0.25em] mb-3 pl-1">
+              {/* TAGLINE: text-[9px] for mobile */}
+              <p className="text-yellow-400 text-[9px] md:text-xs font-bold uppercase tracking-[0.25em] mb-2 md:mb-3 pl-1 drop-shadow-md">
                 {currentSlide.tagline}
               </p>
-
-              {/* TITLE: Shrunk, White, One Line, Non-overlapping */}
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-black uppercase mb-3 text-white tracking-tighter whitespace-nowrap leading-none">
+              
+              {/* TITLE: text-2xl for mobile (much smaller) */}
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black uppercase mb-3 text-white tracking-tighter leading-tight drop-shadow-lg">
                 {currentSlide.title}
               </h1>
-
-              {/* SUBTITLE: Black text on Yellow BG, slightly rotated, smaller text */}
-              <div className="inline-block bg-yellow-400 px-3 py-1 mb-5 -skew-x-12 origin-left">
-                <h2 className="text-xs md:text-sm font-black text-blue-950 tracking-wide uppercase skew-x-12">
+              
+              {/* SUBTITLE BOX: scaled down */}
+              <div className="inline-block bg-yellow-400 px-2 py-0.5 md:px-3 md:py-1 mb-4 -skew-x-12 origin-left shadow-lg">
+                <h2 className="text-[10px] md:text-sm font-black text-blue-950 tracking-wide uppercase skew-x-12">
                    {currentSlide.subtitle}
                 </h2>
               </div>
-
-              {/* DESCRIPTION: Small text, light gray, fixed width */}
-              <p className="text-gray-300 text-xs max-w-xs mb-6 leading-relaxed font-light">
+              
+              {/* DESCRIPTION: text-xs and max-width limited */}
+              <p className="text-gray-300 text-xs md:text-sm max-w-[280px] md:max-w-md mb-6 leading-relaxed font-light drop-shadow-md text-opacity-90">
                 {currentSlide.description}
               </p>
-
-              {/* BUTTON: Yellow Background, Blue Text */}
+              
+              {/* BUTTON: Smaller padding and text on mobile */}
               <motion.button 
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={currentSlide.ctaAction} 
-                className="bg-yellow-500 hover:bg-yellow-400 text-blue-950 px-6 py-2.5 font-bold uppercase text-[10px] tracking-widest rounded-full transition-all shadow-lg flex items-center gap-2"
+                className="bg-yellow-500 hover:bg-yellow-400 text-blue-950 px-5 py-2 md:px-8 md:py-3 font-bold uppercase text-[10px] md:text-xs tracking-widest rounded-full transition-all shadow-lg flex items-center gap-2"
               >
-                {currentSlide.isSupportSlide ? 
-                  <WhatsAppIcon size={14}/> : 
-                  <ArrowRight size={14}/>}
+                {currentSlide.isSupportSlide ? <WhatsAppIcon size={14}/> : <ArrowRight size={14}/>}
                 {currentSlide.isSupportSlide ? "TALK TO US NOW" : "VIEW PACKAGES"}
               </motion.button>
             </motion.div>
           </AnimatePresence>
         </div>
         
+        {/* IMAGE RIGHT - HIDDEN ON MOBILE */}
         <div className="hidden md:flex w-1/2 h-full items-end justify-end mt-12 md:mt-0 relative">
           <motion.img 
             initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} 
@@ -156,13 +163,14 @@ const HeroSlider = () => {
           />
         </div>
 
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 md:bottom-10 z-30">
+        {/* DOTS NAVIGATION */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 md:bottom-10 z-30">
           {HERO_SLIDES.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentSlideIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index === currentSlideIndex ? 'bg-yellow-400 w-6' : 'bg-white/30 hover:bg-white'
+              className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300 ${
+                index === currentSlideIndex ? 'bg-yellow-400 w-4 md:w-6' : 'bg-white/30 hover:bg-white'
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -204,7 +212,7 @@ const cardVariants = {
 };
 
 const PLAN_IMAGES = {
-  "Jumbo": "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  "Jumbo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLtDRuk2QhRzgJFqmA7jIrUxFwQb470KLtVeLuGb4vwlMhBSOoiK8soiuQEj9JsYFORWw&usqp=CAU",
   "Buffalo": "https://www.travelbutlers.com/images/450px/dreamstimemaximum_20395360_KRUGER.jpg",
   "Ndovu": "https://static.wixstatic.com/media/4c001d_b2c8ccb2a4834f539eeaa2e5c6859985~mv2.png/v1/fill/w_1000,h_567,al_c,q_90,usm_0.66_1.00_0.01/4c001d_b2c8ccb2a4834f539eeaa2e5c6859985~mv2.png",
   "Gazzelle": "https://www.tanzania-experience.com/wp-content/uploads/2015/09/gazelles-antilope-featured.jpg",
@@ -352,11 +360,11 @@ const MainContent = () => {
           OPTIMAS<span className="text-yellow-500">FIBER</span>
         </motion.div>
       </div>
-       
+        
       <HeroSlider />
 
       {/* ======== FEATURE STRIP ======== */}
-      <div className="relative z-30 w-full -mt-8">
+      <div className="relative z-30 w-full -mt-8 hidden md:block">
         <div className="max-w-6xl mx-auto px-4">
            <div className="bg-white rounded-xl shadow-2xl border-b-4 border-yellow-500 py-6 px-4 md:px-10">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center justify-between text-center divide-x-0 md:divide-x divide-gray-100">
@@ -467,8 +475,8 @@ const MainContent = () => {
                       <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-6">
                         {plan.features.map((feature, i) => (
                            <div key={i} className={`flex items-center gap-2 p-1.5 rounded-md ${theme.light} bg-opacity-20`}>
-                              <feature.icon size={14} className={`flex-shrink-0`} strokeWidth={2.5} />
-                              <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide leading-none">{feature.text}</span>
+                             <feature.icon size={14} className={`flex-shrink-0`} strokeWidth={2.5} />
+                             <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide leading-none">{feature.text}</span>
                            </div>
                         ))}
                       </div>
@@ -638,30 +646,17 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
           <div className="space-y-1">
             <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Selected Package</label>
             <div className="w-full px-4 py-3 rounded-lg bg-blue-50 border border-blue-100 flex justify-between items-center">
-               <span className="text-sm font-bold text-blue-900">{plan?.name || 'Not Selected'}</span>
-               <span className="text-xs font-bold text-blue-600">{plan?.speed}</span>
+               <span className="text-sm font-bold text-blue-900">{plan?.name || 'Not Selected'} - {plan?.speed || ''}</span>
+               <span className="text-sm font-black text-blue-600">{plan?.price || '0'}</span>
             </div>
           </div>
-          <div className="flex gap-3 pt-2">
-            <motion.button 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button" 
-              onClick={onClose} 
-              className="w-1/3 py-3 rounded-lg bg-gray-100 text-gray-600 font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition"
-            >
-              Cancel
-            </motion.button>
-            <motion.button 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit" 
-              disabled={isLoading}
-              className="w-2/3 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2"
-            >
-              {isLoading ? <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span> : "Confirm Order"}
-            </motion.button>
-          </div>
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className={`w-full py-4 rounded-lg font-black text-white uppercase tracking-widest text-xs shadow-lg bg-blue-600 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 mt-2`}
+          >
+            {isLoading ? "Processing..." : "Confirm via WhatsApp"} <Send size={16} />
+          </button>
         </form>
       </motion.div>
     </div>
@@ -669,21 +664,18 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
 };
 
 const SuccessPopup = ({ onClose }) => (
-  <div className="fixed inset-0 bg-blue-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={onClose}>
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[110]" onClick={onClose}>
     <motion.div 
-      initial={{ scale: 0.8, opacity: 0 }} 
-      animate={{ scale: 1, opacity: 1 }}
-      className="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm"
-      onClick={(e) => e.stopPropagation()}
+       initial={{ scale: 0.5, opacity: 0 }} 
+       animate={{ scale: 1, opacity: 1 }}
+       className="bg-white rounded-2xl p-8 text-center max-w-sm w-full shadow-2xl"
     >
-      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <CheckCircle className="text-green-500 w-8 h-8" />
-      </div>
-      <h3 className="text-xl font-black text-blue-950 uppercase mb-2">Order Received!</h3>
-      <p className="text-gray-500 text-sm mb-6">Redirecting you to WhatsApp to finalize your connection...</p>
-      <button onClick={onClose} className="bg-blue-950 text-white px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-blue-900 transition shadow-lg">
-        Close
-      </button>
+       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
+          <CheckCircle size={32} />
+       </div>
+       <h3 className="text-xl font-black text-blue-950 uppercase mb-2">Request Sent!</h3>
+       <p className="text-gray-500 text-sm mb-6">Redirecting you to WhatsApp to finalize your booking...</p>
+       <button onClick={onClose} className="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-2 px-6 rounded-full text-xs uppercase tracking-widest">Close</button>
     </motion.div>
   </div>
 );
