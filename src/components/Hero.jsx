@@ -22,7 +22,7 @@ const SLIDE_INTERVAL = 5000;
 const HERO_SLIDES = [
   {
     id: 1,
-    image: "/optic.jpeg",
+    image: "https://www.centurylink.com/content/dam/home/static/internet/couchfam-sm.png",
     tagline: "FAST AFFORDABLE WIFI",
     title: "OPTIMAS HOME FIBER",
     subtitle: "Empowering Digital Connectivity",
@@ -33,7 +33,7 @@ const HERO_SLIDES = [
   },
   {
     id: 2,
-    image: "https://www.zipitwireless.com/hubfs/iStock-1421479531.jpg",
+    image: "https://d191tlbtp8692k.cloudfront.net/prod/fcom/general/Westbrook-ME.jpg",
     tagline: "HIGH SPEED, LOW LATENCY",
     title: "FUTURE-PROOF CONNECTIVITY",
     subtitle: "Ideal for Streaming and Gaming",
@@ -44,7 +44,7 @@ const HERO_SLIDES = [
   },
   {
     id: 3,
-    image: "https://www.malwarebytes.com/wp-content/uploads/sites/2/2025/06/247support_line.png",
+    image: "https://media.istockphoto.com/id/2168215145/photo/businessman-using-kpi-dashboard-management-data-system-kpi-connected-in-database-for-follow.jpg?s=612x612&w=0&k=20&c=kUNncAVVzQEGnoEkAk0RZpfawjgH1tDx6gbIJ7St-cs=",
     tagline: "24/7 DEDICATED SUPPORT",
     title: "RELIABILITY YOU CAN TRUST",
     subtitle: "We're Always Here For You",
@@ -91,7 +91,8 @@ const HeroSlider = () => {
             key={currentSlide.id}
             src={currentSlide.image}
             alt={`Background ${currentSlide.id}`}
-            className="absolute inset-0 w-full h-full object-cover opacity-50"
+            // UPDATED: object-cover (fills screen), object-top (keeps heads visible, cuts bottom)
+            className="absolute inset-0 w-full h-full object-cover object-top opacity-50"
             variants={imageVariants}
             initial="enter"
             animate="center"
@@ -152,7 +153,6 @@ const HeroSlider = () => {
         </div>
         
         {/* IMAGE RIGHT - SHRINKED & PUSHED RIGHT */}
-        {/* Changed max-w-md to max-w-sm and added justification/alignment ensuring it stays right */}
         <div className="hidden md:flex w-full md:w-[45%] lg:w-1/2 h-full items-end justify-end mt-12 md:mt-0 relative">
           <motion.img 
             initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} 
