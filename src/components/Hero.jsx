@@ -33,7 +33,7 @@ const HERO_SLIDES = [
   },
   {
     id: 2,
-    image: "https://d191tlbtp8692k.cloudfront.net/prod/fcom/general/Westbrook-ME.jpg",
+    image: "https://issafrica.s3.amazonaws.com/site/images/banners/2018-06-20-ear18-banner.jpg",
     tagline: "HIGH SPEED, LOW LATENCY",
     title: "FUTURE-PROOF CONNECTIVITY",
     subtitle: "Ideal for Streaming and Gaming",
@@ -44,7 +44,7 @@ const HERO_SLIDES = [
   },
   {
     id: 3,
-    image: "https://media.istockphoto.com/id/2168215145/photo/businessman-using-kpi-dashboard-management-data-system-kpi-connected-in-database-for-follow.jpg?s=612x612&w=0&k=20&c=kUNncAVVzQEGnoEkAk0RZpfawjgH1tDx6gbIJ7St-cs=",
+    image: "https://media.istockphoto.com/id/1494073880/photo/a-man-holding-icon-virtual-24-7-support-services-for-worldwide-nonstop-and-full-time.jpg?s=612x612&w=0&k=20&c=4YF-otaX3n8OiPOC4L_-_pAX1ibayzdvpkK1Ih2-p50=",
     tagline: "24/7 DEDICATED SUPPORT",
     title: "RELIABILITY YOU CAN TRUST",
     subtitle: "We're Always Here For You",
@@ -81,7 +81,6 @@ const HeroSlider = () => {
   };
 
   return (
-    // CHANGED: min-h reduced to 50vh on mobile to shrink it
     <section className="relative w-full min-h-[50vh] md:min-h-[85vh] flex items-center overflow-hidden bg-blue-950 pb-8 pt-20 md:pt-32">
       
       {/* BACKGROUND IMAGE */}
@@ -91,7 +90,6 @@ const HeroSlider = () => {
             key={currentSlide.id}
             src={currentSlide.image}
             alt={`Background ${currentSlide.id}`}
-            // UPDATED: object-cover (fills screen), object-top (keeps heads visible, cuts bottom)
             className="absolute inset-0 w-full h-full object-cover object-top opacity-50"
             variants={imageVariants}
             initial="enter"
@@ -106,7 +104,7 @@ const HeroSlider = () => {
         
       <div className="relative z-20 w-full max-w-6xl mx-auto px-6 h-full flex flex-col md:flex-row items-center justify-center md:justify-start">
         
-        {/* TEXT CONTENT - SHRINKED & PADDED TO AVOID OVERLAP */}
+        {/* TEXT CONTENT */}
         <div className="w-full md:w-[55%] lg:w-1/2 pt-4 md:pt-0 flex flex-col items-center text-center md:items-start md:text-left md:pr-12 relative z-30">
           <AnimatePresence initial={false} mode="wait">
             <motion.div
@@ -117,29 +115,24 @@ const HeroSlider = () => {
               exit="exit"
               className="flex flex-col items-center md:items-start"
             >
-              {/* TAGLINE: Tiny text */}
               <p className="text-yellow-400 text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] mb-3 pl-1 drop-shadow-md">
                 {currentSlide.tagline}
               </p>
               
-              {/* TITLE: Changed to BLACK as requested */}
               <h1 className="text-lg sm:text-xl md:text-3xl lg:text-4xl font-black uppercase mb-4 text-black tracking-tighter leading-tight drop-shadow-lg whitespace-nowrap">
                 {currentSlide.title}
               </h1>
               
-              {/* SUBTITLE BOX: Changed text to BLUE */}
               <div className="inline-block bg-yellow-400 px-2 py-0.5 md:px-2 md:py-1 mb-3 -skew-x-12 origin-left shadow-lg">
                 <h2 className="text-[9px] md:text-[11px] font-black text-blue-600 tracking-wide uppercase skew-x-12">
                    {currentSlide.subtitle}
                 </h2>
               </div>
               
-              {/* DESCRIPTION: Very small text */}
               <p className="text-gray-300 text-[9px] md:text-xs max-w-[280px] md:max-w-sm mb-5 leading-relaxed font-light drop-shadow-md text-opacity-90">
                 {currentSlide.description}
               </p>
               
-              {/* BUTTON: Compact */}
               <motion.button 
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={currentSlide.ctaAction} 
@@ -152,7 +145,7 @@ const HeroSlider = () => {
           </AnimatePresence>
         </div>
         
-        {/* IMAGE RIGHT - SHRINKED & PUSHED RIGHT */}
+        {/* IMAGE RIGHT */}
         <div className="hidden md:flex w-full md:w-[45%] lg:w-1/2 h-full items-end justify-end mt-12 md:mt-0 relative">
           <motion.img 
             initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} 
@@ -162,8 +155,6 @@ const HeroSlider = () => {
             style={{ maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)' }} 
           />
         </div>
-
-        {/* DOTS NAVIGATION REMOVED */}
       </div>
     </section>
   );
@@ -351,45 +342,47 @@ const MainContent = () => {
         
       <HeroSlider />
 
-      {/* ======== FEATURE STRIP ======== */}
-      <div className="relative z-30 w-full -mt-8 hidden md:block">
-        <div className="max-w-6xl mx-auto px-4">
-           <div className="bg-white rounded-xl shadow-2xl border-b-4 border-yellow-500 py-6 px-4 md:px-10">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center justify-between text-center divide-x-0 md:divide-x divide-gray-100">
-                
-                <div className="flex flex-col md:flex-row items-center justify-center gap-3 group">
-                   <Phone className="w-5 h-5 text-blue-900" strokeWidth={2.5} />
-                   <div className="text-left">
-                     <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Support</span>
-                     <span className="block text-xs font-black text-blue-950 uppercase tracking-tight">24/7 Active</span>
-                   </div>
+      {/* ======== NEW FEATURE STRIP (LOGO STYLE) ======== */}
+      <div className="relative z-30 w-full bg-white border-b border-gray-100 py-10 md:py-12">
+        <div className="max-w-7xl mx-auto px-6">
+           <div className="flex flex-wrap items-center justify-center md:justify-between gap-8 md:gap-12 opacity-90">
+             
+             {/* Item 1 */}
+             <div className="flex items-center gap-3 group cursor-default grayscale hover:grayscale-0 transition-all duration-500">
+                <Phone className="w-8 h-8 text-blue-900 opacity-80" strokeWidth={1.5} />
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-gray-800 tracking-tight leading-none group-hover:text-blue-900 transition-colors">24/7 SUPPORT</span>
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5">ALWAYS ACTIVE</span>
                 </div>
+             </div>
 
-                <div className="flex flex-col md:flex-row items-center justify-center gap-3 group">
-                   <Globe className="w-5 h-5 text-blue-900" strokeWidth={2.5} />
-                   <div className="text-left">
-                     <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Network</span>
-                     <span className="block text-xs font-black text-blue-950 uppercase tracking-tight">Wide Cover</span>
-                   </div>
+             {/* Item 2 */}
+             <div className="flex items-center gap-3 group cursor-default grayscale hover:grayscale-0 transition-all duration-500">
+                <Globe className="w-8 h-8 text-blue-900 opacity-80" strokeWidth={1.5} />
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-gray-800 tracking-tight leading-none group-hover:text-blue-900 transition-colors">WIDE NETWORK</span>
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5">FULL COVERAGE</span>
                 </div>
+             </div>
 
-                <div className="flex flex-col md:flex-row items-center justify-center gap-3 group">
-                   <HardHat className="w-5 h-5 text-blue-900" strokeWidth={2.5} />
-                   <div className="text-left">
-                     <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Install</span>
-                     <span className="block text-xs font-black text-blue-950 uppercase tracking-tight">Expert Team</span>
-                   </div>
+             {/* Item 3 */}
+             <div className="flex items-center gap-3 group cursor-default grayscale hover:grayscale-0 transition-all duration-500">
+                <HardHat className="w-8 h-8 text-blue-900 opacity-80" strokeWidth={1.5} />
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-gray-800 tracking-tight leading-none group-hover:text-blue-900 transition-colors">FREE INSTALL</span>
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5">EXPERT TEAM</span>
                 </div>
+             </div>
 
-                <div className="flex flex-col md:flex-row items-center justify-center gap-3 group">
-                   <Gauge className="w-5 h-5 text-blue-900" strokeWidth={2.5} />
-                   <div className="text-left">
-                     <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Speed</span>
-                     <span className="block text-xs font-black text-blue-950 uppercase tracking-tight">High Bandwidth</span>
-                   </div>
+             {/* Item 4 */}
+             <div className="flex items-center gap-3 group cursor-default grayscale hover:grayscale-0 transition-all duration-500">
+                <Gauge className="w-8 h-8 text-blue-900 opacity-80" strokeWidth={1.5} />
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-gray-800 tracking-tight leading-none group-hover:text-blue-900 transition-colors">HIGH SPEED</span>
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5">LOW LATENCY</span>
                 </div>
+             </div>
 
-              </div>
            </div>
         </div>
       </div>
@@ -399,7 +392,6 @@ const MainContent = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <p className="text-yellow-600 text-[10px] font-bold uppercase tracking-[0.25em] mb-2">Choose Your Speed</p>
-            {/* UPDATED: Lowercase, Black & Blue text */}
             <h2 className="text-3xl md:text-4xl font-black mb-4 text-black tracking-tight lowercase">
               unlimited <span className="text-blue-600">fiber internet</span>
             </h2>
@@ -424,13 +416,11 @@ const MainContent = () => {
                 >
                   {/* Top Image Section */}
                   <div className="h-52 relative">
-                      {/* RESTORED: Original High Opacity + Multiply Blend for Vibrant Color */}
                       <div className={`absolute inset-0 bg-gradient-to-br ${theme.gradient} opacity-90 mix-blend-multiply z-10`} />
                       <img src={plan.image} alt={plan.name} className="w-full h-full object-cover grayscale opacity-60 group-hover:scale-105 transition-transform duration-700" />
                       
-                      {/* Speed Display - UPDATED: No Padding, Just Black Text + Glow for Visibility */}
+                      {/* Speed Display */}
                       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pb-8">
-                          {/* Black Text with Strong White Shadow so it's readable on dark color */}
                           <h2 className="text-5xl font-black text-black tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.9)]">
                             {plan.speed}
                           </h2>
@@ -453,13 +443,13 @@ const MainContent = () => {
                         </div>
                       </div>
 
-                      {/* Price - UPDATED to Black */}
+                      {/* Price */}
                       <div className="text-center mb-6 border-b border-gray-100 pb-4">
                         <span className="text-2xl font-black text-black tracking-tight">{plan.price}</span>
                         <span className="text-gray-400 font-bold text-[10px] uppercase ml-1">/month</span>
                       </div>
 
-                      {/* Features Grid - Clean & Small */}
+                      {/* Features Grid */}
                       <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-6">
                         {plan.features.map((feature, i) => (
                            <div key={i} className={`flex items-center gap-2 p-1.5 rounded-md ${theme.light} bg-opacity-20`}>
@@ -469,7 +459,7 @@ const MainContent = () => {
                         ))}
                       </div>
 
-                      {/* Action Button - UPDATED: Curved Edges & Default Theme Color */}
+                      {/* Action Button */}
                       <button 
                         onClick={() => handlePlanSelect(plan)}
                         className={`w-full py-3 rounded-full font-black text-white uppercase tracking-widest text-[10px] shadow-md transition-all hover:shadow-xl active:scale-95 bg-gradient-to-r ${theme.gradient} flex items-center justify-center gap-2`}
@@ -484,28 +474,18 @@ const MainContent = () => {
         </div>
       </section>
 
-      {/* ======== HOTSPOT SECTION (UPDATED with Unsplash Background) ======== */}
-      <section id="hotspot-section" className="py-20 relative overflow-hidden">
-        {/* Background Image - Unsplash Tech/Connection Vibe */}
-        <div className="absolute inset-0">
-          <img 
-            src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop" 
-            alt="Hotspot Background" 
-            className="w-full h-full object-cover"
-          />
-          {/* Overlay to ensure text readability */}
-          <div className="absolute inset-0 bg-blue-950/90 mix-blend-multiply"></div>
-        </div>
+      {/* ======== HOTSPOT SECTION ======== */}
+      <section id="hotspot-section" className="py-20 relative overflow-hidden bg-white">
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4 border-b border-white/10 pb-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4 border-b border-gray-100 pb-6">
             <div>
-               <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-[0.25em] mb-1">Public Zones</p>
-               <h2 className="text-3xl font-black text-white uppercase tracking-tight">
-                 Wifi <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Hotspot</span> Passes
+               <p className="text-blue-600 text-[10px] font-bold uppercase tracking-[0.25em] mb-1">Public Zones</p>
+               <h2 className="text-3xl font-black text-blue-950 uppercase tracking-tight">
+                 Wifi <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Hotspot</span> Passes
                </h2>
             </div>
-            <button onClick={handleHotspotSelect} className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:text-yellow-400 transition-all border border-white/20 px-4 py-2 rounded-full hover:bg-white/5">
+            <button onClick={handleHotspotSelect} className="text-blue-950 text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:text-blue-600 transition-all border border-gray-200 px-4 py-2 rounded-full hover:bg-gray-50">
                View All Zones <ArrowRight size={14} />
             </button>
           </div>
@@ -519,22 +499,25 @@ const MainContent = () => {
                    transition={{ delay: index * 0.1 }}
                    whileHover={{ y: -5 }}
                    onClick={handleHotspotSelect}
-                   className={`rounded-xl p-4 cursor-pointer relative overflow-hidden group bg-gradient-to-br ${plan.color}`}
+                   className={`rounded-xl p-4 cursor-pointer relative overflow-hidden group bg-gradient-to-br ${plan.color} shadow-lg hover:shadow-xl`}
                 >
-                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
-                      <Wifi size={50} className="text-white" />
+                   {/* UPDATED: WIFI ICON -> BLACK & HIGHER OPACITY */}
+                   <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-40 transition-opacity">
+                      <Wifi size={50} className="text-black" />
                    </div>
 
-                   <div className="relative z-10 text-white h-full flex flex-col justify-between min-h-[110px]">
+                   {/* UPDATED: TEXT CONTAINER -> DARK BLUE (blue-950) */}
+                   <div className="relative z-10 text-blue-950 h-full flex flex-col justify-between min-h-[110px]">
                       <div>
                           <h3 className="font-bold text-xs uppercase tracking-wide leading-tight mb-2">{plan.name}</h3>
-                          <span className="inline-block bg-black/20 text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-md border border-white/10">
+                          {/* UPDATED: DURATION PILL -> White BG for Dark Text */}
+                          <span className="inline-block bg-white/50 text-[10px] font-black px-2 py-0.5 rounded backdrop-blur-md border border-white/20">
                              {plan.duration}
                           </span>
                       </div>
                       
                       <div className="mt-3">
-                          <p className="text-[10px] opacity-75 uppercase tracking-widest mb-0">Only</p>
+                          <p className="text-[10px] opacity-75 uppercase tracking-widest mb-0 font-bold">Only</p>
                           <p className="text-xl font-black tracking-tight">Ksh {plan.price}</p>
                       </div>
                    </div>
@@ -562,7 +545,7 @@ const MainContent = () => {
   );
 };
 
-// --- MODALS (Updated to be cleaner/sharper) ---
+// --- MODALS ---
 const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoading }) => {
   if (!show) return null;
   return (
@@ -619,29 +602,33 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
                />
              </div>
           </div>
-          
           <div className="space-y-1">
-             <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Location/Landmark</label>
-             <input 
-               type="text" 
-               name="location" 
-               value={formData.location} 
-               onChange={onChange} 
-               required
-               className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
-               placeholder="e.g. Near Market, Apartment Name" 
-             />
+            <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Installation Location *</label>
+            <textarea 
+              name="location" 
+              value={formData.location} 
+              onChange={onChange} 
+              required 
+              rows="2"
+              className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
+              placeholder="Building name, Road, Floor..." 
+            ></textarea>
           </div>
-
-          <div className="pt-2">
-            <button 
-              type="submit" 
-              disabled={isLoading}
-              className={`w-full py-4 rounded-xl font-black text-white uppercase tracking-widest shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 bg-[#015B97]`}
-            >
-              {isLoading ? "Processing..." : "Submit Request"} <Send size={16} />
-            </button>
+          <div className="p-4 bg-blue-50 rounded-xl flex items-center justify-between border border-blue-100">
+             <div>
+                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Selected Plan</p>
+                <p className="font-black text-blue-900">{plan?.name} ({plan?.speed})</p>
+             </div>
+             <p className="font-black text-xl text-blue-600">{plan?.price}</p>
           </div>
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className={`w-full py-4 rounded-xl font-black text-white uppercase tracking-widest text-xs shadow-xl transition-all hover:shadow-2xl active:scale-95 bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2`}
+          >
+            {isLoading ? "Processing..." : "Confirm & Send Request"}
+            {!isLoading && <Send size={16} />}
+          </button>
         </form>
       </motion.div>
     </div>
@@ -649,20 +636,18 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
 };
 
 const SuccessPopup = ({ onClose }) => (
-  <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={onClose}>
+  <div className="fixed inset-0 bg-blue-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={onClose}>
     <motion.div 
-      initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-      className="bg-white rounded-2xl p-8 text-center max-w-sm shadow-2xl"
-      onClick={(e) => e.stopPropagation()}
+      initial={{ scale: 0.5, opacity: 0 }} 
+      animate={{ scale: 1, opacity: 1 }} 
+      className="bg-white rounded-3xl p-8 text-center max-w-sm shadow-2xl"
     >
-      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <CheckCircle size={32} className="text-green-600" />
+      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-500">
+        <CheckCircle size={40} />
       </div>
-      <h3 className="text-xl font-black text-blue-950 uppercase mb-2">Request Sent!</h3>
-      <p className="text-gray-500 text-sm mb-6">We have received your details. Our team will contact you shortly via WhatsApp/Phone.</p>
-      <button onClick={onClose} className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 px-8 rounded-xl uppercase text-xs tracking-widest transition-colors">
-        Close
-      </button>
+      <h3 className="text-2xl font-black text-blue-950 uppercase mb-2">Request Sent!</h3>
+      <p className="text-gray-500 text-sm mb-6">We have received your details on WhatsApp. Our team will contact you shortly to schedule installation.</p>
+      <button onClick={onClose} className="bg-blue-950 text-white px-8 py-3 rounded-full font-bold uppercase text-xs tracking-widest">Close</button>
     </motion.div>
   </div>
 );
