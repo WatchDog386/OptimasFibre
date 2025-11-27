@@ -1,161 +1,100 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom"; 
-import { MapPin, Phone, Mail, ArrowUp, Lock } from "lucide-react";
-
-// Consistent styling matching your MainContent
-const FOOTER_STYLES = {
-  primaryColor: '#015B97',
-  button: {
-    primary: {
-      base: 'px-5 py-2 bg-white text-[#015B97] border border-white font-bold rounded-full transition-all duration-300 shadow-md flex items-center gap-2 text-xs uppercase tracking-widest',
-      hover: 'hover:bg-[#015B97] hover:text-white hover:border-[#015B97] hover:shadow-lg',
-    },
-    secondary: {
-      base: 'px-5 py-2 bg-transparent text-white border border-white/30 font-bold rounded-full transition-all duration-300 flex items-center gap-2 text-xs uppercase tracking-widest',
-      hover: 'hover:bg-white hover:text-[#015B97] hover:border-white',
-    },
-  },
-  typography: {
-    heading: 'text-lg font-black uppercase tracking-wider mb-4',
-    link: 'text-sm text-gray-400 hover:text-white hover:translate-x-1 transition-all duration-200 block cursor-pointer font-medium',
-  },
-};
+import { ArrowUp } from "lucide-react";
 
 export default function Footer() {
-  // Using specific colors to match the Hero Section (Blue-950 vibe)
-  const colors = {
-    bg: '#020617', // Slate-950/Black blend
-    textPrimary: '#ffffff',
-    textSecondary: '#94a3b8', // Slate-400
-    border: '#1e293b', // Slate-800
-    iconColor: '#3b82f6', // Blue-500
-  };
-
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const quickLinks = [
+  // Simplified links
+  const links = [
     { name: 'Home', path: '/' },
-    { name: 'About Us', path: '/about' },
-    { name: 'Services', path: '/services' },
-    { name: 'Coverage', path: '/coverage' },
-    { name: 'Contact', path: '/contact' }
-  ];
-
-  const serviceLinks = [
-    { name: 'High-Speed WiFi', path: '/services' },
-    { name: 'Network Installation', path: '/services' },
-    { name: 'Business Solutions', path: '/services' },
-    { name: '24/7 Support', path: '/contact' },
-    { name: 'Maintenance', path: '/services' }
+    { name: 'About', path: '/about' },
+    { name: 'Our Coverage', path: '/coverage' },
+    { name: 'Contact', path: '/contact', isActive: true }
   ];
 
   return (
-    <motion.footer
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-      viewport={{ once: true }}
-      className="relative pt-16 pb-8 px-4 md:px-6 z-40 border-t border-slate-800"
-      style={{ backgroundColor: colors.bg, fontFamily: "'Poppins', sans-serif" }}
-    >
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+    <>
+      <footer className="relative w-full bg-[#020617] text-white overflow-hidden font-sans">
+        
+        {/* 1. Background Wave Pattern */}
+        <div 
+          className="absolute inset-0 z-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z' fill='none' stroke='%23ffffff' stroke-width='3' opacity='0.5'/%3E%3Cpath d='M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05c99.41,75.27,251.83,52.35,366.63-8.86C502.5,37.37,564.13,3.81,664.18,3c113-.92,186.29,66.5,278,92.16C1033.43,120.67,1123,98,1200,52.47V0Z' fill='none' stroke='%23ffffff' stroke-width='3' opacity='0.3'/%3E%3C/svg%3E")`,
+            backgroundSize: '100% 100px',
+            backgroundRepeat: 'repeat'
+          }}
+        />
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 md:h-32 flex flex-col md:flex-row items-center justify-between">
           
-          {/* 1. Company Info */}
-          <div className="space-y-4">
-            <h3 className="font-black text-2xl text-white tracking-tighter">
-              OPTIMAS<span className="text-blue-500">FIBER</span>
-            </h3>
-            <p className="text-sm leading-relaxed max-w-xs" style={{ color: colors.textSecondary }}>
-              Empowering homes and businesses across Nairobi with lightning-fast, reliable, and affordable fiber optic connectivity.
+          {/* Spacer for centering logic on desktop */}
+          <div className="hidden md:block w-12"></div>
+
+          {/* Center Content: Links & Copyright (Socials Removed) */}
+          <div className="flex flex-col items-center justify-center space-y-4 w-full md:w-auto">
+            
+            {/* Navigation Links */}
+            <div className="flex flex-wrap justify-center gap-6 md:gap-8 text-sm md:text-base font-medium tracking-wide">
+              {links.map((link) => (
+                <Link 
+                  key={link.name} 
+                  to={link.path} 
+                  className={`transition-colors duration-200 hover:text-blue-400 ${
+                    link.isActive ? "border-b-2 border-blue-500 pb-0.5 text-blue-400" : "text-gray-300"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+
+            {/* Copyright */}
+            <p className="text-xs text-slate-500 font-light tracking-wide mt-2">
+              Copyright © {new Date().getFullYear()} Optimas Fiber LTD
             </p>
           </div>
 
-          {/* 2. Quick Links */}
-          <div>
-            <h3 className={FOOTER_STYLES.typography.heading} style={{ color: colors.textPrimary }}>
-              Quick Links
-            </h3>
-            <ul className="space-y-2">
-              {quickLinks.map((link, idx) => (
-                <li key={idx}>
-                  <Link to={link.path} className={FOOTER_STYLES.typography.link}>
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* 3. Services */}
-          <div>
-            <h3 className={FOOTER_STYLES.typography.heading} style={{ color: colors.textPrimary }}>
-              Services
-            </h3>
-            <ul className="space-y-2">
-              {serviceLinks.map((service, idx) => (
-                <li key={idx}>
-                  <Link to={service.path} className={FOOTER_STYLES.typography.link}>
-                    {service.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* 4. Contact Info */}
-          <div>
-            <h3 className={FOOTER_STYLES.typography.heading} style={{ color: colors.textPrimary }}>
-              Get in Touch
-            </h3>
-            <div className="space-y-4 text-sm" style={{ color: colors.textSecondary }}>
-              <p className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: colors.iconColor }} />
-                <span>Kahawa West, Nairobi, Kenya</span>
-              </p>
-              <p className="flex items-center gap-3">
-                <Phone className="w-5 h-5 flex-shrink-0" style={{ color: colors.iconColor }} />
-                <span>+254 741 874 200</span>
-              </p>
-              <p className="flex items-center gap-3">
-                <Mail className="w-5 h-5 flex-shrink-0" style={{ color: colors.iconColor }} />
-                <span>support@optimaswifi.co.ke</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center border-t mt-12 pt-8" style={{ borderColor: colors.border }}>
-          <p className="text-center md:text-left mb-4 md:mb-0 text-xs text-slate-500 font-medium">
-            &copy; {new Date().getFullYear()} Optimas Systems. All rights reserved.
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-4 items-center">
-            {/* Admin Login */}
-            <Link
-              to="/admin/login"
-              className={`${FOOTER_STYLES.button.secondary.base} ${FOOTER_STYLES.button.secondary.hover}`}
-              style={{ textDecoration: 'none' }}
-            >
-              <Lock size={14} /> Admin
-            </Link>
-
-            {/* Back to Top */}
+          {/* Right Side: Back to Top Button */}
+          <div className="mt-6 md:mt-0 w-full md:w-auto flex justify-center md:justify-end">
             <motion.button
               onClick={scrollToTop}
-              className={`${FOOTER_STYLES.button.primary.base} ${FOOTER_STYLES.button.primary.hover}`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="p-2 rounded-full border border-slate-700 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-300"
+              aria-label="Back to top"
             >
-              Back to Top <ArrowUp size={14} />
+              <ArrowUp size={20} />
             </motion.button>
           </div>
+
         </div>
-      </div>
-    </motion.footer>
+      </footer>
+
+      {/* Floating WhatsApp Button */}
+      <a
+        href="https://wa.me/254741874200" // Replace with actual number
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 hover:scale-110 transition-transform duration-300 shadow-xl rounded-full"
+        aria-label="Chat on WhatsApp"
+      >
+        <div className="bg-[#25D366] p-3 rounded-full flex items-center justify-center">
+          <svg 
+            width="32" 
+            height="32" 
+            viewBox="0 0 24 24" 
+            fill="white" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M17.472 14.382C17.119 14.205 15.396 13.36 15.074 13.243C14.753 13.125 14.518 13.067 14.284 13.418C14.05 13.77 13.376 14.562 13.171 14.796C12.966 15.031 12.762 15.061 12.41 14.884C12.058 14.708 10.926 14.338 9.584 13.143C8.529 12.203 7.817 11.044 7.612 10.692C7.407 10.341 7.59 10.151 7.766 9.976C7.925 9.817 8.119 9.562 8.295 9.357C8.471 9.152 8.529 8.976 8.647 8.742C8.764 8.507 8.705 8.302 8.617 8.126C8.529 7.95 7.826 6.221 7.533 5.518C7.24 4.845 6.947 4.933 6.742 4.933C6.566 4.933 6.361 4.933 6.156 4.933C5.951 4.933 5.629 5.01 5.365 5.297C5.101 5.584 4.339 6.298 4.339 7.751C4.339 9.204 5.423 10.611 5.57 10.816C5.717 11.021 7.71 14.032 10.702 15.352C11.414 15.666 11.971 15.852 12.405 15.989C13.09 16.206 13.725 16.176 14.234 16.101C14.801 16.017 15.974 15.392 16.218 14.708C16.463 14.024 16.463 13.438 16.394 13.321C16.326 13.204 16.121 13.145 15.769 12.969V12.969ZM12.005 21.676C10.36 21.676 8.777 21.265 7.371 20.471L7.049 20.28L3.549 21.197L4.484 17.785L4.27 17.444C3.391 16.046 2.932 14.435 2.932 12.793C2.932 7.79 7.001 3.722 12.005 3.722C14.428 3.722 16.706 4.666 18.419 6.38C20.133 8.093 21.077 10.371 21.077 12.793C21.077 17.806 17.008 21.676 12.005 21.676Z" />
+          </svg>
+        </div>
+      </a>
+    </>
   );
 }

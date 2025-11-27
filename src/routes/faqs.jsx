@@ -325,7 +325,8 @@ export default function Faqs() {
 
   return (
     <motion.section 
-      className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300 bg-gray-50 text-gray-800"
+      // UPDATED CLASSNAME: Increased padding-top (pt-32 and md:pt-40) to clear the navbar
+      className="min-h-screen pt-32 md:pt-40 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300 bg-gray-50 text-gray-800"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}

@@ -331,6 +331,24 @@ const MainContent = () => {
     }, 1500);
   };
 
+  // Reusable Background Pattern Component
+  const BackgroundPattern = () => (
+    <div className="absolute inset-0 opacity-5 pointer-events-none">
+      <div className="absolute top-0 left-0 w-full h-full bg-[#015B97]">
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] opacity-10"
+          animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div 
+          className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] opacity-10"
+          animate={{ scale: [1.2, 1, 1.2], rotate: [180, 270, 180] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className={`min-h-screen bg-white`} style={{ fontFamily: "'Poppins', sans-serif" }}>
       {/* HEADER LOGO */}
@@ -388,7 +406,9 @@ const MainContent = () => {
       </div>
 
       {/* ======== WI-FI PACKAGES ======== */}
-      <section id="wifi-packages" className="py-24 relative overflow-hidden bg-slate-50">
+      {/* BACKGROUND: bg-gray-50 + BackgroundPattern */}
+      <section id="wifi-packages" className="py-24 relative overflow-hidden bg-gray-50 text-gray-800">
+        <BackgroundPattern />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <p className="text-yellow-600 text-[10px] font-bold uppercase tracking-[0.25em] mb-2">Choose Your Speed</p>
@@ -475,17 +495,17 @@ const MainContent = () => {
       </section>
 
       {/* ======== HOTSPOT SECTION ======== */}
-      <section id="hotspot-section" className="py-20 relative overflow-hidden bg-white">
-        
+      {/* BACKGROUND: bg-white (Clean, no pattern) */}
+      <section id="hotspot-section" className="py-20 relative overflow-hidden bg-white text-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4 border-b border-gray-100 pb-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4 border-b border-gray-200 pb-6">
             <div>
                <p className="text-blue-600 text-[10px] font-bold uppercase tracking-[0.25em] mb-1">Public Zones</p>
                <h2 className="text-3xl font-black text-blue-950 uppercase tracking-tight">
                  Wifi <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Hotspot</span> Passes
                </h2>
             </div>
-            <button onClick={handleHotspotSelect} className="text-blue-950 text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:text-blue-600 transition-all border border-gray-200 px-4 py-2 rounded-full hover:bg-gray-50">
+            <button onClick={handleHotspotSelect} className="text-blue-950 text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:text-blue-600 transition-all border border-gray-300 px-4 py-2 rounded-full hover:bg-white bg-white/50 backdrop-blur-sm shadow-sm">
                View All Zones <ArrowRight size={14} />
             </button>
           </div>
@@ -501,16 +521,16 @@ const MainContent = () => {
                    onClick={handleHotspotSelect}
                    className={`rounded-xl p-4 cursor-pointer relative overflow-hidden group bg-gradient-to-br ${plan.color} shadow-lg hover:shadow-xl`}
                 >
-                   {/* UPDATED: WIFI ICON -> BLACK & HIGHER OPACITY */}
+                   {/* WIFI ICON */}
                    <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-40 transition-opacity">
                       <Wifi size={50} className="text-black" />
                    </div>
 
-                   {/* UPDATED: TEXT CONTAINER -> DARK BLUE (blue-950) */}
+                   {/* TEXT CONTAINER */}
                    <div className="relative z-10 text-blue-950 h-full flex flex-col justify-between min-h-[110px]">
                       <div>
                           <h3 className="font-bold text-xs uppercase tracking-wide leading-tight mb-2">{plan.name}</h3>
-                          {/* UPDATED: DURATION PILL -> White BG for Dark Text */}
+                          {/* DURATION PILL */}
                           <span className="inline-block bg-white/50 text-[10px] font-black px-2 py-0.5 rounded backdrop-blur-md border border-white/20">
                              {plan.duration}
                           </span>
@@ -578,29 +598,29 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-1">
-               <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Phone *</label>
-               <input 
-                 type="tel" 
-                 name="phone" 
-                 value={formData.phone} 
-                 onChange={onChange} 
-                 required 
-                 className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
-                 placeholder="07..." 
-               />
-             </div>
-             <div className="space-y-1">
-               <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Email</label>
-               <input 
-                 type="email" 
-                 name="email" 
-                 value={formData.email} 
-                 onChange={onChange} 
-                 className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
-                 placeholder="example@mail.com" 
-               />
-             </div>
+              <div className="space-y-1">
+                <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Phone *</label>
+                <input 
+                  type="tel" 
+                  name="phone" 
+                  value={formData.phone} 
+                  onChange={onChange} 
+                  required 
+                  className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
+                  placeholder="07..." 
+                />
+              </div>
+              <div className="space-y-1">
+                <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Email</label>
+                <input 
+                  type="email" 
+                  name="email" 
+                  value={formData.email} 
+                  onChange={onChange} 
+                  className={`w-full px-4 py-3 rounded-lg border bg-gray-50 border-gray-200 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`} 
+                  placeholder="example@mail.com" 
+                />
+              </div>
           </div>
           <div className="space-y-1">
             <label className={`block text-[10px] font-bold text-gray-500 uppercase tracking-wide`}>Installation Location *</label>
@@ -615,11 +635,11 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
             ></textarea>
           </div>
           <div className="p-4 bg-blue-50 rounded-xl flex items-center justify-between border border-blue-100">
-             <div>
-                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Selected Plan</p>
-                <p className="font-black text-blue-900">{plan?.name} ({plan?.speed})</p>
-             </div>
-             <p className="font-black text-xl text-blue-600">{plan?.price}</p>
+              <div>
+                 <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Selected Plan</p>
+                 <p className="font-black text-blue-900">{plan?.name} ({plan?.speed})</p>
+              </div>
+              <p className="font-black text-xl text-blue-600">{plan?.price}</p>
           </div>
           <button 
             type="submit" 
@@ -636,18 +656,25 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
 };
 
 const SuccessPopup = ({ onClose }) => (
-  <div className="fixed inset-0 bg-blue-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={onClose}>
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[110] backdrop-blur-sm" onClick={onClose}>
     <motion.div 
       initial={{ scale: 0.5, opacity: 0 }} 
       animate={{ scale: 1, opacity: 1 }} 
-      className="bg-white rounded-3xl p-8 text-center max-w-sm shadow-2xl"
+      exit={{ scale: 0.5, opacity: 0 }}
+      className="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm mx-4"
+      onClick={e => e.stopPropagation()}
     >
-      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-500">
-        <CheckCircle size={40} />
+      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+        <CheckCircle size={32} className="text-green-600" />
       </div>
-      <h3 className="text-2xl font-black text-blue-950 uppercase mb-2">Request Sent!</h3>
-      <p className="text-gray-500 text-sm mb-6">We have received your details on WhatsApp. Our team will contact you shortly to schedule installation.</p>
-      <button onClick={onClose} className="bg-blue-950 text-white px-8 py-3 rounded-full font-bold uppercase text-xs tracking-widest">Close</button>
+      <h3 className="text-xl font-black text-gray-800 mb-2">Request Sent!</h3>
+      <p className="text-sm text-gray-600 mb-6 font-medium">We have received your details. Our team will contact you shortly via WhatsApp to finalize installation.</p>
+      <button 
+        onClick={onClose} 
+        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95"
+      >
+        Awesome
+      </button>
     </motion.div>
   </div>
 );
