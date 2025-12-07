@@ -15,7 +15,8 @@ import {
   validateReceiptData,
   cleanupReceipts,
   getReceiptTemplates,
-  checkReceiptSystemStatus
+  checkReceiptSystemStatus,
+  sendReceiptToCustomer // 🔥 NEW: Import the email function
 } from '../controllers/receiptController.js';
 
 const router = express.Router();
@@ -37,6 +38,8 @@ router.delete('/:id', deleteReceipt);
  * ======================= */
 router.post('/generate-from-invoice/:invoiceId', generateReceiptFromInvoice);
 router.post('/:id/duplicate', duplicateReceipt);
+// 🔥 NEW: Send receipt via email with PDF attachment
+router.post('/:id/send', sendReceiptToCustomer);
 
 /** =======================
  * Status & Payment
@@ -70,13 +73,14 @@ router.get('/routes/info', (req, res) => {
       bulk_operations: true,
       advanced_search: true,
       analytics: true,
-      refund_management: true
+      refund_management: true,
+      email_pdf: true // ✅ Added
     }
   });
 });
 
 /** =======================
- * 404 Catch-All (FIXED - Express.js router.use())
+ * 404 Catch-All
  * ======================= */
 router.use((req, res) => {
   res.status(404).json({
