@@ -1,4 +1,4 @@
-// backend/src/controllers/invoiceController.js - FULLY UPDATED WITH EMAIL + PDF
+// backend/src/controllers/invoiceController.js - FULLY UPDATED
 import Invoice from '../models/Invoice.js';
 import mongoose from 'mongoose';
 import nodemailer from 'nodemailer';
@@ -381,7 +381,7 @@ export const checkExistingActiveInvoices = async (req, res) => {
 };
 
 // ============================================================================
-// ✅ Notification & Communication — FULLY UPDATED WITH EMAIL + PDF
+// ✅ Email & PDF Functions (UPDATED & FIXED)
 // ============================================================================
 
 const formatPrice = (price) => {
@@ -392,16 +392,16 @@ const formatPrice = (price) => {
 
 const getInvoiceHTML = (invoice) => {
   const COMPANY_INFO = {
-    name: "OPTIMAS FIBER",
+    name: process.env.COMPANY_NAME || "OPTIMAS FIBER",
     tagline: "High-Speed Internet Solutions",
     logoUrl: "https://optimaswifi.co.ke/oppo.jpg",
-    supportEmail: "support@optimaswifi.co.ke",
-    supportPhone: "+254 741 874 200",
-    bankName: "Equity Bank",
-    accountName: "Optimas Fiber Ltd",
-    accountNumber: "1234567890",
-    branch: "Nairobi Main",
-    paybill: "123456"
+    supportEmail: process.env.EMAIL_FROM || "support@optimaswifi.co.ke",
+    supportPhone: process.env.COMPANY_PHONE || "+254 741 874 200",
+    bankName: process.env.BANK_NAME || "Equity Bank",
+    accountName: process.env.BANK_ACCOUNT_NAME || "Optimas Fiber Ltd",
+    accountNumber: process.env.BANK_ACCOUNT_NUMBER || "1234567890",
+    branch: process.env.BANK_BRANCH || "Nairobi Main",
+    paybill: process.env.MPESA_PAYBILL || "123456"
   };
 
   const primaryItem = invoice.items?.[0] || {
@@ -536,16 +536,223 @@ const getInvoiceHTML = (invoice) => {
   `;
 };
 
-export const sendInvoiceToCustomer = async (req, res) => {
-  try {
-    const invoice = await Invoice.findById(req.params.id);
+// ============================================================================
+// ✅ Email Testing Functions
+// ============================================================================
 
+export const testEmailSetup = async (req, res) => {
+  try {
+    console.log('🔧 Testing Email Configuration...');
+    
+    // Check environment variables
+    const requiredVars = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASS', 'EMAIL_FROM'];
+    const missingVars = requiredVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      return res.status(500).json({
+        success: false,
+        message: 'Missing required environment variables',
+        missing: missingVars
+      });
+    }
+
+    console.log('✅ Environment variables check passed');
+
+    // Create transporter
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT),
+      secure: process.env.EMAIL_SECURE === 'true',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: { 
+        rejectUnauthorized: false 
+      }
+    });
+
+    // Test connection
+    console.log('🔗 Testing SMTP connection...');
+    await transporter.verify();
+    console.log('✅ SMTP connection successful');
+
+    // Try sending a test email
+    console.log('📤 Sending test email...');
+    const testResult = await transporter.sendMail({
+      from: `"${process.env.COMPANY_NAME || 'Optimas Fiber'}" <${process.env.EMAIL_FROM}>`,
+      to: process.env.EMAIL_USER, // Send to yourself for testing
+      subject: '✅ Test Email - Optimas Fiber Backend',
+      text: `This is a test email to verify SMTP configuration is working.
+
+Configuration:
+- Host: ${process.env.EMAIL_HOST}
+- Port: ${process.env.EMAIL_PORT}
+- User: ${process.env.EMAIL_USER}
+- From: ${process.env.EMAIL_FROM}
+- Time: ${new Date().toISOString()}
+
+If you receive this, your email setup is working correctly!`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+          <h2 style="color: #003366; text-align: center;">✅ Email Test Successful</h2>
+          <p>This email confirms that your Optimas Fiber backend email configuration is working correctly.</p>
+          
+          <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3>Configuration Details:</h3>
+            <ul>
+              <li><strong>SMTP Host:</strong> ${process.env.EMAIL_HOST}</li>
+              <li><strong>SMTP Port:</strong> ${process.env.EMAIL_PORT}</li>
+              <li><strong>Email User:</strong> ${process.env.EMAIL_USER}</li>
+              <li><strong>From Address:</strong> ${process.env.EMAIL_FROM}</li>
+              <li><strong>Test Time:</strong> ${new Date().toLocaleString()}</li>
+            </ul>
+          </div>
+          
+          <p style="text-align: center; color: #28a745; font-weight: bold;">
+            Your email system is ready to send invoices!
+          </p>
+          
+          <hr style="margin: 30px 0;">
+          
+          <p style="font-size: 12px; color: #666; text-align: center;">
+            Optimas Fiber Backend System<br>
+            ${process.env.COMPANY_ADDRESS || 'Nairobi, Kenya'}
+          </p>
+        </div>
+      `
+    });
+
+    console.log(`✅ Test email sent successfully! Message ID: ${testResult.messageId}`);
+
+    res.json({
+      success: true,
+      message: 'Email configuration test successful',
+      config: {
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        user: process.env.EMAIL_USER,
+        from: process.env.EMAIL_FROM,
+        secure: process.env.EMAIL_SECURE
+      },
+      testResult: {
+        messageId: testResult.messageId,
+        accepted: testResult.accepted,
+        rejected: testResult.rejected
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Email test failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Email test failed',
+      error: error.message,
+      code: error.code,
+      suggestion: 'Check your email credentials and SMTP settings'
+    });
+  }
+};
+
+export const testPDFGeneration = async (req, res) => {
+  try {
+    console.log('📄 Testing PDF generation...');
+    
+    // Get a sample invoice or create one
+    let invoice = await Invoice.findOne();
+    
+    if (!invoice) {
+      console.log('No invoices found, creating test invoice...');
+      invoice = new Invoice({
+        customerName: "Test Customer",
+        customerEmail: "test@example.com",
+        customerPhone: "+254700000000",
+        invoiceNumber: "TEST-001",
+        planName: "Test Plan",
+        planSpeed: "10Mbps",
+        planPrice: 5000,
+        totalAmount: 5000,
+        status: "pending",
+        subtotal: 5000,
+        taxAmount: 0,
+        balanceDue: 5000,
+        items: [{
+          description: "Test Internet Plan",
+          quantity: 1,
+          unitPrice: 5000,
+          amount: 5000
+        }]
+      });
+      await invoice.save();
+    }
+
+    console.log(`✅ Using invoice: ${invoice.invoiceNumber}`);
+
+    // Test Puppeteer
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      headless: 'new'
+    });
+    
+    console.log('✅ Puppeteer browser launched');
+    
+    const page = await browser.newPage();
+    const html = getInvoiceHTML(invoice);
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    console.log('✅ HTML content set');
+    
+    const pdfBuffer = await page.pdf({ 
+      format: 'A4',
+      printBackground: true
+    });
+    
+    console.log(`✅ PDF generated successfully: ${pdfBuffer.length} bytes`);
+    
+    await browser.close();
+    console.log('✅ Browser closed');
+
+    res.json({
+      success: true,
+      message: 'PDF generation test successful',
+      pdfSize: pdfBuffer.length,
+      invoice: {
+        id: invoice._id,
+        number: invoice.invoiceNumber,
+        customer: invoice.customerName
+      },
+      pdfPreview: `data:application/pdf;base64,${pdfBuffer.toString('base64').substring(0, 100)}...`
+    });
+
+  } catch (error) {
+    console.error('❌ PDF generation test failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'PDF generation test failed',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+// ============================================================================
+// ✅ MAIN EMAIL SENDING FUNCTION (FIXED)
+// ============================================================================
+
+export const sendInvoiceToCustomer = async (req, res) => {
+  console.log(`📧 [EMAIL] Starting send process for invoice: ${req.params.id}`);
+  
+  try {
+    // 1. Find invoice
+    const invoice = await Invoice.findById(req.params.id);
     if (!invoice) {
       return res.status(404).json({
         success: false,
         message: 'Invoice not found'
       });
     }
+
+    console.log(`📧 Invoice found: ${invoice.invoiceNumber}`);
+    console.log(`📧 Sending to: ${invoice.customerEmail}`);
 
     if (!invoice.customerEmail) {
       return res.status(400).json({
@@ -554,66 +761,252 @@ export const sendInvoiceToCustomer = async (req, res) => {
       });
     }
 
-    console.log(`📧 Sending invoice ${invoice.invoiceNumber} to ${invoice.customerEmail}`);
+    // 2. Generate PDF (with fallback)
+    let pdfBuffer = null;
+    try {
+      console.log('📄 Starting PDF generation...');
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        headless: 'new'
+      });
+      
+      const page = await browser.newPage();
+      const html = getInvoiceHTML(invoice);
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      pdfBuffer = await page.pdf({ 
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+      });
+      
+      await browser.close();
+      console.log(`✅ PDF generated: ${pdfBuffer.length} bytes`);
+    } catch (pdfError) {
+      console.warn('⚠️ PDF generation failed, sending email without PDF:', pdfError.message);
+      // Continue without PDF
+    }
 
-    // === STEP 1: Generate PDF using Puppeteer ===
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    // 3. Configure SMTP transporter
+    console.log('🔧 Configuring SMTP...');
+    
+    // Debug: Show email config (without password)
+    console.log('📧 Email Config:', {
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      secure: process.env.EMAIL_SECURE,
+      user: process.env.EMAIL_USER,
+      from: process.env.EMAIL_FROM
     });
-    const page = await browser.newPage();
-    const html = getInvoiceHTML(invoice);
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({ format: 'A4' });
-    await browser.close();
 
-    // === STEP 2: Send email with PDF attachment ===
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'mail.optimaswifi.co.ke',
-      port: parseInt(process.env.SMTP_PORT) || 465,
-      secure: (process.env.SMTP_SECURE === 'true') || true,
+      host: process.env.EMAIL_HOST || 'mail.optimaswifi.co.ke',
+      port: parseInt(process.env.EMAIL_PORT) || 465,
+      secure: process.env.EMAIL_SECURE === 'true' || true,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: process.env.EMAIL_USER || 'support@optimaswifi.co.ke',
+        pass: process.env.EMAIL_PASS || '@Optimas$12'
+      },
+      tls: {
+        rejectUnauthorized: false
       }
     });
 
+    // 4. Test SMTP connection
+    console.log('🔗 Testing SMTP connection...');
+    try {
+      await transporter.verify();
+      console.log('✅ SMTP connection verified');
+    } catch (smtpError) {
+      console.error('❌ SMTP Connection Failed:', smtpError);
+      throw new Error(`SMTP Connection Error: ${smtpError.message}`);
+    }
+
+    // 5. Prepare email content
     const mailOptions = {
-      from: `"OPTIMAS FIBER" <${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'}>`,
+      from: `"${process.env.COMPANY_NAME || 'Optimas Fiber'}" <${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'}>`,
       to: invoice.customerEmail,
-      subject: `Invoice ${invoice.invoiceNumber || 'N/A'} from Optimas Fiber`,
-      text: `Dear ${invoice.customerName || 'Customer'},\n\nPlease find your invoice attached.\n\nThank you for choosing Optimas Fiber!`,
-      html: `<p>Dear ${invoice.customerName || 'Customer'},</p><p>Please find your invoice attached.</p><p>Thank you for choosing Optimas Fiber!</p>`,
-      attachments: [
+      subject: `Invoice #${invoice.invoiceNumber || 'N/A'} - ${process.env.COMPANY_NAME || 'Optimas Fiber'}`,
+      text: `
+INVOICE FROM ${process.env.COMPANY_NAME || 'OPTIMAS FIBER'}
+
+Dear ${invoice.customerName || 'Customer'},
+
+Your invoice details:
+
+Invoice Number: ${invoice.invoiceNumber || 'N/A'}
+Date: ${invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 'N/A'}
+Due Date: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
+Total Amount: Ksh ${invoice.totalAmount || 0}
+Status: ${invoice.status || 'pending'}
+
+${pdfBuffer ? 'Your invoice PDF is attached to this email.' : 'Please login to view your invoice.'}
+
+Payment Methods:
+- M-Pesa Paybill: ${process.env.MPESA_PAYBILL || '123456'}
+- Bank: ${process.env.BANK_NAME || 'Equity Bank'} 
+  Account: ${process.env.BANK_ACCOUNT_NUMBER || '1234567890'}
+
+If you have any questions, contact us:
+Email: ${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'}
+Phone: ${process.env.COMPANY_PHONE || '+254741874200'}
+
+Thank you for your business!
+
+Best regards,
+${process.env.COMPANY_NAME || 'Optimas Fiber Team'}
+      `,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #003366; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { padding: 20px; background: #f9f9f9; }
+        .invoice-details { background: white; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #ddd; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0;">${process.env.COMPANY_NAME || 'OPTIMAS FIBER'}</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">High-Speed Internet Solutions</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="color: #003366;">Invoice #${invoice.invoiceNumber || 'N/A'}</h2>
+            <p>Dear <strong>${invoice.customerName || 'Customer'}</strong>,</p>
+            
+            <div class="invoice-details">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Invoice Number:</strong></td>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${invoice.invoiceNumber || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Date:</strong></td>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Due Date:</strong></td>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Total Amount:</strong></td>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #003366;">Ksh ${invoice.totalAmount || 0}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0;"><strong>Status:</strong></td>
+                        <td style="padding: 8px 0;">
+                            <span style="padding: 3px 10px; background: ${invoice.status === 'paid' ? '#28a745' : invoice.status === 'pending' ? '#ffc107' : '#dc3545'}; color: white; border-radius: 3px; font-size: 12px;">
+                                ${invoice.status || 'pending'}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            ${pdfBuffer ? '<p style="color: #28a745; font-weight: bold;">✅ Your invoice PDF is attached to this email.</p>' : '<p>Please login to your account to view the full invoice.</p>'}
+            
+            <h3 style="color: #003366; margin-top: 25px;">Payment Methods:</h3>
+            <ul style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                <li style="margin-bottom: 8px;"><strong>M-Pesa:</strong> Paybill <strong>${process.env.MPESA_PAYBILL || '123456'}</strong></li>
+                <li><strong>Bank Transfer:</strong> ${process.env.BANK_NAME || 'Equity Bank'}, Account: <strong>${process.env.BANK_ACCOUNT_NUMBER || '1234567890'}</strong></li>
+            </ul>
+            
+            <p>If you have any questions, please contact us:</p>
+            <ul>
+                <li>📧 Email: ${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'}</li>
+                <li>📞 Phone: ${process.env.COMPANY_PHONE || '+254741874200'}</li>
+            </ul>
+            
+            <p style="margin-top: 25px;">Thank you for choosing ${process.env.COMPANY_NAME || 'Optimas Fiber'}!</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>${process.env.COMPANY_NAME || 'Optimas Fiber'}</strong></p>
+            <p>${process.env.COMPANY_ADDRESS || 'Nairobi, Kenya'}</p>
+            <p>📧 ${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'} | 📞 ${process.env.COMPANY_PHONE || '+254741874200'}</p>
+            <p style="font-size: 11px; color: #999; margin-top: 10px;">This is an automated email, please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>
+      `,
+      attachments: pdfBuffer ? [
         {
           filename: `${invoice.invoiceNumber || 'invoice'}-optimas-fiber.pdf`,
           content: pdfBuffer,
           contentType: 'application/pdf'
         }
-      ]
+      ] : []
     };
 
-    await transporter.sendMail(mailOptions);
+    // 6. Send email
+    console.log('📤 Sending email...');
+    const emailResult = await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent successfully! Message ID: ${emailResult.messageId}`);
 
-    // === STEP 3: Update DB (as before) ===
+    // 7. Update database
     invoice.sentToCustomer = true;
     invoice.lastSentAt = new Date();
-    invoice.sendCount += 1;
+    invoice.sendCount = (invoice.sendCount || 0) + 1;
     await invoice.save();
+    console.log(`✅ Database updated for invoice ${invoice.invoiceNumber}`);
 
+    // 8. Return success response
     res.json({
       success: true,
-      message: 'Invoice sent to customer successfully',
-      invoice
+      message: `Invoice sent successfully to ${invoice.customerEmail}`,
+      invoice: {
+        id: invoice._id,
+        invoiceNumber: invoice.invoiceNumber,
+        customerName: invoice.customerName,
+        customerEmail: invoice.customerEmail,
+        sentToCustomer: invoice.sentToCustomer,
+        lastSentAt: invoice.lastSentAt
+      },
+      emailInfo: {
+        messageId: emailResult.messageId,
+        accepted: emailResult.accepted,
+        rejected: emailResult.rejected
+      }
     });
+
   } catch (error) {
-    console.error('❌ Error sending invoice email:', error);
+    console.error('❌ [FULL ERROR DETAILS]:');
+    console.error('Error Message:', error.message);
+    console.error('Error Code:', error.code);
+    console.error('Error Response:', error.response);
+    
+    // Provide specific error messages
+    let userMessage = 'Failed to send invoice';
+    
+    if (error.code === 'EAUTH') {
+      userMessage = 'Email authentication failed. Please check email credentials.';
+    } else if (error.code === 'ESOCKET' || error.code === 'ECONNECTION') {
+      userMessage = 'Cannot connect to email server. Check SMTP settings.';
+    } else if (error.message.includes('timeout')) {
+      userMessage = 'Email server timeout. Please try again.';
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Error sending invoice email',
-      error: error.message
+      message: userMessage,
+      error: error.message,
+      errorCode: error.code,
+      suggestion: 'Check your email configuration and try again.'
     });
   }
 };
+
+// ============================================================================
+// ✅ Other Email/Notification Functions
+// ============================================================================
 
 export const resendInvoiceNotifications = async (req, res) => {
     try {
@@ -676,7 +1069,7 @@ export const sendConnectionRequestToOwner = async (req, res) => {
 };
 
 // ============================================================================
-// ✅ Export & Download (Placeholders)
+// ✅ Export & Download
 // ============================================================================
 
 export const exportInvoicePDF = async (req, res) => {
@@ -690,11 +1083,23 @@ export const exportInvoicePDF = async (req, res) => {
             });
         }
 
-        res.json({
-            success: true,
-            message: 'PDF export functionality coming soon',
-            invoice
+        // Generate PDF
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
+        const page = await browser.newPage();
+        const html = getInvoiceHTML(invoice);
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({ format: 'A4' });
+        await browser.close();
+
+        // Set response headers for download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+
+        res.send(pdfBuffer);
+
     } catch (error) {
         console.error('❌ Error exporting invoice PDF:', error);
         res.status(500).json({
@@ -1347,6 +1752,36 @@ export const getSystemStatus = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'Error getting system status',
+            error: error.message
+        });
+    }
+};
+
+// ============================================================================
+// ✅ View Invoice as HTML (for debugging)
+// ============================================================================
+
+export const viewInvoiceHTML = async (req, res) => {
+    try {
+        const invoice = await Invoice.findById(req.params.id);
+
+        if (!invoice) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invoice not found'
+            });
+        }
+
+        const html = getInvoiceHTML(invoice);
+        
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
+
+    } catch (error) {
+        console.error('❌ Error viewing invoice HTML:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error viewing invoice HTML',
             error: error.message
         });
     }

@@ -29,20 +29,22 @@ import {
   Zap,
   ArrowUpRight,
   ClipboardPaste,
-  AlertTriangle
+  AlertTriangle,
+  Loader2 // Added for loading state
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LabelList,
   LineChart, Line, ReferenceLine
 } from 'recharts';
-// Removed html2pdf import — no longer needed for sending
+
 // Utility function for consistent price formatting in KSH
 const formatPrice = (price) => {
   if (price === undefined || price === null) return '0.00';
   const num = parseFloat(price);
   return isNaN(num) ? price : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
+
 // WiFi Plans data
 const WIFI_PLANS = [
   { id: 1, name: "Jumbo", price: "1499", speed: "8Mbps", features: ["Great for browsing", "24/7 Support", "Free Installation"], type: "home", popular: false },
@@ -52,6 +54,7 @@ const WIFI_PLANS = [
   { id: 5, name: "Tiger", price: "3999", speed: "40Mbps", features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"], type: "home", popular: false },
   { id: 6, name: "Chui", price: "4999", speed: "60Mbps", features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], type: "home", popular: false },
 ];
+
 // Brand info — ✅ FIXED EMAIL DOMAIN
 const COMPANY_INFO = {
   name: "OPTIMAS FIBER",
@@ -65,6 +68,7 @@ const COMPANY_INFO = {
   supportPhone: "+254 741 874 200",
   paybill: "123456"
 };
+
 const initialFormState = {
   invoiceNumber: '',
   customerName: '',
@@ -94,6 +98,7 @@ const initialFormState = {
   terms: 'Payment due within 30 days. Late payments subject to fees.',
   billingCycle: 'monthly'
 };
+
 const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification, invoices, setInvoices, receipts, setReceipts }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -109,10 +114,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [invoiceForm, setInvoiceForm] = useState(initialFormState);
   const [whatsappText, setWhatsappText] = useState('');
   const [showPasteModal, setShowPasteModal] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   const resetForm = () => {
     setInvoiceForm(initialFormState);
     setWhatsappText('');
   };
+
   const calculateTotals = (items, taxRate = 0, discount = 0, discountType = 'none') => {
     const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
     const numericSubtotal = parseFloat(subtotal) || 0;
@@ -128,6 +136,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     const totalAmount = numericSubtotal + taxAmount - discountAmount;
     return { subtotal, taxAmount, discountAmount, totalAmount: Math.max(0, totalAmount) };
   };
+
   useEffect(() => {
     const { subtotal, taxAmount, totalAmount } = calculateTotals(
       invoiceForm.items, 
@@ -153,15 +162,22 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       };
     });
   }, [invoiceForm.items, invoiceForm.taxRate, invoiceForm.discount, invoiceForm.discountType, invoiceForm.amountPaid]);
+
   const fetchInvoices = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
+      
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!response.ok) throw new Error(`Failed to fetch invoices: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch invoices: ${response.status} - ${errorText}`);
+      }
+      
       const data = await response.json();
       let invoicesData = data.invoices || data.data || [];
       setInvoices(invoicesData);
@@ -173,10 +189,15 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setLoading(false);
     }
   };
+
   useEffect(() => {
-    if (!invoices || invoices.length === 0) fetchInvoices();
-    else setLoading(false);
+    if (!invoices || invoices.length === 0) {
+      fetchInvoices();
+    } else {
+      setLoading(false);
+    }
   }, []);
+
   const generateInvoiceNumber = () => {
     if (!invoices || invoices.length === 0) return 'INV-0001';
     const latestNumber = invoices.reduce((max, invoice) => {
@@ -185,12 +206,14 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }, 0);
     return `INV-${String(latestNumber + 1).padStart(4, '0')}`;
   };
+
   const parseAndPopulateFromWhatsApp = () => {
     const text = whatsappText;
     if (!text) {
       showNotification('⚠️ Please paste the WhatsApp message first.', 'warning');
       return;
     }
+
     const nameMatch = text.match(/Name:\s*(.+)/i);
     const phoneMatch = text.match(/Phone:\s*(.+)/i);
     const locationMatch = text.match(/Location:\s*(.+)/i);
@@ -198,6 +221,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     const planMatch = text.match(/Plan:\s*(.+)/i);
     const speedMatch = text.match(/Speed:\s*(.+)/i);
     const priceMatch = text.match(/Price:\s*Ksh\s*([\d,]+)/i);
+
     const customerName = nameMatch ? nameMatch[1].trim() : '';
     const customerPhone = phoneMatch ? phoneMatch[1].trim() : '';
     const customerLocation = locationMatch ? locationMatch[1].trim() : '';
@@ -205,6 +229,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     const planName = planMatch ? planMatch[1].trim() : '';
     const planSpeed = speedMatch ? speedMatch[1].trim() : '';
     const planPrice = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) || 0 : 0;
+
     let selectedPlan = null;
     if (planName) {
       selectedPlan = WIFI_PLANS.find(p => p.name.toLowerCase() === planName.toLowerCase());
@@ -216,12 +241,26 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         }
       }
     }
+
     const finalPlanName = selectedPlan ? selectedPlan.name : planName;
     const finalPlanSpeed = selectedPlan ? selectedPlan.speed : planSpeed;
     const finalPlanPrice = selectedPlan ? parseFloat(selectedPlan.price) : planPrice;
     const finalFeatures = selectedPlan ? selectedPlan.features : [];
-    const items = [{ description: `${finalPlanName} Internet Plan - ${finalPlanSpeed}`, quantity: 1, unitPrice: finalPlanPrice, amount: finalPlanPrice }];
-    const { subtotal, taxAmount, totalAmount } = calculateTotals(items, invoiceForm.taxRate, invoiceForm.discount, invoiceForm.discountType);
+    
+    const items = [{
+      description: `${finalPlanName} Internet Plan - ${finalPlanSpeed}`,
+      quantity: 1,
+      unitPrice: finalPlanPrice,
+      amount: finalPlanPrice
+    }];
+
+    const { subtotal, taxAmount, totalAmount } = calculateTotals(
+      items, 
+      invoiceForm.taxRate, 
+      invoiceForm.discount, 
+      invoiceForm.discountType
+    );
+
     setInvoiceForm(prev => ({
       ...prev,
       customerName: customerName || prev.customerName,
@@ -238,18 +277,33 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       totalAmount: totalAmount,
       balanceDue: totalAmount - (prev.amountPaid || 0)
     }));
+
     showNotification('✅ Form populated from WhatsApp message!', 'success');
     setShowPasteModal(false);
     setWhatsappText('');
   };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setInvoiceForm(prev => ({ ...prev, [name]: value }));
   };
+
   const selectPlan = (plan) => {
     const planPrice = parseFloat(plan.price) || 0;
-    const items = [{ description: `${plan.name} Internet Plan - ${plan.speed}`, quantity: 1, unitPrice: planPrice, amount: planPrice }];
-    const { subtotal, taxAmount, totalAmount } = calculateTotals(items, invoiceForm.taxRate, invoiceForm.discount, invoiceForm.discountType);
+    const items = [{
+      description: `${plan.name} Internet Plan - ${plan.speed}`,
+      quantity: 1,
+      unitPrice: planPrice,
+      amount: planPrice
+    }];
+
+    const { subtotal, taxAmount, totalAmount } = calculateTotals(
+      items, 
+      invoiceForm.taxRate, 
+      invoiceForm.discount, 
+      invoiceForm.discountType
+    );
+
     setInvoiceForm(prev => ({
       ...prev,
       planName: plan.name,
@@ -262,12 +316,15 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       totalAmount: totalAmount,
       balanceDue: totalAmount - (prev.amountPaid || 0)
     }));
+
     setShowPlanSelection(false);
     showNotification(`✅ ${plan.name} plan selected!`, 'success');
   };
+
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...invoiceForm.items];
     const item = updatedItems[index];
+    
     if (field === 'quantity' || field === 'unitPrice') {
       const quantity = field === 'quantity' ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
       const unitPrice = field === 'unitPrice' ? parseFloat(value) || 0 : parseFloat(item.unitPrice) || 0;
@@ -275,31 +332,46 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     } else {
       updatedItems[index] = { ...item, [field]: value };
     }
+    
     setInvoiceForm(prev => ({ ...prev, items: updatedItems }));
   };
+
   const addItem = () => {
-    setInvoiceForm(prev => ({ ...prev, items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, amount: 0 }] }));
+    setInvoiceForm(prev => ({
+      ...prev,
+      items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, amount: 0 }]
+    }));
   };
+
   const removeItem = (index) => {
     if (invoiceForm.items.length > 0) {
       const updatedItems = invoiceForm.items.filter((_, i) => i !== index);
       setInvoiceForm(prev => ({ ...prev, items: updatedItems }));
     }
   };
+
   const markAsPaid = async (invoiceId) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
+
       const invoiceToPay = invoices.find(inv => inv._id === invoiceId);
       if (!invoiceToPay) throw new Error('Invoice not found in local state.');
+
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/paid`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ amount: invoiceToPay.totalAmount || invoiceToPay.planPrice })
       });
+
       if (response.ok) {
         const updatedInvoice = await response.json();
-        setInvoices(prev => prev.map(inv => inv._id === invoiceId ? (updatedInvoice.invoice || updatedInvoice.data || updatedInvoice) : inv));
+        setInvoices(prev => prev.map(inv => 
+          inv._id === invoiceId ? (updatedInvoice.invoice || updatedInvoice.data || updatedInvoice) : inv
+        ));
         showNotification('✅ Invoice marked as paid successfully!', 'success');
       } else {
         const errorData = await response.json();
@@ -310,10 +382,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
+
   const createInvoice = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
+
       if (!invoiceForm.customerName?.trim() || !invoiceForm.customerEmail?.trim() || !invoiceForm.planName?.trim()) {
         let missingFields = [];
         if (!invoiceForm.customerName?.trim()) missingFields.push('Customer Name');
@@ -323,9 +397,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         showNotification(errorMessage, 'warning');
         return;
       }
+
       const invoiceData = {
         ...invoiceForm,
-        invoiceNumber: invoiceForm.invoiceNumber || undefined,
+        invoiceNumber: invoiceForm.invoiceNumber || generateInvoiceNumber(),
         invoiceDate: new Date(invoiceForm.invoiceDate),
         dueDate: new Date(invoiceForm.dueDate),
         planPrice: parseFloat(invoiceForm.planPrice) || 0,
@@ -337,11 +412,16 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
         balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
       };
+
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(invoiceData)
       });
+
       if (response.ok) {
         const newInvoice = await response.json();
         setInvoices(prev => [...prev, newInvoice.invoice || newInvoice.data || newInvoice]);
@@ -350,7 +430,9 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         showNotification('✅ Invoice created successfully!', 'success');
       } else {
         const errorData = await response.json();
-        const errorMessage = errorData.message || (errorData.errors && errorData.errors.join(', ')) || 'Failed to create invoice';
+        const errorMessage = errorData.message || 
+          (errorData.errors && errorData.errors.join(', ')) || 
+          'Failed to create invoice';
         throw new Error(errorMessage);
       }
     } catch (error) {
@@ -358,10 +440,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
+
   const updateInvoice = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
+
       if (!invoiceForm.customerName?.trim() || !invoiceForm.customerEmail?.trim() || !invoiceForm.planName?.trim()) {
         let missingFields = [];
         if (!invoiceForm.customerName?.trim()) missingFields.push('Customer Name');
@@ -371,6 +455,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         showNotification(errorMessage, 'warning');
         return;
       }
+
       const invoiceData = {
         ...invoiceForm,
         invoiceDate: new Date(invoiceForm.invoiceDate),
@@ -384,21 +469,30 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
         balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
       };
+
       const response = await fetch(`${API_BASE_URL}/api/invoices/${editingInvoice._id}`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(invoiceData)
       });
+
       if (response.ok) {
         const updatedInvoice = await response.json();
-        setInvoices(prev => prev.map(inv => inv._id === editingInvoice._id ? (updatedInvoice.invoice || updatedInvoice.data || updatedInvoice) : inv));
+        setInvoices(prev => prev.map(inv => 
+          inv._id === editingInvoice._id ? (updatedInvoice.invoice || updatedInvoice.data || updatedInvoice) : inv
+        ));
         setShowCreateModal(false);
         setEditingInvoice(null);
         resetForm();
         showNotification('✅ Invoice updated successfully!', 'success');
       } else {
         const errorData = await response.json();
-        const errorMessage = errorData.message || (errorData.errors && errorData.errors.join(', ')) || 'Failed to update invoice';
+        const errorMessage = errorData.message || 
+          (errorData.errors && errorData.errors.join(', ')) || 
+          'Failed to update invoice';
         throw new Error(errorMessage);
       }
     } catch (error) {
@@ -406,15 +500,19 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
+
   const deleteInvoice = async (invoiceId) => {
     if (!window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return;
+    
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
+
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
       if (response.ok) {
         setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
         showNotification('✅ Invoice deleted successfully!', 'success');
@@ -427,105 +525,124 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
-  // ✅ NEW: Export PDF using client-side generation (for downloads only)
-  const exportInvoicePDF = async (invoice) => {
-    // Keep existing client-side PDF generation for download functionality
-    const element = document.createElement('div');
-    // (Same HTML generation logic as before - omitted for brevity but kept in full file)
-    element.innerHTML = `
-      <div id="pdf-invoice-content" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: white; color: #333; font-size: 12px;">
-        <!-- Full invoice HTML template here -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #003366; padding-bottom: 15px; margin-bottom: 20px;">
-          <div>
-            <h1 style="font-size: 22px; font-weight: bold; color: #003366; margin: 0;">${COMPANY_INFO.name}</h1>
-            <p style="font-size: 11px; color: #666; margin: 5px 0 0 0;">${COMPANY_INFO.tagline}</p>
-            <div style="font-size: 10px; color: #666; margin-top: 5px;">
-                <p style="margin: 0;">Email: ${COMPANY_INFO.supportEmail}</p>
-                <p style="margin: 0;">Phone: ${COMPANY_INFO.supportPhone}</p>
-            </div>
-          </div>
-          <div style="text-align: right; min-width: 130px;">
-            <img src="${COMPANY_INFO.logoUrl}" alt="${COMPANY_INFO.name}" style="max-height: 50px; max-width: 90px; object-fit: contain; margin-bottom: 5px;" />
-            <h2 style="font-size: 28px; font-weight: bold; color: #FFCC00; margin: 0;">INVOICE</h2>
-            <p style="font-size: 14px; color: #003366; margin: 5px 0 0 0;">#${invoice.invoiceNumber || 'N/A'}</p>
-          </div>
-        </div>
-        <!-- Rest of the HTML template -->
-      </div>
-    `;
-    document.body.appendChild(element);
-    const opt = {
-      margin: [10, 10, 10, 10],
-      filename: `${invoice.invoiceNumber || 'DRAFT'}-invoice.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        allowTaint: true,
-        windowWidth: 800,
-        width: 800,
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().from(element).set(opt).save().then(() => {
-      showNotification('✅ PDF generated successfully!', 'success');
-    }).catch(err => {
-      console.error('PDF error:', err);
-      showNotification('❌ Failed to generate PDF', 'error');
-    }).finally(() => {
-      document.body.removeChild(element);
-    });
-  };
-  // ✅ UPDATED: Send invoice via backend API (auto PDF + email from support@optimaswifi.co.ke)
+
+  // ✅ UPDATED: Send invoice via backend API with proper error handling
   const sendInvoiceToClient = async (invoice) => {
     try {
       setSendingInvoice(invoice._id);
+      setSendingEmail(true);
+      
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
+
       if (!invoice.customerEmail?.trim()) {
         showNotification('⚠️ Customer email address is missing', 'warning');
         return;
       }
+
+      console.log(`📧 Sending invoice ${invoice.invoiceNumber} to ${invoice.customerEmail}`);
+
+      // Test email configuration first
+      const testResponse = await fetch(`${API_BASE_URL}/api/invoices/test-email`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!testResponse.ok) {
+        const testError = await testResponse.json();
+        console.error('Email test failed:', testError);
+        showNotification('⚠️ Email system not configured properly. Check server logs.', 'warning');
+        return;
+      }
+
+      // Send the actual invoice
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
       if (response.ok) {
-        showNotification('✅ Invoice sent to client successfully!', 'success');
+        const result = await response.json();
+        console.log('✅ Email sent successfully:', result);
+        
+        // Update the invoice status locally
+        setInvoices(prev => prev.map(inv => 
+          inv._id === invoice._id 
+            ? { 
+                ...inv, 
+                sentToCustomer: true,
+                lastSentAt: new Date().toISOString(),
+                sendCount: (inv.sendCount || 0) + 1
+              } 
+            : inv
+        ));
+        
+        showNotification(`✅ Invoice sent to ${invoice.customerEmail}!`, 'success');
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send invoice email');
+        console.error('❌ Email sending failed:', errorData);
+        
+        // Show specific error messages
+        let errorMessage = 'Failed to send invoice email';
+        if (errorData.error?.includes('EAUTH')) {
+          errorMessage = 'Email authentication failed. Check email credentials.';
+        } else if (errorData.error?.includes('ESOCKET') || errorData.error?.includes('ECONNECTION')) {
+          errorMessage = 'Cannot connect to email server. Check SMTP settings.';
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        showNotification(`🚨 ${errorMessage}`, 'error');
       }
     } catch (error) {
-      console.error('Error sending invoice email:', error);
-      showNotification(`🚨 ${error.message}`, 'error');
+      console.error('❌ Error sending invoice email:', error);
+      
+      // More specific error messages
+      let errorMessage = error.message;
+      if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Cannot connect to server. Check your internet connection.';
+      } else if (error.message.includes('NetworkError')) {
+        errorMessage = 'Network error. Please check your connection.';
+      }
+      
+      showNotification(`🚨 ${errorMessage}`, 'error');
     } finally {
       setSendingInvoice(null);
+      setSendingEmail(false);
     }
   };
+
   const exportInvoicesToExcel = async () => {
     try {
       setExportLoading(true);
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
+
       const response = await fetch(`${API_BASE_URL}/api/invoices/export/excel`, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `Failed to export Excel: ${response.status} ${response.statusText}`);
       }
+
       const blob = await response.blob();
       const disposition = response.headers.get('Content-Disposition');
       let filename = `invoices-${new Date().toISOString().split('T')[0]}.xlsx`;
+      
       if (disposition && disposition.includes('filename=')) {
-        const filenameMatch = disposition.match(/filename[^;=\s]*=(([\'\"])((?:.(?!\2|\\|\s))*.)?\2|([^;\s]*))/);
+        const filenameMatch = disposition.match(/filename[^;=\s]*=((['"])((?:(?!\2|\\|\s)).)*?\2|([^;\s]*))/);
         if (filenameMatch && filenameMatch[3]) filename = filenameMatch[3];
         else if (filenameMatch && filenameMatch[5]) filename = filenameMatch[5];
       }
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -534,6 +651,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      
       showNotification('✅ Invoices exported to Excel successfully!', 'success');
     } catch (error) {
       console.error('Error exporting to Excel:', error);
@@ -542,6 +660,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setExportLoading(false);
     }
   };
+
   const editInvoice = (invoice) => {
     setInvoiceForm({
       invoiceNumber: invoice.invoiceNumber || '',
@@ -557,11 +676,16 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       invoiceDate: invoice.invoiceDate ? new Date(invoice.invoiceDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       items: invoice.items && invoice.items.length > 0 ? invoice.items.map(item => ({
-          ...item,
-          quantity: parseFloat(item.quantity) || 1,
-          unitPrice: parseFloat(item.unitPrice) || 0,
-          amount: parseFloat(item.amount) || 0
-      })) : [{ description: `${invoice.planName} - ${invoice.planSpeed}`, quantity: 1, unitPrice: invoice.planPrice, amount: invoice.planPrice }],
+        ...item,
+        quantity: parseFloat(item.quantity) || 1,
+        unitPrice: parseFloat(item.unitPrice) || 0,
+        amount: parseFloat(item.amount) || 0
+      })) : [{
+        description: `${invoice.planName} - ${invoice.planSpeed}`,
+        quantity: 1,
+        unitPrice: invoice.planPrice,
+        amount: invoice.planPrice
+      }],
       subtotal: invoice.subtotal || 0,
       taxRate: invoice.taxRate || 0,
       taxAmount: invoice.taxAmount || 0,
@@ -577,25 +701,26 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       terms: invoice.terms || 'Payment due within 30 days. Late payments subject to fees.',
       billingCycle: invoice.billingCycle || 'monthly'
     });
+    
     setEditingInvoice(invoice);
     setShowCreateModal(true);
   };
+
   const viewInvoice = (invoice) => {
     setSelectedInvoice(invoice);
     setShowInvoiceModal(true);
   };
-  const previewPDF = (invoice) => {
-    setSelectedInvoice(invoice);
-    setShowPDFModal(true);
-  };
+
   const filteredInvoices = Array.isArray(invoices) 
     ? invoices.filter(invoice => {
         if (!invoice || typeof invoice !== 'object') return false;
+        
         const matchesFilter = filter === 'all' || 
-                              (filter === 'paid' && invoice.status === 'paid') ||
-                              (filter === 'pending' && invoice.status === 'pending') ||
-                              (filter === 'overdue' && invoice.status === 'overdue') ||
-                              (filter === 'partially_paid' && invoice.status === 'partially_paid');
+          (filter === 'paid' && invoice.status === 'paid') ||
+          (filter === 'pending' && invoice.status === 'pending') ||
+          (filter === 'overdue' && invoice.status === 'overdue') ||
+          (filter === 'partially_paid' && invoice.status === 'partially_paid');
+        
         const lowerSearchTerm = searchTerm.toLowerCase();
         const matchesSearch = 
           (invoice.customerName?.toLowerCase() || '').includes(lowerSearchTerm) ||
@@ -603,9 +728,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           (invoice.customerEmail?.toLowerCase() || '').includes(lowerSearchTerm) ||
           (invoice.customerPhone?.toLowerCase() || '').includes(lowerSearchTerm) ||
           (invoice.planName?.toLowerCase() || '').includes(lowerSearchTerm);
+        
         return matchesFilter && matchesSearch;
       })
     : [];
+
   const stats = {
     totalInvoices: invoices.length,
     pendingInvoices: invoices.filter(inv => inv.status === 'pending').length,
@@ -617,18 +744,21 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     annualRevenue: invoices.filter(inv => inv.billingCycle === 'annually').reduce((sum, inv) => sum + (parseFloat(inv.totalAmount) || parseFloat(inv.planPrice) || 0), 0),
     oneTimeRevenue: invoices.filter(inv => inv.billingCycle === 'one_time').reduce((sum, inv) => sum + (parseFloat(inv.totalAmount) || parseFloat(inv.planPrice) || 0), 0)
   };
+
   const statusData = [
     { name: 'Paid', value: stats.paidInvoices, color: '#28a745' },
     { name: 'Pending', value: stats.pendingInvoices, color: '#ffc107' },
     { name: 'Overdue', value: stats.overdueInvoices, color: '#dc3545' },
     { name: 'Draft/Other', value: stats.totalInvoices - stats.paidInvoices - stats.pendingInvoices - stats.overdueInvoices, color: '#6c757d' }
   ].filter(d => d.value > 0);
+
   const revenueData = [
     { name: 'Monthly', value: stats.monthlyRevenue },
     { name: 'Quarterly', value: stats.quarterlyRevenue },
     { name: 'Annually', value: stats.annualRevenue },
     { name: 'One Time', value: stats.oneTimeRevenue }
   ].filter(d => d.value > 0);
+
   const timeSeriesMap = invoices
     .filter(inv => inv.invoiceDate)
     .reduce((acc, inv) => {
@@ -637,10 +767,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       acc[dateKey] = (acc[dateKey] || 0) + amount;
       return acc;
     }, {});
-  const timeSeriesData = Object.keys(timeSeriesMap).map(date => ({
-    date,
-    amount: timeSeriesMap[date]
-  })).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const timeSeriesData = Object.keys(timeSeriesMap)
+    .map(date => ({ date, amount: timeSeriesMap[date] }))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -648,6 +779,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       </div>
     );
   }
+
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -681,6 +813,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             onClick={() => {
               setEditingInvoice(null);
               resetForm();
+              setInvoiceForm(prev => ({
+                ...prev,
+                invoiceNumber: generateInvoiceNumber()
+              }));
               setShowCreateModal(true);
             }}
             className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light} flex items-center`}
@@ -697,6 +833,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </button>
         </div>
       </div>
+
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
@@ -724,6 +861,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </PieChart>
           </ResponsiveContainer>
         </div>
+
         <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
           <h3 className="text-lg font-semibold mb-4">Revenue by Billing Cycle</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -739,12 +877,17 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               <Tooltip 
                 formatter={(value) => [`Ksh ${formatPrice(value)}`, 'Revenue']} 
                 labelFormatter={(name) => name}
-                contentStyle={{ backgroundColor: darkMode ? '#1f2937' : '#fff', border: '1px solid #4b5563', borderRadius: '5px' }}
+                contentStyle={{ 
+                  backgroundColor: darkMode ? '#1f2937' : '#fff', 
+                  border: '1px solid #4b5563', 
+                  borderRadius: '5px' 
+                }}
               />
               <Bar dataKey="value" fill="#003366" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
+
         <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
           <h3 className="text-lg font-semibold mb-4">Revenue Trend (Last {timeSeriesData.length} periods)</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -760,14 +903,36 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               <Tooltip 
                 formatter={(value) => [`Ksh ${formatPrice(value)}`, 'Revenue']}
                 labelFormatter={(date) => `Period: ${date}`}
-                contentStyle={{ backgroundColor: darkMode ? '#1f2937' : '#fff', border: '1px solid #4b5563', borderRadius: '5px' }}
+                contentStyle={{ 
+                  backgroundColor: darkMode ? '#1f2937' : '#fff', 
+                  border: '1px solid #4b5563', 
+                  borderRadius: '5px' 
+                }}
               />
-              <Line type="monotone" dataKey="amount" stroke="#FFCC00" strokeWidth={3} dot={{ stroke: '#003366', strokeWidth: 2, r: 4 }} activeDot={{ r: 8 }} />
-              <ReferenceLine y={stats.totalRevenue / timeSeriesData.length} stroke="#003366" strokeDasharray="3 3" label={{ position: 'right', value: 'Avg', fill: '#003366', fontSize: 12 }} />
+              <Line 
+                type="monotone" 
+                dataKey="amount" 
+                stroke="#FFCC00" 
+                strokeWidth={3} 
+                dot={{ stroke: '#003366', strokeWidth: 2, r: 4 }} 
+                activeDot={{ r: 8 }} 
+              />
+              <ReferenceLine 
+                y={stats.totalRevenue / timeSeriesData.length} 
+                stroke="#003366" 
+                strokeDasharray="3 3" 
+                label={{ 
+                  position: 'right', 
+                  value: 'Avg', 
+                  fill: '#003366', 
+                  fontSize: 12 
+                }} 
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
+
       {/* Filters and Search */}
       <div className={`${themeClasses.card} p-4 mb-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
         <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -830,6 +995,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       </div>
+
       {/* Invoices Table */}
       <div className={`${themeClasses.card} rounded-xl shadow-lg border backdrop-blur-sm overflow-hidden`}>
         <div className="overflow-x-auto">
@@ -946,22 +1112,26 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                           <Eye size={16} />
                         </button>
                         <button
-                          onClick={() => exportInvoicePDF(invoice)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-purple-400 hover:bg-gray-600' : 'text-purple-600 hover:bg-gray-100'} transition-colors`}
-                          title="Download PDF"
+                          onClick={() => editInvoice(invoice)}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-yellow-400 hover:bg-gray-600' : 'text-yellow-600 hover:bg-gray-100'} transition-colors`}
+                          title="Edit Invoice"
                         >
-                          <Download size={16} />
+                          <Edit size={16} />
                         </button>
-                        {/* ✅ UPDATED: Now uses backend API */}
+                        {/* ✅ UPDATED: Send Invoice Button with Loading State */}
                         <button
                           onClick={() => sendInvoiceToClient(invoice)}
-                          disabled={sendingInvoice === invoice._id}
+                          disabled={sendingInvoice === invoice._id || sendingEmail}
                           className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
-                            sendingInvoice === invoice._id ? 'opacity-50 cursor-not-allowed' : ''
+                            sendingInvoice === invoice._id || sendingEmail ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
-                          title="Send to Client (Email)"
+                          title="Send to Client (Email with PDF)"
                         >
-                          <Send size={16} /> {/* ✅ Use Send icon */}
+                          {sendingInvoice === invoice._id ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <Send size={16} />
+                          )}
                         </button>
                         {invoice.status !== 'paid' && (
                           <button
@@ -972,13 +1142,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                             <CreditCard size={16} />
                           </button>
                         )}
-                        <button
-                          onClick={() => editInvoice(invoice)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-yellow-400 hover:bg-gray-600' : 'text-yellow-600 hover:bg-gray-100'} transition-colors`}
-                          title="Edit Invoice"
-                        >
-                          <Edit size={16} />
-                        </button>
                         <button
                           onClick={() => deleteInvoice(invoice._id)}
                           className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-gray-100'} transition-colors`}
@@ -995,9 +1158,417 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </table>
         </div>
       </div>
-      {/* Modals remain exactly as in your original file — no changes needed */}
-      {/* ... (all modals: create/edit, paste, plan selection, view, preview) ... */}
+
+      {/* Paste WhatsApp Modal */}
+      {showPasteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto`}>
+            <div className="flex justify-between items-center border-b p-4">
+              <h3 className="text-xl font-semibold">Paste WhatsApp Message</h3>
+              <button
+                onClick={() => setShowPasteModal(false)}
+                className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="mb-4 text-sm">
+                Paste the WhatsApp message below to automatically populate the invoice form:
+              </p>
+              <textarea
+                value={whatsappText}
+                onChange={(e) => setWhatsappText(e.target.value)}
+                placeholder="Example: Name: John Doe\nPhone: +254712345678\nLocation: Nairobi\nEmail: john@example.com\nPlan: Gazzelle\nSpeed: 30Mbps\nPrice: Ksh 2999"
+                className={`w-full h-48 p-3 border rounded-lg resize-none ${themeClasses.input}`}
+              />
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowPasteModal(false)}
+                  className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} transition-colors`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={parseAndPopulateFromWhatsApp}
+                  className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-[#003366] hover:bg-[#002244] text-white' : 'bg-[#003366] hover:bg-[#002244] text-white'} transition-colors`}
+                >
+                  Populate Form
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit Invoice Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
+            <div className="flex justify-between items-center border-b p-4">
+              <h3 className="text-xl font-semibold">
+                {editingInvoice ? 'Edit Invoice' : 'Create New Invoice'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setEditingInvoice(null);
+                  resetForm();
+                }}
+                className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              {/* Form content remains the same */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Invoice Number</label>
+                  <input
+                    type="text"
+                    name="invoiceNumber"
+                    value={invoiceForm.invoiceNumber}
+                    onChange={handleInputChange}
+                    className={`w-full p-2 border rounded ${themeClasses.input}`}
+                    placeholder="Auto-generated"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Invoice Date</label>
+                  <input
+                    type="date"
+                    name="invoiceDate"
+                    value={invoiceForm.invoiceDate}
+                    onChange={handleInputChange}
+                    className={`w-full p-2 border rounded ${themeClasses.input}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Customer Name *</label>
+                  <input
+                    type="text"
+                    name="customerName"
+                    value={invoiceForm.customerName}
+                    onChange={handleInputChange}
+                    className={`w-full p-2 border rounded ${themeClasses.input}`}
+                    placeholder="Full name"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Customer Email *</label>
+                  <input
+                    type="email"
+                    name="customerEmail"
+                    value={invoiceForm.customerEmail}
+                    onChange={handleInputChange}
+                    className={`w-full p-2 border rounded ${themeClasses.input}`}
+                    placeholder="email@example.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Customer Phone</label>
+                  <input
+                    type="text"
+                    name="customerPhone"
+                    value={invoiceForm.customerPhone}
+                    onChange={handleInputChange}
+                    className={`w-full p-2 border rounded ${themeClasses.input}`}
+                    placeholder="+254712345678"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Customer Location</label>
+                  <input
+                    type="text"
+                    name="customerLocation"
+                    value={invoiceForm.customerLocation}
+                    onChange={handleInputChange}
+                    className={`w-full p-2 border rounded ${themeClasses.input}`}
+                    placeholder="Nairobi, Kenya"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium">Select Plan *</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowPlanSelection(true)}
+                      className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} flex items-center`}
+                    >
+                      <Wifi size={14} className="mr-1" />
+                      Browse Plans
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="planName"
+                      value={invoiceForm.planName}
+                      onChange={handleInputChange}
+                      className={`flex-1 p-2 border rounded ${themeClasses.input}`}
+                      placeholder="Plan name"
+                      required
+                    />
+                    <input
+                      type="text"
+                      name="planSpeed"
+                      value={invoiceForm.planSpeed}
+                      onChange={handleInputChange}
+                      className={`w-32 p-2 border rounded ${themeClasses.input}`}
+                      placeholder="Speed"
+                    />
+                    <input
+                      type="number"
+                      name="planPrice"
+                      value={invoiceForm.planPrice}
+                      onChange={handleInputChange}
+                      className={`w-32 p-2 border rounded ${themeClasses.input}`}
+                      placeholder="Price"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="text-lg font-medium">Items</h4>
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className={`px-3 py-1 text-sm rounded ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  >
+                    + Add Item
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium">Description</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium w-20">Qty</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium w-32">Unit Price</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium w-32">Amount</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium w-16">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoiceForm.items.map((item, index) => (
+                        <tr key={index}>
+                          <td className="px-4 py-2">
+                            <input
+                              type="text"
+                              value={item.description}
+                              onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                              className={`w-full p-1 border rounded ${themeClasses.input}`}
+                              placeholder="Item description"
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                              className={`w-full p-1 border rounded ${themeClasses.input}`}
+                              min="1"
+                              step="1"
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <input
+                              type="number"
+                              value={item.unitPrice}
+                              onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+                              className={`w-full p-1 border rounded ${themeClasses.input}`}
+                              step="0.01"
+                              placeholder="0.00"
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="p-1">
+                              Ksh {formatPrice(item.amount)}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2">
+                            {invoiceForm.items.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeItem(index)}
+                                className={`p-1 rounded ${darkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'}`}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Summary Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Notes</label>
+                    <textarea
+                      name="notes"
+                      value={invoiceForm.notes}
+                      onChange={handleInputChange}
+                      className={`w-full p-2 border rounded h-24 resize-none ${themeClasses.input}`}
+                      placeholder="Additional notes for the customer..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Terms & Conditions</label>
+                    <textarea
+                      name="terms"
+                      value={invoiceForm.terms}
+                      onChange={handleInputChange}
+                      className={`w-full p-2 border rounded h-24 resize-none ${themeClasses.input}`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h4 className="text-lg font-medium mb-3">Summary</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span className="font-medium">Ksh {formatPrice(invoiceForm.subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Tax ({invoiceForm.taxRate}%):</span>
+                        <span className="font-medium">Ksh {formatPrice(invoiceForm.taxAmount)}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="font-semibold">Total Amount:</span>
+                        <span className="font-bold text-lg">Ksh {formatPrice(invoiceForm.totalAmount)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Amount Paid:</span>
+                        <input
+                          type="number"
+                          name="amountPaid"
+                          value={invoiceForm.amountPaid}
+                          onChange={handleInputChange}
+                          className={`w-32 p-1 border rounded text-right ${themeClasses.input}`}
+                          step="0.01"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="font-semibold">Balance Due:</span>
+                        <span className={`font-bold ${invoiceForm.balanceDue > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                          Ksh {formatPrice(invoiceForm.balanceDue)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex justify-end gap-3 mt-8 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setEditingInvoice(null);
+                    resetForm();
+                  }}
+                  className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} transition-colors`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={editingInvoice ? updateInvoice : createInvoice}
+                  className={`px-6 py-2 rounded-lg ${darkMode ? 'bg-[#003366] hover:bg-[#002244] text-white' : 'bg-[#003366] hover:bg-[#002244] text-white'} transition-colors`}
+                >
+                  {editingInvoice ? 'Update Invoice' : 'Create Invoice'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Plan Selection Modal */}
+      {showPlanSelection && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
+            <div className="flex justify-between items-center border-b p-4">
+              <h3 className="text-xl font-semibold">Select Internet Plan</h3>
+              <button
+                onClick={() => setShowPlanSelection(false)}
+                className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {WIFI_PLANS.map((plan) => (
+                  <div
+                    key={plan.id}
+                    className={`border rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg ${
+                      plan.popular ? 'border-[#FFCC00] ring-2 ring-[#FFCC00]' : ''
+                    } ${
+                      darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                    }`}
+                    onClick={() => selectPlan(plan)}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="text-lg font-bold">{plan.name}</h4>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {plan.speed}
+                        </p>
+                      </div>
+                      {plan.popular && (
+                        <span className="px-2 py-1 text-xs font-bold bg-[#FFCC00] text-black rounded-full">
+                          POPULAR
+                        </span>
+                      )}
+                    </div>
+                    <div className="mb-4">
+                      <div className="text-2xl font-bold text-[#003366]">
+                        Ksh {plan.price}
+                        <span className="text-sm font-normal text-gray-500">/month</span>
+                      </div>
+                    </div>
+                    <ul className="space-y-2 mb-4">
+                      {plan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center text-sm">
+                          <CheckCircle size={14} className="mr-2 text-green-500" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      className={`w-full py-2 rounded-lg font-medium ${
+                        darkMode 
+                          ? 'bg-[#003366] hover:bg-[#002244] text-white' 
+                          : 'bg-[#003366] hover:bg-[#002244] text-white'
+                      }`}
+                    >
+                      Select Plan
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
 export default InvoiceManager;
