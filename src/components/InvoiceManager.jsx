@@ -30,7 +30,7 @@ import {
   ArrowUpRight,
   ClipboardPaste,
   AlertTriangle,
-  Loader2 // Added for loading state
+  Loader2
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -64,7 +64,7 @@ const COMPANY_INFO = {
   accountName: "Optimas Fiber Ltd",
   accountNumber: "1234567890",
   branch: "Nairobi Main",
-  supportEmail: "support@optimaswifi.co.ke", // ✅ CORRECTED DOMAIN
+  supportEmail: "support@optimaswifi.co.ke",
   supportPhone: "+254 741 874 200",
   paybill: "123456"
 };
@@ -109,7 +109,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [exportLoading, setExportLoading] = useState(false);
-  const [sendingInvoice, setSendingInvoice] = useState(null); // Tracks which invoice is being sent
+  const [sendingInvoice, setSendingInvoice] = useState(null);
   const [showPlanSelection, setShowPlanSelection] = useState(false);
   const [invoiceForm, setInvoiceForm] = useState(initialFormState);
   const [whatsappText, setWhatsappText] = useState('');
@@ -168,16 +168,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setLoading(true);
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
-      
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to fetch invoices: ${response.status} - ${errorText}`);
       }
-      
       const data = await response.json();
       let invoicesData = data.invoices || data.data || [];
       setInvoices(invoicesData);
@@ -213,7 +210,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification('⚠️ Please paste the WhatsApp message first.', 'warning');
       return;
     }
-
     const nameMatch = text.match(/Name:\s*(.+)/i);
     const phoneMatch = text.match(/Phone:\s*(.+)/i);
     const locationMatch = text.match(/Location:\s*(.+)/i);
@@ -246,7 +242,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     const finalPlanSpeed = selectedPlan ? selectedPlan.speed : planSpeed;
     const finalPlanPrice = selectedPlan ? parseFloat(selectedPlan.price) : planPrice;
     const finalFeatures = selectedPlan ? selectedPlan.features : [];
-    
+
     const items = [{
       description: `${finalPlanName} Internet Plan - ${finalPlanSpeed}`,
       quantity: 1,
@@ -277,7 +273,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       totalAmount: totalAmount,
       balanceDue: totalAmount - (prev.amountPaid || 0)
     }));
-
     showNotification('✅ Form populated from WhatsApp message!', 'success');
     setShowPasteModal(false);
     setWhatsappText('');
@@ -296,14 +291,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       unitPrice: planPrice,
       amount: planPrice
     }];
-
     const { subtotal, taxAmount, totalAmount } = calculateTotals(
       items, 
       invoiceForm.taxRate, 
       invoiceForm.discount, 
       invoiceForm.discountType
     );
-
     setInvoiceForm(prev => ({
       ...prev,
       planName: plan.name,
@@ -316,7 +309,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       totalAmount: totalAmount,
       balanceDue: totalAmount - (prev.amountPaid || 0)
     }));
-
     setShowPlanSelection(false);
     showNotification(`✅ ${plan.name} plan selected!`, 'success');
   };
@@ -324,7 +316,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...invoiceForm.items];
     const item = updatedItems[index];
-    
     if (field === 'quantity' || field === 'unitPrice') {
       const quantity = field === 'quantity' ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
       const unitPrice = field === 'unitPrice' ? parseFloat(value) || 0 : parseFloat(item.unitPrice) || 0;
@@ -332,7 +323,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     } else {
       updatedItems[index] = { ...item, [field]: value };
     }
-    
     setInvoiceForm(prev => ({ ...prev, items: updatedItems }));
   };
 
@@ -354,10 +344,8 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
-
       const invoiceToPay = invoices.find(inv => inv._id === invoiceId);
       if (!invoiceToPay) throw new Error('Invoice not found in local state.');
-
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/paid`, {
         method: 'PATCH',
         headers: {
@@ -366,7 +354,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify({ amount: invoiceToPay.totalAmount || invoiceToPay.planPrice })
       });
-
       if (response.ok) {
         const updatedInvoice = await response.json();
         setInvoices(prev => prev.map(inv => 
@@ -387,7 +374,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
-
       if (!invoiceForm.customerName?.trim() || !invoiceForm.customerEmail?.trim() || !invoiceForm.planName?.trim()) {
         let missingFields = [];
         if (!invoiceForm.customerName?.trim()) missingFields.push('Customer Name');
@@ -397,7 +383,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         showNotification(errorMessage, 'warning');
         return;
       }
-
       const invoiceData = {
         ...invoiceForm,
         invoiceNumber: invoiceForm.invoiceNumber || generateInvoiceNumber(),
@@ -412,7 +397,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
         balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
       };
-
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
         headers: {
@@ -421,10 +405,14 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(invoiceData)
       });
-
       if (response.ok) {
         const newInvoice = await response.json();
-        setInvoices(prev => [...prev, newInvoice.invoice || newInvoice.data || newInvoice]);
+        // Ensure invoice has an invoiceNumber
+        const savedInvoice = newInvoice.invoice || newInvoice.data || newInvoice;
+        if (!savedInvoice.invoiceNumber) {
+          savedInvoice.invoiceNumber = generateInvoiceNumber();
+        }
+        setInvoices(prev => [...prev, savedInvoice]);
         setShowCreateModal(false);
         resetForm();
         showNotification('✅ Invoice created successfully!', 'success');
@@ -445,7 +433,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
-
       if (!invoiceForm.customerName?.trim() || !invoiceForm.customerEmail?.trim() || !invoiceForm.planName?.trim()) {
         let missingFields = [];
         if (!invoiceForm.customerName?.trim()) missingFields.push('Customer Name');
@@ -455,7 +442,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         showNotification(errorMessage, 'warning');
         return;
       }
-
       const invoiceData = {
         ...invoiceForm,
         invoiceDate: new Date(invoiceForm.invoiceDate),
@@ -469,7 +455,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
         balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
       };
-
       const response = await fetch(`${API_BASE_URL}/api/invoices/${editingInvoice._id}`, {
         method: 'PUT',
         headers: {
@@ -478,7 +463,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(invoiceData)
       });
-
       if (response.ok) {
         const updatedInvoice = await response.json();
         setInvoices(prev => prev.map(inv => 
@@ -503,16 +487,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
   const deleteInvoice = async (invoiceId) => {
     if (!window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return;
-    
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
-
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
       if (response.ok) {
         setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
         showNotification('✅ Invoice deleted successfully!', 'success');
@@ -526,38 +507,43 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }
   };
 
-  // ✅ UPDATED: Send invoice via backend API with proper error handling
+  // ✅ UPDATED: Send invoice via backend API with proper validation
   const sendInvoiceToClient = async (invoice) => {
+    // Validate presence of customer email
+    if (!invoice.customerEmail?.trim()) {
+      showNotification('⚠️ Cannot send: Customer email is required.', 'warning');
+      return;
+    }
+
+    // Validate invoice has been saved (has _id)
+    if (!invoice._id) {
+      showNotification('⚠️ Cannot send: Save the invoice first.', 'warning');
+      return;
+    }
+
     try {
       setSendingInvoice(invoice._id);
       setSendingEmail(true);
-      
+
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
 
-      if (!invoice.customerEmail?.trim()) {
-        showNotification('⚠️ Customer email address is missing', 'warning');
-        return;
-      }
+      console.log(`📧 Sending invoice ${invoice.invoiceNumber || invoice._id} to ${invoice.customerEmail}`);
 
-      console.log(`📧 Sending invoice ${invoice.invoiceNumber} to ${invoice.customerEmail}`);
+      // Skip email test in production? Or keep for safety
+      // const testResponse = await fetch(`${API_BASE_URL}/api/invoices/test-email`, {
+      //   method: 'POST',
+      //   headers: { 'Authorization': `Bearer ${token}` }
+      // });
+      // if (!testResponse.ok) {
+      //   const testError = await testResponse.json();
+      //   console.error('Email test failed:', testError);
+      //   showNotification('⚠️ Email system not configured. Contact admin.', 'warning');
+      //   return;
+      // }
 
-      // Test email configuration first
-      const testResponse = await fetch(`${API_BASE_URL}/api/invoices/test-email`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!testResponse.ok) {
-        const testError = await testResponse.json();
-        console.error('Email test failed:', testError);
-        showNotification('⚠️ Email system not configured properly. Check server logs.', 'warning');
-        return;
-      }
-
-      // Send the actual invoice
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -566,8 +552,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (response.ok) {
         const result = await response.json();
         console.log('✅ Email sent successfully:', result);
-        
-        // Update the invoice status locally
+        // Update local state to reflect sent status
         setInvoices(prev => prev.map(inv => 
           inv._id === invoice._id 
             ? { 
@@ -578,35 +563,28 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               } 
             : inv
         ));
-        
         showNotification(`✅ Invoice sent to ${invoice.customerEmail}!`, 'success');
       } else {
         const errorData = await response.json();
         console.error('❌ Email sending failed:', errorData);
-        
-        // Show specific error messages
         let errorMessage = 'Failed to send invoice email';
-        if (errorData.error?.includes('EAUTH')) {
-          errorMessage = 'Email authentication failed. Check email credentials.';
+        if (response.status === 404) {
+          errorMessage = 'Email service not available. Contact system admin.';
+        } else if (errorData.error?.includes('EAUTH')) {
+          errorMessage = 'Email authentication failed. Check SMTP settings.';
         } else if (errorData.error?.includes('ESOCKET') || errorData.error?.includes('ECONNECTION')) {
-          errorMessage = 'Cannot connect to email server. Check SMTP settings.';
+          errorMessage = 'Cannot connect to email server. Check network.';
         } else if (errorData.message) {
           errorMessage = errorData.message;
         }
-        
         showNotification(`🚨 ${errorMessage}`, 'error');
       }
     } catch (error) {
-      console.error('❌ Error sending invoice email:', error);
-      
-      // More specific error messages
-      let errorMessage = error.message;
-      if (error.message.includes('Failed to fetch')) {
-        errorMessage = 'Cannot connect to server. Check your internet connection.';
-      } else if (error.message.includes('NetworkError')) {
-        errorMessage = 'Network error. Please check your connection.';
+      console.error('❌ Network error sending invoice:', error);
+      let errorMessage = 'Network error. Check your connection.';
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = 'Cannot reach server. Check your internet connection.';
       }
-      
       showNotification(`🚨 ${errorMessage}`, 'error');
     } finally {
       setSendingInvoice(null);
@@ -619,7 +597,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setExportLoading(true);
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
-
       const response = await fetch(`${API_BASE_URL}/api/invoices/export/excel`, {
         method: 'GET',
         headers: {
@@ -627,22 +604,18 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           'Content-Type': 'application/json'
         }
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `Failed to export Excel: ${response.status} ${response.statusText}`);
       }
-
       const blob = await response.blob();
       const disposition = response.headers.get('Content-Disposition');
       let filename = `invoices-${new Date().toISOString().split('T')[0]}.xlsx`;
-      
       if (disposition && disposition.includes('filename=')) {
         const filenameMatch = disposition.match(/filename[^;=\s]*=((['"])((?:(?!\2|\\|\s)).)*?\2|([^;\s]*))/);
         if (filenameMatch && filenameMatch[3]) filename = filenameMatch[3];
         else if (filenameMatch && filenameMatch[5]) filename = filenameMatch[5];
       }
-
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -651,7 +624,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
       showNotification('✅ Invoices exported to Excel successfully!', 'success');
     } catch (error) {
       console.error('Error exporting to Excel:', error);
@@ -701,7 +673,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       terms: invoice.terms || 'Payment due within 30 days. Late payments subject to fees.',
       billingCycle: invoice.billingCycle || 'monthly'
     });
-    
     setEditingInvoice(invoice);
     setShowCreateModal(true);
   };
@@ -714,13 +685,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const filteredInvoices = Array.isArray(invoices) 
     ? invoices.filter(invoice => {
         if (!invoice || typeof invoice !== 'object') return false;
-        
         const matchesFilter = filter === 'all' || 
           (filter === 'paid' && invoice.status === 'paid') ||
           (filter === 'pending' && invoice.status === 'pending') ||
           (filter === 'overdue' && invoice.status === 'overdue') ||
           (filter === 'partially_paid' && invoice.status === 'partially_paid');
-        
         const lowerSearchTerm = searchTerm.toLowerCase();
         const matchesSearch = 
           (invoice.customerName?.toLowerCase() || '').includes(lowerSearchTerm) ||
@@ -728,7 +697,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           (invoice.customerEmail?.toLowerCase() || '').includes(lowerSearchTerm) ||
           (invoice.customerPhone?.toLowerCase() || '').includes(lowerSearchTerm) ||
           (invoice.planName?.toLowerCase() || '').includes(lowerSearchTerm);
-        
         return matchesFilter && matchesSearch;
       })
     : [];
@@ -861,7 +829,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </PieChart>
           </ResponsiveContainer>
         </div>
-
         <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
           <h3 className="text-lg font-semibold mb-4">Revenue by Billing Cycle</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -887,7 +854,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </BarChart>
           </ResponsiveContainer>
         </div>
-
         <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
           <h3 className="text-lg font-semibold mb-4">Revenue Trend (Last {timeSeriesData.length} periods)</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -1032,7 +998,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {invoice.invoiceNumber || 'N/A'}
+                          {invoice.invoiceNumber || `INV-${invoice._id?.substring(0,4) || 'N/A'}`}
                         </div>
                         <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                           Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
@@ -1118,12 +1084,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         >
                           <Edit size={16} />
                         </button>
-                        {/* ✅ UPDATED: Send Invoice Button with Loading State */}
+                        {/* ✅ Send Invoice Button with Loading State */}
                         <button
                           onClick={() => sendInvoiceToClient(invoice)}
-                          disabled={sendingInvoice === invoice._id || sendingEmail}
+                          disabled={sendingInvoice === invoice._id}
                           className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
-                            sendingInvoice === invoice._id || sendingEmail ? 'opacity-50 cursor-not-allowed' : ''
+                            sendingInvoice === invoice._id ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
                           title="Send to Client (Email with PDF)"
                         >
@@ -1179,7 +1145,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               <textarea
                 value={whatsappText}
                 onChange={(e) => setWhatsappText(e.target.value)}
-                placeholder="Example: Name: John Doe\nPhone: +254712345678\nLocation: Nairobi\nEmail: john@example.com\nPlan: Gazzelle\nSpeed: 30Mbps\nPrice: Ksh 2999"
+                placeholder="Example: Name: John Doe
+Phone: +254712345678
+Location: Nairobi
+Email: john@example.com
+Plan: Gazzelle
+Speed: 30Mbps
+Price: Ksh 2999"
                 className={`w-full h-48 p-3 border rounded-lg resize-none ${themeClasses.input}`}
               />
               <div className="flex justify-end gap-3 mt-6">
@@ -1221,7 +1193,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               </button>
             </div>
             <div className="p-4">
-              {/* Form content remains the same */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium mb-1">Invoice Number</label>

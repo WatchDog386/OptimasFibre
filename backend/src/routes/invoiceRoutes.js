@@ -48,6 +48,9 @@ import {
     validateInvoiceData,
     cleanupInvoices,
 
+    // Email & PDF Functions (UPDATED & FIXED)
+    testEmailSetup, // ✅ ADDED for /test-email route
+
     // Temporary Cleanup Routes
     removeInvoiceNumberIndex,
     checkIndexes,
@@ -104,6 +107,9 @@ router.patch('/:id/paid', protect, markInvoiceAsPaid);
 
 // Mark invoice as overdue
 router.patch('/:id/mark-overdue', protect, markInvoiceAsOverdue);
+
+// ✅ CRITICAL: Add test-email route (fixes 404 on dashboard load)
+router.post('/test-email', protect, testEmailSetup);
 
 // Send or resend notifications
 router.post('/:id/send', protect, sendInvoiceToCustomer);

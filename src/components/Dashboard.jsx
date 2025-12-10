@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import InvoiceManager from './InvoiceManager';
 import ReceiptManager from './ReceiptManager';
-
 // ✅ CHART.JS IMPORTS
 import {
   Chart as ChartJS,
@@ -20,7 +19,6 @@ import {
   LineElement
 } from 'chart.js';
 import { Bar, Pie, Line } from 'react-chartjs-2';
-
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -33,7 +31,6 @@ ChartJS.register(
   Legend,
   Title
 );
-
 // Utility function for consistent price formatting
 const formatPrice = (price) => {
   if (price === undefined || price === null) return '0';
@@ -41,7 +38,6 @@ const formatPrice = (price) => {
   const num = parseInt(cleanStr, 10);
   return isNaN(num) ? price : num.toLocaleString();
 };
-
 // ✅ COMPACT BUTTON STYLES
 const BUTTON_STYLES = {
   primary: {
@@ -65,7 +61,6 @@ const BUTTON_STYLES = {
     dark: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
   }
 };
-
 // Main Dashboard Component
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -101,7 +96,6 @@ const Dashboard = () => {
   const [uploadMethod, setUploadMethod] = useState('url');
   const [darkMode, setDarkMode] = useState(false);
   const [error, setError] = useState('');
-  
   // NEW STATE FOR CENTRALIZED NOTIFICATIONS AND LOADING POPUP
   const [notification, setNotification] = useState({ 
     show: false, 
@@ -109,16 +103,13 @@ const Dashboard = () => {
     type: 'info', 
     title: 'Info' 
   });
-  
   const [loadingPopup, setLoadingPopup] = useState({ 
     show: false, 
     message: 'Loading data...' 
   });
-
   // Refs for popups to handle clicks outside
   const notificationRef = useRef(null);
   const loadingPopupRef = useRef(null);
-
   // Handle clicks outside popups to close them
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -134,7 +125,6 @@ const Dashboard = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [notification, loadingPopup]);
-
   // ✅ DYNAMIC API URL
   const getApiBaseUrl = () => {
     if (import.meta.env.VITE_API_BASE_URL) {
@@ -146,19 +136,16 @@ const Dashboard = () => {
     return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
   };
   const API_BASE_URL = getApiBaseUrl();
-
   // Show centralized notification with improved email-specific messages
   const showNotification = (message, type = 'info') => {
     let emoji = 'ℹ️';
     let title = 'Information';
-    
     if (type === 'success') {
       emoji = '✅';
       title = 'Success!';
     } else if (type === 'error') {
       emoji = '🚨';
       title = 'Error!';
-      
       // Email-specific error messages
       if (message.includes('EAUTH') || message.includes('authentication')) {
         message = 'Email authentication failed. Check email credentials in Settings.';
@@ -185,32 +172,26 @@ const Dashboard = () => {
       emoji = '🔄';
       title = 'Data Refreshed';
     }
-
     setNotification({ 
       show: true, 
       message: `${emoji} ${message}`, 
       type, 
       title 
     });
-    
     // Auto-hide notification after 5 seconds (3 seconds for errors)
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'info', title: 'Info' });
     }, type === 'error' ? 3000 : 5000);
   };
-
   // Show centralized loading popup
   const showLoadingPopup = (message = 'Loading dashboard data...') => {
     setLoadingPopup({ show: true, message });
   };
-
   // Hide centralized loading popup
   const hideLoadingPopup = () => {
     setLoadingPopup({ show: false, message: '' });
   };
-
   const toggleDarkMode = () => setDarkMode(!darkMode);
-  
   const themeClasses = {
     background: darkMode ? 'bg-gray-900' : 'bg-gray-50',
     text: darkMode ? 'text-gray-100' : 'text-gray-800',
@@ -220,7 +201,6 @@ const Dashboard = () => {
       : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500 focus:border-[#003366]',
     button: BUTTON_STYLES
   };
-
   // Load data from backend
   useEffect(() => {
     const fetchData = async () => {
@@ -229,22 +209,18 @@ const Dashboard = () => {
         setLoading(true);
         setError('');
         const token = localStorage.getItem('token');
-        
         if (!token) {
           throw new Error('Authentication session expired. Please log in again.');
         }
-
         const headers = {
           'Authorization': `Bearer ${token}`
         };
-
         // Test email connection on dashboard load
         try {
           const emailTestRes = await fetch(`${API_BASE_URL}/api/invoices/test-email`, {
             method: 'POST',
             headers
           });
-          
           if (emailTestRes.ok) {
             console.log('✅ Email configuration test successful');
           } else {
@@ -255,7 +231,6 @@ const Dashboard = () => {
         } catch (emailTestError) {
           console.warn('⚠️ Could not test email configuration:', emailTestError);
         }
-
         // Fetch blog posts
         const blogRes = await fetch(`${API_BASE_URL}/api/blog`, { headers });
         if (!blogRes.ok) {
@@ -263,7 +238,6 @@ const Dashboard = () => {
         }
         const blogResponse = await blogRes.json();
         setBlogPosts(blogResponse.data || []);
-
         // Fetch portfolio items
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
@@ -276,7 +250,6 @@ const Dashboard = () => {
             : (portfolioResponse.data || portfolioResponse.items || []);
           setPortfolioItems(portfolioData);
         }
-
         // Fetch invoices with proper error handling
         let fetchedInvoices = [];
         try {
@@ -292,7 +265,6 @@ const Dashboard = () => {
           console.warn('Error fetching invoices:', invoiceError);
         }
         setInvoices(fetchedInvoices);
-
         // Fetch receipts with proper error handling
         let fetchedReceipts = [];
         try {
@@ -308,7 +280,6 @@ const Dashboard = () => {
           console.warn('Error fetching receipts:', receiptError);
         }
         setReceipts(fetchedReceipts);
-
         // Calculate stats from fetched data
         const calculatedStats = {
           totalInvoices: fetchedInvoices.length,
@@ -318,7 +289,6 @@ const Dashboard = () => {
           totalRevenue: fetchedInvoices.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0)
         };
         setStats(calculatedStats);
-
         // Fetch settings
         try {
           const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
@@ -329,15 +299,12 @@ const Dashboard = () => {
         } catch (settingsError) {
           console.warn('Settings endpoint not available');
         }
-
         // Show success notification after data load
         showNotification('Dashboard data loaded successfully!', 'success');
-
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.message);
         showNotification(err.message, 'error');
-        
         if (err.message.includes('401') || err.message.includes('token')) {
           setTimeout(() => {
             handleLogout();
@@ -348,10 +315,8 @@ const Dashboard = () => {
         hideLoadingPopup();
       }
     };
-    
     fetchData();
   }, [API_BASE_URL]);
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     showNotification('You have been logged out successfully.', 'success');
@@ -359,7 +324,6 @@ const Dashboard = () => {
       window.location.href = '/admin/login';
     }, 1500);
   };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -367,7 +331,6 @@ const Dashboard = () => {
       [name]: value
     });
   };
-
   const handleSettingsChange = (e) => {
     const { name, value, type, checked } = e.target;
     setSettingsData({
@@ -375,14 +338,12 @@ const Dashboard = () => {
       [name]: type === 'checkbox' ? checked : value
     });
   };
-
   const saveSettings = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
-      
       const res = await fetch(`${API_BASE_URL}/api/settings`, {
         method: 'POST',
         headers: {
@@ -391,7 +352,6 @@ const Dashboard = () => {
         },
         body: JSON.stringify(settingsData)
       });
-      
       const responseData = await res.json();
       if (res.ok) {
         setSettingsData(responseData);
@@ -404,7 +364,6 @@ const Dashboard = () => {
       showNotification(`Error: ${err.message}`, 'error');
     }
   };
-
   const handleImageChange = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -415,13 +374,11 @@ const Dashboard = () => {
       showNotification('Image size should be less than 5MB.', 'error');
       return;
     }
-    
     try {
       showNotification('Uploading image...', 'info');
       const formDataCloud = new FormData();
       formDataCloud.append('file', file);
       formDataCloud.append('upload_preset', 'admin_dashboard_upload');
-      
       const res = await fetch(
         'https://api.cloudinary.com/v1_1/dsfwavo7x/image/upload',
         {
@@ -429,12 +386,10 @@ const Dashboard = () => {
           body: formDataCloud,
         }
       );
-      
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error?.message || 'Upload failed');
       }
-      
       setFormData((prev) => ({
         ...prev,
         image: file,
@@ -451,7 +406,6 @@ const Dashboard = () => {
       }));
     }
   };
-
   const handleImageUrlChange = (url) => {
     setFormData({
       ...formData,
@@ -459,17 +413,14 @@ const Dashboard = () => {
       image: null
     });
   };
-
   const handleSave = async () => {
     try {
       setError('');
       let endpoint;
       const token = localStorage.getItem('token');
-      
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
-
       if (!formData.title?.trim()) {
         throw new Error('Title is required');
       }
@@ -479,7 +430,6 @@ const Dashboard = () => {
       if (!formData.category?.trim()) {
         throw new Error('Category is required');
       }
-
       const payload = {
         title: formData.title.trim(),
         category: formData.category.trim(),
@@ -487,13 +437,11 @@ const Dashboard = () => {
         content: formData.content.trim(),
         description: formData.content.trim()
       };
-
       Object.keys(payload).forEach(key => {
         if (payload[key] === '' || payload[key] == null) {
           delete payload[key];
         }
       });
-
       if (activeTab === 'blog') {
         endpoint = `${API_BASE_URL}/api/blog`;
         if (isEditing && editingItem && editingItem._id) {
@@ -510,9 +458,7 @@ const Dashboard = () => {
           endpoint = `${endpoint}/${editingItem._id}`;
         }
       }
-
       const method = isEditing && editingItem && editingItem._id ? 'PUT' : 'POST';
-      
       const res = await fetch(endpoint, {
         method: method,
         headers: {
@@ -521,12 +467,10 @@ const Dashboard = () => {
         },
         body: JSON.stringify(payload)
       });
-
       const responseData = await res.json();
       if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
-
       if (activeTab === 'blog') {
         if (isEditing) {
           setBlogPosts(prev => prev.map(item =>
@@ -545,12 +489,10 @@ const Dashboard = () => {
           setPortfolioItems(prev => [...prev, newItem]);
         }
       }
-
       setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
       setEditingItem(null);
       setIsEditing(false);
       setUploadMethod('url');
-      
       showNotification(
         `${activeTab === 'blog' ? 'Blog post' : 'Portfolio item'} ${isEditing ? 'updated' : 'created'} successfully!`,
         'success'
@@ -560,7 +502,6 @@ const Dashboard = () => {
       showNotification(err.message, 'error');
     }
   };
-
   const handleEdit = (item) => {
     setFormData({
       title: item.title || '',
@@ -573,7 +514,6 @@ const Dashboard = () => {
     setIsEditing(true);
     setUploadMethod('url');
     setError('');
-    
     // Switch to the correct tab if editing from dashboard
     if (item.title && blogPosts.some(post => post._id === item._id)) {
       setActiveTab('blog');
@@ -585,11 +525,9 @@ const Dashboard = () => {
       setActiveTab('receipts');
     }
   };
-
   const handleDelete = async (id, type) => {
     let typeString = '';
     let endpoint = '';
-    
     if (type === 'blog') {
       typeString = 'blog post';
       endpoint = `${API_BASE_URL}/api/blog/${id}`;
@@ -606,24 +544,20 @@ const Dashboard = () => {
       showNotification('Invalid item type for deletion.', 'error');
       return;
     }
-
     if (!window.confirm(`Are you sure you want to delete this ${typeString}? This action cannot be undone.`)) {
       return;
     }
-
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
-
       const res = await fetch(endpoint, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
       const responseData = await res.json();
       if (res.ok) {
         if (type === 'blog') {
@@ -644,7 +578,6 @@ const Dashboard = () => {
       showNotification(err.message, 'error');
     }
   };
-
   const cancelEdit = () => {
     setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
     setEditingItem(null);
@@ -652,12 +585,10 @@ const Dashboard = () => {
     setUploadMethod('url');
     setError('');
   };
-
   const renderContent = () => {
     if (loading && activeTab === 'dashboard') {
       return <div></div>;
     }
-    
     if (error && activeTab === 'dashboard') {
       return (
         <div className={`p-6 mb-6 rounded-xl ${darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-200'} backdrop-blur-sm`}>
@@ -678,7 +609,6 @@ const Dashboard = () => {
         </div>
       );
     }
-
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -797,7 +727,6 @@ const Dashboard = () => {
         );
     }
   };
-
   return (
     <div className={`flex h-screen ${themeClasses.background} ${themeClasses.text} transition-colors duration-300`}>
       {/* Centralized Loading Popup */}
@@ -810,7 +739,6 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
       {/* Centralized Notification Popup */}
       {notification.show && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40">
@@ -825,7 +753,6 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -833,7 +760,6 @@ const Dashboard = () => {
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
-
       {/* Sidebar */}
       <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
         <div className="p-5 border-b border-gray-200 flex justify-between items-center">
@@ -850,7 +776,6 @@ const Dashboard = () => {
             <X size={20} />
           </button>
         </div>
-        
         <nav className="mt-6 px-3 space-y-1">
           <NavItem
             icon={<BarChart3 size={18} />}
@@ -895,7 +820,6 @@ const Dashboard = () => {
             darkMode={darkMode}
           />
         </nav>
-        
         <div className="mt-8 px-3 pb-4">
           <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
           <button
@@ -943,7 +867,6 @@ const Dashboard = () => {
             New Receipt
           </button>
         </div>
-        
         <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
           <button
             onClick={handleLogout}
@@ -956,7 +879,6 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
@@ -995,7 +917,6 @@ const Dashboard = () => {
             </div>
           </div>
         </header>
-        
         <main className="p-4 md:p-6">
           {renderContent()}
         </main>
@@ -1003,7 +924,6 @@ const Dashboard = () => {
     </div>
   );
 };
-
 // Navigation Item Component
 const NavItem = ({ icon, text, active, onClick, darkMode }) => (
   <button
@@ -1020,7 +940,6 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
     {text}
   </button>
 );
-
 // New Component: Calendar Placeholder
 const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
   const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -1029,16 +948,16 @@ const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
     11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
     26, 27, 28, 29, 30, null
   ];
-  
   return (
     <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
       <div className="flex justify-between items-center mb-4">
         <h3 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>🗓️ Upcoming Schedule</h3>
         <div className="text-sm font-medium text-[#003366] dark:text-[#FFCC00]">November 2025</div>
       </div>
+      {/* ✅ FIXED: Use index as key to avoid duplicates */}
       <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase">
-        {days.map(day => (
-          <div key={day} className={darkMode ? 'text-gray-400' : 'text-gray-500'}>{day}</div>
+        {days.map((day, index) => (
+          <div key={index} className={darkMode ? 'text-gray-400' : 'text-gray-500'}>{day}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1 mt-2">
@@ -1067,7 +986,6 @@ const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
     </div>
   );
 };
-
 // New Component: Receipt Status Pie Chart
 const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
   const statusCounts = {
@@ -1075,7 +993,6 @@ const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
     pending: receipts.filter(r => r.status === 'pending' || r.status === 'draft' || r.status === 'unprocessed').length,
     rejected: receipts.filter(r => r.status === 'rejected' || r.status === 'canceled').length,
   };
-  
   const receiptStatusData = {
     labels: ['Processed/Paid', 'Pending/Draft', 'Rejected/Canceled'],
     datasets: [{
@@ -1085,7 +1002,6 @@ const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
       borderWidth: 2,
     }],
   };
-  
   const receiptStatusOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -1106,7 +1022,6 @@ const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
       },
     },
   };
-  
   return (
     <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full flex flex-col`}>
       <div className="flex-grow flex items-center justify-center min-h-[200px]">
@@ -1122,7 +1037,6 @@ const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
     </div>
   );
 };
-
 // NEW COMPONENT: Blog Status Pie Chart
 const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
   const statusCounts = {
@@ -1130,7 +1044,6 @@ const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
     draft: blogPosts.filter(p => p.published === false || p.status === 'draft').length,
     other: blogPosts.length - (blogPosts.filter(p => p.published === true || p.status === 'published').length + blogPosts.filter(p => p.published === false || p.status === 'draft').length)
   };
-  
   const blogStatusData = {
     labels: ['Published', 'Draft', 'Other'],
     datasets: [{
@@ -1140,7 +1053,6 @@ const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
       borderWidth: 2,
     }],
   };
-  
   const blogStatusOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -1161,7 +1073,6 @@ const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
       },
     },
   };
-  
   return (
     <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full flex flex-col`}>
       <div className="flex-grow flex items-center justify-center min-h-[200px]">
@@ -1177,7 +1088,6 @@ const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
     </div>
   );
 };
-
 // NEW COMPONENT: Portfolio Category Bar Chart
 const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) => {
   const categoryMap = {};
@@ -1185,10 +1095,8 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
     const cat = item.category || 'Uncategorized';
     categoryMap[cat] = (categoryMap[cat] || 0) + 1;
   });
-  
   const categories = Object.keys(categoryMap);
   const counts = Object.values(categoryMap);
-  
   const generateColors = (numCategories) => {
     const colors = [];
     for (let i = 0; i < numCategories; i++) {
@@ -1197,7 +1105,6 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
     }
     return colors;
   };
-  
   const portfolioCategoryData = {
     labels: categories,
     datasets: [{
@@ -1208,7 +1115,6 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
       borderWidth: 1,
     }],
   };
-  
   const portfolioCategoryOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -1233,7 +1139,6 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
       },
     },
   };
-  
   return (
     <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full flex flex-col`}>
       <div className="flex-grow flex items-center justify-center min-h-[200px]">
@@ -1249,7 +1154,6 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
     </div>
   );
 };
-
 // ✅ UPDATED DASHBOARD OVERVIEW WITH CHARTS & RECENT RECEIPTS
 const DashboardOverview = ({
   blogPosts,
@@ -1274,7 +1178,6 @@ const DashboardOverview = ({
           'Authorization': `Bearer ${token}`
         }
       });
-      
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -1294,7 +1197,6 @@ const DashboardOverview = ({
       showNotification('Error exporting invoices to Excel', 'error');
     }
   };
-
   // ✅ CHART DATA — REAL-TIME FROM DATABASE
   const getLast6Months = () => {
     const months = [];
@@ -1305,10 +1207,8 @@ const DashboardOverview = ({
     }
     return months;
   };
-
   const monthLabels = getLast6Months();
   const monthlyRevenue = Array(6).fill(0);
-  
   invoices.forEach(inv => {
     if (inv.createdAt && inv.status === 'paid') {
       const invDate = new Date(inv.createdAt);
@@ -1319,7 +1219,6 @@ const DashboardOverview = ({
       }
     }
   });
-
   // Revenue Trend (Line)
   const revenueChartData = {
     labels: monthLabels,
@@ -1334,7 +1233,6 @@ const DashboardOverview = ({
       pointBackgroundColor: '#FFCC00',
     }],
   };
-
   const revenueChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -1385,14 +1283,12 @@ const DashboardOverview = ({
       },
     },
   };
-
   // Invoice Status (Pie)
   const invoiceStatusCounts = {
     paid: invoices.filter(i => i.status === 'paid').length,
     pending: invoices.filter(i => i.status === 'pending' || i.status === 'draft').length,
     other: invoices.filter(i => !['paid', 'pending', 'draft'].includes(i.status)).length,
   };
-
   const invoiceStatusData = {
     labels: ['Paid', 'Pending/Draft', 'Other'],
     datasets: [{
@@ -1402,7 +1298,6 @@ const DashboardOverview = ({
       borderWidth: 2,
     }],
   };
-
   const invoiceStatusOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -1430,7 +1325,6 @@ const DashboardOverview = ({
       }
     },
   };
-
   // Content Overview (Bar)
   const contentData = {
     labels: ['Blog Posts', 'Portfolio', 'Invoices', 'Receipts'],
@@ -1442,7 +1336,6 @@ const DashboardOverview = ({
       borderWidth: 1,
     }],
   };
-
   const contentOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -1482,7 +1375,6 @@ const DashboardOverview = ({
       },
     },
   };
-
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -1521,7 +1413,6 @@ const DashboardOverview = ({
           </button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Blog Posts"
@@ -1556,7 +1447,6 @@ const DashboardOverview = ({
           darkMode={darkMode}
         />
       </div>
-
       {/* ✅ Charts Section - Organized into 3 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Content Overview - Bar Chart */}
@@ -1565,33 +1455,28 @@ const DashboardOverview = ({
             <Bar data={contentData} options={contentOptions} />
           </div>
         </div>
-        
         {/* Invoice Status Distribution (Pie Chart) */}
         <div className="lg:col-span-1 h-80">
           <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
             <Pie data={invoiceStatusData} options={invoiceStatusOptions} />
           </div>
         </div>
-        
         {/* ✅ Receipt Status Distribution (Pie Chart) */}
         <div className="lg:col-span-1 h-80">
           <ReceiptStatusPieChart receipts={receipts} darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
-
       {/* ✅ NEW ANALYTICS SECTION FOR BLOG & PORTFOLIO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Blog Status Distribution */}
         <div className="h-80">
           <BlogStatusPieChart blogPosts={blogPosts} darkMode={darkMode} themeClasses={themeClasses} />
         </div>
-        
         {/* Portfolio Category Distribution */}
         <div className="h-80">
           <PortfolioCategoryBarChart portfolioItems={portfolioItems} darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
-
       {/* ✅ Revenue Chart and Calendar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Revenue Chart - Takes up 2/3rds of the space */}
@@ -1600,13 +1485,11 @@ const DashboardOverview = ({
             <Line data={revenueChartData} options={revenueChartOptions} />
           </div>
         </div>
-        
         {/* ✅ Calendar Placeholder - Takes up 1/3rd of the space */}
         <div className="lg:col-span-1 h-96">
           <CalendarPlaceholder darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
-
       {/* ✅ RECENT ITEMS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <RecentList
@@ -1643,7 +1526,6 @@ const DashboardOverview = ({
     </div>
   );
 };
-
 // Stat Card Component
 const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   const colorClasses = {
@@ -1652,17 +1534,14 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
     green: darkMode ? 'bg-green-900/20 border-green-800/30' : 'bg-green-50 border-green-200',
     purple: darkMode ? 'bg-purple-900/20 border-purple-800/30' : 'bg-purple-50 border-purple-200'
   };
-  
   const iconColor = {
     blue: 'text-blue-500',
     gold: 'text-[#FFCC00]',
     green: 'text-green-500',
     purple: 'text-purple-500'
   };
-  
   const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
   const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
-  
   return (
     <div className={`${colorClasses[color]} p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105`}>
       <div className="flex items-center justify-between">
@@ -1678,7 +1557,6 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
     </div>
   );
 };
-
 // Recent List Component - UPDATED TO SUPPORT RECEIPTS
 const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete, type }) => (
   <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
@@ -1763,7 +1641,6 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
     </ul>
   </div>
 );
-
 // Content Manager Component
 const ContentManager = ({
   title,
@@ -1785,7 +1662,6 @@ const ContentManager = ({
   contentType
 }) => {
   const isPortfolio = contentType === 'portfolio';
-  
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -1802,7 +1678,6 @@ const ContentManager = ({
           </button>
         )}
       </div>
-      
       <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border mb-8 backdrop-blur-sm`}>
         <div className="space-y-6">
           <InputGroup
@@ -1815,7 +1690,6 @@ const ContentManager = ({
             themeClasses={themeClasses}
             icon={<FileText size={18} />}
           />
-          
           <InputGroup
             label="Category"
             name="category"
@@ -1826,7 +1700,6 @@ const ContentManager = ({
             themeClasses={themeClasses}
             icon={<Globe size={18} />}
           />
-          
           <div className="flex flex-col space-y-4">
             <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
             <div className={`flex items-center space-x-4 p-2 rounded-lg ${darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gray-100 border border-gray-200'}`}>
@@ -1853,7 +1726,6 @@ const ContentManager = ({
                 <Upload size={16} className="inline-block mr-1.5" /> Upload File
               </button>
             </div>
-            
             {uploadMethod === 'url' ? (
               <div className="relative">
                 <input
@@ -1887,7 +1759,6 @@ const ContentManager = ({
                 </div>
               </div>
             )}
-            
             {formData.imageUrl && (
               <div className="flex items-center space-x-3 mt-4">
                 <img src={formData.imageUrl} alt="Preview" className="w-24 h-auto rounded-lg shadow-md" />
@@ -1898,7 +1769,6 @@ const ContentManager = ({
               </div>
             )}
           </div>
-          
           <div>
             <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               {isPortfolio ? 'Description' : 'Content'}
@@ -1912,7 +1782,6 @@ const ContentManager = ({
               className={`w-full p-4 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent resize-y ${themeClasses.input}`}
             ></textarea>
           </div>
-          
           <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
             {isEditing && (
               <button
@@ -1935,11 +1804,9 @@ const ContentManager = ({
           </div>
         </div>
       </div>
-      
       <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
         Existing {isPortfolio ? 'Portfolio Items' : 'Blog Posts'}
       </h3>
-      
       <div className={`${themeClasses.card} p-5 rounded-xl shadow-lg border backdrop-blur-sm overflow-x-auto`}>
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-700">
@@ -2015,7 +1882,6 @@ const ContentManager = ({
     </div>
   );
 };
-
 // Settings Panel Component
 const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => (
   <div>
@@ -2084,7 +1950,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
           </div>
         </div>
       </div>
-      
       <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
         <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">System Health Monitoring</h3>
         <div className="space-y-4">
@@ -2117,7 +1982,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
     </div>
   </div>
 );
-
 // Input Group Component
 const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', darkMode, themeClasses, icon }) => (
   <div>
@@ -2140,5 +2004,4 @@ const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', 
     </div>
   </div>
 );
-
 export default Dashboard;
