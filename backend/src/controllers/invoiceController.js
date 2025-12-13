@@ -1,4 +1,4 @@
-// backend/src/controllers/invoiceController.js — FINAL PRODUCTION VERSION
+// backend/src/controllers/invoiceController.js — FINAL PRODUCTION VERSION (FIXED)
 import Invoice from '../models/Invoice.js';
 import mongoose from 'mongoose';
 import puppeteer from 'puppeteer';
@@ -357,6 +357,36 @@ export const checkExistingActiveInvoices = async (req, res) => {
 };
 
 // ============================================================================
+// ✅ BULK DELETE — NEWLY ADDED (FIXES THE EXPORT ERROR)
+// ============================================================================
+export const bulkDeleteInvoices = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: "IDs must be a non-empty array" });
+    }
+
+    // Validate all IDs are valid ObjectIds
+    const invalidIds = ids.filter(id => !mongoose.Types.ObjectId.isValid(id));
+    if (invalidIds.length > 0) {
+      return res.status(400).json({ success: false, message: "Invalid invoice ID(s)", invalidIds });
+    }
+
+    const result = await Invoice.deleteMany({ _id: { $in: ids } });
+
+    res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} invoice(s) deleted successfully`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    res.status(500).json({ success: false, message: 'Error during bulk delete', error: error.message });
+  }
+};
+
+// ============================================================================
 // ✅ EMAIL & PDF INTEGRATION (using emailService.js)
 // ============================================================================
 
@@ -514,13 +544,10 @@ export const viewInvoiceHTML = async (req, res) => {
 };
 
 // ============================================================================
-// ✅ Other exports (analytics, bulk, health, etc.) — unchanged from original
+// ✅ Other exports (analytics, bulk, health, etc.)
 // ============================================================================
-// (All other functions like getInvoiceAnalytics, bulkUpdateInvoices, healthCheck, etc.
-// remain identical to your original file and are omitted here for brevity.
-// They do not involve email/PDF logic and are safe to keep as-is.)
 
-// ➤ Export all other functions from original
+// Ensure all referenced exports exist — bulkDeleteInvoices is now defined above
 export {
   resendInvoiceNotifications,
   sendConnectionRequestToOwner,
@@ -533,7 +560,7 @@ export {
   getInvoicesByDateRange,
   getInvoicesByStatus,
   bulkUpdateInvoices,
-  bulkDeleteInvoices,
+  // bulkDeleteInvoices,  // ← NO LONGER NEEDED HERE (already exported above)
   bulkSendInvoices,
   getInvoiceTemplates,
   validateInvoiceData,
