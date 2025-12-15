@@ -532,9 +532,9 @@ export {
   searchInvoices,
   getInvoicesByDateRange,
   getInvoicesByStatus,
-  bulkUpdateInvoices,
-  bulkDeleteInvoices,
-  bulkSendInvoices,
+  
+  
+  
   getInvoiceTemplates,
   validateInvoiceData,
   cleanupInvoices,
@@ -543,4 +543,4 @@ export {
   removeInvoiceNumberIndex,
   checkIndexes,
   getSystemStatus
-};
+};                                            
