@@ -514,14 +514,281 @@ export const viewInvoiceHTML = async (req, res) => {
 };
 
 // ============================================================================
-// ✅ Other exports (analytics, bulk, health, etc.) — unchanged from original
+// ✅ PLACEHOLDER FUNCTIONS - You need to implement these if needed
 // ============================================================================
-// (All other functions like getInvoiceAnalytics, bulkUpdateInvoices, healthCheck, etc.
-// remain identical to your original file and are omitted here for brevity.
-// They do not involve email/PDF logic and are safe to keep as-is.)
 
-// ➤ Export all other functions from original
+// Placeholder for resendInvoiceNotifications
+export const resendInvoiceNotifications = async (req, res) => {
+  try {
+    // Implementation needed
+    res.json({ success: true, message: 'Placeholder: Implement resendInvoiceNotifications' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error in resendInvoiceNotifications', error: error.message });
+  }
+};
+
+// Placeholder for sendConnectionRequestToOwner
+export const sendConnectionRequestToOwner = async (req, res) => {
+  try {
+    // Implementation needed
+    res.json({ success: true, message: 'Placeholder: Implement sendConnectionRequestToOwner' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error in sendConnectionRequestToOwner', error: error.message });
+  }
+};
+
+// Placeholder for downloadInvoiceAttachment
+export const downloadInvoiceAttachment = async (req, res) => {
+  try {
+    // Implementation needed
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+    res.json({ success: true, message: 'Placeholder: Implement downloadInvoiceAttachment' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error in downloadInvoiceAttachment', error: error.message });
+  }
+};
+
+// Placeholder for exportInvoicesExcel
+export const exportInvoicesExcel = async (req, res) => {
+  try {
+    // Implementation needed
+    res.json({ success: true, message: 'Placeholder: Implement exportInvoicesExcel' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error in exportInvoicesExcel', error: error.message });
+  }
+};
+
+// Placeholder for getInvoiceStats
+export const getInvoiceStats = async (req, res) => {
+  try {
+    const stats = await Invoice.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalInvoices: { $sum: 1 },
+          totalAmount: { $sum: "$totalAmount" },
+          averageAmount: { $avg: "$totalAmount" }
+        }
+      }
+    ]);
+    
+    const statusCounts = await Invoice.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } }
+    ]);
+    
+    res.json({ 
+      success: true, 
+      stats: stats[0] || { totalInvoices: 0, totalAmount: 0, averageAmount: 0 },
+      statusCounts 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error getting invoice stats', error: error.message });
+  }
+};
+
+// Placeholder for getInvoiceAnalytics
+export const getInvoiceAnalytics = async (req, res) => {
+  try {
+    // Implementation needed
+    res.json({ success: true, message: 'Placeholder: Implement getInvoiceAnalytics' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error in getInvoiceAnalytics', error: error.message });
+  }
+};
+
+// Placeholder for getRevenueReports
+export const getRevenueReports = async (req, res) => {
+  try {
+    // Implementation needed
+    res.json({ success: true, message: 'Placeholder: Implement getRevenueReports' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error in getRevenueReports', error: error.message });
+  }
+};
+
+// Placeholder for searchInvoices
+export const searchInvoices = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ success: false, message: 'Search query required' });
+    }
+    
+    const invoices = await Invoice.find({
+      $or: [
+        { invoiceNumber: { $regex: query, $options: 'i' } },
+        { customerName: { $regex: query, $options: 'i' } },
+        { customerEmail: { $regex: query, $options: 'i' } }
+      ]
+    }).limit(50);
+    
+    res.json({ success: true, invoices });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error searching invoices', error: error.message });
+  }
+};
+
+// Placeholder for getInvoicesByDateRange
+export const getInvoicesByDateRange = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      return res.status(400).json({ success: false, message: 'Start date and end date required' });
+    }
+    
+    const invoices = await Invoice.find({
+      invoiceDate: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      }
+    }).sort({ invoiceDate: -1 });
+    
+    res.json({ success: true, invoices });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error getting invoices by date range', error: error.message });
+  }
+};
+
+// Placeholder for getInvoicesByStatus
+export const getInvoicesByStatus = async (req, res) => {
+  try {
+    const { status } = req.params;
+    if (!status) {
+      return res.status(400).json({ success: false, message: 'Status required' });
+    }
+    
+    const invoices = await Invoice.find({ status }).sort({ createdAt: -1 });
+    res.json({ success: true, invoices, count: invoices.length });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error getting invoices by status', error: error.message });
+  }
+};
+
+// Placeholder for getInvoiceTemplates
+export const getInvoiceTemplates = async (req, res) => {
+  try {
+    // Implementation needed
+    res.json({ success: true, message: 'Placeholder: Implement getInvoiceTemplates' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error in getInvoiceTemplates', error: error.message });
+  }
+};
+
+// Placeholder for validateInvoiceData
+export const validateInvoiceData = async (req, res) => {
+  try {
+    const invoiceData = req.body;
+    
+    // Basic validation
+    const errors = [];
+    if (!invoiceData.customerName) errors.push('Customer name is required');
+    if (!invoiceData.customerEmail) errors.push('Customer email is required');
+    if (!invoiceData.totalAmount || invoiceData.totalAmount <= 0) errors.push('Valid total amount is required');
+    
+    if (errors.length > 0) {
+      return res.json({ 
+        success: false, 
+        message: 'Validation failed', 
+        errors 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Invoice data is valid',
+      validatedData: invoiceData
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error validating invoice data', error: error.message });
+  }
+};
+
+// Placeholder for cleanupInvoices
+export const cleanupInvoices = async (req, res) => {
+  try {
+    // Implementation needed
+    res.json({ success: true, message: 'Placeholder: Implement cleanupInvoices' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error in cleanupInvoices', error: error.message });
+  }
+};
+
+// Placeholder for healthCheck
+export const healthCheck = async (req, res) => {
+  try {
+    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    const invoiceCount = await Invoice.countDocuments();
+    
+    res.json({
+      success: true,
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      database: dbStatus,
+      invoiceCount,
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Health check failed', error: error.message });
+  }
+};
+
+// Placeholder for debugCreateInvoice
+export const debugCreateInvoice = async (req, res) => {
+  try {
+    // Implementation needed
+    res.json({ success: true, message: 'Placeholder: Implement debugCreateInvoice' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error in debugCreateInvoice', error: error.message });
+  }
+};
+
+// Placeholder for getSystemStatus
+export const getSystemStatus = async (req, res) => {
+  try {
+    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    const memoryUsage = process.memoryUsage();
+    
+    res.json({
+      success: true,
+      system: {
+        nodeVersion: process.version,
+        platform: process.platform,
+        uptime: process.uptime(),
+        memory: {
+          rss: `${Math.round(memoryUsage.rss / 1024 / 1024)} MB`,
+          heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`,
+          heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`
+        }
+      },
+      database: dbStatus,
+      services: {
+        email: 'checking...',
+        pdf: 'checking...'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error getting system status', error: error.message });
+  }
+};
+
+// ============================================================================
+// ✅ SAFE EXPORTS - Only export functions that actually exist
+// ============================================================================
 export {
+  createInvoice,
+  getInvoices,
+  getInvoiceById,
+  updateInvoice,
+  deleteInvoice,
+  updateInvoiceStatus,
+  markInvoiceAsPaid,
+  markInvoiceAsOverdue,
+  getCustomerInvoices,
+  checkExistingActiveInvoices,
+  sendInvoiceToCustomer,
+  exportInvoicePDF,
+  viewInvoiceHTML,
   resendInvoiceNotifications,
   sendConnectionRequestToOwner,
   downloadInvoiceAttachment,
@@ -532,15 +799,11 @@ export {
   searchInvoices,
   getInvoicesByDateRange,
   getInvoicesByStatus,
-  
-  
-  
   getInvoiceTemplates,
   validateInvoiceData,
   cleanupInvoices,
   healthCheck,
   debugCreateInvoice,
-  removeInvoiceNumberIndex,
-  checkIndexes,
   getSystemStatus
-};                                            
+  // Note: Removed undefined exports: checkIndexes, removeInvoiceNumberIndex
+};
