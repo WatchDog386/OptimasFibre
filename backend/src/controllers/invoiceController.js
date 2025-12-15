@@ -360,17 +360,6 @@ export const checkExistingActiveInvoices = async (req, res) => {
 // ✅ EMAIL & PDF INTEGRATION (using emailService.js)
 // ============================================================================
 
-/**
- * 📧 Requires: backend/src/services/emailService.js
- * It should export a function:
- *   sendEmail({ to, subject, html, text, attachments }) → Promise
- * Configured with:
- *   host: 'pld109.truehost.cloud'
- *   port: 465
- *   secure: true
- *   auth: { user: 'support@optimaswifi.co.ke', pass: process.env.EMAIL_PASS }
- */
-
 export const sendInvoiceToCustomer = async (req, res) => {
   console.log(`📧 Sending invoice ${req.params.id} to customer...`);
   try {
@@ -514,13 +503,12 @@ export const viewInvoiceHTML = async (req, res) => {
 };
 
 // ============================================================================
-// ✅ PLACEHOLDER FUNCTIONS - You need to implement these if needed
+// ✅ PLACEHOLDER FUNCTIONS
 // ============================================================================
 
 // Placeholder for resendInvoiceNotifications
 export const resendInvoiceNotifications = async (req, res) => {
   try {
-    // Implementation needed
     res.json({ success: true, message: 'Placeholder: Implement resendInvoiceNotifications' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error in resendInvoiceNotifications', error: error.message });
@@ -530,7 +518,6 @@ export const resendInvoiceNotifications = async (req, res) => {
 // Placeholder for sendConnectionRequestToOwner
 export const sendConnectionRequestToOwner = async (req, res) => {
   try {
-    // Implementation needed
     res.json({ success: true, message: 'Placeholder: Implement sendConnectionRequestToOwner' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error in sendConnectionRequestToOwner', error: error.message });
@@ -540,7 +527,6 @@ export const sendConnectionRequestToOwner = async (req, res) => {
 // Placeholder for downloadInvoiceAttachment
 export const downloadInvoiceAttachment = async (req, res) => {
   try {
-    // Implementation needed
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
     res.json({ success: true, message: 'Placeholder: Implement downloadInvoiceAttachment' });
@@ -552,7 +538,6 @@ export const downloadInvoiceAttachment = async (req, res) => {
 // Placeholder for exportInvoicesExcel
 export const exportInvoicesExcel = async (req, res) => {
   try {
-    // Implementation needed
     res.json({ success: true, message: 'Placeholder: Implement exportInvoicesExcel' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error in exportInvoicesExcel', error: error.message });
@@ -590,7 +575,6 @@ export const getInvoiceStats = async (req, res) => {
 // Placeholder for getInvoiceAnalytics
 export const getInvoiceAnalytics = async (req, res) => {
   try {
-    // Implementation needed
     res.json({ success: true, message: 'Placeholder: Implement getInvoiceAnalytics' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error in getInvoiceAnalytics', error: error.message });
@@ -600,7 +584,6 @@ export const getInvoiceAnalytics = async (req, res) => {
 // Placeholder for getRevenueReports
 export const getRevenueReports = async (req, res) => {
   try {
-    // Implementation needed
     res.json({ success: true, message: 'Placeholder: Implement getRevenueReports' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error in getRevenueReports', error: error.message });
@@ -668,7 +651,6 @@ export const getInvoicesByStatus = async (req, res) => {
 // Placeholder for getInvoiceTemplates
 export const getInvoiceTemplates = async (req, res) => {
   try {
-    // Implementation needed
     res.json({ success: true, message: 'Placeholder: Implement getInvoiceTemplates' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error in getInvoiceTemplates', error: error.message });
@@ -707,7 +689,6 @@ export const validateInvoiceData = async (req, res) => {
 // Placeholder for cleanupInvoices
 export const cleanupInvoices = async (req, res) => {
   try {
-    // Implementation needed
     res.json({ success: true, message: 'Placeholder: Implement cleanupInvoices' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error in cleanupInvoices', error: error.message });
@@ -736,7 +717,6 @@ export const healthCheck = async (req, res) => {
 // Placeholder for debugCreateInvoice
 export const debugCreateInvoice = async (req, res) => {
   try {
-    // Implementation needed
     res.json({ success: true, message: 'Placeholder: Implement debugCreateInvoice' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error in debugCreateInvoice', error: error.message });
@@ -773,37 +753,7 @@ export const getSystemStatus = async (req, res) => {
 };
 
 // ============================================================================
-// ✅ SAFE EXPORTS - Only export functions that actually exist
+// ✅ REMOVED THE DUPLICATE EXPORT BLOCK AT THE END
 // ============================================================================
-export {
-  createInvoice,
-  getInvoices,
-  getInvoiceById,
-  updateInvoice,
-  deleteInvoice,
-  updateInvoiceStatus,
-  markInvoiceAsPaid,
-  markInvoiceAsOverdue,
-  getCustomerInvoices,
-  checkExistingActiveInvoices,
-  sendInvoiceToCustomer,
-  exportInvoicePDF,
-  viewInvoiceHTML,
-  resendInvoiceNotifications,
-  sendConnectionRequestToOwner,
-  downloadInvoiceAttachment,
-  exportInvoicesExcel,
-  getInvoiceStats,
-  getInvoiceAnalytics,
-  getRevenueReports,
-  searchInvoices,
-  getInvoicesByDateRange,
-  getInvoicesByStatus,
-  getInvoiceTemplates,
-  validateInvoiceData,
-  cleanupInvoices,
-  healthCheck,
-  debugCreateInvoice,
-  getSystemStatus
-  // Note: Removed undefined exports: checkIndexes, removeInvoiceNumberIndex
-};
+// All functions are already exported individually above with "export const"
+// No need for additional export block
