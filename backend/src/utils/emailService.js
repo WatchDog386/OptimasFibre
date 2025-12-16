@@ -1,30 +1,24 @@
+// backend/src/services/emailService.js
 import nodemailer from 'nodemailer';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs';
-
-// For ES module __dirname equivalent
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // Create and configure email transporter
 const createTransporter = () => {
   const config = {
     host: process.env.EMAIL_HOST || 'mail.optimaswifi.co.ke',
     port: parseInt(process.env.EMAIL_PORT) || 465,
-    secure: process.env.EMAIL_SECURE === 'true' || true, // True for port 465
+    secure: process.env.EMAIL_SECURE === 'true' || true,
     auth: {
       user: process.env.EMAIL_USER || 'support@optimaswifi.co.ke',
       pass: process.env.EMAIL_PASS || '@Optimas$12'
     },
     tls: {
-      rejectUnauthorized: false, // Important for Truehost CPanel
+      rejectUnauthorized: false,
       ciphers: 'SSLv3'
     },
-    connectionTimeout: 30000, // 30 seconds
+    connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000,
-    debug: process.env.NODE_ENV !== 'production' // Enable debug in development
+    debug: process.env.NODE_ENV !== 'production'
   };
 
   console.log('📧 Creating email transporter with config:', {
@@ -36,7 +30,6 @@ const createTransporter = () => {
 
   const transporter = nodemailer.createTransport(config);
 
-  // Test connection in development
   if (process.env.NODE_ENV !== 'production') {
     transporter.verify((error) => {
       if (error) {
@@ -50,7 +43,7 @@ const createTransporter = () => {
   return transporter;
 };
 
-// Test email setup (for /api/invoices/test-email endpoint)
+// Test email setup
 export const testEmailSetup = async () => {
   try {
     console.log('🧪 Testing email configuration...');
@@ -64,7 +57,7 @@ export const testEmailSetup = async () => {
     // Send test email
     const testMailOptions = {
       from: process.env.EMAIL_FROM || '"Optimas Fibre" <support@optimaswifi.co.ke>',
-      to: process.env.EMAIL_USER || 'support@optimaswifi.co.ke', // Send to self
+      to: process.env.EMAIL_USER || 'support@optimaswifi.co.ke',
       subject: '✅ Optimas Fibre - Email Configuration Test',
       text: `This is a test email from Optimas Fibre Invoice System.
       
@@ -132,12 +125,6 @@ If you received this, your email configuration is working correctly!`,
       </div>
       
       <p>You can now send invoices to customers from the Optimas Fibre system.</p>
-      <p><strong>Next Steps:</strong></p>
-      <ul>
-        <li>Create a new invoice</li>
-        <li>Test sending to a real customer</li>
-        <li>Check spam folder if emails don't arrive</li>
-      </ul>
     </div>
     
     <div class="footer">
@@ -170,7 +157,6 @@ If you received this, your email configuration is working correctly!`,
   } catch (error) {
     console.error('❌ Email test failed:', error);
     
-    // Provide helpful error messages
     let userMessage = 'Email configuration test failed';
     let suggestion = 'Check your email credentials and SMTP settings';
     
@@ -200,7 +186,6 @@ const sendEmail = async (emailData) => {
   try {
     const transporter = createTransporter();
     
-    // Prepare email options
     const mailOptions = {
       from: process.env.EMAIL_FROM || '"Optimas Fibre" <support@optimaswifi.co.ke>',
       to: emailData.to,
@@ -213,7 +198,6 @@ const sendEmail = async (emailData) => {
     console.log(`📤 Sending email to: ${emailData.to}`);
     console.log(`📝 Subject: ${emailData.subject}`);
     
-    // Send email
     const info = await transporter.sendMail(mailOptions);
     
     console.log(`✅ Email sent successfully: ${info.messageId}`);
@@ -228,7 +212,6 @@ const sendEmail = async (emailData) => {
   } catch (error) {
     console.error('❌ Email sending failed:', error);
     
-    // Enhanced error handling
     let userMessage = 'Failed to send email';
     let suggestion = 'Please try again later';
     
@@ -256,7 +239,7 @@ const sendEmail = async (emailData) => {
   }
 };
 
-// Export functions
+// Export as default object
 export default {
   sendEmail,
   testEmailSetup,
