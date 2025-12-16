@@ -46,6 +46,9 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// ✅ FIX: Add trust proxy for Render.com (IMPORTANT!)
+app.set('trust proxy', 1); // Trust first proxy (Render's load balancer)
+
 // Allowed origins for CORS
 const allowedOrigins = [
   FRONTEND_URL,
@@ -98,19 +101,21 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
-// Rate limiting
+// ✅ UPDATED: Rate limiting with proper proxy configuration
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: NODE_ENV === 'production' ? 200 : 2000,
   message: { success: false, message: 'Too many requests. Try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: true } // ✅ Added for proxy support
 });
 
 const exportLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: NODE_ENV === 'production' ? 50 : 500,
   message: { success: false, message: 'Too many export requests. Please wait a while.' },
+  validate: { trustProxy: true } // ✅ Added for proxy support
 });
 
 // Apply rate limiting
@@ -149,6 +154,7 @@ app.get('/health', (req, res) => {
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    proxy: req.ip, // ✅ Shows proxy IP
     features: { invoices: true, receipts: true, pdf_export: true, excel_export: true, email_sending: true }
   });
 });
@@ -159,6 +165,8 @@ app.get('/', (req, res) => {
     message: '🚀 Optimas Fibre Backend running!', 
     version: '2.0.0', 
     timestamp: new Date().toISOString(),
+    environment: NODE_ENV,
+    proxy: req.ip, // ✅ Shows proxy IP
     features: [
       'Complete Invoice Management',
       'Complete Receipt Management', 
@@ -227,10 +235,31 @@ app.use('/api/receipts', protect, receiptRoutes); // ✅ Fixed - 404 handler now
 // System status
 app.get('/api/system/status', protect, (req, res) => {
   res.json({
-    server: { status: 'healthy', environment: NODE_ENV, uptime: process.uptime(), memory: process.memoryUsage() },
-    database: { status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected', name: mongoose.connection.name || 'N/A' },
-    features: { invoices: { enabled: true }, receipts: { enabled: true }, file_operations: { uploads: fs.existsSync(uploadsDir), exports: fs.existsSync(exportsDir) } },
-    timestamps: { server_start: new Date(Date.now() - process.uptime() * 1000).toISOString(), current_time: new Date().toISOString() }
+    server: { 
+      status: 'healthy', 
+      environment: NODE_ENV, 
+      uptime: process.uptime(), 
+      memory: process.memoryUsage(),
+      proxy_enabled: true,
+      client_ip: req.ip
+    },
+    database: { 
+      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected', 
+      name: mongoose.connection.name || 'N/A' 
+    },
+    features: { 
+      invoices: { enabled: true }, 
+      receipts: { enabled: true }, 
+      file_operations: { 
+        uploads: fs.existsSync(uploadsDir), 
+        exports: fs.existsSync(exportsDir) 
+      },
+      email: { enabled: true, host: process.env.EMAIL_HOST || 'Not configured' }
+    },
+    timestamps: { 
+      server_start: new Date(Date.now() - process.uptime() * 1000).toISOString(), 
+      current_time: new Date().toISOString() 
+    }
   });
 });
 
@@ -251,7 +280,8 @@ app.use((err, req, res, next) => {
     message: err.message, 
     stack: err.stack, 
     path: req.path, 
-    method: req.method 
+    method: req.method,
+    client_ip: req.ip // ✅ Log client IP
   });
   
   let statusCode = err.statusCode || 500;
@@ -307,6 +337,8 @@ const startServer = async () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Environment: ${NODE_ENV}`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+      console.log(`🌐 Public URL: https://optimasfibre.onrender.com`);
+      console.log(`✅ Trust proxy: enabled (for Render.com)`);
     });
     
     process.on('SIGTERM', gracefulShutdown('SIGTERM'));

@@ -115,6 +115,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [whatsappText, setWhatsappText] = useState('');
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailTestStatus, setEmailTestStatus] = useState(null);
 
   const resetForm = () => {
     setInvoiceForm(initialFormState);
@@ -187,12 +188,38 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }
   };
 
+  // Test email configuration on component mount
+  const testEmailConfiguration = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const response = await fetch(`${API_BASE_URL}/api/invoices/test-email`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const result = await response.json();
+      setEmailTestStatus(result.success ? '✅ Email system ready' : '❌ Email system not configured');
+      
+      if (!result.success) {
+        console.warn('Email test failed:', result);
+      }
+    } catch (error) {
+      console.log('Email test not available or skipped');
+      setEmailTestStatus('⚠️ Email test not available');
+    }
+  };
+
   useEffect(() => {
     if (!invoices || invoices.length === 0) {
       fetchInvoices();
     } else {
       setLoading(false);
     }
+    
+    // Test email configuration on load
+    testEmailConfiguration();
   }, []);
 
   const generateInvoiceNumber = () => {
@@ -507,7 +534,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }
   };
 
-  // ✅ UPDATED: Send invoice via backend API with proper validation
+  // ✅ IMPROVED: Send invoice via backend API with better error handling
   const sendInvoiceToClient = async (invoice) => {
     // Validate presence of customer email
     if (!invoice.customerEmail?.trim()) {
@@ -515,9 +542,21 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(invoice.customerEmail.trim())) {
+      showNotification('⚠️ Cannot send: Invalid email format.', 'warning');
+      return;
+    }
+
     // Validate invoice has been saved (has _id)
     if (!invoice._id) {
       showNotification('⚠️ Cannot send: Save the invoice first.', 'warning');
+      return;
+    }
+
+    // Show confirmation dialog
+    if (!window.confirm(`Send invoice ${invoice.invoiceNumber || invoice._id.substring(0, 8)} to ${invoice.customerEmail}?`)) {
       return;
     }
 
@@ -532,26 +571,19 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
       console.log(`📧 Sending invoice ${invoice.invoiceNumber || invoice._id} to ${invoice.customerEmail}`);
 
-      // Skip email test in production? Or keep for safety
-      // const testResponse = await fetch(`${API_BASE_URL}/api/invoices/test-email`, {
-      //   method: 'POST',
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // });
-      // if (!testResponse.ok) {
-      //   const testError = await testResponse.json();
-      //   console.error('Email test failed:', testError);
-      //   showNotification('⚠️ Email system not configured. Contact admin.', 'warning');
-      //   return;
-      // }
-
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (response.ok) {
-        const result = await response.json();
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
         console.log('✅ Email sent successfully:', result);
+        
         // Update local state to reflect sent status
         setInvoices(prev => prev.map(inv => 
           inv._id === invoice._id 
@@ -563,29 +595,61 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               } 
             : inv
         ));
-        showNotification(`✅ Invoice sent to ${invoice.customerEmail}!`, 'success');
-      } else {
-        const errorData = await response.json();
-        console.error('❌ Email sending failed:', errorData);
-        let errorMessage = 'Failed to send invoice email';
-        if (response.status === 404) {
-          errorMessage = 'Email service not available. Contact system admin.';
-        } else if (errorData.error?.includes('EAUTH')) {
-          errorMessage = 'Email authentication failed. Check SMTP settings.';
-        } else if (errorData.error?.includes('ESOCKET') || errorData.error?.includes('ECONNECTION')) {
-          errorMessage = 'Cannot connect to email server. Check network.';
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
+        
+        showNotification(`✅ Invoice sent to ${invoice.customerEmail}! Check your inbox.`, 'success');
+        
+        // Show success details
+        if (result.emailInfo?.messageId) {
+          console.log('📨 Message ID:', result.emailInfo.messageId);
         }
+        
+      } else {
+        console.error('❌ Email sending failed:', result);
+        
+        // Enhanced error messages
+        let errorMessage = 'Failed to send invoice email';
+        let errorDetails = '';
+        
+        if (response.status === 404) {
+          errorMessage = 'Email service endpoint not found';
+          errorDetails = 'The server may not have email functionality configured';
+        } else if (response.status === 500) {
+          errorMessage = 'Server error when sending email';
+          errorDetails = 'Email server configuration may be incorrect';
+        } else if (result.error?.includes('EAUTH')) {
+          errorMessage = 'Email authentication failed';
+          errorDetails = 'Check email username and password in server settings';
+        } else if (result.error?.includes('ECONNECTION') || result.error?.includes('ESOCKET')) {
+          errorMessage = 'Cannot connect to email server';
+          errorDetails = 'Check SMTP host/port and internet connection';
+        } else if (result.error?.includes('ETIMEDOUT')) {
+          errorMessage = 'Email server timeout';
+          errorDetails = 'Server is not responding. Try again later';
+        } else if (result.message) {
+          errorMessage = result.message;
+          errorDetails = result.suggestion || 'Please check server configuration';
+        }
+        
         showNotification(`🚨 ${errorMessage}`, 'error');
+        
+        // Log detailed error for debugging
+        if (errorDetails) {
+          console.log('Error details:', errorDetails);
+        }
       }
+      
     } catch (error) {
       console.error('❌ Network error sending invoice:', error);
-      let errorMessage = 'Network error. Check your connection.';
+      
+      let errorMessage = 'Network error when sending email';
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         errorMessage = 'Cannot reach server. Check your internet connection.';
+      } else if (error.message.includes('auth') || error.message.includes('token')) {
+        errorMessage = 'Authentication failed. Please log in again.';
       }
+      
       showNotification(`🚨 ${errorMessage}`, 'error');
+      
     } finally {
       setSendingInvoice(null);
       setSendingEmail(false);
@@ -757,6 +821,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </h2>
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Create, manage, and track customer invoices - Total: {invoices.length} invoices
+            {emailTestStatus && (
+              <span className={`ml-2 text-xs px-2 py-1 rounded ${emailTestStatus.includes('✅') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}`}>
+                {emailTestStatus}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
@@ -1084,11 +1153,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         >
                           <Edit size={16} />
                         </button>
-                        {/* ✅ Send Invoice Button with Loading State */}
+                        {/* ✅ Send Invoice Button with Enhanced Loading State */}
                         <button
                           onClick={() => sendInvoiceToClient(invoice)}
                           disabled={sendingInvoice === invoice._id}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
+                          className={`p-2 rounded-lg flex items-center justify-center w-8 h-8 ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
                             sendingInvoice === invoice._id ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
                           title="Send to Client (Email with PDF)"
@@ -1164,6 +1233,7 @@ Price: Ksh 2999"
                 <button
                   onClick={parseAndPopulateFromWhatsApp}
                   className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-[#003366] hover:bg-[#002244] text-white' : 'bg-[#003366] hover:bg-[#002244] text-white'} transition-colors`}
+                  disabled={!whatsappText.trim()}
                 >
                   Populate Form
                 </button>
