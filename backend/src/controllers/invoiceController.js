@@ -2,7 +2,7 @@
 import Invoice from '../models/Invoice.js';
 import mongoose from 'mongoose';
 import puppeteer from 'puppeteer';
-import emailService from '../services/emailService.js'; // 📩 Centralized email logic
+import emailService from '../utils/emailService.js'; // 📩 Centralized email logic
 
 // ============================================================================
 // ✅ Helper: Format price for display
