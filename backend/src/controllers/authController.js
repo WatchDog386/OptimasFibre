@@ -7,7 +7,7 @@ import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { sendPasswordResetEmail } from '../utils/emailService.js';
+import emailService from '../utils/emailService.js'; // ✅ Changed to default import
 
 /**
  * LOGIN
@@ -216,7 +216,7 @@ export const refreshToken = async (req, res) => {
 };
 
 /**
- * FORGOT PASSWORD
+ * FORGOT PASSWORD - UPDATED with emailService
  */
 export const forgotPassword = async (req, res) => {
   try {
@@ -248,13 +248,24 @@ export const forgotPassword = async (req, res) => {
     await user.save();
 
     try {
-      await sendPasswordResetEmail(user.email, resetToken);
-      res.status(200).json({
-        success: true,
-        message: 'Password reset instructions have been sent to your email'
-      });
+      // ✅ Use emailService.sendPasswordResetEmail instead of direct function
+      const emailResult = await emailService.sendPasswordResetEmail(user.email, resetToken);
+      
+      if (emailResult.success) {
+        res.status(200).json({
+          success: true,
+          message: 'Password reset instructions have been sent to your email'
+        });
+      } else {
+        console.error('📧 Email sending failed:', emailResult.error);
+        // Still return success to user for security
+        res.status(200).json({
+          success: true,
+          message: 'If this email is registered, you will receive password reset instructions shortly.'
+        });
+      }
     } catch (emailError) {
-      console.error('📧 Email sending error:', emailError.message);
+      console.error('📧 Email service error:', emailError.message);
       // Still return success to user — log error internally
       res.status(200).json({
         success: true,
@@ -322,6 +333,195 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to reset password. Please try again or request a new reset link.'
+    });
+  }
+};
+
+/**
+ * REGISTER USER - NEW FUNCTION
+ */
+export const registerUser = async (req, res) => {
+  try {
+    const { name, email, password, role = 'customer' } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, and password are required'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists with this email'
+      });
+    }
+
+    // Create new user
+    const user = new User({
+      name,
+      email,
+      password, // Will be hashed by pre-save middleware
+      role
+    });
+
+    await user.save();
+
+    // Send welcome email
+    try {
+      await emailService.sendWelcomeEmail(email, name);
+    } catch (emailError) {
+      console.error('📧 Welcome email failed:', emailError.message);
+      // Continue even if email fails
+    }
+
+    // Generate token for auto-login
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.publicEmail,
+        role: user.role
+      }
+    });
+
+  } catch (err) {
+    console.error('🔐 Registration error:', err.message);
+    
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: Object.values(err.errors).map(e => e.message)
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed. Please try again.'
+    });
+  }
+};
+
+/**
+ * CHANGE PASSWORD
+ */
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user._id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password and new password are required'
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 8 characters'
+      });
+    }
+
+    const user = await User.findById(userId).select('+password');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+
+  } catch (err) {
+    console.error('🔐 Change password error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to change password. Please try again.'
+    });
+  }
+};
+
+/**
+ * LOGOUT
+ */
+export const logout = async (req, res) => {
+  try {
+    // In JWT, logout is handled client-side by removing tokens
+    // For enhanced security, you could implement a token blacklist here
+    
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+
+  } catch (err) {
+    console.error('🔐 Logout error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Logout failed'
+    });
+  }
+};
+
+/**
+ * CHECK EMAIL AVAILABILITY
+ */
+export const checkEmail = async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    const user = await User.findOne({ email });
+    
+    res.status(200).json({
+      success: true,
+      available: !user,
+      message: user ? 'Email already registered' : 'Email available'
+    });
+
+  } catch (err) {
+    console.error('🔐 Check email error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check email availability'
     });
   }
 };

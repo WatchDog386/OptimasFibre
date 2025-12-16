@@ -1,4 +1,4 @@
-// backend/src/services/emailService.js
+// backend/src/utils/emailService.js
 import nodemailer from 'nodemailer';
 
 // Create and configure email transporter
@@ -50,11 +50,9 @@ export const testEmailSetup = async () => {
     
     const transporter = createTransporter();
     
-    // First verify connection
     await transporter.verify();
     console.log('✅ SMTP connection verified');
     
-    // Send test email
     const testMailOptions = {
       from: process.env.EMAIL_FROM || '"Optimas Fibre" <support@optimaswifi.co.ke>',
       to: process.env.EMAIL_USER || 'support@optimaswifi.co.ke',
@@ -182,7 +180,7 @@ If you received this, your email configuration is working correctly!`,
 };
 
 // Send email function
-const sendEmail = async (emailData) => {
+export const sendEmail = async (emailData) => {
   try {
     const transporter = createTransporter();
     
@@ -239,9 +237,171 @@ const sendEmail = async (emailData) => {
   }
 };
 
-// Export as default object
+// Send password reset email
+export const sendPasswordResetEmail = async (email, resetToken) => {
+  try {
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    
+    const emailData = {
+      to: email,
+      subject: 'Password Reset Request - Optimas Fibre',
+      text: `You requested a password reset for your Optimas Fibre account.
+      
+Reset your password by clicking the link below:
+${resetUrl}
+
+This link will expire in 1 hour.
+
+If you didn't request this, please ignore this email.`,
+      
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #003366; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+    .content { padding: 20px; background: #f9f9f9; }
+    .button { display: inline-block; background: #003366; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">Optimas Fibre</h1>
+      <p style="margin: 5px 0 0 0; opacity: 0.9;">Password Reset Request</p>
+    </div>
+    
+    <div class="content">
+      <h2 style="color: #003366;">Hello,</h2>
+      <p>You requested to reset your password for your Optimas Fibre account.</p>
+      <p>Click the button below to reset your password:</p>
+      
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="${resetUrl}" class="button">Reset Password</a>
+      </p>
+      
+      <p>Or copy and paste this link in your browser:</p>
+      <p style="background: #f5f5f5; padding: 10px; border-radius: 5px; word-break: break-all;">
+        ${resetUrl}
+      </p>
+      
+      <p><strong>Note:</strong> This link will expire in 1 hour.</p>
+      
+      <p>If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
+    </div>
+    
+    <div class="footer">
+      <p><strong>Optimas Fibre Support Team</strong></p>
+      <p>📧 ${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'} | 📞 ${process.env.COMPANY_PHONE || '+254 741 874 200'}</p>
+      <p style="font-size: 11px; color: #999; margin-top: 10px;">This is an automated email.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `
+    };
+
+    return await sendEmail(emailData);
+    
+  } catch (error) {
+    console.error('❌ Password reset email failed:', error);
+    return {
+      success: false,
+      message: 'Failed to send password reset email',
+      error: error.message
+    };
+  }
+};
+
+// Send welcome email
+export const sendWelcomeEmail = async (email, name) => {
+  try {
+    const emailData = {
+      to: email,
+      subject: 'Welcome to Optimas Fibre!',
+      text: `Welcome to Optimas Fibre, ${name}!
+      
+Your account has been successfully created. You can now:
+• Log in to your account
+• View and pay invoices
+• Manage your internet services
+• Contact support for assistance
+
+Thank you for choosing Optimas Fibre for your internet needs!
+
+Best regards,
+Optimas Fibre Team`,
+      
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #003366; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+    .content { padding: 20px; background: #f9f9f9; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">Welcome to Optimas Fibre!</h1>
+      <p style="margin: 5px 0 0 0; opacity: 0.9;">High-Speed Internet Solutions</p>
+    </div>
+    
+    <div class="content">
+      <h2 style="color: #003366;">Hello ${name},</h2>
+      <p>Welcome to Optimas Fibre! Your account has been successfully created.</p>
+      
+      <p>With your account, you can now:</p>
+      <ul>
+        <li>Log in to your dashboard</li>
+        <li>View and pay your invoices online</li>
+        <li>Track your internet service status</li>
+        <li>Contact our support team for assistance</li>
+        <li>Manage your account settings</li>
+      </ul>
+      
+      <p>If you have any questions or need assistance, don't hesitate to contact our support team.</p>
+      
+      <p>Thank you for choosing Optimas Fibre for your internet needs!</p>
+    </div>
+    
+    <div class="footer">
+      <p><strong>Optimas Fibre Team</strong></p>
+      <p>📧 ${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'} | 📞 ${process.env.COMPANY_PHONE || '+254 741 874 200'}</p>
+      <p style="font-size: 11px; color: #999; margin-top: 10px;">This is an automated welcome email.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `
+    };
+
+    return await sendEmail(emailData);
+    
+  } catch (error) {
+    console.error('❌ Welcome email failed:', error);
+    return {
+      success: false,
+      message: 'Failed to send welcome email',
+      error: error.message
+    };
+  }
+};
+
+// Export default object for invoiceController
 export default {
   sendEmail,
   testEmailSetup,
+  sendPasswordResetEmail,
+  sendWelcomeEmail,
   createTransporter
 };
