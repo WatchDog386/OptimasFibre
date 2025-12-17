@@ -1,4 +1,4 @@
-// backend/src/routes/invoiceRoutes.js - COMPLETELY UPDATED & FIXED
+// backend/src/routes/invoiceRoutes.js - COMPLETELY UPDATED & FIXED FOR RESEND EMAIL
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
 import {
@@ -48,7 +48,7 @@ import {
     validateInvoiceData,
     cleanupInvoices,
 
-    // Email & PDF Functions (UPDATED & FIXED)
+    // ✅ EMAIL FUNCTIONS - NOW USING RESEND VIA emailService
     testEmailSetup, // ✅ ADDED for /test-email route
 
     // Temporary Cleanup Routes
@@ -111,8 +111,10 @@ router.patch('/:id/mark-overdue', protect, markInvoiceAsOverdue);
 // ✅ CRITICAL: Add test-email route (fixes 404 on dashboard load)
 router.post('/test-email', protect, testEmailSetup);
 
-// Send or resend notifications
+// ✅ SEND INVOICE VIA RESEND (PDF + EMAIL)
 router.post('/:id/send', protect, sendInvoiceToCustomer);
+
+// Resend notifications
 router.post('/:id/resend', protect, resendInvoiceNotifications);
 
 // Export & Downloads
@@ -153,28 +155,43 @@ router.delete('/:id', protect, deleteInvoice);
 router.get('/health/status', (req, res) => {
     res.json({
         success: true,
-        message: 'Invoice system healthy',
+        message: '✅ Invoice system healthy (Resend email ready)',
         timestamp: new Date().toISOString(),
-        version: '2.0.0'
+        version: '2.1.0',
+        emailProvider: 'Resend API'
     });
 });
 
 router.get('/routes/info', (req, res) => {
     res.json({
         message: 'Optimas Fibre Invoice API',
-        version: '2.0.0'
+        version: '2.1.0',
+        endpoints: {
+            testEmail: 'POST /api/invoices/test-email',
+            sendInvoice: 'POST /api/invoices/:id/send',
+            markPaid: ['PATCH /api/invoices/:id/paid', 'PATCH /api/invoices/:id/mark-paid']
+        }
     });
 });
 
 // =========================================================
-// 🎯 EXPRESS 5 CATCH-ALL
+// 🎯 EXPRESS 404 CATCH-ALL
 // =========================================================
 router.use((req, res) => {
     res.status(404).json({
         success: false,
         message: '❌ Invoice API endpoint not found',
         requested: { method: req.method, path: req.originalUrl },
-        documentation: '/api/invoices/routes/info'
+        available: [
+            'GET /', 
+            'POST /', 
+            'GET /:id', 
+            'PUT /:id', 
+            'DELETE /:id',
+            'PATCH /:id/paid',
+            'POST /:id/send',
+            'POST /test-email'
+        ]
     });
 });
 

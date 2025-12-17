@@ -1,6 +1,11 @@
-import dotenv from '@dotenvx/dotenvx';
+// src/index.js
+// ✅ CRITICAL: Load dotenv FIRST using require() for ESM compatibility
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const dotenv = require('dotenv');
 dotenv.config();
 
+// Now safe to import other ESM modules
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -19,7 +24,7 @@ import blogRoutes from './routes/blogRoutes.js';
 import portfolioRoutes from './routes/portfolioRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
-import receiptRoutes from './routes/receipts.js'; // ✅ Fixed - 404 handler now uses valid syntax
+import receiptRoutes from './routes/receipts.js';
 
 // Middleware
 import { protect } from './middleware/authMiddleware.js';
@@ -28,7 +33,7 @@ import { protect } from './middleware/authMiddleware.js';
 import connectDB from './config/db.js';
 
 // Environment variables validation
-const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI', 'FRONTEND_URL'];
+const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI', 'FRONTEND_URL', 'RESEND_API_KEY'];
 const missingEnvVars = requiredEnvVars.filter(v => !process.env[v]);
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
@@ -49,7 +54,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // ✅ FIX: Add trust proxy for Render.com (IMPORTANT!)
 app.set('trust proxy', 1); // Trust first proxy (Render's load balancer)
 
-// Allowed origins for CORS
+// Allowed origins for CORS - ✅ CLEANED UP TRAILING SPACES
 const allowedOrigins = [
   FRONTEND_URL,
   'https://www.optimaswifi.co.ke',
@@ -87,7 +92,7 @@ app.use(
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:", "blob:", "https://res.cloudinary.com"],
         scriptSrc: ["'self'", "'unsafe-inline'"],
-        connectSrc: ["'self'", "https://optimasfibre.onrender.com", "http://localhost:10000", "https://optimaswifi.co.ke", "https://api.cloudinary.com"],
+        connectSrc: ["'self'", "https://optimasfibre.onrender.com", "http://localhost:10000", "https://optimaswifi.co.ke", "https://api.cloudinary.com"]
       },
     },
     crossOriginEmbedderPolicy: false,
@@ -108,14 +113,14 @@ const generalLimiter = rateLimit({
   message: { success: false, message: 'Too many requests. Try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { trustProxy: true } // ✅ Added for proxy support
+  validate: { trustProxy: true }
 });
 
 const exportLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: NODE_ENV === 'production' ? 50 : 500,
   message: { success: false, message: 'Too many export requests. Please wait a while.' },
-  validate: { trustProxy: true } // ✅ Added for proxy support
+  validate: { trustProxy: true }
 });
 
 // Apply rate limiting
@@ -154,8 +159,14 @@ app.get('/health', (req, res) => {
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    proxy: req.ip, // ✅ Shows proxy IP
-    features: { invoices: true, receipts: true, pdf_export: true, excel_export: true, email_sending: true }
+    proxy: req.ip,
+    features: { 
+      invoices: true, 
+      receipts: true, 
+      pdf_export: true, 
+      excel_export: true, 
+      email_sending: true 
+    }
   });
 });
 
@@ -166,13 +177,13 @@ app.get('/', (req, res) => {
     version: '2.0.0', 
     timestamp: new Date().toISOString(),
     environment: NODE_ENV,
-    proxy: req.ip, // ✅ Shows proxy IP
+    proxy: req.ip,
     features: [
       'Complete Invoice Management',
       'Complete Receipt Management', 
       'PDF Export System',
       'Excel Export System',
-      'Email Integration',
+      'Email Integration (Resend API)',
       'Advanced Search & Filtering',
       'Real-time Statistics'
     ]
@@ -230,7 +241,7 @@ app.use('/api/blog', blogRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/settings', protect, settingRoutes);
 app.use('/api/invoices', protect, invoiceRoutes);
-app.use('/api/receipts', protect, receiptRoutes); // ✅ Fixed - 404 handler now uses valid syntax
+app.use('/api/receipts', protect, receiptRoutes);
 
 // System status
 app.get('/api/system/status', protect, (req, res) => {
@@ -254,7 +265,11 @@ app.get('/api/system/status', protect, (req, res) => {
         uploads: fs.existsSync(uploadsDir), 
         exports: fs.existsSync(exportsDir) 
       },
-      email: { enabled: true, host: process.env.EMAIL_HOST || 'Not configured' }
+      email: { 
+        enabled: true, 
+        provider: 'Resend API',
+        from: process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'
+      }
     },
     timestamps: { 
       server_start: new Date(Date.now() - process.uptime() * 1000).toISOString(), 
@@ -281,7 +296,7 @@ app.use((err, req, res, next) => {
     stack: err.stack, 
     path: req.path, 
     method: req.method,
-    client_ip: req.ip // ✅ Log client IP
+    client_ip: req.ip
   });
   
   let statusCode = err.statusCode || 500;
@@ -339,6 +354,7 @@ const startServer = async () => {
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
       console.log(`🌐 Public URL: https://optimasfibre.onrender.com`);
       console.log(`✅ Trust proxy: enabled (for Render.com)`);
+      console.log(`📧 Email provider: Resend API`);
     });
     
     process.on('SIGTERM', gracefulShutdown('SIGTERM'));

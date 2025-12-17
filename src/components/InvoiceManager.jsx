@@ -193,15 +193,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      
       const response = await fetch(`${API_BASE_URL}/api/invoices/test-email`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
       const result = await response.json();
       setEmailTestStatus(result.success ? '✅ Email system ready' : '❌ Email system not configured');
-      
       if (!result.success) {
         console.warn('Email test failed:', result);
       }
@@ -217,7 +214,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     } else {
       setLoading(false);
     }
-    
     // Test email configuration on load
     testEmailConfiguration();
   }, []);
@@ -264,7 +260,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         }
       }
     }
-
     const finalPlanName = selectedPlan ? selectedPlan.name : planName;
     const finalPlanSpeed = selectedPlan ? selectedPlan.speed : planSpeed;
     const finalPlanPrice = selectedPlan ? parseFloat(selectedPlan.price) : planPrice;
@@ -434,7 +429,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       });
       if (response.ok) {
         const newInvoice = await response.json();
-        // Ensure invoice has an invoiceNumber
         const savedInvoice = newInvoice.invoice || newInvoice.data || newInvoice;
         if (!savedInvoice.invoiceNumber) {
           savedInvoice.invoiceNumber = generateInvoiceNumber();
@@ -541,36 +535,29 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification('⚠️ Cannot send: Customer email is required.', 'warning');
       return;
     }
-
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(invoice.customerEmail.trim())) {
       showNotification('⚠️ Cannot send: Invalid email format.', 'warning');
       return;
     }
-
     // Validate invoice has been saved (has _id)
     if (!invoice._id) {
       showNotification('⚠️ Cannot send: Save the invoice first.', 'warning');
       return;
     }
-
     // Show confirmation dialog
     if (!window.confirm(`Send invoice ${invoice.invoiceNumber || invoice._id.substring(0, 8)} to ${invoice.customerEmail}?`)) {
       return;
     }
-
     try {
       setSendingInvoice(invoice._id);
       setSendingEmail(true);
-
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
-
       console.log(`📧 Sending invoice ${invoice.invoiceNumber || invoice._id} to ${invoice.customerEmail}`);
-
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
         method: 'POST',
         headers: { 
@@ -578,12 +565,9 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           'Content-Type': 'application/json'
         }
       });
-
       const result = await response.json();
-      
       if (response.ok && result.success) {
         console.log('✅ Email sent successfully:', result);
-        
         // Update local state to reflect sent status
         setInvoices(prev => prev.map(inv => 
           inv._id === invoice._id 
@@ -595,21 +579,16 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               } 
             : inv
         ));
-        
         showNotification(`✅ Invoice sent to ${invoice.customerEmail}! Check your inbox.`, 'success');
-        
         // Show success details
         if (result.emailInfo?.messageId) {
           console.log('📨 Message ID:', result.emailInfo.messageId);
         }
-        
       } else {
         console.error('❌ Email sending failed:', result);
-        
         // Enhanced error messages
         let errorMessage = 'Failed to send invoice email';
         let errorDetails = '';
-        
         if (response.status === 404) {
           errorMessage = 'Email service endpoint not found';
           errorDetails = 'The server may not have email functionality configured';
@@ -629,27 +608,21 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           errorMessage = result.message;
           errorDetails = result.suggestion || 'Please check server configuration';
         }
-        
         showNotification(`🚨 ${errorMessage}`, 'error');
-        
         // Log detailed error for debugging
         if (errorDetails) {
           console.log('Error details:', errorDetails);
         }
       }
-      
     } catch (error) {
       console.error('❌ Network error sending invoice:', error);
-      
       let errorMessage = 'Network error when sending email';
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         errorMessage = 'Cannot reach server. Check your internet connection.';
       } else if (error.message.includes('auth') || error.message.includes('token')) {
         errorMessage = 'Authentication failed. Please log in again.';
       }
-      
       showNotification(`🚨 ${errorMessage}`, 'error');
-      
     } finally {
       setSendingInvoice(null);
       setSendingEmail(false);
@@ -799,7 +772,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       acc[dateKey] = (acc[dateKey] || 0) + amount;
       return acc;
     }, {});
-
   const timeSeriesData = Object.keys(timeSeriesMap)
     .map(date => ({ date, amount: timeSeriesMap[date] }))
     .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -870,7 +842,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </button>
         </div>
       </div>
-
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
@@ -967,7 +938,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </ResponsiveContainer>
         </div>
       </div>
-
       {/* Filters and Search */}
       <div className={`${themeClasses.card} p-4 mb-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
         <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -1030,7 +1000,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       </div>
-
       {/* Invoices Table */}
       <div className={`${themeClasses.card} rounded-xl shadow-lg border backdrop-blur-sm overflow-hidden`}>
         <div className="overflow-x-auto">
@@ -1193,7 +1162,6 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </table>
         </div>
       </div>
-
       {/* Paste WhatsApp Modal */}
       {showPasteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1214,13 +1182,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               <textarea
                 value={whatsappText}
                 onChange={(e) => setWhatsappText(e.target.value)}
-                placeholder="Example: Name: John Doe
-Phone: +254712345678
-Location: Nairobi
-Email: john@example.com
-Plan: Gazzelle
-Speed: 30Mbps
-Price: Ksh 2999"
+                placeholder={`Example:\nName: John Doe\nPhone: +254712345678\nLocation: Nairobi\nEmail: john@example.com\nPlan: Gazzelle\nSpeed: 30Mbps\nPrice: Ksh 2999`}
                 className={`w-full h-48 p-3 border rounded-lg resize-none ${themeClasses.input}`}
               />
               <div className="flex justify-end gap-3 mt-6">
@@ -1242,7 +1204,6 @@ Price: Ksh 2999"
           </div>
         </div>
       )}
-
       {/* Create/Edit Invoice Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1373,7 +1334,6 @@ Price: Ksh 2999"
                   </div>
                 </div>
               </div>
-
               {/* Items Table */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-3">
@@ -1451,7 +1411,6 @@ Price: Ksh 2999"
                   </table>
                 </div>
               </div>
-
               {/* Summary Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -1476,7 +1435,7 @@ Price: Ksh 2999"
                   </div>
                 </div>
                 <div>
-                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
                     <h4 className="text-lg font-medium mb-3">Summary</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
@@ -1513,7 +1472,6 @@ Price: Ksh 2999"
                   </div>
                 </div>
               </div>
-
               {/* Form Actions */}
               <div className="flex justify-end gap-3 mt-8 pt-4 border-t">
                 <button
@@ -1539,7 +1497,6 @@ Price: Ksh 2999"
           </div>
         </div>
       )}
-
       {/* Plan Selection Modal */}
       {showPlanSelection && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

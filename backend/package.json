@@ -41,6 +41,7 @@
     "nodemailer": "^7.0.10",
     "pdfkit": "^0.17.2",
     "puppeteer": "^24.30.0",
+    "resend": "^6.6.0",
     "slugify": "^1.6.6",
     "twilio": "^5.10.4"
   },

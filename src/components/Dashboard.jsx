@@ -1,10 +1,13 @@
 // Dashboard.jsx - FULLY UPDATED WITH RESPONSIVE DESIGN, MODERN ANALYTICS, AND CENTRALIZED NOTIFICATIONS
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  BarChart3, FileText, Image, LogOut, Plus, Edit, Trash2, Upload, Save, X, Menu, User, Settings, Search, Moon, Sun, Link, Download, Eye, Globe, AlertCircle, CheckCircle, Info, RefreshCw, Database, Server, Shield, Activity, HardDrive, Clock, Zap, TrendingUp, Users, Mail, MessageCircle, DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer, Loader2
+  BarChart3, FileText, Image, LogOut, Plus, Edit, Trash2, Upload, Save, X, Menu, User, Settings, Search, Moon, Sun, Link, Download, Eye, Globe,
+  AlertCircle, CheckCircle, Info, RefreshCw, Database, Server, Shield, Activity, HardDrive, Clock, Zap, TrendingUp, Users, Mail, MessageCircle,
+  DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer, Loader2
 } from 'lucide-react';
 import InvoiceManager from './InvoiceManager';
 import ReceiptManager from './ReceiptManager';
+
 // ✅ CHART.JS IMPORTS
 import {
   Chart as ChartJS,
@@ -19,6 +22,7 @@ import {
   LineElement
 } from 'chart.js';
 import { Bar, Pie, Line } from 'react-chartjs-2';
+
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -31,6 +35,7 @@ ChartJS.register(
   Legend,
   Title
 );
+
 // Utility function for consistent price formatting
 const formatPrice = (price) => {
   if (price === undefined || price === null) return '0';
@@ -38,6 +43,7 @@ const formatPrice = (price) => {
   const num = parseInt(cleanStr, 10);
   return isNaN(num) ? price : num.toLocaleString();
 };
+
 // ✅ COMPACT BUTTON STYLES
 const BUTTON_STYLES = {
   primary: {
@@ -61,6 +67,7 @@ const BUTTON_STYLES = {
     dark: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
   }
 };
+
 // Main Dashboard Component
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -96,6 +103,7 @@ const Dashboard = () => {
   const [uploadMethod, setUploadMethod] = useState('url');
   const [darkMode, setDarkMode] = useState(false);
   const [error, setError] = useState('');
+
   // NEW STATE FOR CENTRALIZED NOTIFICATIONS AND LOADING POPUP
   const [notification, setNotification] = useState({ 
     show: false, 
@@ -107,24 +115,24 @@ const Dashboard = () => {
     show: false, 
     message: 'Loading data...' 
   });
+
   // Refs for popups to handle clicks outside
   const notificationRef = useRef(null);
   const loadingPopupRef = useRef(null);
+
   // Handle clicks outside popups to close them
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target) && notification.show) {
         setNotification({ ...notification, show: false });
       }
-      if (loadingPopupRef.current && !loadingPopupRef.current.contains(event.target) && loadingPopup.show) {
-        // Loading popup should not close manually, only after loading finishes
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [notification, loadingPopup]);
+  }, [notification]);
+
   // ✅ DYNAMIC API URL
   const getApiBaseUrl = () => {
     if (import.meta.env.VITE_API_BASE_URL) {
@@ -135,7 +143,9 @@ const Dashboard = () => {
     }
     return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
   };
-  const API_BASE_URL = getApiBaseUrl();
+
+  const API_BASE_URL = getApiBaseUrl(); // ✅ FIXED: Correct variable name
+
   // Show centralized notification with improved email-specific messages
   const showNotification = (message, type = 'info') => {
     let emoji = 'ℹ️';
@@ -183,15 +193,19 @@ const Dashboard = () => {
       setNotification({ show: false, message: '', type: 'info', title: 'Info' });
     }, type === 'error' ? 3000 : 5000);
   };
+
   // Show centralized loading popup
   const showLoadingPopup = (message = 'Loading dashboard data...') => {
     setLoadingPopup({ show: true, message });
   };
+
   // Hide centralized loading popup
   const hideLoadingPopup = () => {
     setLoadingPopup({ show: false, message: '' });
   };
+
   const toggleDarkMode = () => setDarkMode(!darkMode);
+
   const themeClasses = {
     background: darkMode ? 'bg-gray-900' : 'bg-gray-50',
     text: darkMode ? 'text-gray-100' : 'text-gray-800',
@@ -201,6 +215,7 @@ const Dashboard = () => {
       : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500 focus:border-[#003366]',
     button: BUTTON_STYLES
   };
+
   // Load data from backend
   useEffect(() => {
     const fetchData = async () => {
@@ -215,6 +230,7 @@ const Dashboard = () => {
         const headers = {
           'Authorization': `Bearer ${token}`
         };
+
         // Test email connection on dashboard load
         try {
           const emailTestRes = await fetch(`${API_BASE_URL}/api/invoices/test-email`, {
@@ -231,6 +247,7 @@ const Dashboard = () => {
         } catch (emailTestError) {
           console.warn('⚠️ Could not test email configuration:', emailTestError);
         }
+
         // Fetch blog posts
         const blogRes = await fetch(`${API_BASE_URL}/api/blog`, { headers });
         if (!blogRes.ok) {
@@ -238,6 +255,7 @@ const Dashboard = () => {
         }
         const blogResponse = await blogRes.json();
         setBlogPosts(blogResponse.data || []);
+
         // Fetch portfolio items
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
@@ -250,6 +268,7 @@ const Dashboard = () => {
             : (portfolioResponse.data || portfolioResponse.items || []);
           setPortfolioItems(portfolioData);
         }
+
         // Fetch invoices with proper error handling
         let fetchedInvoices = [];
         try {
@@ -265,6 +284,7 @@ const Dashboard = () => {
           console.warn('Error fetching invoices:', invoiceError);
         }
         setInvoices(fetchedInvoices);
+
         // Fetch receipts with proper error handling
         let fetchedReceipts = [];
         try {
@@ -280,6 +300,7 @@ const Dashboard = () => {
           console.warn('Error fetching receipts:', receiptError);
         }
         setReceipts(fetchedReceipts);
+
         // Calculate stats from fetched data
         const calculatedStats = {
           totalInvoices: fetchedInvoices.length,
@@ -289,6 +310,7 @@ const Dashboard = () => {
           totalRevenue: fetchedInvoices.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0)
         };
         setStats(calculatedStats);
+
         // Fetch settings
         try {
           const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
@@ -299,6 +321,7 @@ const Dashboard = () => {
         } catch (settingsError) {
           console.warn('Settings endpoint not available');
         }
+
         // Show success notification after data load
         showNotification('Dashboard data loaded successfully!', 'success');
       } catch (err) {
@@ -315,8 +338,10 @@ const Dashboard = () => {
         hideLoadingPopup();
       }
     };
+
     fetchData();
   }, [API_BASE_URL]);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     showNotification('You have been logged out successfully.', 'success');
@@ -324,6 +349,7 @@ const Dashboard = () => {
       window.location.href = '/admin/login';
     }, 1500);
   };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -331,6 +357,7 @@ const Dashboard = () => {
       [name]: value
     });
   };
+
   const handleSettingsChange = (e) => {
     const { name, value, type, checked } = e.target;
     setSettingsData({
@@ -338,6 +365,7 @@ const Dashboard = () => {
       [name]: type === 'checkbox' ? checked : value
     });
   };
+
   const saveSettings = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -364,6 +392,7 @@ const Dashboard = () => {
       showNotification(`Error: ${err.message}`, 'error');
     }
   };
+
   const handleImageChange = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -406,6 +435,7 @@ const Dashboard = () => {
       }));
     }
   };
+
   const handleImageUrlChange = (url) => {
     setFormData({
       ...formData,
@@ -413,6 +443,7 @@ const Dashboard = () => {
       image: null
     });
   };
+
   const handleSave = async () => {
     try {
       setError('');
@@ -437,11 +468,13 @@ const Dashboard = () => {
         content: formData.content.trim(),
         description: formData.content.trim()
       };
+
       Object.keys(payload).forEach(key => {
         if (payload[key] === '' || payload[key] == null) {
           delete payload[key];
         }
       });
+
       if (activeTab === 'blog') {
         endpoint = `${API_BASE_URL}/api/blog`;
         if (isEditing && editingItem && editingItem._id) {
@@ -458,7 +491,9 @@ const Dashboard = () => {
           endpoint = `${endpoint}/${editingItem._id}`;
         }
       }
+
       const method = isEditing && editingItem && editingItem._id ? 'PUT' : 'POST';
+
       const res = await fetch(endpoint, {
         method: method,
         headers: {
@@ -467,10 +502,12 @@ const Dashboard = () => {
         },
         body: JSON.stringify(payload)
       });
+
       const responseData = await res.json();
       if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
+
       if (activeTab === 'blog') {
         if (isEditing) {
           setBlogPosts(prev => prev.map(item =>
@@ -489,6 +526,7 @@ const Dashboard = () => {
           setPortfolioItems(prev => [...prev, newItem]);
         }
       }
+
       setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
       setEditingItem(null);
       setIsEditing(false);
@@ -502,6 +540,7 @@ const Dashboard = () => {
       showNotification(err.message, 'error');
     }
   };
+
   const handleEdit = (item) => {
     setFormData({
       title: item.title || '',
@@ -525,6 +564,7 @@ const Dashboard = () => {
       setActiveTab('receipts');
     }
   };
+
   const handleDelete = async (id, type) => {
     let typeString = '';
     let endpoint = '';
@@ -544,9 +584,11 @@ const Dashboard = () => {
       showNotification('Invalid item type for deletion.', 'error');
       return;
     }
+
     if (!window.confirm(`Are you sure you want to delete this ${typeString}? This action cannot be undone.`)) {
       return;
     }
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -578,6 +620,7 @@ const Dashboard = () => {
       showNotification(err.message, 'error');
     }
   };
+
   const cancelEdit = () => {
     setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
     setEditingItem(null);
@@ -585,6 +628,7 @@ const Dashboard = () => {
     setUploadMethod('url');
     setError('');
   };
+
   const renderContent = () => {
     if (loading && activeTab === 'dashboard') {
       return <div></div>;
@@ -609,6 +653,7 @@ const Dashboard = () => {
         </div>
       );
     }
+
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -727,6 +772,7 @@ const Dashboard = () => {
         );
     }
   };
+
   return (
     <div className={`flex h-screen ${themeClasses.background} ${themeClasses.text} transition-colors duration-300`}>
       {/* Centralized Loading Popup */}
@@ -739,6 +785,7 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
       {/* Centralized Notification Popup */}
       {notification.show && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40">
@@ -753,6 +800,7 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -760,6 +808,7 @@ const Dashboard = () => {
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
+
       {/* Sidebar */}
       <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
         <div className="p-5 border-b border-gray-200 flex justify-between items-center">
@@ -879,6 +928,7 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
@@ -924,6 +974,7 @@ const Dashboard = () => {
     </div>
   );
 };
+
 // Navigation Item Component
 const NavItem = ({ icon, text, active, onClick, darkMode }) => (
   <button
@@ -940,6 +991,7 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
     {text}
   </button>
 );
+
 // New Component: Calendar Placeholder
 const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
   const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -986,6 +1038,7 @@ const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
     </div>
   );
 };
+
 // New Component: Receipt Status Pie Chart
 const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
   const statusCounts = {
@@ -1037,6 +1090,7 @@ const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
     </div>
   );
 };
+
 // NEW COMPONENT: Blog Status Pie Chart
 const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
   const statusCounts = {
@@ -1088,6 +1142,7 @@ const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
     </div>
   );
 };
+
 // NEW COMPONENT: Portfolio Category Bar Chart
 const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) => {
   const categoryMap = {};
@@ -1154,6 +1209,7 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
     </div>
   );
 };
+
 // ✅ UPDATED DASHBOARD OVERVIEW WITH CHARTS & RECENT RECEIPTS
 const DashboardOverview = ({
   blogPosts,
@@ -1197,6 +1253,7 @@ const DashboardOverview = ({
       showNotification('Error exporting invoices to Excel', 'error');
     }
   };
+
   // ✅ CHART DATA — REAL-TIME FROM DATABASE
   const getLast6Months = () => {
     const months = [];
@@ -1207,6 +1264,7 @@ const DashboardOverview = ({
     }
     return months;
   };
+
   const monthLabels = getLast6Months();
   const monthlyRevenue = Array(6).fill(0);
   invoices.forEach(inv => {
@@ -1219,6 +1277,7 @@ const DashboardOverview = ({
       }
     }
   });
+
   // Revenue Trend (Line)
   const revenueChartData = {
     labels: monthLabels,
@@ -1233,6 +1292,7 @@ const DashboardOverview = ({
       pointBackgroundColor: '#FFCC00',
     }],
   };
+
   const revenueChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -1283,12 +1343,14 @@ const DashboardOverview = ({
       },
     },
   };
+
   // Invoice Status (Pie)
   const invoiceStatusCounts = {
     paid: invoices.filter(i => i.status === 'paid').length,
     pending: invoices.filter(i => i.status === 'pending' || i.status === 'draft').length,
     other: invoices.filter(i => !['paid', 'pending', 'draft'].includes(i.status)).length,
   };
+
   const invoiceStatusData = {
     labels: ['Paid', 'Pending/Draft', 'Other'],
     datasets: [{
@@ -1298,6 +1360,7 @@ const DashboardOverview = ({
       borderWidth: 2,
     }],
   };
+
   const invoiceStatusOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -1325,6 +1388,7 @@ const DashboardOverview = ({
       }
     },
   };
+
   // Content Overview (Bar)
   const contentData = {
     labels: ['Blog Posts', 'Portfolio', 'Invoices', 'Receipts'],
@@ -1336,6 +1400,7 @@ const DashboardOverview = ({
       borderWidth: 1,
     }],
   };
+
   const contentOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -1375,6 +1440,7 @@ const DashboardOverview = ({
       },
     },
   };
+
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -1413,6 +1479,7 @@ const DashboardOverview = ({
           </button>
         </div>
       </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Blog Posts"
@@ -1447,6 +1514,7 @@ const DashboardOverview = ({
           darkMode={darkMode}
         />
       </div>
+
       {/* ✅ Charts Section - Organized into 3 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Content Overview - Bar Chart */}
@@ -1466,6 +1534,7 @@ const DashboardOverview = ({
           <ReceiptStatusPieChart receipts={receipts} darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
+
       {/* ✅ NEW ANALYTICS SECTION FOR BLOG & PORTFOLIO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Blog Status Distribution */}
@@ -1477,6 +1546,7 @@ const DashboardOverview = ({
           <PortfolioCategoryBarChart portfolioItems={portfolioItems} darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
+
       {/* ✅ Revenue Chart and Calendar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Revenue Chart - Takes up 2/3rds of the space */}
@@ -1490,6 +1560,7 @@ const DashboardOverview = ({
           <CalendarPlaceholder darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
+
       {/* ✅ RECENT ITEMS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <RecentList
@@ -1526,6 +1597,7 @@ const DashboardOverview = ({
     </div>
   );
 };
+
 // Stat Card Component
 const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   const colorClasses = {
@@ -1542,6 +1614,7 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   };
   const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
   const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
+
   return (
     <div className={`${colorClasses[color]} p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105`}>
       <div className="flex items-center justify-between">
@@ -1557,6 +1630,7 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
     </div>
   );
 };
+
 // Recent List Component - UPDATED TO SUPPORT RECEIPTS
 const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete, type }) => (
   <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
@@ -1641,6 +1715,7 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
     </ul>
   </div>
 );
+
 // Content Manager Component
 const ContentManager = ({
   title,
@@ -1882,6 +1957,7 @@ const ContentManager = ({
     </div>
   );
 };
+
 // Settings Panel Component
 const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => (
   <div>
@@ -1982,6 +2058,7 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
     </div>
   </div>
 );
+
 // Input Group Component
 const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', darkMode, themeClasses, icon }) => (
   <div>
@@ -2004,4 +2081,5 @@ const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', 
     </div>
   </div>
 );
+
 export default Dashboard;
