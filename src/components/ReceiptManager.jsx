@@ -1,4 +1,4 @@
-// ReceiptManager.jsx - FULLY UPDATED: sendReceiptToClient now uses backend API for automatic PDF emailing from support@optimaswifi.co.ke
+// ReceiptManager.jsx - FULLY UPDATED WITH ENHANCED PDF & EMAIL
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -20,50 +20,583 @@ import {
   X,
   FileSpreadsheet,
   Printer,
-  Send, // ✅ Use Send icon (consistent with InvoiceManager)
+  Send,
   FileDown,
   Receipt,
   User,
   CreditCard,
-  TrendingUp
+  TrendingUp,
+  Check,
+  Shield,
+  Clock,
+  Loader2,
+  Copy,
+  Building,
+  Phone,
+  MapPin,
+  Globe,
+  AlertTriangle,
+  Wifi,
+  CheckSquare,
+  FileCheck,
+  ArrowUpRight,
+  Link,
+  QrCode,
+  BarChart3,
+  PieChart as PieChartIcon
 } from 'lucide-react';
+
 // Import recharts for visualization
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart as RechartsPie, Pie, Cell,
   LineChart, Line
 } from 'recharts';
-// Remove html2pdf import (no longer used for sending)
+
+// Import html2pdf for client-side PDF generation
+import html2pdf from 'html2pdf.js';
+
 // Utility function for consistent price formatting in KSH
 const formatPrice = (price) => {
-  if (price === undefined || price === null) return '0';
+  if (price === undefined || price === null) return '0.00';
   const cleanStr = price.toString().replace(/,/g, '');
-  const num = parseInt(cleanStr, 10);
-  return isNaN(num) ? price : num.toLocaleString();
+  const num = parseFloat(cleanStr);
+  return isNaN(num) ? price : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
-// Brand configuration to match your design
+
+// Brand configuration
 const BRAND = {
   name: "OPTIMAS FIBER",
   tagline: "High-Speed Internet Solutions",
-  logoUrl: "/oppo.jpg", // Fixed path (remove /public/)
+  logoUrl: "/oppo.jpg",
   colors: {
     primary: '#003366',
     accent: '#FFCC00',
     success: '#28a745',
     warning: '#ffc107',
-    danger: '#dc3545'
+    danger: '#dc3545',
+    info: '#17a2b8'
   },
   contact: {
-    email: "support@optimaswifi.co.ke", // ✅ FIXED: Use correct email domain
+    email: "support@optimaswifi.co.ke",
     phone: "+254 741 874 200",
+    address: "Nairobi, Kenya",
+    website: "www.optimaswifi.co.ke",
+    vatNumber: "VAT00123456",
     bank: {
       name: "Equity Bank",
       accountName: "Optimas Fiber Ltd",
       accountNumber: "1234567890",
-      branch: "Nairobi Main"
+      branch: "Nairobi Main",
+      swiftCode: "EQBLKENA"
+    },
+    paybill: {
+      number: "123456",
+      name: "OPTIMAS FIBER"
     }
   }
 };
+
+// ✅ ENHANCED: Generate professional receipt PDF (client-side)
+const generateReceiptPDF = async (receipt, showNotification) => {
+  const printContainer = document.createElement('div');
+  printContainer.style.position = 'absolute';
+  printContainer.style.left = '-10000px';
+  printContainer.style.top = '-10000px';
+  printContainer.style.width = '800px';
+  printContainer.style.backgroundColor = 'white';
+  printContainer.style.padding = '40px';
+  printContainer.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+  printContainer.style.color = '#333';
+
+  // Calculate totals
+  const subtotal = receipt.subtotal || 0;
+  const taxAmount = receipt.taxAmount || 0;
+  const total = receipt.total || 0;
+  const amountPaid = receipt.amountPaid || 0;
+  const balance = Math.max(0, total - amountPaid);
+  
+  // Payment status
+  const isFullyPaid = balance === 0;
+  const statusText = isFullyPaid ? 'PAID IN FULL' : 'PARTIAL PAYMENT';
+  const statusColor = isFullyPaid ? BRAND.colors.success : BRAND.colors.warning;
+
+  // Format payment method
+  const paymentMethodMap = {
+    'mobile_money': 'Mobile Money',
+    'bank_transfer': 'Bank Transfer',
+    'cash': 'Cash',
+    'card': 'Credit/Debit Card',
+    'cheque': 'Cheque',
+    'other': 'Other'
+  };
+  const paymentMethod = paymentMethodMap[receipt.paymentMethod] || receipt.paymentMethod || 'Cash';
+
+  printContainer.innerHTML = `
+    <div style="border:2px solid ${BRAND.colors.primary}; border-radius:12px; padding:40px; background:white; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+      <!-- Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; padding-bottom:20px; border-bottom:2px solid ${BRAND.colors.primary};">
+        <div>
+          ${BRAND.logoUrl ? `<img src="${BRAND.logoUrl}" alt="${BRAND.name} Logo" style="height:70px; margin-bottom:15px; border-radius:8px;" onerror="this.style.display='none'" />` : ''}
+          <h1 style="margin:5px 0; font-size:28px; color:${BRAND.colors.primary}; font-weight:800; letter-spacing:-0.5px;">${BRAND.name}</h1>
+          <p style="margin:0; color:#666; font-size:14px; font-weight:500;">${BRAND.tagline}</p>
+          <div style="margin-top:10px; display:flex; align-items:center; gap:15px; font-size:12px; color:#666;">
+            <span style="display:inline-flex; align-items:center;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              ${BRAND.contact.address}
+            </span>
+            <span style="display:inline-flex; align-items:center;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              ${BRAND.contact.phone}
+            </span>
+            <span style="display:inline-flex; align-items:center;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              ${BRAND.contact.email}
+            </span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="background:${BRAND.colors.accent}; color:white; padding:8px 20px; border-radius:20px; display:inline-block; font-weight:700; font-size:12px; letter-spacing:1px; margin-bottom:10px;">
+            OFFICIAL RECEIPT
+          </div>
+          <h2 style="margin:0 0 10px 0; font-size:36px; color:${BRAND.colors.primary}; font-weight:900; letter-spacing:-1px;">RECEIPT</h2>
+          <div style="background:${statusColor}; color:white; padding:10px 25px; border-radius:25px; display:inline-block; font-weight:700; font-size:14px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+            ${statusText}
+          </div>
+        </div>
+      </div>
+
+      <!-- Receipt Details -->
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:30px; margin-bottom:40px;">
+        <!-- Customer Information -->
+        <div>
+          <h3 style="margin:0 0 15px 0; font-size:16px; color:${BRAND.colors.primary}; font-weight:700; padding-bottom:8px; border-bottom:2px solid #f0f0f0;">CUSTOMER INFORMATION</h3>
+          <div style="background:#f8f9fa; padding:20px; border-radius:10px; border-left:4px solid ${BRAND.colors.primary}; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+            <p style="margin:0 0 8px 0; font-size:16px; font-weight:700; color:#333;">${receipt.customerName || 'Customer'}</p>
+            <p style="margin:0 0 6px 0; font-size:14px; color:#555;">
+              <span style="font-weight:600;">Email:</span> ${receipt.customerEmail || 'N/A'}
+            </p>
+            <p style="margin:0 0 6px 0; font-size:14px; color:#555;">
+              <span style="font-weight:600;">Phone:</span> ${receipt.customerPhone || 'N/A'}
+            </p>
+            <p style="margin:0; font-size:14px; color:#555;">
+              <span style="font-weight:600;">Location:</span> ${receipt.customerLocation || receipt.customerAddress || 'N/A'}
+            </p>
+          </div>
+        </div>
+        
+        <!-- Receipt Information -->
+        <div>
+          <h3 style="margin:0 0 15px 0; font-size:16px; color:${BRAND.colors.primary}; font-weight:700; padding-bottom:8px; border-bottom:2px solid #f0f0f0;">RECEIPT DETAILS</h3>
+          <div style="background:#f8f9fa; padding:20px; border-radius:10px; border-left:4px solid ${BRAND.colors.accent}; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+            <p style="margin:0 0 8px 0; font-size:14px;">
+              <span style="font-weight:700; color:#333;">Receipt #:</span> 
+              <span style="font-weight:800; color:${BRAND.colors.primary}; font-size:16px;">${receipt.receiptNumber || 'N/A'}</span>
+            </p>
+            <p style="margin:0 0 8px 0; font-size:14px;">
+              <span style="font-weight:600; color:#333;">Invoice #:</span> ${receipt.invoiceNumber || 'N/A'}
+            </p>
+            <p style="margin:0 0 8px 0; font-size:14px;">
+              <span style="font-weight:600; color:#333;">Receipt Date:</span> ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
+            </p>
+            <p style="margin:0 0 8px 0; font-size:14px;">
+              <span style="font-weight:600; color:#333;">Payment Date:</span> ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
+            </p>
+            <p style="margin:0; font-size:14px;">
+              <span style="font-weight:600; color:#333;">Payment Method:</span> 
+              <span style="font-weight:700; color:${BRAND.colors.success};">${paymentMethod}</span>
+            </p>
+          </div>
+        </div>
+        
+        <!-- Service Details -->
+        <div>
+          <h3 style="margin:0 0 15px 0; font-size:16px; color:${BRAND.colors.primary}; font-weight:700; padding-bottom:8px; border-bottom:2px solid #f0f0f0;">SERVICE DETAILS</h3>
+          <div style="background:#f8f9fa; padding:20px; border-radius:10px; border-left:4px solid ${BRAND.colors.success}; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+            <p style="margin:0 0 8px 0; font-size:14px;">
+              <span style="font-weight:600; color:#333;">Plan:</span> ${receipt.planName || 'N/A'}
+            </p>
+            <p style="margin:0 0 8px 0; font-size:14px;">
+              <span style="font-weight:600; color:#333;">Speed:</span> ${receipt.planSpeed || 'N/A'}
+            </p>
+            <p style="margin:0 0 8px 0; font-size:14px;">
+              <span style="font-weight:600; color:#333;">Service:</span> ${receipt.serviceDescription || 'Internet Service'}
+            </p>
+            ${receipt.paymentReference ? `
+            <p style="margin:0; font-size:14px;">
+              <span style="font-weight:600; color:#333;">Reference:</span> ${receipt.paymentReference}
+            </p>
+            ` : ''}
+            ${receipt.transactionId ? `
+            <p style="margin:8px 0 0 0; font-size:14px;">
+              <span style="font-weight:600; color:#333;">Transaction ID:</span> ${receipt.transactionId}
+            </p>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- Items Table -->
+      <div style="margin-bottom:40px;">
+        <h3 style="margin:0 0 20px 0; font-size:18px; color:${BRAND.colors.primary}; font-weight:700;">PAYMENT BREAKDOWN</h3>
+        <table style="width:100%; border-collapse:separate; border-spacing:0; border:1px solid #e0e0e0; border-radius:10px; overflow:hidden; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+          <thead>
+            <tr style="background:linear-gradient(135deg, ${BRAND.colors.primary} 0%, #002244 100%); color:white;">
+              <th style="padding:18px 20px; text-align:left; font-weight:700; font-size:14px; border-right:1px solid rgba(255,255,255,0.1);">DESCRIPTION</th>
+              <th style="padding:18px 20px; text-align:center; font-weight:700; font-size:14px; border-right:1px solid rgba(255,255,255,0.1);">QUANTITY</th>
+              <th style="padding:18px 20px; text-align:right; font-weight:700; font-size:14px; border-right:1px solid rgba(255,255,255,0.1);">UNIT PRICE</th>
+              <th style="padding:18px 20px; text-align:right; font-weight:700; font-size:14px;">AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(receipt.items && receipt.items.length > 0 ? receipt.items : [{
+                description: receipt.serviceDescription || (receipt.planName ? `${receipt.planName} - ${receipt.planSpeed}` : 'Internet Service'),
+                quantity: 1,
+                unitPrice: receipt.planPrice || receipt.total || 0,
+                amount: receipt.total || 0
+              }]).map((item, index) => `
+                <tr style="${index % 2 === 0 ? 'background:#f8f9fa;' : 'background:white;'} border-bottom:1px solid #eee;">
+                  <td style="padding:15px 20px; text-align:left; font-size:14px; border-right:1px solid #eee;">${item.description || 'Service'}</td>
+                  <td style="padding:15px 20px; text-align:center; font-size:14px; border-right:1px solid #eee;">${item.quantity || 1}</td>
+                  <td style="padding:15px 20px; text-align:right; font-size:14px; border-right:1px solid #eee;">Ksh ${formatPrice(item.unitPrice || 0)}</td>
+                  <td style="padding:15px 20px; text-align:right; font-size:14px; font-weight:600;">Ksh ${formatPrice(item.amount || 0)}</td>
+                </tr>
+              `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Payment Summary -->
+      <div style="display:flex; justify-content:space-between; margin-bottom:40px; gap:40px;">
+        <div style="flex:1;">
+          <h3 style="margin:0 0 15px 0; font-size:16px; color:${BRAND.colors.primary}; font-weight:700;">PAYMENT NOTES</h3>
+          <div style="background:#f8f9fa; padding:25px; border-radius:10px; border:1px solid #e0e0e0; min-height:150px;">
+            <p style="margin:0 0 10px 0; font-size:14px; line-height:1.6; color:#333;">
+              ${receipt.notes || 'Thank you for your payment! Your business is greatly appreciated.'}
+            </p>
+            <div style="margin-top:15px; padding:12px; background:rgba(0,51,102,0.05); border-radius:6px; border-left:3px solid ${BRAND.colors.primary};">
+              <p style="margin:0; font-size:12px; color:#666; line-height:1.5;">
+                <strong>Important:</strong> This receipt serves as official proof of payment. Please retain for your records.
+                For any billing inquiries, please quote receipt number: <strong>${receipt.receiptNumber || 'N/A'}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="width:380px;">
+          <div style="background:#f8f9fa; padding:30px; border-radius:10px; border:1px solid #e0e0e0; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+            <h3 style="margin:0 0 25px 0; font-size:20px; color:${BRAND.colors.primary}; font-weight:800; text-align:center; padding-bottom:15px; border-bottom:2px solid ${BRAND.colors.primary};">PAYMENT SUMMARY</h3>
+            
+            <div style="margin-bottom:20px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #ddd;">
+                <span style="color:#666; font-size:15px;">Subtotal:</span>
+                <span style="font-weight:600; font-size:15px;">Ksh ${formatPrice(subtotal)}</span>
+              </div>
+              
+              ${receipt.taxRate > 0 ? `
+              <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #ddd;">
+                <span style="color:#666; font-size:15px;">VAT (${receipt.taxRate || 0}%):</span>
+                <span style="font-weight:600; font-size:15px;">Ksh ${formatPrice(taxAmount)}</span>
+              </div>
+              ` : ''}
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; margin-bottom:25px; padding:20px; background:white; border-radius:8px; border:2px solid ${BRAND.colors.primary};">
+              <span style="font-size:18px; font-weight:700; color:${BRAND.colors.primary};">TOTAL AMOUNT:</span>
+              <span style="font-size:22px; font-weight:900; color:${BRAND.colors.primary};">Ksh ${formatPrice(total)}</span>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; padding:15px; background:rgba(40,167,69,0.1); border-radius:8px; border-left:4px solid ${BRAND.colors.success};">
+              <span style="font-size:16px; font-weight:700; color:#333;">Amount Paid:</span>
+              <span style="font-size:18px; font-weight:800; color:${BRAND.colors.success};">Ksh ${formatPrice(amountPaid)}</span>
+            </div>
+            
+            ${balance > 0 ? `
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; padding:15px; background:rgba(220,53,69,0.1); border-radius:8px; border-left:4px solid ${BRAND.colors.danger};">
+              <span style="font-size:16px; font-weight:700; color:#333;">Balance Due:</span>
+              <span style="font-size:18px; font-weight:800; color:${BRAND.colors.danger};">Ksh ${formatPrice(balance)}</span>
+            </div>
+            ` : ''}
+            
+            <div style="display:flex; justify-content:space-between; padding-top:20px; border-top:2px solid #e0e0e0;">
+              <span style="font-size:16px; font-weight:700;">PAYMENT STATUS:</span>
+              <span style="font-size:18px; font-weight:900; color:${statusColor};">${statusText}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Company Information -->
+      <div style="margin-bottom:30px; padding:25px; background:linear-gradient(135deg, ${BRAND.colors.primary} 0%, #002244 100%); border-radius:10px; color:white; box-shadow:0 8px 25px rgba(0,51,102,0.2);">
+        <h3 style="margin:0 0 20px 0; font-size:20px; font-weight:700; color:${BRAND.colors.accent}; text-align:center; letter-spacing:0.5px;">${BRAND.name} - BANKING INFORMATION</h3>
+        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:30px;">
+          <div>
+            <div style="display:flex; align-items:center; margin-bottom:15px;">
+              <div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-right:15px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                  <path d="M6 10h4"></path><path d="M14 10h4"></path>
+                  <path d="M6 14h12"></path>
+                </svg>
+              </div>
+              <div>
+                <p style="margin:0 0 5px 0; font-size:16px; font-weight:700;">Bank Transfer</p>
+              </div>
+            </div>
+            <div style="padding-left:55px;">
+              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Bank:</strong> ${BRAND.contact.bank.name}</p>
+              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Account Name:</strong> ${BRAND.contact.bank.accountName}</p>
+              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Account Number:</strong> ${BRAND.contact.bank.accountNumber}</p>
+              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Branch:</strong> ${BRAND.contact.bank.branch}</p>
+              <p style="margin:0; font-size:14px;"><strong>SWIFT Code:</strong> ${BRAND.contact.bank.swiftCode}</p>
+            </div>
+          </div>
+          
+          <div>
+            <div style="display:flex; align-items:center; margin-bottom:15px;">
+              <div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-right:15px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                  <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                  <circle cx="12" cy="12" r="2"></circle>
+                  <path d="M6 12h.01M18 12h.01"></path>
+                </svg>
+              </div>
+              <div>
+                <p style="margin:0 0 5px 0; font-size:16px; font-weight:700;">Mobile Payments</p>
+              </div>
+            </div>
+            <div style="padding-left:55px;">
+              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Paybill:</strong> ${BRAND.contact.paybill.number}</p>
+              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Business:</strong> ${BRAND.contact.paybill.name}</p>
+              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Account:</strong> ${receipt.customerName?.split(' ')[0] || 'Customer'}</p>
+              <p style="margin:0 0 8px 0; font-size:14px;"><strong>VAT Number:</strong> ${BRAND.contact.vatNumber}</p>
+              <p style="margin:0; font-size:14px;"><strong>Website:</strong> ${BRAND.contact.website}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding-top:25px; border-top:2px solid #f0f0f0; text-align:center; color:#666; font-size:12px;">
+        <div style="display:flex; justify-content:center; align-items:center; gap:30px; margin-bottom:15px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; background:rgba(0,51,102,0.05); padding:8px 15px; border-radius:20px;">
+            <Check size={14} style="margin-right:8px; color:${BRAND.colors.success};" />
+            <span style="font-weight:600;">Payment Confirmed</span>
+          </div>
+          <div style="display:flex; align-items:center; background:rgba(0,51,102,0.05); padding:8px 15px; border-radius:20px;">
+            <Shield size={14} style="margin-right:8px; color:${BRAND.colors.primary};" />
+            <span style="font-weight:600;">Official Document</span>
+          </div>
+          <div style="display:flex; align-items:center; background:rgba(0,51,102,0.05); padding:8px 15px; border-radius:20px;">
+            <Clock size={14} style="margin-right:8px; color:${BRAND.colors.warning};" />
+            <span style="font-weight:600;">Generated: ${new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        </div>
+        <p style="margin:0 0 15px 0; font-size:16px; font-weight:700; color:${BRAND.colors.primary};">Thank you for choosing ${BRAND.name}!</p>
+        <div style="display:flex; justify-content:center; gap:30px; margin-bottom:10px; flex-wrap:wrap;">
+          <span style="display:flex; align-items:center; font-size:13px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            ${BRAND.contact.email}
+          </span>
+          <span style="display:flex; align-items:center; font-size:13px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+            ${BRAND.contact.phone}
+          </span>
+          <span style="display:flex; align-items:center; font-size:13px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
+              <circle cx="12" cy="9" r="3"></circle>
+            </svg>
+            ${BRAND.contact.website}
+          </span>
+        </div>
+        <p style="margin:10px 0 0 0; font-size:11px; color:#999; line-height:1.4;">
+          This is an official receipt generated by ${BRAND.name}. Please retain for your records.<br/>
+          For any billing inquiries, please contact ${BRAND.contact.email} or call ${BRAND.contact.phone}
+        </p>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(printContainer);
+
+  try {
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: `Receipt_${receipt.receiptNumber || receipt._id || Date.now()}_${BRAND.name}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        allowTaint: true,
+        windowWidth: 800,
+        width: 800,
+        backgroundColor: '#ffffff',
+        logging: false
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    await html2pdf().from(printContainer).set(opt).save();
+    showNotification('✅ Professional receipt PDF downloaded successfully!', 'success');
+    return { success: true };
+  } catch (err) {
+    console.error('PDF generation error:', err);
+    showNotification('❌ Failed to generate PDF. Please try again.', 'error');
+    return { success: false };
+  } finally {
+    document.body.removeChild(printContainer);
+  }
+};
+
+// ✅ ENHANCED: Prepare comprehensive email content
+const prepareReceiptEmailContent = (receipt) => {
+  const paymentMethodMap = {
+    'mobile_money': 'Mobile Money',
+    'bank_transfer': 'Bank Transfer',
+    'cash': 'Cash',
+    'card': 'Credit/Debit Card',
+    'cheque': 'Cheque',
+    'other': 'Other'
+  };
+  
+  const paymentMethod = paymentMethodMap[receipt.paymentMethod] || receipt.paymentMethod || 'Cash';
+  const total = receipt.total || 0;
+  const amountPaid = receipt.amountPaid || 0;
+  const balance = Math.max(0, total - amountPaid);
+  const isFullyPaid = balance === 0;
+
+  const subject = `Payment Receipt #${receipt.receiptNumber} from ${BRAND.name} - ${isFullyPaid ? 'PAID' : 'PARTIAL PAYMENT'}`;
+  
+  const bodyLines = [
+    `Dear ${receipt.customerName || 'Valued Customer'},`,
+    ``,
+    `We are pleased to confirm receipt of your payment. Thank you for choosing ${BRAND.name}!`,
+    ``,
+    `========================================`,
+    `            PAYMENT RECEIPT SUMMARY`,
+    `========================================`,
+    ``,
+    `📋 **RECEIPT INFORMATION**`,
+    `• Receipt Number: ${receipt.receiptNumber || 'N/A'}`,
+    `• Invoice Number: ${receipt.invoiceNumber || 'Not specified'}`,
+    `• Receipt Date: ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A'}`,
+    `• Payment Date: ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString() : 'N/A'}`,
+    `• Payment Method: ${paymentMethod}`,
+    `• Payment Status: ${isFullyPaid ? '✅ PAID IN FULL' : '⚠️ PARTIAL PAYMENT'}`,
+    `${receipt.paymentReference ? `• Payment Reference: ${receipt.paymentReference}` : ''}`,
+    `${receipt.transactionId ? `• Transaction ID: ${receipt.transactionId}` : ''}`,
+    ``,
+    `👤 **CUSTOMER INFORMATION**`,
+    `• Name: ${receipt.customerName || 'Customer'}`,
+    `• Email: ${receipt.customerEmail || 'N/A'}`,
+    `• Phone: ${receipt.customerPhone || 'Not provided'}`,
+    `• Location: ${receipt.customerLocation || receipt.customerAddress || 'Not provided'}`,
+    ``,
+    `📦 **SERVICE DETAILS**`,
+    `• Plan: ${receipt.planName || 'N/A'}`,
+    `• Speed: ${receipt.planSpeed || 'N/A'}`,
+    `• Service Description: ${receipt.serviceDescription || 'Internet Service'}`,
+    `• Connection Type: Fiber Optic`,
+    ``,
+    `🧾 **PAYMENT BREAKDOWN**`,
+    ...(receipt.items && receipt.items.length > 0 
+      ? receipt.items.map((item, index) => 
+          `• ${item.description || 'Service'}: ${item.quantity || 1} x Ksh ${formatPrice(item.unitPrice)} = Ksh ${formatPrice(item.amount)}`
+        )
+      : [`• ${receipt.planName || 'Internet Service'}: Ksh ${formatPrice(receipt.total || 0)}`]
+    ),
+    ``,
+    `💰 **PAYMENT SUMMARY**`,
+    `• Subtotal: Ksh ${formatPrice(receipt.subtotal || 0)}`,
+    `• VAT (${receipt.taxRate || 0}%): Ksh ${formatPrice(receipt.taxAmount || 0)}`,
+    `• Total Amount Due: Ksh ${formatPrice(receipt.total || 0)}`,
+    `• Amount Paid: Ksh ${formatPrice(receipt.amountPaid || 0)}`,
+    `${balance > 0 ? `• Balance Due: Ksh ${formatPrice(balance)}` : ''}`,
+    `• Payment Status: ${isFullyPaid ? '✅ PAID IN FULL - Thank you!' : '⚠️ PARTIAL PAYMENT - Balance due'}`,
+    ``,
+    `💳 **BANKING INFORMATION**`,
+    `For future payments, please use the following details:`,
+    ``,
+    `🏦 **Bank Transfer**`,
+    `• Bank: ${BRAND.contact.bank.name}`,
+    `• Account Name: ${BRAND.contact.bank.accountName}`,
+    `• Account Number: ${BRAND.contact.bank.accountNumber}`,
+    `• Branch: ${BRAND.contact.bank.branch}`,
+    `• SWIFT Code: ${BRAND.contact.bank.swiftCode}`,
+    ``,
+    `📱 **Mobile Payments**`,
+    `• Paybill Number: ${BRAND.contact.paybill.number}`,
+    `• Business Name: ${BRAND.contact.paybill.name}`,
+    `• Account Name: ${receipt.customerName?.split(' ')[0] || 'Customer'}`,
+    ``,
+    `💳 **Other Payment Methods**`,
+    `• Cash (at our offices)`,
+    `• Credit/Debit Cards`,
+    `• Cheques (payable to ${BRAND.contact.bank.accountName})`,
+    ``,
+    `📝 **RECEIPT NOTES**`,
+    `${receipt.notes || 'Thank you for your payment! This receipt serves as official proof of payment for services rendered.'}`,
+    ``,
+    `========================================`,
+    `            IMPORTANT INFORMATION`,
+    `========================================`,
+    ``,
+    `🔸 This receipt is an official document from ${BRAND.name}`,
+    `🔸 Please retain this receipt for your records and future reference`,
+    `🔸 For billing inquiries, please quote your receipt number: ${receipt.receiptNumber}`,
+    `🔸 The attached PDF is your official receipt document`,
+    `🔸 This receipt has been CC'd to our support team for record keeping`,
+    ``,
+    `========================================`,
+    `            CONTACT & SUPPORT`,
+    `========================================`,
+    ``,
+    `For any queries, technical support, or billing assistance:`,
+    ``,
+    `📧 **Email Support:** ${BRAND.contact.email}`,
+    `📞 **Phone Support:** ${BRAND.contact.phone}`,
+    `🌐 **Website:** ${BRAND.contact.website}`,
+    `📍 **Address:** ${BRAND.contact.address}`,
+    ``,
+    `Our support team is available:`,
+    `• Monday - Friday: 8:00 AM - 6:00 PM`,
+    `• Saturday: 9:00 AM - 4:00 PM`,
+    `• Sunday: Emergency Support Only`,
+    ``,
+    `========================================`,
+    ``,
+    `Thank you for choosing ${BRAND.name} for your internet needs!`,
+    ``,
+    `Best regards,`,
+    `**The ${BRAND.name} Team**`,
+    `${BRAND.tagline}`,
+    ``,
+    `---`,
+    `This is an automated email. Please do not reply directly to this message.`,
+    `If you need assistance, please contact ${BRAND.contact.email}`,
+    `This email has been CC'd to our support team at ${BRAND.contact.email} for record keeping.`
+  ];
+
+  return {
+    subject: encodeURIComponent(subject),
+    body: encodeURIComponent(bodyLines.join('\n'))
+  };
+};
+
 const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification, receipts, setReceipts, invoices }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,10 +606,13 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState(null);
   const [exportLoading, setExportLoading] = useState(false);
-  const [sendingReceipt, setSendingReceipt] = useState(null); // Tracks which receipt is being sent
+  const [sendingReceipt, setSendingReceipt] = useState(null);
   const [searchInvoiceTerm, setSearchInvoiceTerm] = useState('');
   const [showInvoiceSearch, setShowInvoiceSearch] = useState(false);
-  // Form state for creating/editing receipts
+  const [copiedReceipt, setCopiedReceipt] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
+  
+  // Form state
   const [receiptForm, setReceiptForm] = useState({
     receiptNumber: '',
     invoiceId: '',
@@ -89,7 +625,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     paymentDate: new Date().toISOString().split('T')[0],
     items: [{ description: 'Monthly Internet Service', quantity: 1, unitPrice: 0, amount: 0 }],
     subtotal: 0,
-    taxRate: 0,
+    taxRate: 16,
     taxAmount: 0,
     discount: 0,
     discountType: 'none',
@@ -108,7 +644,8 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     transactionId: '',
     bankReference: ''
   });
-  // Fetch receipts from backend
+
+  // Fetch receipts
   const fetchReceipts = async () => {
     try {
       setLoading(true);
@@ -117,15 +654,16 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         throw new Error('Authentication session expired. Please log in again.');
       }
       const response = await fetch(`${API_BASE_URL}/api/receipts`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch receipts: ${response.status}`);
       }
+      
       const data = await response.json();
       let receiptsData = [];
+      
       if (Array.isArray(data)) {
         receiptsData = data;
       } else if (data && Array.isArray(data.data)) {
@@ -135,20 +673,17 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       } else {
         receiptsData = [];
       }
+      
       setReceipts(receiptsData);
     } catch (error) {
       console.error('Error fetching receipts:', error);
       showNotification(`🚨 Error loading receipts: ${error.message}`, 'error');
       setReceipts([]);
-      if (error.message.includes('401') || error.message.includes('token')) {
-        setTimeout(() => {
-          window.location.href = '/admin/login';
-        }, 2000);
-      }
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (!receipts || receipts.length === 0) {
       fetchReceipts();
@@ -156,7 +691,8 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setLoading(false);
     }
   }, []);
-  // Generate sequential receipt number
+
+  // Generate receipt number
   const generateReceiptNumber = () => {
     if (receipts.length === 0) return 'RCP-001';
     const latestNumber = receipts.reduce((max, receipt) => {
@@ -169,8 +705,9 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }, 0);
     return `RCP-${String(latestNumber + 1).padStart(3, '0')}`;
   };
+
   // Calculate totals
-  const calculateTotals = (items, taxRate = 0, discount = 0, discountType = 'none') => {
+  const calculateTotals = (items, taxRate = 16, discount = 0, discountType = 'none') => {
     const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
     const taxAmount = (subtotal * (parseFloat(taxRate) || 0)) / 100;
     let discountAmount = 0;
@@ -182,6 +719,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     const total = subtotal + taxAmount - discountAmount;
     return { subtotal, taxAmount, total };
   };
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -205,19 +743,24 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       }
       if (name === 'amountPaid') {
         const amountPaid = parseFloat(value) || 0;
+        const balance = Math.max(0, updatedForm.total - amountPaid);
+        const status = balance === 0 ? 'paid' : (amountPaid > 0 ? 'partially_paid' : 'issued');
         return {
           ...updatedForm,
           amountPaid,
-          balance: Math.max(0, updatedForm.total - amountPaid)
+          balance,
+          status
         };
       }
       return updatedForm;
     });
   };
+
   // Handle item changes
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...receiptForm.items];
     const item = updatedItems[index];
+    
     if (field === 'quantity' || field === 'unitPrice') {
       const quantity = field === 'quantity' ? parseFloat(value) || 0 : item.quantity;
       const unitPrice = field === 'unitPrice' ? parseFloat(value) || 0 : item.unitPrice;
@@ -226,12 +769,14 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     } else {
       updatedItems[index] = { ...item, [field]: value };
     }
+    
     const { subtotal, taxAmount, total } = calculateTotals(
       updatedItems, 
       receiptForm.taxRate, 
       receiptForm.discount, 
       receiptForm.discountType
     );
+    
     setReceiptForm(prev => ({
       ...prev,
       items: updatedItems,
@@ -242,6 +787,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       balance: Math.max(0, total - (prev.amountPaid || 0))
     }));
   };
+
   // Add new item
   const addItem = () => {
     setReceiptForm(prev => ({
@@ -249,6 +795,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, amount: 0 }]
     }));
   };
+
   // Remove item
   const removeItem = (index) => {
     if (receiptForm.items.length > 1) {
@@ -259,6 +806,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         receiptForm.discount, 
         receiptForm.discountType
       );
+      
       setReceiptForm(prev => ({
         ...prev,
         items: updatedItems,
@@ -270,6 +818,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       }));
     }
   };
+
   // Create new receipt
   const createReceipt = async () => {
     try {
@@ -277,12 +826,17 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
+      
       if (!receiptForm.customerName?.trim()) {
-        throw new Error('Customer name is required');
+        showNotification('⚠️ Customer name is required', 'warning');
+        return;
       }
+      
       if (!receiptForm.customerEmail?.trim()) {
-        throw new Error('Customer email is required');
+        showNotification('⚠️ Customer email is required', 'warning');
+        return;
       }
+      
       const receiptData = {
         receiptNumber: receiptForm.receiptNumber || generateReceiptNumber(),
         invoiceNumber: receiptForm.invoiceNumber || '',
@@ -299,7 +853,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           amount: parseFloat(item.amount) || 0
         })),
         subtotal: parseFloat(receiptForm.subtotal) || 0,
-        taxRate: parseFloat(receiptForm.taxRate) || 0,
+        taxRate: parseFloat(receiptForm.taxRate) || 16,
         taxAmount: parseFloat(receiptForm.taxAmount) || 0,
         discount: parseFloat(receiptForm.discount) || 0,
         discountType: receiptForm.discountType || 'none',
@@ -318,6 +872,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         transactionId: receiptForm.transactionId?.trim() || '',
         bankReference: receiptForm.bankReference?.trim() || ''
       };
+      
       const response = await fetch(`${API_BASE_URL}/api/receipts`, {
         method: 'POST',
         headers: {
@@ -326,7 +881,9 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(receiptData)
       });
+      
       const responseData = await response.json();
+      
       if (response.ok) {
         const newReceipt = responseData.receipt || responseData.data || responseData;
         setReceipts(prev => [...prev, newReceipt]);
@@ -345,6 +902,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
+
   // Update receipt
   const updateReceipt = async () => {
     try {
@@ -352,6 +910,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
+      
       const receiptData = {
         receiptNumber: receiptForm.receiptNumber,
         invoiceNumber: receiptForm.invoiceNumber,
@@ -368,7 +927,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           amount: parseFloat(item.amount) || 0
         })),
         subtotal: parseFloat(receiptForm.subtotal) || 0,
-        taxRate: parseFloat(receiptForm.taxRate) || 0,
+        taxRate: parseFloat(receiptForm.taxRate) || 16,
         taxAmount: parseFloat(receiptForm.taxAmount) || 0,
         discount: parseFloat(receiptForm.discount) || 0,
         discountType: receiptForm.discountType || 'none',
@@ -387,6 +946,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         transactionId: receiptForm.transactionId?.trim() || '',
         bankReference: receiptForm.bankReference?.trim() || ''
       };
+      
       const response = await fetch(`${API_BASE_URL}/api/receipts/${editingReceipt._id}`, {
         method: 'PUT',
         headers: {
@@ -395,7 +955,9 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(receiptData)
       });
+      
       const responseData = await response.json();
+      
       if (response.ok) {
         const updatedReceipt = responseData.receipt || responseData.data || responseData;
         setReceipts(prev => prev.map(rec => 
@@ -417,22 +979,24 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
+
   // Delete receipt
   const deleteReceipt = async (receiptId) => {
     if (!window.confirm('Are you sure you want to delete this receipt? This action cannot be undone.')) {
       return;
     }
+    
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
+      
       const response = await fetch(`${API_BASE_URL}/api/receipts/${receiptId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      
       if (response.ok) {
         setReceipts(prev => prev.filter(rec => rec._id !== receiptId));
         showNotification('✅ Receipt deleted successfully!', 'success');
@@ -445,6 +1009,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       showNotification(`🚨 Error: ${error.message}`, 'error');
     }
   };
+
   // Generate receipt from invoice
   const generateReceiptFromInvoice = (invoice) => {
     const items = invoice.items && invoice.items.length > 0 
@@ -455,12 +1020,14 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           unitPrice: invoice.planPrice || 0, 
           amount: invoice.planPrice || 0 
         }];
+    
     const { subtotal, taxAmount, total } = calculateTotals(
       items, 
-      invoice.taxRate || 0, 
+      invoice.taxRate || 16, 
       invoice.discount || 0, 
       invoice.discountType || 'none'
     );
+    
     setReceiptForm({
       receiptNumber: generateReceiptNumber(),
       invoiceId: invoice._id,
@@ -473,7 +1040,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       paymentDate: new Date().toISOString().split('T')[0],
       items: items,
       subtotal: subtotal,
-      taxRate: invoice.taxRate || 0,
+      taxRate: invoice.taxRate || 16,
       taxAmount: taxAmount,
       discount: invoice.discount || 0,
       discountType: invoice.discountType || 'none',
@@ -492,189 +1059,56 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       transactionId: '',
       bankReference: ''
     });
+    
     setShowInvoiceSearch(false);
     setShowCreateModal(true);
   };
-  // ✅ EXPORT PDF (client-side only for downloads)
-  const exportReceiptPDF = (receipt) => {
-    // Keep existing PDF generation logic for DOWNLOADS (unchanged)
-    const element = document.createElement('div');
-    element.innerHTML = `
-      <div id="receipt-pdf" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: white; color: #333; font-size: 12px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid ${BRAND.colors.primary}; padding-bottom: 15px; margin-bottom: 20px;">
-          <div>
-            <h1 style="font-size: 22px; font-weight: bold; color: ${BRAND.colors.primary}; margin: 0;">${BRAND.name}</h1>
-            <p style="font-size: 11px; color: #666; margin: 5px 0 0 0;">${BRAND.tagline}</p>
-            <div style="font-size: 10px; color: #666; margin-top: 5px;">
-                <p style="margin: 0;">Email: ${BRAND.contact.email}</p>
-                <p style="margin: 0;">Phone: ${BRAND.contact.phone}</p>
-            </div>
-          </div>
-          <div style="text-align: right; min-width: 130px;">
-            <img src="${BRAND.logoUrl}" alt="${BRAND.name}" style="max-height: 50px; max-width: 90px; object-fit: contain; margin-bottom: 5px;" />
-            <h1 style="font-size: 28px; font-weight: bold; color: ${BRAND.colors.accent}; margin: 0;">RECEIPT</h1>
-            <p style="font-size: 14px; color: ${BRAND.colors.primary}; margin: 5px 0 0 0;">#${receipt.receiptNumber || 'N/A'}</p>
-          </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #eee; padding: 12px; border-radius: 5px;">
-          <div style="flex: 1;">
-            <h3 style="font-size: 13px; font-weight: bold; color: #333; margin: 0 0 5px 0; padding-bottom: 5px; border-bottom: 1px solid #eee;">Bill To:</h3>
-            <p style="margin: 2px 0; line-height: 1.4;"><strong>${receipt.customerName || 'N/A'}</strong></p>
-            <p style="margin: 2px 0; line-height: 1.4;">${receipt.customerEmail || 'N/A'}</p>
-            <p style="margin: 2px 0; line-height: 1.4;">${receipt.customerPhone || 'N/A'}</p>
-            <p style="margin: 2px 0; line-height: 1.4;">${receipt.customerLocation || receipt.customerAddress || 'N/A'}</p>
-          </div>
-          <div style="flex: 1; text-align: right;">
-            <p style="margin: 2px 0;"><strong>Receipt Date:</strong> ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin: 2px 0;"><strong>Payment Date:</strong> ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin: 2px 0;"><strong>Payment Method:</strong> ${receipt.paymentMethod?.replace('_', ' ')?.toUpperCase() || 'CASH'}</p>
-            <p style="margin: 2px 0;">
-              <strong>Status:</strong> 
-              <span style="color: ${
-                receipt.status === 'paid' ? BRAND.colors.success :
-                receipt.status === 'issued' ? BRAND.colors.warning :
-                BRAND.colors.danger
-              };">
-                ${receipt.status?.toUpperCase() || 'ISSUED'}
-              </span>
-            </p>
-          </div>
-        </div>
-        <div style="border: 1px solid #ddd; border-radius: 5px; overflow: hidden; margin-bottom: 20px;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-            <thead style="background-color: ${BRAND.colors.primary}; color: white;">
-              <tr>
-                <th style="padding: 8px 12px; text-align: left; width: 45%;">Description</th>
-                <th style="padding: 8px 12px; text-align: center; width: 10%;">Qty</th>
-                <th style="padding: 8px 12px; text-align: right; width: 20%;">Unit Price</th>
-                <th style="padding: 8px 12px; text-align: right; width: 25%;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${(receipt.items && receipt.items.length > 0 ? receipt.items : [{
-                description: receipt.serviceDescription || (receipt.planName ? `${receipt.planName} - ${receipt.planSpeed}` : 'Internet Service'),
-                quantity: 1,
-                unitPrice: receipt.planPrice || receipt.total || 0,
-                amount: receipt.total || 0
-              }]).map(item => `
-                <tr style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 8px 12px;">${item.description || 'Service'}</td>
-                  <td style="padding: 8px 12px; text-align: center;">${item.quantity || 1}</td>
-                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(item.unitPrice || 0)}</td>
-                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(item.amount || 0)}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-            <tfoot>
-              <tr style="background-color: #f8f9fa; font-weight: bold;">
-                <td colspan="3" style="padding: 8px 12px; text-align: right;">Subtotal:</td>
-                <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.subtotal || receipt.total || 0)}</td>
-              </tr>
-              <tr style="background-color: #f8f9fa; font-weight: bold;">
-                <td colspan="3" style="padding: 8px 12px; text-align: right;">Tax ( ${receipt.taxRate || 0}% ):</td>
-                <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.taxAmount || 0)}</td>
-              </tr>
-              <tr style="background-color: #f8f9fa; font-weight: bold; border-top: 2px solid #333;">
-                <td colspan="3" style="padding: 8px 12px; text-align: right;">TOTAL:</td>
-                <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.total || 0)}</td>
-              </tr>
-              <tr style="background-color: #e8f5e8; font-weight: bold; color: ${BRAND.colors.success};">
-                <td colspan="3" style="padding: 8px 12px; text-align: right;">AMOUNT PAID:</td>
-                <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.amountPaid || 0)}</td>
-              </tr>
-              ${receipt.balance > 0 ? `
-                <tr style="background-color: #ffe8e8; font-weight: bold; color: ${BRAND.colors.danger};">
-                  <td colspan="3" style="padding: 8px 12px; text-align: right;">BALANCE DUE:</td>
-                  <td style="padding: 8px 12px; text-align: right;">Ksh ${formatPrice(receipt.balance || 0)}</td>
-                </tr>
-              ` : ''}
-            </tfoot>
-          </table>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-            <div style="flex: 1; padding-right: 20px;">
-                <h3 style="font-size: 13px; font-weight: bold; color: #333; margin: 0 0 5px 0;">Notes:</h3>
-                <p style="margin: 0; white-space: pre-wrap; line-height: 1.4;">${receipt.notes || 'N/A'}</p>
-            </div>
-            <div style="width: 220px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                    <tr>
-                        <td colspan="2" style="padding: 5px 0; font-size: 12px; font-weight: bold; text-align: center; background-color: #f8f9fa; border-bottom: 2px solid #333;">Payment Instructions</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0; font-size: 11px; text-align: left; vertical-align: top;">
-                            <p style="margin: 3px 0;"><strong>Bank:</strong> ${BRAND.contact.bank.name}</p>
-                            <p style="margin: 3px 0;"><strong>Acc Name:</strong> ${BRAND.contact.bank.accountName}</p>
-                            <p style="margin: 3px 0;"><strong>Acc No:</strong> ${BRAND.contact.bank.accountNumber}</p>
-                        </td>
-                        <td style="padding: 5px 0; font-size: 11px; text-align: left; vertical-align: top;">
-                            <p style="margin: 3px 0;"><strong>Paybill:</strong> 123456</p>
-                            <p style="margin: 3px 0;"><strong>Account:</strong> ${receipt.customerName?.split(' ')[0] || 'Customer'}</p>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 10px;">
-          <p style="margin: 5px 0;"><strong>Thank you for choosing ${BRAND.name}!</strong></p>
-          <p style="margin: 5px 0;">For support: <a href="mailto:${BRAND.contact.email}" style="color: ${BRAND.colors.primary};">${BRAND.contact.email}</a> | <a href="tel:${BRAND.contact.phone}" style="color: ${BRAND.colors.primary};">${BRAND.contact.phone}</a></p>
-          <p style="margin: 5px 0; font-size: 10px; color: #999;">Receipt generated on ${new Date().toLocaleString()}</p>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(element);
-    const opt = {
-      margin: [10, 10, 10, 10],
-      filename: `receipt-${receipt.receiptNumber || 'N/A'}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        allowTaint: true,
-        windowWidth: 800,
-        width: 800,
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().from(element).set(opt).save().then(() => {
-      showNotification('✅ PDF generated successfully!', 'success');
-    }).catch(err => {
-      console.error('PDF error:', err);
-      showNotification('❌ Failed to generate PDF', 'error');
-    }).finally(() => {
-      document.body.removeChild(element);
-    });
+
+  // ✅ ENHANCED: Download PDF with professional receipt design
+  const exportReceiptPDF = async (receipt) => {
+    await generateReceiptPDF(receipt, showNotification);
   };
-  // ✅ UPDATED: Send receipt via backend API (auto PDF + email from support@optimaswifi.co.ke)
+
+  // ✅ ENHANCED: Send receipt via email with all details and CC support
   const sendReceiptToClient = async (receipt) => {
     try {
       setSendingReceipt(receipt._id);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication session expired. Please log in again.');
-      }
+      
+      // Validate email
       if (!receipt.customerEmail?.trim()) {
-        showNotification('⚠️ Customer email address is missing', 'warning');
+        showNotification('⚠️ Customer email address is required', 'warning');
         return;
       }
-      const response = await fetch(`${API_BASE_URL}/api/receipts/${receipt._id}/send`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        showNotification('✅ Receipt sent to client successfully!', 'success');
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send receipt email');
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(receipt.customerEmail.trim())) {
+        showNotification('⚠️ Invalid customer email format', 'warning');
+        return;
       }
+      
+      // Prepare enhanced email content
+      const { subject, body } = prepareReceiptEmailContent(receipt);
+      
+      // Create mailto link with CC to support
+      const mailtoLink = `mailto:${encodeURIComponent(receipt.customerEmail.trim())}?cc=${encodeURIComponent(BRAND.contact.email)}&subject=${subject}&body=${body}`;
+      
+      // Open email client
+      window.open(mailtoLink, '_blank');
+      
+      showNotification(
+        `📧 Email client opened with receipt details. CC added to ${BRAND.contact.email}. Please attach the downloaded PDF manually.`,
+        'info'
+      );
+      
     } catch (error) {
-      console.error('Error sending receipt email:', error);
-      showNotification(`🚨 ${error.message}`, 'error');
+      console.error('Error preparing receipt email:', error);
+      showNotification(`🚨 Error: ${error.message}`, 'error');
     } finally {
       setSendingReceipt(null);
     }
   };
-  // Export all receipts to Excel
+
+  // Export to Excel
   const exportReceiptsToExcel = async () => {
     try {
       setExportLoading(true);
@@ -682,6 +1116,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       if (!token) {
         throw new Error('Authentication session expired. Please log in again.');
       }
+      
       const response = await fetch(`${API_BASE_URL}/api/receipts/export/excel`, {
         method: 'GET',
         headers: {
@@ -689,29 +1124,21 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           'Content-Type': 'application/json'
         }
       });
+      
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `receipts-${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.download = `receipts_${new Date().toISOString().split('T')[0]}.xlsx`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         showNotification('✅ Receipts exported to Excel successfully!', 'success');
       } else {
-        let errorMessage = 'Failed to export Excel';
-        try {
-          const errorData = await response.json();
-          if (errorData && errorData.message) {
-            errorMessage = errorData.message;
-          }
-        } catch (e) {
-          console.error("Error parsing error response JSON:", e);
-          errorMessage = response.statusText || errorMessage;
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to export Excel');
       }
     } catch (error) {
       console.error('Error exporting to Excel:', error);
@@ -720,11 +1147,21 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setExportLoading(false);
     }
   };
-  // Preview PDF
-  const previewPDF = (receipt) => {
-    setSelectedReceipt(receipt);
-    setShowPDFModal(true);
+
+  // Copy receipt number to clipboard
+  const copyReceiptNumber = (receiptNumber) => {
+    navigator.clipboard.writeText(receiptNumber)
+      .then(() => {
+        setCopiedReceipt(receiptNumber);
+        setTimeout(() => setCopiedReceipt(null), 2000);
+        showNotification('📋 Receipt number copied to clipboard!', 'success');
+      })
+      .catch(err => {
+        console.error('Failed to copy:', err);
+        showNotification('❌ Failed to copy receipt number', 'error');
+      });
   };
+
   // Reset form
   const resetForm = () => {
     setReceiptForm({
@@ -739,7 +1176,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       paymentDate: new Date().toISOString().split('T')[0],
       items: [{ description: 'Monthly Internet Service', quantity: 1, unitPrice: 0, amount: 0 }],
       subtotal: 0,
-      taxRate: 0,
+      taxRate: 16,
       taxAmount: 0,
       discount: 0,
       discountType: 'none',
@@ -759,6 +1196,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       bankReference: ''
     });
   };
+
   // Edit receipt
   const editReceipt = (receipt) => {
     setReceiptForm({
@@ -773,7 +1211,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       paymentDate: receipt.paymentDate ? new Date(receipt.paymentDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       items: receipt.items || [{ description: 'Monthly Internet Service', quantity: 1, unitPrice: 0, amount: 0 }],
       subtotal: receipt.subtotal || 0,
-      taxRate: receipt.taxRate || 0,
+      taxRate: receipt.taxRate || 16,
       taxAmount: receipt.taxAmount || 0,
       discount: receipt.discount || 0,
       discountType: receipt.discountType || 'none',
@@ -792,18 +1230,26 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       transactionId: receipt.transactionId || '',
       bankReference: receipt.bankReference || ''
     });
+    
     setEditingReceipt(receipt);
     setShowCreateModal(true);
   };
+
   // View receipt details
   const viewReceipt = (receipt) => {
     setSelectedReceipt(receipt);
     setShowReceiptModal(true);
   };
+
   // Filter receipts
   const filteredReceipts = Array.isArray(receipts) 
     ? receipts.filter(receipt => {
         if (!receipt || typeof receipt !== 'object') return false;
+        
+        // Filter by status
+        if (filterStatus !== 'all' && receipt.status !== filterStatus) return false;
+        
+        // Filter by search term
         const term = searchTerm.toLowerCase();
         return (
           (receipt.customerName?.toLowerCase() || '').includes(term) ||
@@ -814,34 +1260,66 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         );
       })
     : [];
+
+  // Calculate statistics
+  const stats = {
+    totalReceipts: receipts.length,
+    totalRevenue: receipts.reduce((sum, r) => sum + (parseFloat(r.total) || 0), 0),
+    paidReceipts: receipts.filter(r => r.status === 'paid').length,
+    issuedReceipts: receipts.filter(r => r.status === 'issued').length,
+    partiallyPaidReceipts: receipts.filter(r => r.status === 'partially_paid').length,
+    refundedReceipts: receipts.filter(r => r.status === 'refunded').length,
+    monthlyRevenue: receipts
+      .filter(r => {
+        const date = new Date(r.receiptDate || r.createdAt);
+        const now = new Date();
+        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, r) => sum + (parseFloat(r.total) || 0), 0),
+    todayRevenue: receipts
+      .filter(r => {
+        const date = new Date(r.receiptDate || r.createdAt);
+        const today = new Date();
+        return date.getDate() === today.getDate() && 
+               date.getMonth() === today.getMonth() && 
+               date.getFullYear() === today.getFullYear();
+      })
+      .reduce((sum, r) => sum + (parseFloat(r.total) || 0), 0)
+  };
+
   // Calculate chart data
   const prepareChartData = () => {
     if (!receipts || receipts.length === 0) return { statusData: [], revenueData: [], trendData: [] };
+    
     const statusData = [
-      { name: 'Paid', value: receipts.filter(r => r.status === 'paid').length, color: BRAND.colors.success },
-      { name: 'Issued', value: receipts.filter(r => r.status === 'issued').length, color: BRAND.colors.warning },
-      { name: 'Refunded', value: receipts.filter(r => r.status === 'refunded').length, color: BRAND.colors.danger }
-    ];
+      { name: 'Paid', value: stats.paidReceipts, color: BRAND.colors.success },
+      { name: 'Issued', value: stats.issuedReceipts, color: BRAND.colors.warning },
+      { name: 'Partial', value: stats.partiallyPaidReceipts, color: BRAND.colors.info },
+      { name: 'Refunded', value: stats.refundedReceipts, color: BRAND.colors.danger }
+    ].filter(d => d.value > 0);
+    
     const now = new Date();
-    const monthly = receipts.filter(r => {
-      const date = new Date(r.receiptDate || r.createdAt);
-      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-    }).reduce((sum, r) => sum + (r.total || 0), 0);
+    const monthly = stats.monthlyRevenue;
+    
     const quarterly = receipts.filter(r => {
       const date = new Date(r.receiptDate || r.createdAt);
       const currentQuarter = Math.floor(now.getMonth() / 3);
       const receiptQuarter = Math.floor(date.getMonth() / 3);
       return date.getFullYear() === now.getFullYear() && receiptQuarter === currentQuarter;
     }).reduce((sum, r) => sum + (r.total || 0), 0);
+    
     const annually = receipts.filter(r => {
       const date = new Date(r.receiptDate || r.createdAt);
       return date.getFullYear() === now.getFullYear();
     }).reduce((sum, r) => sum + (r.total || 0), 0);
+    
     const revenueData = [
+      { name: 'Today', value: stats.todayRevenue },
       { name: 'Monthly', value: monthly },
       { name: 'Quarterly', value: quarterly },
-      { name: 'Annually', value: annually }
-    ];
+      { name: 'Annual', value: annually }
+    ].filter(d => d.value > 0);
+    
     const trendData = [];
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -854,9 +1332,12 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         .reduce((sum, r) => sum + (r.total || 0), 0);
       trendData.push({ name: monthKey, revenue: amount });
     }
+    
     return { statusData, revenueData, trendData };
   };
+
   const { statusData, revenueData, trendData } = prepareChartData();
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -864,6 +1345,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       </div>
     );
   }
+
   return (
     <div>
       {/* Header */}
@@ -873,7 +1355,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             Receipt Management
           </h2>
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Generate, manage, and track customer receipts - Total: {receipts.length} receipts
+            Total: {receipts.length} receipts • Revenue: Ksh {formatPrice(stats.totalRevenue)}
           </p>
         </div>
         <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
@@ -903,6 +1385,10 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             onClick={() => {
               setEditingReceipt(null);
               resetForm();
+              setReceiptForm(prev => ({
+                ...prev,
+                receiptNumber: generateReceiptNumber()
+              }));
               setShowCreateModal(true);
             }}
             className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light} flex items-center`}
@@ -911,12 +1397,53 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </button>
         </div>
       </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className={`${themeClasses.card} rounded-xl p-4 border-l-4 border-[#003366]`}>
+          <div className="flex items-center">
+            <Receipt className={`h-8 w-8 mr-3 ${darkMode ? 'text-blue-400' : 'text-[#003366]'}`} />
+            <div>
+              <p className="text-sm font-medium">Total Receipts</p>
+              <p className="text-2xl font-bold">{stats.totalReceipts}</p>
+            </div>
+          </div>
+        </div>
+        <div className={`${themeClasses.card} rounded-xl p-4 border-l-4 border-[#FFCC00]`}>
+          <div className="flex items-center">
+            <DollarSign className={`h-8 w-8 mr-3 ${darkMode ? 'text-yellow-400' : 'text-[#FFCC00]'}`} />
+            <div>
+              <p className="text-sm font-medium">Total Revenue</p>
+              <p className="text-2xl font-bold">Ksh {formatPrice(stats.totalRevenue)}</p>
+            </div>
+          </div>
+        </div>
+        <div className={`${themeClasses.card} rounded-xl p-4 border-l-4 border-[#28a745]`}>
+          <div className="flex items-center">
+            <CheckCircle className={`h-8 w-8 mr-3 ${darkMode ? 'text-green-400' : 'text-[#28a745]'}`} />
+            <div>
+              <p className="text-sm font-medium">Paid Receipts</p>
+              <p className="text-2xl font-bold">{stats.paidReceipts}</p>
+            </div>
+          </div>
+        </div>
+        <div className={`${themeClasses.card} rounded-xl p-4 border-l-4 border-[#17a2b8]`}>
+          <div className="flex items-center">
+            <Clock className={`h-8 w-8 mr-3 ${darkMode ? 'text-blue-400' : 'text-[#17a2b8]'}`} />
+            <div>
+              <p className="text-sm font-medium">Issued Receipts</p>
+              <p className="text-2xl font-bold">{stats.issuedReceipts}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Charts */}
       {receipts.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
             <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Receipt size={18} className="mr-2" /> Receipt Status
+              <PieChartIcon size={18} className="mr-2" /> Receipt Status
             </h3>
             <ResponsiveContainer width="100%" height={200}>
               <RechartsPie>
@@ -938,21 +1465,23 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               </RechartsPie>
             </ResponsiveContainer>
           </div>
+          
           <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
             <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <DollarSign size={18} className="mr-2" /> Revenue Overview
+              <BarChart3 size={18} className="mr-2" /> Revenue Overview
             </h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis tickFormatter={(value) => `Ksh ${formatPrice(value)}`} />
-                <Tooltip formatter={(value) => [`Ksh ${formatPrice(value)}`, '']} />
+                <Tooltip formatter={(value) => [`Ksh ${formatPrice(value)}`, 'Revenue']} />
                 <Legend />
                 <Bar dataKey="value" fill="#003366" />
               </BarChart>
             </ResponsiveContainer>
           </div>
+          
           <div className={`${themeClasses.card} p-4 rounded-xl border backdrop-blur-sm`}>
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <TrendingUp size={18} className="mr-2" /> Revenue Trend (6 Months)
@@ -962,7 +1491,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis tickFormatter={(value) => `Ksh ${formatPrice(value)}`} />
-                <Tooltip formatter={(value) => [`Ksh ${formatPrice(value)}`, '']} />
+                <Tooltip formatter={(value) => [`Ksh ${formatPrice(value)}`, 'Revenue']} />
                 <Legend />
                 <Line type="monotone" dataKey="revenue" stroke="#FFCC00" strokeWidth={3} dot={{ fill: '#003366', strokeWidth: 2, r: 4 }} />
               </LineChart>
@@ -970,19 +1499,57 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
-      {/* Search */}
+
+      {/* Filters and Search */}
       <div className={`${themeClasses.card} p-4 mb-6 rounded-xl shadow-sm border backdrop-blur-sm`}>
-        <div className="relative">
-          <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-          <input
-            type="text"
-            placeholder="Search by customer name, receipt number, invoice number, email, or phone..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full pl-10 pr-4 py-2 border rounded-lg text-sm ${themeClasses.input}`}
-          />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilterStatus('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${filterStatus === 'all' 
+                ? 'bg-[#003366] text-white' 
+                : darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+            >
+              All Receipts
+            </button>
+            <button
+              onClick={() => setFilterStatus('paid')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center ${filterStatus === 'paid' 
+                ? 'bg-green-500 text-white' 
+                : darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+            >
+              <CheckCircle size={14} className="mr-1" /> Paid
+            </button>
+            <button
+              onClick={() => setFilterStatus('issued')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center ${filterStatus === 'issued' 
+                ? 'bg-yellow-500 text-white' 
+                : darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+            >
+              <Clock size={14} className="mr-1" /> Issued
+            </button>
+            <button
+              onClick={() => setFilterStatus('partially_paid')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center ${filterStatus === 'partially_paid' 
+                ? 'bg-blue-500 text-white' 
+                : darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+            >
+              <CreditCard size={14} className="mr-1" /> Partial
+            </button>
+          </div>
+          <div className="relative w-full md:w-64">
+            <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+            <input
+              type="text"
+              placeholder="Search receipts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`w-full pl-10 pr-4 py-2 border rounded-lg ${themeClasses.input}`}
+            />
+          </div>
         </div>
       </div>
+
       {/* Receipts Table */}
       <div className={`${themeClasses.card} rounded-xl shadow-lg border backdrop-blur-sm overflow-hidden`}>
         <div className="overflow-x-auto">
@@ -993,38 +1560,64 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">Customer</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">Invoice #</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">Payment</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {filteredReceipts.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center">
+                  <td colSpan="7" className="px-6 py-8 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Receipt size={48} className={`mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
                       <p className={`text-lg font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {Array.isArray(receipts) && receipts.length === 0 ? 'No receipts available' : 'No receipts match your search'}
+                        {receipts.length === 0 ? 'No receipts available' : 'No receipts match your search'}
                       </p>
-                      <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                        {searchTerm ? 'Try adjusting your search' : 'Generate your first receipt to get started'}
-                      </p>
+                      <button 
+                        onClick={() => {
+                          setEditingReceipt(null);
+                          resetForm();
+                          setReceiptForm(prev => ({
+                            ...prev,
+                            receiptNumber: generateReceiptNumber()
+                          }));
+                          setShowCreateModal(true);
+                        }}
+                        className="px-4 py-2 bg-[#003366] text-white rounded-lg hover:bg-[#002244] transition-colors mt-4"
+                      >
+                        Create Your First Receipt
+                      </button>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredReceipts.map((receipt) => (
-                  <tr key={receipt._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                  <tr key={receipt._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors`}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {receipt.receiptNumber || 'N/A'}
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <Receipt size={20} className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                         </div>
-                        <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {new Date(receipt.receiptDate || receipt.createdAt).toLocaleDateString()}
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                            {receipt.receiptNumber || 'N/A'}
+                            <button
+                              onClick={() => copyReceiptNumber(receipt.receiptNumber)}
+                              className="ml-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                              title="Copy receipt number"
+                            >
+                              <Copy size={12} className={copiedReceipt === receipt.receiptNumber ? 'text-green-500' : 'text-gray-400'} />
+                            </button>
+                          </div>
+                          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 
+                             receipt.createdAt ? new Date(receipt.createdAt).toLocaleDateString() : 'N/A'}
+                          </div>
                         </div>
                       </div>
                     </td>
+                    
                     <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -1035,15 +1628,27 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         </div>
                       </div>
                     </td>
+                    
                     <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm text-gray-600 dark:text-gray-400">
                       {receipt.invoiceNumber || 'N/A'}
                     </td>
+                    
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         Ksh {formatPrice(receipt.total || 0)}
                       </div>
+                      <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Paid: Ksh {formatPrice(receipt.amountPaid || 0)}
+                      </div>
                     </td>
+                    
                     <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                        {receipt.paymentMethod?.replace('_', ' ') || 'cash'}
+                      </div>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         receipt.status === 'paid' 
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -1051,11 +1656,18 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                           ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                           : receipt.status === 'refunded'
                           ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          : receipt.status === 'partially_paid'
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                           : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                       }`}>
-                        {receipt.status?.toUpperCase() || 'ISSUED'}
+                        {receipt.status === 'paid' ? <><CheckCircle size={12} className="mr-1" /> Paid</> :
+                         receipt.status === 'issued' ? <><Clock size={12} className="mr-1" /> Issued</> :
+                         receipt.status === 'refunded' ? <><AlertCircle size={12} className="mr-1" /> Refunded</> :
+                         receipt.status === 'partially_paid' ? <><CreditCard size={12} className="mr-1" /> Partial</> :
+                         <><Receipt size={12} className="mr-1" /> {receipt.status}</>}
                       </span>
                     </td>
+                    
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-1">
                         <button
@@ -1065,31 +1677,30 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         >
                           <Eye size={16} />
                         </button>
-                        <button
-                          onClick={() => previewPDF(receipt)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'} transition-colors`}
-                          title="Preview PDF"
-                        >
-                          <FileDown size={16} />
-                        </button>
+                        
                         <button
                           onClick={() => exportReceiptPDF(receipt)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-purple-400 hover:bg-gray-600' : 'text-purple-600 hover:bg-gray-100'} transition-colors`}
-                          title="Export PDF"
+                          className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'} transition-colors`}
+                          title="Download PDF"
                         >
                           <Download size={16} />
                         </button>
-                        {/* ✅ UPDATED: Now uses backend API */}
+                        
                         <button
                           onClick={() => sendReceiptToClient(receipt)}
                           disabled={sendingReceipt === receipt._id}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
+                          className={`p-2 rounded-lg flex items-center justify-center w-8 h-8 ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} transition-colors ${
                             sendingReceipt === receipt._id ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
-                          title="Send to Client (Email)"
+                          title="Send via Email"
                         >
-                          <Send size={16} /> {/* ✅ Use Send icon */}
+                          {sendingReceipt === receipt._id ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <Send size={16} />
+                          )}
                         </button>
+                        
                         <button
                           onClick={() => editReceipt(receipt)}
                           className={`p-2 rounded-lg ${darkMode ? 'text-yellow-400 hover:bg-gray-600' : 'text-yellow-600 hover:bg-gray-100'} transition-colors`}
@@ -1097,6 +1708,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         >
                           <Edit size={16} />
                         </button>
+                        
                         <button
                           onClick={() => deleteReceipt(receipt._id)}
                           className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-gray-100'} transition-colors`}
@@ -1113,7 +1725,8 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </table>
         </div>
       </div>
-      {/* ALL MODALS REMAIN EXACTLY AS BEFORE (UNCHANGED) */}
+
+      {/* Create/Edit Receipt Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
@@ -1134,12 +1747,12 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 </button>
               </div>
             </div>
+            
             <div className="p-6 space-y-6">
-              {/* ... rest of create/edit modal ... */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Receipt Number
+                    Receipt Number *
                   </label>
                   <input
                     type="text"
@@ -1148,8 +1761,10 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     onChange={handleInputChange}
                     placeholder="Auto-generated if empty"
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                    required
                   />
                 </div>
+                
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Invoice Number
@@ -1163,6 +1778,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                   />
                 </div>
+                
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Customer Name *
@@ -1176,6 +1792,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     required
                   />
                 </div>
+                
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Customer Email *
@@ -1189,6 +1806,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     required
                   />
                 </div>
+                
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Customer Phone
@@ -1201,6 +1819,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                   />
                 </div>
+                
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Customer Address
@@ -1214,6 +1833,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                   />
                 </div>
+                
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Receipt Date *
@@ -1227,6 +1847,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     required
                   />
                 </div>
+                
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Payment Date *
@@ -1240,6 +1861,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     required
                   />
                 </div>
+                
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Payment Method
@@ -1250,14 +1872,15 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     onChange={handleInputChange}
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                   >
-                    <option value="cash">Cash</option>
-                    <option value="card">Card</option>
-                    <option value="bank_transfer">Bank Transfer</option>
                     <option value="mobile_money">Mobile Money</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="cash">Cash</option>
+                    <option value="card">Credit/Debit Card</option>
                     <option value="cheque">Cheque</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
+                
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Payment Reference
@@ -1272,6 +1895,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   />
                 </div>
               </div>
+              
               {/* Plan Information */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
@@ -1315,6 +1939,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   />
                 </div>
               </div>
+              
               {/* Receipt Items */}
               <div>
                 <div className="flex justify-between items-center mb-4">
@@ -1386,6 +2011,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   ))}
                 </div>
               </div>
+              
               {/* Financial Summary */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div>
@@ -1448,6 +2074,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   />
                 </div>
               </div>
+              
               {/* Totals Display */}
               <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -1471,6 +2098,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   </div>
                 </div>
               </div>
+              
               {/* Notes and Terms */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -1500,6 +2128,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   ></textarea>
                 </div>
               </div>
+              
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   onClick={() => {
@@ -1522,6 +2151,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
+
       {/* Invoice Search Modal */}
       {showInvoiceSearch && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1610,6 +2240,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
+
       {/* Receipt Details Modal */}
       {showReceiptModal && selectedReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1631,33 +2262,39 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Customer Information</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    <strong>Name:</strong> {selectedReceipt.customerName || 'N/A'}<br/>
-                    <strong>Email:</strong> {selectedReceipt.customerEmail || 'N/A'}<br/>
-                    <strong>Phone:</strong> {selectedReceipt.customerPhone || 'N/A'}<br/>
-                    <strong>Address:</strong> {selectedReceipt.customerLocation || selectedReceipt.customerAddress || 'N/A'}
-                  </p>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <strong>Name:</strong> {selectedReceipt.customerName || 'N/A'}<br/>
+                      <strong>Email:</strong> {selectedReceipt.customerEmail || 'N/A'}<br/>
+                      <strong>Phone:</strong> {selectedReceipt.customerPhone || 'N/A'}<br/>
+                      <strong>Address:</strong> {selectedReceipt.customerLocation || selectedReceipt.customerAddress || 'N/A'}
+                    </p>
+                  </div>
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Receipt Details</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    <strong>Receipt Date:</strong> {selectedReceipt.receiptDate ? new Date(selectedReceipt.receiptDate).toLocaleDateString() : 
-                                                  selectedReceipt.createdAt ? new Date(selectedReceipt.createdAt).toLocaleDateString() : 'N/A'}<br/>
-                    <strong>Payment Date:</strong> {selectedReceipt.paymentDate ? new Date(selectedReceipt.paymentDate).toLocaleDateString() : 'N/A'}<br/>
-                    <strong>Invoice #:</strong> {selectedReceipt.invoiceNumber || 'N/A'}<br/>
-                    <strong>Payment Method:</strong> {selectedReceipt.paymentMethod?.toUpperCase() || 'CASH'}<br/>
-                    <strong>Status:</strong> <span className={`font-semibold ${
-                      selectedReceipt.status === 'paid' ? 'text-green-600' : 
-                      selectedReceipt.status === 'issued' ? 'text-blue-600' : 
-                      'text-gray-600'
-                    }`}>{selectedReceipt.status?.toUpperCase() || 'ISSUED'}</span>
-                  </p>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <strong>Receipt Date:</strong> {selectedReceipt.receiptDate ? new Date(selectedReceipt.receiptDate).toLocaleDateString() : 
+                                                      selectedReceipt.createdAt ? new Date(selectedReceipt.createdAt).toLocaleDateString() : 'N/A'}<br/>
+                      <strong>Payment Date:</strong> {selectedReceipt.paymentDate ? new Date(selectedReceipt.paymentDate).toLocaleDateString() : 'N/A'}<br/>
+                      <strong>Invoice #:</strong> {selectedReceipt.invoiceNumber || 'N/A'}<br/>
+                      <strong>Payment Method:</strong> {selectedReceipt.paymentMethod?.toUpperCase() || 'CASH'}<br/>
+                      <strong>Status:</strong> <span className={`font-semibold ${
+                        selectedReceipt.status === 'paid' ? 'text-green-600' : 
+                        selectedReceipt.status === 'issued' ? 'text-blue-600' : 
+                        selectedReceipt.status === 'partially_paid' ? 'text-yellow-600' :
+                        'text-gray-600'
+                      }`}>{selectedReceipt.status?.toUpperCase() || 'ISSUED'}</span>
+                    </p>
+                  </div>
                 </div>
               </div>
+              
               {(selectedReceipt.planName || selectedReceipt.serviceDescription) && (
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Service Details</h4>
-                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
                     <p className="text-sm">
                       <strong>Plan:</strong> {selectedReceipt.planName || 'N/A'} • {selectedReceipt.planSpeed || 'N/A'}<br/>
                       <strong>Description:</strong> {selectedReceipt.serviceDescription || 'N/A'}
@@ -1665,8 +2302,9 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   </div>
                 </div>
               )}
+              
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Items</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Payment Items</h4>
                 <div className={`border rounded-lg ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
@@ -1714,6 +2352,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   </table>
                 </div>
               </div>
+              
               {selectedReceipt.notes && (
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Notes</h4>
@@ -1722,15 +2361,15 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   </p>
                 </div>
               )}
+              
               <div className="flex flex-wrap gap-3 pt-4">
                 <button
                   onClick={() => exportReceiptPDF(selectedReceipt)}
                   className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
                 >
                   <Download size={16} className="mr-1.5" />
-                  Export PDF
+                  Download PDF
                 </button>
-                {/* ✅ UPDATED: Now uses backend API */}
                 <button
                   onClick={() => sendReceiptToClient(selectedReceipt)}
                   disabled={sendingReceipt === selectedReceipt._id}
@@ -1738,8 +2377,8 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     sendingReceipt === selectedReceipt._id ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
-                  <Send size={16} className="mr-1.5" /> {/* ✅ Use Send icon */}
-                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send to Client'}
+                  <Send size={16} className="mr-1.5" />
+                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send via Email'}
                 </button>
                 <button
                   onClick={() => {
@@ -1756,6 +2395,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           </div>
         </div>
       )}
+
       {/* PDF Preview Modal */}
       {showPDFModal && selectedReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1776,27 +2416,33 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             <div className="p-6">
               <div className={`border-2 border-dashed rounded-lg p-8 ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-white'}`}>
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">RECEIPT</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">RECEIPT PREVIEW</h2>
                   <p className="text-gray-600 dark:text-gray-400">Receipt #: {selectedReceipt.receiptNumber}</p>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-8 mb-6">
                   <div>
-                    <h3 className="font-semibold mb-2">Bill To:</h3>
-                    <p>{selectedReceipt.customerName}</p>
-                    <p>{selectedReceipt.customerEmail}</p>
-                    <p>{selectedReceipt.customerPhone}</p>
-                    <p>{selectedReceipt.customerLocation || selectedReceipt.customerAddress}</p>
+                    <h3 className="font-semibold mb-2">Customer Information:</h3>
+                    <p className="text-sm">{selectedReceipt.customerName}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{selectedReceipt.customerEmail}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{selectedReceipt.customerPhone}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{selectedReceipt.customerLocation || selectedReceipt.customerAddress}</p>
                   </div>
                   <div className="text-right">
-                    <p><strong>Date:</strong> {selectedReceipt.receiptDate ? new Date(selectedReceipt.receiptDate).toLocaleDateString() : 
-                                            selectedReceipt.createdAt ? new Date(selectedReceipt.createdAt).toLocaleDateString() : 'N/A'}</p>
-                    <p><strong>Payment Date:</strong> {selectedReceipt.paymentDate ? new Date(selectedReceipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
-                    <p><strong>Status:</strong> {selectedReceipt.status}</p>
+                    <p className="text-sm"><strong>Date:</strong> {selectedReceipt.receiptDate ? new Date(selectedReceipt.receiptDate).toLocaleDateString() : 
+                                                    selectedReceipt.createdAt ? new Date(selectedReceipt.createdAt).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-sm"><strong>Payment Date:</strong> {selectedReceipt.paymentDate ? new Date(selectedReceipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-sm"><strong>Status:</strong> <span className={`font-semibold ${
+                      selectedReceipt.status === 'paid' ? 'text-green-600' : 
+                      selectedReceipt.status === 'issued' ? 'text-yellow-600' : 
+                      'text-gray-600'
+                    }`}>{selectedReceipt.status?.toUpperCase()}</span></p>
                     {selectedReceipt.planName && (
-                      <p><strong>Plan:</strong> {selectedReceipt.planName} • {selectedReceipt.planSpeed}</p>
+                      <p className="text-sm"><strong>Plan:</strong> {selectedReceipt.planName} • {selectedReceipt.planSpeed}</p>
                     )}
                   </div>
                 </div>
+                
                 <table className="w-full mb-6">
                   <thead>
                     <tr className={`border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
@@ -1814,10 +2460,10 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       amount: selectedReceipt.planPrice || selectedReceipt.total || 0 
                     }]).map((item, index) => (
                       <tr key={index} className={`border-b ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}>
-                        <td className="py-2">{item.description}</td>
-                        <td className="text-center py-2">{item.quantity || 1}</td>
-                        <td className="text-right py-2">Ksh {formatPrice(item.unitPrice || item.amount)}</td>
-                        <td className="text-right py-2">Ksh {formatPrice(item.amount)}</td>
+                        <td className="py-2 text-sm">{item.description}</td>
+                        <td className="text-center py-2 text-sm">{item.quantity || 1}</td>
+                        <td className="text-right py-2 text-sm">Ksh {formatPrice(item.unitPrice || item.amount)}</td>
+                        <td className="text-right py-2 text-sm">Ksh {formatPrice(item.amount)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1846,18 +2492,21 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     )}
                   </tfoot>
                 </table>
+                
                 {selectedReceipt.notes && (
                   <div className={`mt-4 p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                     <p className="text-sm font-semibold mb-1">Notes:</p>
                     <p className="text-sm">{selectedReceipt.notes}</p>
                   </div>
                 )}
+                
                 <div className={`mt-8 p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                   <p className="text-sm text-center">
                     Thank you for your business!
                   </p>
                 </div>
               </div>
+              
               <div className="flex justify-center space-x-4 mt-6">
                 <button
                   onClick={() => exportReceiptPDF(selectedReceipt)}
@@ -1866,7 +2515,6 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   <Download size={16} className="mr-1.5" />
                   Download PDF
                 </button>
-                {/* ✅ UPDATED: Now uses backend API */}
                 <button
                   onClick={() => sendReceiptToClient(selectedReceipt)}
                   disabled={sendingReceipt === selectedReceipt._id}
@@ -1874,8 +2522,8 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     sendingReceipt === selectedReceipt._id ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
-                  <Send size={16} className="mr-1.5" /> {/* ✅ Use Send icon */}
-                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send to Client'}
+                  <Send size={16} className="mr-1.5" />
+                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send via Email'}
                 </button>
               </div>
             </div>
@@ -1885,4 +2533,5 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     </div>
   );
 };
+
 export default ReceiptManager;

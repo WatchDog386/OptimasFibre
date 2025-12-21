@@ -1,57 +1,53 @@
-// backend/src/routes/invoiceRoutes.js - COMPLETELY UPDATED & FIXED FOR RESEND EMAIL
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
 import {
-    // Basic CRUD Operations
+    // CRUD
     createInvoice,
     getInvoices,
     getInvoiceById,
     updateInvoice,
     deleteInvoice,
 
-    // Status Management
+    // Status
     updateInvoiceStatus,
-    markInvoiceAsPaid, // This function handles marking as paid
+    markInvoiceAsPaid,
     markInvoiceAsOverdue,
 
-    // Customer Operations
+    // Customer
     getCustomerInvoices,
     checkExistingActiveInvoices,
 
-    // Notifications & Communication
+    // Email
     sendInvoiceToCustomer,
     resendInvoiceNotifications,
-    sendConnectionRequestToOwner,
+    testEmailSetup,
 
-    // Export & Download
+    // PDF / Export
     exportInvoicePDF,
     exportInvoicesExcel,
     downloadInvoiceAttachment,
 
-    // Statistics & Analytics
+    // Analytics
     getInvoiceStats,
     getInvoiceAnalytics,
     getRevenueReports,
 
-    // Search & Filtering
+    // Search
     searchInvoices,
     getInvoicesByDateRange,
     getInvoicesByStatus,
 
-    // Bulk Operations
+    // Bulk
     bulkUpdateInvoices,
     bulkDeleteInvoices,
     bulkSendInvoices,
 
-    // System Operations
+    // System
     getInvoiceTemplates,
     validateInvoiceData,
     cleanupInvoices,
 
-    // ✅ EMAIL FUNCTIONS - NOW USING RESEND VIA emailService
-    testEmailSetup, // ✅ ADDED for /test-email route
-
-    // Temporary Cleanup Routes
+    // Debug
     removeInvoiceNumberIndex,
     checkIndexes,
     getSystemStatus
@@ -59,139 +55,133 @@ import {
 
 const router = express.Router();
 
-// =========================================================
-// 📊 PUBLIC ROUTES (Customer Facing)
-// =========================================================
+/* =========================================================
+   🧪 HARD DEBUG – MUST RESPOND OR ROUTER IS NOT LOADED
+========================================================= */
+router.get('/__router_alive', (req, res) => {
+    res.json({
+        success: true,
+        message: '✅ invoiceRoutes.js is ACTIVE',
+        time: new Date().toISOString()
+    });
+});
 
-// Create invoice
+/* =========================================================
+   🌍 PUBLIC ROUTES (NO AUTH)
+========================================================= */
 router.post('/', createInvoice);
-
-// GET invoices for a specific customer
 router.get('/customer/:email', getCustomerInvoices);
-
-// Check active invoices
 router.get('/check/existing', checkExistingActiveInvoices);
-
-// Validate before creation
 router.post('/validate', validateInvoiceData);
 
-// Connection request
-router.post('/:id/send-connection-request', sendConnectionRequestToOwner);
+/* =========================================================
+   🔐 PROTECTED ROUTES
+========================================================= */
+router.use(protect);
 
-// =========================================================
-// 🔐 PROTECTED ROUTES (Admin/Staff)
-// =========================================================
+/* =========================================================
+   📄 PDF & EXPORT (ABSOLUTE PRIORITY)
+   MUST COME BEFORE ANY :id ROUTES
+========================================================= */
+router.get('/export/excel', exportInvoicesExcel);
 
-// Search, filtering, pagination
-router.get('/', protect, getInvoices);
-router.get('/search/advanced', protect, searchInvoices);
-router.get('/status/:status', protect, getInvoicesByStatus);
-router.get('/date-range/:startDate/:endDate', protect, getInvoicesByDateRange);
+/**
+ * 🔥 THIS IS THE ROUTE YOUR FRONTEND CALLS
+ * GET /api/invoices/:id/pdf
+ */
+router.get('/:id/pdf', exportInvoicePDF);
 
-// Update & Status
-router.put('/:id', protect, updateInvoice);
-router.patch('/:id/status', protect, updateInvoiceStatus);
+/**
+ * Legacy / fallback support
+ */
+router.get('/:id/export/pdf', exportInvoicePDF);
+router.get('/:id/download', downloadInvoiceAttachment);
 
-// =========================================================
-// 🔥 FIXED: ADD BOTH ENDPOINTS FOR MARKING PAID
-// Your previous backend used /mark-paid
-// Your frontend calls /paid
-// Now BOTH work.
-// =========================================================
+/* =========================================================
+   🔍 SEARCH & FILTER
+========================================================= */
+router.get('/', getInvoices);
+router.get('/search/advanced', searchInvoices);
+router.get('/status/:status', getInvoicesByStatus);
+router.get('/date-range/:startDate/:endDate', getInvoicesByDateRange);
 
-// ✔ Existing backend route
-router.patch('/:id/mark-paid', protect, markInvoiceAsPaid);
+/* =========================================================
+   📧 EMAIL
+========================================================= */
+router.post('/test-email', testEmailSetup);
+router.post('/:id/send', sendInvoiceToCustomer);
+router.post('/:id/resend', resendInvoiceNotifications);
 
-// ✔ Added for frontend compatibility (fixes your 404 error)
-router.patch('/:id/paid', protect, markInvoiceAsPaid);
+/* =========================================================
+   🧾 STATUS
+========================================================= */
+router.patch('/:id/status', updateInvoiceStatus);
+router.patch('/:id/paid', markInvoiceAsPaid);
+router.patch('/:id/mark-paid', markInvoiceAsPaid);
+router.patch('/:id/mark-overdue', markInvoiceAsOverdue);
 
-// Mark invoice as overdue
-router.patch('/:id/mark-overdue', protect, markInvoiceAsOverdue);
+/* =========================================================
+   📦 BULK
+========================================================= */
+router.patch('/bulk/update', bulkUpdateInvoices);
+router.delete('/bulk/delete', bulkDeleteInvoices);
+router.post('/bulk/send', bulkSendInvoices);
 
-// ✅ CRITICAL: Add test-email route (fixes 404 on dashboard load)
-router.post('/test-email', protect, testEmailSetup);
+/* =========================================================
+   📊 ANALYTICS
+========================================================= */
+router.get('/stats/summary', getInvoiceStats);
+router.get('/analytics/advanced', getInvoiceAnalytics);
+router.get('/reports/revenue', getRevenueReports);
 
-// ✅ SEND INVOICE VIA RESEND (PDF + EMAIL)
-router.post('/:id/send', protect, sendInvoiceToCustomer);
+/* =========================================================
+   ⚙️ SYSTEM
+========================================================= */
+router.get('/templates/available', getInvoiceTemplates);
+router.post('/cleanup/old-invoices', cleanupInvoices);
 
-// Resend notifications
-router.post('/:id/resend', protect, resendInvoiceNotifications);
-
-// Export & Downloads
-router.get('/export/excel', protect, exportInvoicesExcel);
-router.get('/:id/export/pdf', protect, exportInvoicePDF);
-router.get('/:id/download', protect, downloadInvoiceAttachment);
-
-// Bulk operations
-router.patch('/bulk/update', protect, bulkUpdateInvoices);
-router.delete('/bulk/delete', protect, bulkDeleteInvoices);
-router.post('/bulk/send', protect, bulkSendInvoices);
-
-// Statistics & analytics
-router.get('/stats/summary', protect, getInvoiceStats);
-router.get('/analytics/advanced', protect, getInvoiceAnalytics);
-router.get('/reports/revenue', protect, getRevenueReports);
-
-// Templates & cleanup
-router.get('/templates/available', protect, getInvoiceTemplates);
-router.post('/cleanup/old-invoices', protect, cleanupInvoices);
-
-// Debug + maintenance
+/* =========================================================
+   🧪 DEBUG / MAINTENANCE
+========================================================= */
 router.delete('/cleanup/remove-invoiceNumber-index', removeInvoiceNumberIndex);
 router.get('/cleanup/check-indexes', checkIndexes);
 router.get('/cleanup/system-status', getSystemStatus);
 
-// =========================================================
-// ⚠️ PLACE /:id ROUTES AT THE END
-// =========================================================
-
-// MUST BE LAST among invoice routes
+/* =========================================================
+   🧾 SINGLE INVOICE (ALWAYS LAST)
+========================================================= */
 router.get('/:id', getInvoiceById);
-router.delete('/:id', protect, deleteInvoice);
+router.put('/:id', updateInvoice);
+router.delete('/:id', deleteInvoice);
 
-// =========================================================
-// 🔍 DEBUG ROUTES
-// =========================================================
+/* =========================================================
+   ❤️ HEALTH
+========================================================= */
 router.get('/health/status', (req, res) => {
     res.json({
         success: true,
-        message: '✅ Invoice system healthy (Resend email ready)',
-        timestamp: new Date().toISOString(),
-        version: '2.1.0',
-        emailProvider: 'Resend API'
+        message: 'Invoice API healthy',
+        emailProvider: 'Resend',
+        pdf: {
+            primary: '/api/invoices/:id/pdf',
+            legacy: '/api/invoices/:id/export/pdf'
+        },
+        timestamp: new Date().toISOString()
     });
 });
 
-router.get('/routes/info', (req, res) => {
-    res.json({
-        message: 'Optimas Fibre Invoice API',
-        version: '2.1.0',
-        endpoints: {
-            testEmail: 'POST /api/invoices/test-email',
-            sendInvoice: 'POST /api/invoices/:id/send',
-            markPaid: ['PATCH /api/invoices/:id/paid', 'PATCH /api/invoices/:id/mark-paid']
-        }
-    });
-});
-
-// =========================================================
-// 🎯 EXPRESS 404 CATCH-ALL
-// =========================================================
+/* =========================================================
+   ❌ 404 (LAST – DO NOT MOVE)
+========================================================= */
 router.use((req, res) => {
     res.status(404).json({
         success: false,
         message: '❌ Invoice API endpoint not found',
-        requested: { method: req.method, path: req.originalUrl },
-        available: [
-            'GET /', 
-            'POST /', 
-            'GET /:id', 
-            'PUT /:id', 
-            'DELETE /:id',
-            'PATCH /:id/paid',
-            'POST /:id/send',
-            'POST /test-email'
-        ]
+        requested: {
+            method: req.method,
+            path: req.originalUrl
+        },
+        hint: 'If /__router_alive fails, this router is not mounted'
     });
 });
 

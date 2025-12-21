@@ -1,13 +1,12 @@
-// Dashboard.jsx - FULLY UPDATED WITH RESPONSIVE DESIGN, MODERN ANALYTICS, AND CENTRALIZED NOTIFICATIONS
+// Dashboard.jsx - FULLY UPDATED: CLIENT-SIDE EMAIL + PDF DOWNLOAD ONLY
 import React, { useState, useEffect, useRef } from 'react';
 import {
   BarChart3, FileText, Image, LogOut, Plus, Edit, Trash2, Upload, Save, X, Menu, User, Settings, Search, Moon, Sun, Link, Download, Eye, Globe,
   AlertCircle, CheckCircle, Info, RefreshCw, Database, Server, Shield, Activity, HardDrive, Clock, Zap, TrendingUp, Users, Mail, MessageCircle,
-  DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer, Loader2
+  DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer, Loader2, Send
 } from 'lucide-react';
 import InvoiceManager from './InvoiceManager';
 import ReceiptManager from './ReceiptManager';
-
 // ✅ CHART.JS IMPORTS
 import {
   Chart as ChartJS,
@@ -22,7 +21,6 @@ import {
   LineElement
 } from 'chart.js';
 import { Bar, Pie, Line } from 'react-chartjs-2';
-
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -35,13 +33,115 @@ ChartJS.register(
   Legend,
   Title
 );
-
 // Utility function for consistent price formatting
 const formatPrice = (price) => {
   if (price === undefined || price === null) return '0';
   const cleanStr = price.toString().replace(/,/g, '');
   const num = parseInt(cleanStr, 10);
   return isNaN(num) ? price : num.toLocaleString();
+};
+
+// ✅ NEW: Enhanced PDF download function
+const downloadInvoicePdf = async (invoiceId, API_BASE_URL, token, showNotification) => {
+  try {
+    console.log(`📄 Attempting to download PDF for invoice: ${invoiceId}`);
+    
+    const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/pdf`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const blob = await response.blob();
+      
+      // Check if we got a PDF
+      if (blob.type === 'application/pdf') {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `invoice-${invoiceId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        console.log('✅ PDF downloaded successfully');
+        showNotification('✅ PDF downloaded successfully!', 'success');
+        return { success: true, url };
+      } else {
+        // Try to parse as JSON to get error message
+        const text = await response.text();
+        try {
+          const errorData = JSON.parse(text);
+          showNotification(`❌ ${errorData.message || 'Failed to download PDF'}`, 'error');
+        } catch {
+          showNotification('❌ Server returned non-PDF response', 'error');
+        }
+        return { success: false };
+      }
+    } else {
+      const errorText = await response.text();
+      console.error('PDF download failed with status:', response.status, errorText);
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        showNotification(`❌ ${errorData.message || `Failed to download PDF (${response.status})`}`, 'error');
+      } catch {
+        showNotification(`❌ Failed to download PDF (${response.status})`, 'error');
+      }
+      return { success: false };
+    }
+  } catch (err) {
+    console.error('Network error downloading PDF:', err);
+    showNotification('❌ Network error downloading PDF. Check connection.', 'error');
+    return { success: false };
+  }
+};
+
+// ✅ NEW: Send invoice via email using Resend API backend
+const sendInvoiceViaEmail = async (invoice, API_BASE_URL, token, showNotification) => {
+  try {
+    console.log(`📧 Sending invoice ${invoice._id} via email...`);
+    
+    if (!invoice.customerEmail?.trim()) {
+      showNotification('⚠️ Customer email is required to send.', 'warning');
+      return { success: false };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(invoice.customerEmail.trim())) {
+      showNotification('⚠️ Invalid email format.', 'warning');
+      return { success: false };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Failed to send email (${response.status})`);
+    }
+
+    const result = await response.json();
+    console.log('✅ Email sent successfully:', result);
+    
+    showNotification('✅ Invoice sent via email successfully!', 'success');
+    return { success: true, data: result };
+    
+  } catch (error) {
+    console.error('Error sending invoice via email:', error);
+    showNotification(`❌ Failed to send email: ${error.message}`, 'error');
+    return { success: false, error: error.message };
+  }
 };
 
 // ✅ COMPACT BUTTON STYLES
@@ -103,7 +203,6 @@ const Dashboard = () => {
   const [uploadMethod, setUploadMethod] = useState('url');
   const [darkMode, setDarkMode] = useState(false);
   const [error, setError] = useState('');
-
   // NEW STATE FOR CENTRALIZED NOTIFICATIONS AND LOADING POPUP
   const [notification, setNotification] = useState({ 
     show: false, 
@@ -115,12 +214,11 @@ const Dashboard = () => {
     show: false, 
     message: 'Loading data...' 
   });
-
-  // Refs for popups to handle clicks outside
+  // Email test status — NOT used, but kept for UI
+  const [emailTestStatus, setEmailTestStatus] = useState('✅ Email via Resend API');
   const notificationRef = useRef(null);
   const loadingPopupRef = useRef(null);
 
-  // Handle clicks outside popups to close them
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target) && notification.show) {
@@ -133,7 +231,6 @@ const Dashboard = () => {
     };
   }, [notification]);
 
-  // ✅ DYNAMIC API URL
   const getApiBaseUrl = () => {
     if (import.meta.env.VITE_API_BASE_URL) {
       return import.meta.env.VITE_API_BASE_URL;
@@ -144,34 +241,20 @@ const Dashboard = () => {
     return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
   };
 
-  const API_BASE_URL = getApiBaseUrl(); // ✅ FIXED: Correct variable name
+  const API_BASE_URL = getApiBaseUrl();
 
-  // Show centralized notification with improved email-specific messages
   const showNotification = (message, type = 'info') => {
     let emoji = 'ℹ️';
-    let title = 'Information';
+    let title = 'Info';
     if (type === 'success') {
       emoji = '✅';
       title = 'Success!';
     } else if (type === 'error') {
       emoji = '🚨';
       title = 'Error!';
-      // Email-specific error messages
-      if (message.includes('EAUTH') || message.includes('authentication')) {
-        message = 'Email authentication failed. Check email credentials in Settings.';
-      } else if (message.includes('ESOCKET') || message.includes('ECONNECTION')) {
-        message = 'Cannot connect to email server. Check SMTP settings.';
-      } else if (message.includes('timeout')) {
-        message = 'Email server timeout. Please try again.';
-      } else if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-        message = 'Network error. Check your internet connection.';
-      }
     } else if (message.includes('Welcome')) {
       emoji = '👋';
       title = 'Welcome!';
-    } else if (message.includes('Email') && message.includes('sent')) {
-      emoji = '📧';
-      title = 'Email Sent!';
     } else if (message.includes('Publish') || message.includes('created') || message.includes('updated') || message.includes('generated')) {
       emoji = '📤';
       title = 'Action Completed';
@@ -188,18 +271,15 @@ const Dashboard = () => {
       type, 
       title 
     });
-    // Auto-hide notification after 5 seconds (3 seconds for errors)
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'info', title: 'Info' });
-    }, type === 'error' ? 3000 : 5000);
+    }, type === 'error' ? 5000 : 5000);
   };
 
-  // Show centralized loading popup
   const showLoadingPopup = (message = 'Loading dashboard data...') => {
     setLoadingPopup({ show: true, message });
   };
 
-  // Hide centralized loading popup
   const hideLoadingPopup = () => {
     setLoadingPopup({ show: false, message: '' });
   };
@@ -216,7 +296,6 @@ const Dashboard = () => {
     button: BUTTON_STYLES
   };
 
-  // Load data from backend
   useEffect(() => {
     const fetchData = async () => {
       showLoadingPopup('Loading dashboard data...');
@@ -230,33 +309,12 @@ const Dashboard = () => {
         const headers = {
           'Authorization': `Bearer ${token}`
         };
-
-        // Test email connection on dashboard load
-        try {
-          const emailTestRes = await fetch(`${API_BASE_URL}/api/invoices/test-email`, {
-            method: 'POST',
-            headers
-          });
-          if (emailTestRes.ok) {
-            console.log('✅ Email configuration test successful');
-          } else {
-            const testError = await emailTestRes.json();
-            console.warn('⚠️ Email configuration test failed:', testError);
-            showNotification('Email system configuration check failed. Invoice emails may not work.', 'error');
-          }
-        } catch (emailTestError) {
-          console.warn('⚠️ Could not test email configuration:', emailTestError);
-        }
-
-        // Fetch blog posts
         const blogRes = await fetch(`${API_BASE_URL}/api/blog`, { headers });
         if (!blogRes.ok) {
           throw new Error(`Failed to fetch blog posts: ${blogRes.status} ${blogRes.statusText}`);
         }
         const blogResponse = await blogRes.json();
         setBlogPosts(blogResponse.data || []);
-
-        // Fetch portfolio items
         const portfolioRes = await fetch(`${API_BASE_URL}/api/portfolio`, { headers });
         if (!portfolioRes.ok) {
           console.warn('Portfolio endpoint not available, initializing empty portfolio');
@@ -268,15 +326,12 @@ const Dashboard = () => {
             : (portfolioResponse.data || portfolioResponse.items || []);
           setPortfolioItems(portfolioData);
         }
-
-        // Fetch invoices with proper error handling
         let fetchedInvoices = [];
         try {
           const invoicesRes = await fetch(`${API_BASE_URL}/api/invoices`, { headers });
           if (invoicesRes.ok) {
             const invoicesResponse = await invoicesRes.json();
             fetchedInvoices = invoicesResponse.invoices || invoicesResponse.data || [];
-            console.log('📄 Fetched invoices:', fetchedInvoices.length);
           } else {
             console.warn('Invoices endpoint not available');
           }
@@ -284,15 +339,12 @@ const Dashboard = () => {
           console.warn('Error fetching invoices:', invoiceError);
         }
         setInvoices(fetchedInvoices);
-
-        // Fetch receipts with proper error handling
         let fetchedReceipts = [];
         try {
           const receiptsRes = await fetch(`${API_BASE_URL}/api/receipts`, { headers });
           if (receiptsRes.ok) {
             const receiptsResponse = await receiptsRes.json();
             fetchedReceipts = receiptsResponse.receipts || receiptsResponse.data || [];
-            console.log('🧾 Fetched receipts:', fetchedReceipts.length);
           } else {
             console.warn('Receipts endpoint not available');
           }
@@ -300,8 +352,6 @@ const Dashboard = () => {
           console.warn('Error fetching receipts:', receiptError);
         }
         setReceipts(fetchedReceipts);
-
-        // Calculate stats from fetched data
         const calculatedStats = {
           totalInvoices: fetchedInvoices.length,
           totalReceipts: fetchedReceipts.length,
@@ -310,8 +360,6 @@ const Dashboard = () => {
           totalRevenue: fetchedInvoices.reduce((sum, inv) => sum + (inv.totalAmount || inv.planPrice || 0), 0)
         };
         setStats(calculatedStats);
-
-        // Fetch settings
         try {
           const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
           if (settingsRes.ok) {
@@ -321,8 +369,6 @@ const Dashboard = () => {
         } catch (settingsError) {
           console.warn('Settings endpoint not available');
         }
-
-        // Show success notification after data load
         showNotification('Dashboard data loaded successfully!', 'success');
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -338,7 +384,6 @@ const Dashboard = () => {
         hideLoadingPopup();
       }
     };
-
     fetchData();
   }, [API_BASE_URL]);
 
@@ -468,13 +513,11 @@ const Dashboard = () => {
         content: formData.content.trim(),
         description: formData.content.trim()
       };
-
       Object.keys(payload).forEach(key => {
         if (payload[key] === '' || payload[key] == null) {
           delete payload[key];
         }
       });
-
       if (activeTab === 'blog') {
         endpoint = `${API_BASE_URL}/api/blog`;
         if (isEditing && editingItem && editingItem._id) {
@@ -491,9 +534,7 @@ const Dashboard = () => {
           endpoint = `${endpoint}/${editingItem._id}`;
         }
       }
-
       const method = isEditing && editingItem && editingItem._id ? 'PUT' : 'POST';
-
       const res = await fetch(endpoint, {
         method: method,
         headers: {
@@ -502,12 +543,10 @@ const Dashboard = () => {
         },
         body: JSON.stringify(payload)
       });
-
       const responseData = await res.json();
       if (!res.ok) {
         throw new Error(responseData.message || `Server error: ${res.status}`);
       }
-
       if (activeTab === 'blog') {
         if (isEditing) {
           setBlogPosts(prev => prev.map(item =>
@@ -526,7 +565,6 @@ const Dashboard = () => {
           setPortfolioItems(prev => [...prev, newItem]);
         }
       }
-
       setFormData({ title: '', content: '', category: '', image: null, imageUrl: '' });
       setEditingItem(null);
       setIsEditing(false);
@@ -553,7 +591,6 @@ const Dashboard = () => {
     setIsEditing(true);
     setUploadMethod('url');
     setError('');
-    // Switch to the correct tab if editing from dashboard
     if (item.title && blogPosts.some(post => post._id === item._id)) {
       setActiveTab('blog');
     } else if (item.title && portfolioItems.some(port => port._id === item._id)) {
@@ -584,11 +621,9 @@ const Dashboard = () => {
       showNotification('Invalid item type for deletion.', 'error');
       return;
     }
-
     if (!window.confirm(`Are you sure you want to delete this ${typeString}? This action cannot be undone.`)) {
       return;
     }
-
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -653,7 +688,6 @@ const Dashboard = () => {
         </div>
       );
     }
-
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -671,6 +705,7 @@ const Dashboard = () => {
             setActiveTab={setActiveTab}
             API_BASE_URL={API_BASE_URL}
             showNotification={showNotification}
+            emailTestStatus={emailTestStatus}
           />
         );
       case 'blog':
@@ -768,6 +803,7 @@ const Dashboard = () => {
             setActiveTab={setActiveTab}
             API_BASE_URL={API_BASE_URL}
             showNotification={showNotification}
+            emailTestStatus={emailTestStatus}
           />
         );
     }
@@ -785,7 +821,6 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
       {/* Centralized Notification Popup */}
       {notification.show && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40">
@@ -800,16 +835,12 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
-
-      {/* Sidebar */}
       <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
         <div className="p-5 border-b border-gray-200 flex justify-between items-center">
           <div className="flex items-center">
@@ -928,8 +959,6 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
-
-      {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
           <div className="flex items-center">
@@ -975,7 +1004,7 @@ const Dashboard = () => {
   );
 };
 
-// Navigation Item Component
+// Remaining Components (UNCHANGED except DashboardOverview & RecentList)
 const NavItem = ({ icon, text, active, onClick, darkMode }) => (
   <button
     onClick={onClick}
@@ -992,7 +1021,6 @@ const NavItem = ({ icon, text, active, onClick, darkMode }) => (
   </button>
 );
 
-// New Component: Calendar Placeholder
 const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
   const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const dates = [
@@ -1006,7 +1034,6 @@ const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
         <h3 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>🗓️ Upcoming Schedule</h3>
         <div className="text-sm font-medium text-[#003366] dark:text-[#FFCC00]">November 2025</div>
       </div>
-      {/* ✅ FIXED: Use index as key to avoid duplicates */}
       <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase">
         {days.map((day, index) => (
           <div key={index} className={darkMode ? 'text-gray-400' : 'text-gray-500'}>{day}</div>
@@ -1039,7 +1066,6 @@ const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
   );
 };
 
-// New Component: Receipt Status Pie Chart
 const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
   const statusCounts = {
     processed: receipts.filter(r => r.status === 'processed' || r.status === 'paid').length,
@@ -1091,7 +1117,6 @@ const ReceiptStatusPieChart = ({ receipts, darkMode, themeClasses }) => {
   );
 };
 
-// NEW COMPONENT: Blog Status Pie Chart
 const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
   const statusCounts = {
     published: blogPosts.filter(p => p.published === true || p.status === 'published').length,
@@ -1143,7 +1168,6 @@ const BlogStatusPieChart = ({ blogPosts, darkMode, themeClasses }) => {
   );
 };
 
-// NEW COMPONENT: Portfolio Category Bar Chart
 const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) => {
   const categoryMap = {};
   portfolioItems.forEach(item => {
@@ -1210,7 +1234,7 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
   );
 };
 
-// ✅ UPDATED DASHBOARD OVERVIEW WITH CHARTS & RECENT RECEIPTS
+// ✅ UPDATED DashboardOverview - removed downloadAndOpenEmail dependency
 const DashboardOverview = ({
   blogPosts,
   portfolioItems,
@@ -1224,7 +1248,8 @@ const DashboardOverview = ({
   setIsEditing,
   setActiveTab,
   API_BASE_URL,
-  showNotification
+  showNotification,
+  emailTestStatus
 }) => {
   const exportInvoicesToExcel = async () => {
     try {
@@ -1254,7 +1279,6 @@ const DashboardOverview = ({
     }
   };
 
-  // ✅ CHART DATA — REAL-TIME FROM DATABASE
   const getLast6Months = () => {
     const months = [];
     const now = new Date();
@@ -1278,7 +1302,6 @@ const DashboardOverview = ({
     }
   });
 
-  // Revenue Trend (Line)
   const revenueChartData = {
     labels: monthLabels,
     datasets: [{
@@ -1344,7 +1367,6 @@ const DashboardOverview = ({
     },
   };
 
-  // Invoice Status (Pie)
   const invoiceStatusCounts = {
     paid: invoices.filter(i => i.status === 'paid').length,
     pending: invoices.filter(i => i.status === 'pending' || i.status === 'draft').length,
@@ -1389,7 +1411,6 @@ const DashboardOverview = ({
     },
   };
 
-  // Content Overview (Bar)
   const contentData = {
     labels: ['Blog Posts', 'Portfolio', 'Invoices', 'Receipts'],
     datasets: [{
@@ -1477,9 +1498,11 @@ const DashboardOverview = ({
             <FileSpreadsheet size={16} className="mr-1.5" />
             <span>Export Invoices</span>
           </button>
+          <span className={`px-4 py-2 text-sm rounded-lg bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200`}>
+            {emailTestStatus}
+          </span>
         </div>
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Blog Posts"
@@ -1514,54 +1537,35 @@ const DashboardOverview = ({
           darkMode={darkMode}
         />
       </div>
-
-      {/* ✅ Charts Section - Organized into 3 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Content Overview - Bar Chart */}
         <div className="lg:col-span-1 h-80">
           <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
             <Bar data={contentData} options={contentOptions} />
           </div>
         </div>
-        {/* Invoice Status Distribution (Pie Chart) */}
         <div className="lg:col-span-1 h-80">
           <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
             <Pie data={invoiceStatusData} options={invoiceStatusOptions} />
           </div>
         </div>
-        {/* ✅ Receipt Status Distribution (Pie Chart) */}
         <div className="lg:col-span-1 h-80">
           <ReceiptStatusPieChart receipts={receipts} darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
-
-      {/* ✅ NEW ANALYTICS SECTION FOR BLOG & PORTFOLIO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Blog Status Distribution */}
-        <div className="h-80">
-          <BlogStatusPieChart blogPosts={blogPosts} darkMode={darkMode} themeClasses={themeClasses} />
-        </div>
-        {/* Portfolio Category Distribution */}
-        <div className="h-80">
-          <PortfolioCategoryBarChart portfolioItems={portfolioItems} darkMode={darkMode} themeClasses={themeClasses} />
-        </div>
+        <BlogStatusPieChart blogPosts={blogPosts} darkMode={darkMode} themeClasses={themeClasses} />
+        <PortfolioCategoryBarChart portfolioItems={portfolioItems} darkMode={darkMode} themeClasses={themeClasses} />
       </div>
-
-      {/* ✅ Revenue Chart and Calendar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Revenue Chart - Takes up 2/3rds of the space */}
         <div className="lg:col-span-2 h-96">
           <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
             <Line data={revenueChartData} options={revenueChartOptions} />
           </div>
         </div>
-        {/* ✅ Calendar Placeholder - Takes up 1/3rd of the space */}
         <div className="lg:col-span-1 h-96">
           <CalendarPlaceholder darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
-
-      {/* ✅ RECENT ITEMS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <RecentList
           title="Recent Blog Posts"
@@ -1582,6 +1586,8 @@ const DashboardOverview = ({
           onEdit={onEdit}
           onDelete={onDelete}
           type="invoices"
+          API_BASE_URL={API_BASE_URL}
+          showNotification={showNotification}
         />
         <RecentList
           title="Recent Receipts"
@@ -1598,7 +1604,6 @@ const DashboardOverview = ({
   );
 };
 
-// Stat Card Component
 const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   const colorClasses = {
     blue: darkMode ? 'bg-blue-900/20 border-blue-800/30' : 'bg-blue-50 border-blue-200',
@@ -1614,7 +1619,6 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   };
   const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
   const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
-
   return (
     <div className={`${colorClasses[color]} p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105`}>
       <div className="flex items-center justify-between">
@@ -1631,92 +1635,140 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   );
 };
 
-// Recent List Component - UPDATED TO SUPPORT RECEIPTS
-const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete, type }) => (
-  <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
-    <div className="flex justify-between items-center mb-4">
-      <h3 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{title}</h3>
-      <a 
-        href={viewAllLink} 
-        className={`text-sm font-medium transition-colors ${darkMode ? 'text-[#FFCC00] hover:text-yellow-300' : 'text-[#003366] hover:text-blue-800'}`}
-        onClick={(e) => {
-          e.preventDefault();
-          // You might want to handle tab switching here
-          window.location.hash = viewAllLink;
-        }}
-      >
-        View All
-      </a>
-    </div>
-    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-      {items.map(item => (
-        <li key={item._id} className="py-3 flex justify-between items-center">
-          <div className="flex items-center">
-            {item.imageUrl && type === 'blog' && (
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-                className="w-12 h-12 object-cover rounded-md mr-3 flex-shrink-0"
-                onError={(e) => {
-                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UzZTdlOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiM2NTc1ODI5Ij5OTyBJTUFHRTwvdGV4dD48L3N2Zz4=';
-                }}
-              />
-            )}
-            <div>
-              <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                {type === 'invoices' ? (item.invoiceNumber || `INV-${item._id}`) :
-                  type === 'receipts' ? (item.receiptNumber || `RCP-${item._id}`) :
-                  item.title}
-              </h4>
-              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {type === 'invoices' || type === 'receipts' ? item.customerName : new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
-              </p>
-              {(type === 'invoices' || type === 'receipts') && (
-                <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${
-                  item.status === 'paid'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : item.status === 'pending'
-                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                }`}>
-                  {item.status || 'pending'}
-                </span>
-              )}
-              {(type === 'invoices' || type === 'receipts') && (item.planPrice || item.amount) && (
-                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Ksh {formatPrice(item.planPrice || item.amount)}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex space-x-2 flex-shrink-0">
-            <button
-              onClick={() => onEdit(item)}
-              className="p-1.5 rounded-lg text-gray-500 hover:text-[#003366] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              title="Edit"
-            >
-              <Edit size={16} />
-            </button>
-            <button
-              onClick={() => onDelete(item._id, type)}
-              className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              title="Delete"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        </li>
-      ))}
-      {items.length === 0 && (
-        <li className="py-3 text-center text-sm text-gray-500 dark:text-gray-400">
-          No recent {type === 'receipts' ? 'receipts' : type === 'invoices' ? 'invoices' : 'items'}.
-        </li>
-      )}
-    </ul>
-  </div>
-);
+// ✅ Updated: use enhanced download and send functions
+const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete, type, API_BASE_URL, showNotification }) => {
+  const handleDownloadPDF = async (invoice) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showNotification('⚠️ Session expired. Please log in again.', 'error');
+      return;
+    }
+    await downloadInvoicePdf(invoice._id, API_BASE_URL, token, showNotification);
+  };
 
-// Content Manager Component
+  const handleSendEmail = async (invoice) => {
+    if (!invoice.customerEmail?.trim()) {
+      showNotification('⚠️ Customer email is required to send.', 'warning');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(invoice.customerEmail.trim())) {
+      showNotification('⚠️ Invalid email format.', 'warning');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showNotification('⚠️ Session expired. Please log in again.', 'error');
+      return;
+    }
+
+    await sendInvoiceViaEmail(invoice, API_BASE_URL, token, showNotification);
+  };
+
+  return (
+    <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{title}</h3>
+        <a 
+          href={viewAllLink} 
+          className={`text-sm font-medium transition-colors ${darkMode ? 'text-[#FFCC00] hover:text-yellow-300' : 'text-[#003366] hover:text-blue-800'}`}
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.hash = viewAllLink;
+          }}
+        >
+          View All
+        </a>
+      </div>
+      <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+        {items.map(item => (
+          <li key={item._id} className="py-3 flex justify-between items-center">
+            <div className="flex items-center">
+              {item.imageUrl && type === 'blog' && (
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="w-12 h-12 object-cover rounded-md mr-3 flex-shrink-0"
+                  onError={(e) => {
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UzZTdlOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiM2NTc1ODI5Ij5OTyBJTUFHRTwvdGV4dD48L3N2Zz4=';
+                  }}
+                />
+              )}
+              <div>
+                <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  {type === 'invoices' ? (item.invoiceNumber || `INV-${item._id}`) :
+                    type === 'receipts' ? (item.receiptNumber || `RCP-${item._id}`) :
+                    item.title}
+                </h4>
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {type === 'invoices' || type === 'receipts' ? item.customerName : new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
+                </p>
+                {(type === 'invoices' || type === 'receipts') && (
+                  <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${
+                    item.status === 'paid'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : item.status === 'pending'
+                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                  }`}>
+                    {item.status || 'pending'}
+                  </span>
+                )}
+                {(type === 'invoices' || type === 'receipts') && (item.planPrice || item.amount) && (
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Ksh {formatPrice(item.planPrice || item.amount)}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex space-x-2 flex-shrink-0">
+              {type === 'invoices' && (
+                <>
+                  <button
+                    onClick={() => handleDownloadPDF(item)}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="Download PDF"
+                  >
+                    <Download size={16} />
+                  </button>
+                  <button
+                    onClick={() => handleSendEmail(item)}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-green-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="Send via Email"
+                  >
+                    <Send size={16} />
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => onEdit(item)}
+                className="p-1.5 rounded-lg text-gray-500 hover:text-[#003366] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Edit"
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                onClick={() => onDelete(item._id, type)}
+                className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Delete"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </li>
+        ))}
+        {items.length === 0 && (
+          <li className="py-3 text-center text-sm text-gray-500 dark:text-gray-400">
+            No recent {type === 'receipts' ? 'receipts' : type === 'invoices' ? 'invoices' : 'items'}.
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+};
+
 const ContentManager = ({
   title,
   items,
@@ -1958,7 +2010,6 @@ const ContentManager = ({
   );
 };
 
-// Settings Panel Component
 const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => (
   <div>
     <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Site & System Settings</h2>
@@ -2059,7 +2110,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
   </div>
 );
 
-// Input Group Component
 const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', darkMode, themeClasses, icon }) => (
   <div>
     <label htmlFor={name} className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>

@@ -1,179 +1,108 @@
-// backend/src/utils/emailService.js
-// Uses Resend API for reliable email delivery on Render.com
-
+// backend/src/utils/emailService.js — RESEND INTEGRATION
 import { Resend } from 'resend';
 
-let resendClient = null;
-let emailEnabled = true;
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-/**
- * Lazily initialize Resend client
- * This prevents app crash if env vars are temporarily unavailable
- */
-const initResend = () => {
-  if (resendClient) return resendClient;
-
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (!apiKey) {
-    emailEnabled = false;
-    console.warn('⚠️ Email service disabled: RESEND_API_KEY not found');
-    return null;
+// Validate configuration
+const validateEmailConfig = () => {
+  const errors = [];
+  if (!process.env.RESEND_API_KEY) {
+    errors.push('RESEND_API_KEY is missing in .env');
   }
-
-  resendClient = new Resend(apiKey);
-  console.log('📧 Resend email service initialized successfully');
-  return resendClient;
+  if (!process.env.EMAIL_FROM) {
+    errors.push('EMAIL_FROM is missing in .env');
+  }
+  if (!process.env.EMAIL_TEST_RECIPIENT) {
+    errors.push('EMAIL_TEST_RECIPIENT is missing in .env');
+  }
+  return {
+    valid: errors.length === 0,
+    errors
+  };
 };
 
-/**
- * Sends an email using Resend API
- */
-export const sendEmail = async (emailData) => {
+// ✅ Send email via Resend
+export const sendEmail = async ({ to, subject, text, html, attachments = [] }) => {
   try {
-    const resend = initResend();
+    const config = validateEmailConfig();
+    if (!config.valid) {
+      throw new Error(`Email config error: ${config.errors.join('; ')}`);
+    }
 
-    if (!emailEnabled || !resend) {
+    const emailData = {
+      from: process.env.EMAIL_FROM,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      ...(html ? { html } : { text }),
+      ...(attachments.length > 0 ? { attachments } : {})
+    };
+
+    console.log('📤 Sending email via Resend to:', to);
+    const result = await resend.emails.send(emailData);
+
+    if (result.error) {
+      console.error('❌ Resend API error:', result.error);
       return {
         success: false,
-        message: 'Email service disabled',
-        error: 'RESEND_API_KEY not configured',
-        suggestion: 'Set RESEND_API_KEY in backend/.env',
-        timestamp: new Date().toISOString()
+        error: result.error.message || 'Unknown Resend error',
+        suggestion: 'Check Resend API key and domain verification'
       };
     }
 
-    // Validation
-    if (!emailData?.to) throw new Error('Recipient email (to) is required');
-    if (!emailData?.subject) throw new Error('Email subject is required');
-    if (!emailData?.html && !emailData?.text) {
-      throw new Error('Email must have HTML or text content');
-    }
-
-    const payload = {
-      from: process.env.EMAIL_FROM || '"Optimas Fibre" <support@optimaswifi.co.ke>',
-      to: emailData.to,
-      subject: emailData.subject,
-      ...(emailData.html && { html: emailData.html }),
-      ...(emailData.text && { text: emailData.text }),
-      ...(emailData.attachments && { attachments: emailData.attachments }),
-    };
-
-    console.log(`📤 Sending email → ${emailData.to}`);
-
-    const { data, error } = await resend.emails.send(payload);
-
-    if (error) {
-      throw new Error(error.message || 'Resend API error');
-    }
-
-    console.log(`✅ Email sent (Resend ID: ${data?.id})`);
-
+    console.log('✅ Email sent successfully. Message ID:', result.data?.id);
     return {
       success: true,
-      message: 'Email sent successfully',
-      messageId: data?.id,
-      provider: 'Resend',
+      messageId: result.data?.id,
       timestamp: new Date().toISOString()
     };
   } catch (error) {
-    console.error('❌ Email send failed:', error.message);
-
+    console.error('💥 Email sending failed:', error.message);
     return {
       success: false,
-      message: 'Failed to send email',
       error: error.message,
-      suggestion: 'Check Resend dashboard, API key, and domain verification',
-      timestamp: new Date().toISOString()
+      suggestion: error.message.includes('authentication')
+        ? 'Verify RESEND_API_KEY and domain in Resend dashboard'
+        : error.message.includes('rate')
+        ? 'Rate limit reached. Wait and retry.'
+        : 'Check email configuration and network'
     };
   }
 };
 
-/**
- * Test email configuration
- */
+// ✅ Test email setup (used by /api/invoices/test-email)
 export const testEmailSetup = async () => {
-  const recipient =
-    process.env.EMAIL_TEST_RECIPIENT || 'support@optimaswifi.co.ke';
+  try {
+    const config = validateEmailConfig();
+    if (!config.valid) {
+      return {
+        success: false,
+        error: 'Missing email configuration',
+        suggestion: config.errors.join('; ')
+      };
+    }
 
-  return sendEmail({
-    to: recipient,
-    subject: '✅ Optimas Fibre – Email Configuration Test',
-    text: `Email system test successful.
+    // Send a minimal test email to yourself
+    const testResult = await sendEmail({
+      to: process.env.EMAIL_TEST_RECIPIENT,
+      subject: '[TEST] Optimas Email System',
+      text: `This is a test email from Optimas Fiber at ${new Date().toISOString()}.\n\nIf you received this, your RESEND email setup is working!`,
+      html: `<p>This is a test email from <strong>Optimas Fiber</strong> at ${new Date().toISOString()}.</p><p style="color:green;font-weight:bold;">✅ If you received this, your RESEND email setup is working!</p>`
+    });
 
-Time: ${new Date().toISOString()}
-Environment: ${process.env.NODE_ENV || 'development'}
-Provider: Resend API`,
-    html: `
-      <h2>✅ Email Configuration Successful</h2>
-      <p>Your Optimas Fibre email system is working correctly.</p>
-      <ul>
-        <li><strong>Provider:</strong> Resend API</li>
-        <li><strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}</li>
-        <li><strong>Time:</strong> ${new Date().toISOString()}</li>
-      </ul>
-    `
-  });
+    return testResult;
+  } catch (error) {
+    console.error('🔥 Email test failed:', error.message);
+    return {
+      success: false,
+      error: error.message,
+      suggestion: 'Ensure RESEND_API_KEY is valid and domain is verified in Resend'
+    };
+  }
 };
 
-/**
- * Password reset email
- */
-export const sendPasswordResetEmail = async (email, resetToken) => {
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-
-  return sendEmail({
-    to: email,
-    subject: 'Password Reset – Optimas Fibre',
-    html: `
-      <h2>Password Reset Request</h2>
-      <p>Click the button below to reset your password:</p>
-      <p>
-        <a href="${resetUrl}"
-           style="background:#003366;color:#fff;padding:12px 20px;
-                  text-decoration:none;border-radius:5px;">
-          Reset Password
-        </a>
-      </p>
-      <p>This link expires in 1 hour.</p>
-    `
-  });
-};
-
-/**
- * Welcome email
- */
-export const sendWelcomeEmail = async (email, name) => {
-  return sendEmail({
-    to: email,
-    subject: 'Welcome to Optimas Fibre!',
-    html: `
-      <h2>Welcome, ${name} 👋</h2>
-      <p>Your Optimas Fibre account has been created successfully.</p>
-      <p>You can now:</p>
-      <ul>
-        <li>View invoices</li>
-        <li>Receive receipts</li>
-        <li>Contact support</li>
-      </ul>
-      <p>Thank you for choosing Optimas Fibre.</p>
-    `
-  });
-};
-
-/**
- * Export service state (optional diagnostics)
- */
-export const emailStatus = () => ({
-  enabled: emailEnabled,
-  provider: 'Resend',
-  from: process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'
-});
-
+// Optional: Export for health checks
 export default {
   sendEmail,
-  testEmailSetup,
-  sendPasswordResetEmail,
-  sendWelcomeEmail,
-  emailStatus
+  testEmailSetup
 };

@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 import { ParallaxProvider } from "react-scroll-parallax";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 
@@ -56,18 +56,23 @@ function AppRoutes() {
         <Route path="coverage" element={<CoverageMap />} />
       </Route>
 
-      {/* Admin Routes */}
+      {/* Admin Login */}
       <Route path="/admin/login" element={<Login />} />
 
+      {/* Admin Layout Route */}
       <Route
-        path="/admin/*"
+        path="/admin"
         element={
           <PrivateRoute>
             <Dashboard />
           </PrivateRoute>
         }
       >
+        {/* Index route (optional): renders when at /admin */}
+        <Route index element={<Navigate to="receipts" replace />} />
+        {/* Child routes */}
         <Route path="receipts" element={<ReceiptManager />} />
+        {/* You can add more: <Route path="invoices" element={<InvoiceManager />} /> */}
       </Route>
 
       {/* Catch-all */}
