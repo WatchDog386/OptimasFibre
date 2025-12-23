@@ -1,4 +1,4 @@
-// InvoiceManager.jsx - UPDATED VERSION
+// InvoiceManager.jsx - UPDATED VERSION WITH IMPROVED EMAIL ATTACHMENT FLOW
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   FileText, 
@@ -36,7 +36,13 @@ import {
   Building,
   Phone,
   MapPin,
-  Globe
+  Globe,
+  Share2,
+  Smartphone,
+  QrCode,
+  Link,
+  Paperclip,
+  FolderOpen
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -44,7 +50,7 @@ import {
   LineChart, Line, ReferenceLine
 } from 'recharts';
 
-// ✅ CLIENT-SIDE PDF GENERATION
+// ✅ ENHANCED CLIENT-SIDE PDF GENERATION
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -109,8 +115,74 @@ const initialFormState = {
   billingCycle: 'monthly'
 };
 
-// ✅ UPGRADED: ENHANCED PDF GENERATOR WITH BETTER LAYOUT
-const generateInvoicePDF = async (invoice, showNotification) => {
+// ✅ HELPER: Create attachment guidance for email
+const createAttachmentGuide = (fileName) => {
+  return `
+    <div style="background:#e8f4fd; border:2px solid #2196f3; border-radius:10px; padding:20px; margin:25px 0; font-family:Arial,sans-serif;">
+      <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+        <div style="width:40px; height:40px; background:#2196f3; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+          📎
+        </div>
+        <div>
+          <h4 style="margin:0 0 5px 0; font-size:18px; color:#1565c0; font-weight:bold;">ATTACHMENT REQUIRED</h4>
+          <p style="margin:0; font-size:14px; color:#333;">Please attach the invoice PDF before sending this email</p>
+        </div>
+      </div>
+      
+      <div style="background:white; border-radius:8px; padding:15px; margin-bottom:15px; border:1px solid #ddd;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:14px; font-weight:600; color:#333;">File to attach:</span>
+          <span style="font-size:12px; color:#2196f3; background:#e3f2fd; padding:3px 8px; border-radius:4px;">
+            Downloaded to your device
+          </span>
+        </div>
+        <div style="background:#f8f9fa; padding:12px 15px; border-radius:6px; border:2px dashed #ccc; font-family:'Courier New',monospace; font-size:14px; color:#333; display:flex; align-items:center; gap:10px;">
+          <span style="color:#2196f3; font-size:16px;">📄</span>
+          <span style="font-weight:600;">${fileName}</span>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:#666;">
+          <strong>Location:</strong> Your browser's Downloads folder
+        </div>
+      </div>
+      
+      <div style="background:#f0f7ff; border-radius:8px; padding:15px;">
+        <h5 style="margin:0 0 10px 0; font-size:14px; color:#1565c0;">Quick Attachment Steps:</h5>
+        <ol style="margin:0; padding-left:20px; font-size:13px; color:#444; line-height:1.6;">
+          <li>Click the <strong>"Attach"</strong> or <strong>"📎"</strong> button in your email client</li>
+          <li>Navigate to your <strong>Downloads</strong> folder</li>
+          <li>Select the file: <code style="background:#e9ecef; padding:2px 6px; border-radius:3px; font-family:monospace;">${fileName}</code></li>
+          <li>Click <strong>"Open"</strong> or <strong>"Choose"</strong></li>
+          <li>Verify the attachment appears in your email</li>
+          <li>Click <strong>"Send"</strong> to deliver the invoice</li>
+        </ol>
+      </div>
+      
+      <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc; font-size:12px; color:#777; text-align:center;">
+        The PDF file has been automatically saved to your device. If you can't find it, check your Downloads folder.
+      </div>
+    </div>
+  `;
+};
+
+// ✅ UPDATED: OFFLINE PDF GENERATOR WITH EMAIL ATTACHMENT FLOW
+const generateInvoicePDF = async (invoice, showNotification, includeShareOptions = false) => {
+  // Create a unique invoice ID for offline storage
+  const invoiceId = invoice._id || `local-inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  // ✅ Save invoice to localStorage for offline access
+  try {
+    const savedInvoices = JSON.parse(localStorage.getItem('localInvoices') || '{}');
+    savedInvoices[invoiceId] = {
+      ...invoice,
+      _id: invoiceId,
+      savedAt: new Date().toISOString(),
+      isLocal: true
+    };
+    localStorage.setItem('localInvoices', JSON.stringify(savedInvoices));
+  } catch (e) {
+    console.log('Local storage save skipped:', e);
+  }
+
   const printContainer = document.createElement('div');
   printContainer.style.position = 'absolute';
   printContainer.style.left = '-10000px';
@@ -120,6 +192,27 @@ const generateInvoicePDF = async (invoice, showNotification) => {
   printContainer.style.padding = '40px';
   printContainer.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
   printContainer.style.color = '#333';
+
+  // ✅ Add QR Code for mobile payments
+  const qrCodeSection = includeShareOptions ? `
+    <div style="margin:20px 0; padding:15px; background:#f8f9fa; border-radius:8px; border-left:4px solid #28a745;">
+      <div style="display:flex; align-items:center; gap:15px;">
+        <div style="width:80px; height:80px; background:#e9ecef; display:flex; align-items:center; justify-content:center; border-radius:6px; font-size:12px; color:#666;">
+          [QR Code]
+        </div>
+        <div>
+          <h4 style="margin:0 0 8px 0; font-size:14px; font-weight:600; color:#333;">Quick Pay via M-Pesa</h4>
+          <p style="margin:0 0 5px 0; font-size:12px; color:#555;">
+            <strong>Paybill:</strong> ${COMPANY_INFO.paybill}
+          </p>
+          <p style="margin:0 0 5px 0; font-size:12px; color:#555;">
+            <strong>Account:</strong> ${invoice.invoiceNumber || 'Your Name'}
+          </p>
+          <p style="margin:0; font-size:11px; color:#777;">Scan or share this invoice for quick payment</p>
+        </div>
+      </div>
+    </div>
+  ` : '';
 
   const logo = COMPANY_INFO.logoUrl 
     ? `<img src="${COMPANY_INFO.logoUrl}" alt="Logo" style="height:70px; margin-bottom:10px;" onerror="this.style.display='none'" />` 
@@ -169,8 +262,12 @@ const generateInvoicePDF = async (invoice, showNotification) => {
         <div style="text-align:right;">
           <h2 style="margin:0 0 10px 0; font-size:32px; color:#003366; font-weight:800;">INVOICE</h2>
           ${statusBadge}
+          <p style="margin:5px 0 0 0; font-size:11px; color:#999;">Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
         </div>
       </div>
+
+      <!-- QR Code Section (optional) -->
+      ${qrCodeSection}
 
       <!-- Company & Customer Info -->
       <div style="display:flex; justify-content:space-between; margin-bottom:40px;">
@@ -297,15 +394,25 @@ const generateInvoicePDF = async (invoice, showNotification) => {
         </div>
       </div>
 
-      <!-- Footer -->
+      <!-- Footer with Share Options -->
       <div style="padding-top:20px; border-top:2px solid #f0f0f0; text-align:center; color:#666; font-size:12px;">
+        <div style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;">
+          <button style="padding:6px 12px; background:#003366; color:white; border:none; border-radius:6px; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            Share via WhatsApp
+          </button>
+          <button style="padding:6px 12px; background:#28a745; color:white; border:none; border-radius:6px; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            Email Invoice
+          </button>
+        </div>
         <p style="margin:0 0 10px 0;">Thank you for choosing ${COMPANY_INFO.name}!</p>
         <p style="margin:0; display:flex; justify-content:center; gap:20px;">
           <span>📧 ${COMPANY_INFO.supportEmail}</span>
           <span>📱 ${COMPANY_INFO.supportPhone}</span>
           <span>🌐 ${COMPANY_INFO.website}</span>
         </p>
-        <p style="margin:10px 0 0 0; font-size:11px; color:#999;">This is a computer-generated invoice. No signature required.</p>
+        <p style="margin:10px 0 0 0; font-size:11px; color:#999;">Invoice ID: ${invoiceId} | Generated client-side | No signature required</p>
       </div>
     </div>
   `;
@@ -317,38 +424,118 @@ const generateInvoicePDF = async (invoice, showNotification) => {
       scale: 2, 
       useCORS: true,
       backgroundColor: '#ffffff',
-      logging: false
+      logging: false,
+      onclone: (clonedDoc) => {
+        // Ensure images are loaded
+        const images = clonedDoc.querySelectorAll('img');
+        images.forEach(img => {
+          if (!img.complete) {
+            img.src = img.src;
+          }
+        });
+      }
     });
     
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgWidth = 190; // Slightly smaller for margins
+    const imgWidth = 190;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
+    // Add header
     pdf.setFillColor(0, 51, 102);
-    pdf.rect(0, 0, 210, 20, 'F');
+    pdf.rect(0, 0, 210, 15, 'F');
     pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(16);
-    pdf.text('INVOICE', 105, 12, { align: 'center' });
+    pdf.setFontSize(12);
+    pdf.text('INVOICE', 105, 9, { align: 'center' });
     
-    pdf.addImage(imgData, 'PNG', 10, 25, imgWidth, imgHeight);
+    pdf.addImage(imgData, 'PNG', 10, 20, imgWidth, imgHeight);
     
-    const filename = `Invoice_${invoice.invoiceNumber || invoice._id || Date.now()}_${COMPANY_INFO.name}.pdf`;
+    // Add footer
+    pdf.setFontSize(8);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(`Generated: ${new Date().toLocaleDateString()} | Page 1/1`, 105, 290, { align: 'center' });
+    
+    const filename = `Invoice_${invoice.invoiceNumber || invoice._id || Date.now()}_${COMPANY_INFO.name.replace(/\s+/g, '_')}.pdf`;
+    
+    // ✅ Save the PDF file
     pdf.save(filename);
     
-    showNotification('✅ Professional PDF invoice downloaded successfully!', 'success');
-    return { success: true, filename };
+    showNotification(`✅ PDF saved as "${filename}" in your Downloads folder`, 'success');
+    
+    // Store for potential sharing
+    const invoiceData = {
+      ...invoice,
+      pdfData: imgData.substring(0, 500) + '...', // Truncated for storage
+      generatedAt: new Date().toISOString(),
+      companyInfo: COMPANY_INFO,
+      filename: filename
+    };
+    
+    sessionStorage.setItem(`lastInvoice_${invoiceId}`, JSON.stringify(invoiceData));
+    
+    return { success: true, filename, invoiceId, pdfData: imgData };
   } catch (err) {
     console.error('PDF generation error:', err);
     showNotification('❌ Failed to generate PDF. Please try again.', 'error');
-    return { success: false };
+    return { success: false, error: err.message };
   } finally {
     document.body.removeChild(printContainer);
   }
 };
 
-// ✅ UPDATED: ENHANCED EMAIL CLIENT WITH ALL INVOICE CONTENTS & CC SUPPORT
-const openEmailClient = (invoice, showNotification) => {
+// ✅ NEW: Direct WhatsApp sharing with invoice details
+const shareViaWhatsApp = (invoice, showNotification) => {
+  const message = encodeURIComponent(
+    `📋 *INVOICE NOTIFICATION* 📋\n\n` +
+    `Hello ${invoice.customerName || 'Valued Customer'},\n\n` +
+    `Your invoice #${invoice.invoiceNumber || invoice._id?.substring(0,8)} from ${COMPANY_INFO.name} is ready.\n\n` +
+    `*Amount Due:* Ksh ${formatPrice(invoice.totalAmount)}\n` +
+    `*Due Date:* ${new Date(invoice.dueDate).toLocaleDateString()}\n` +
+    `*Plan:* ${invoice.planName} (${invoice.planSpeed})\n\n` +
+    `*Payment Instructions:*\n` +
+    `Paybill: ${COMPANY_INFO.paybill}\n` +
+    `Account: ${invoice.invoiceNumber || 'Your Name'}\n\n` +
+    `Thank you for choosing ${COMPANY_INFO.name}!\n` +
+    `Need help? Call ${COMPANY_INFO.supportPhone}`
+  );
+  
+  const whatsappUrl = `https://wa.me/${invoice.customerPhone?.replace(/\D/g, '') || ''}?text=${message}`;
+  
+  if (invoice.customerPhone) {
+    window.open(whatsappUrl, '_blank');
+    showNotification('✅ WhatsApp opened with invoice details!', 'success');
+  } else {
+    // Copy to clipboard if no phone
+    navigator.clipboard.writeText(message)
+      .then(() => showNotification('📋 Invoice message copied to clipboard!', 'success'))
+      .catch(() => showNotification('⚠️ Please manually copy the message', 'warning'));
+  }
+};
+
+// ✅ NEW: Share as downloadable link
+const createShareableLink = (invoice, showNotification) => {
+  const invoiceData = {
+    invoice: {
+      ...invoice,
+      companyInfo: COMPANY_INFO,
+      generatedAt: new Date().toISOString()
+    }
+  };
+  
+  // Create a data URL
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(invoiceData));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", `invoice_${invoice.invoiceNumber || invoice._id}.json`);
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+  
+  showNotification('✅ Invoice data exported as JSON file!', 'success');
+};
+
+// ✅ UPDATED: Enhanced Email Client with PDF Attachment Flow
+const openEmailClient = async (invoice, showNotification) => {
   if (!invoice.customerEmail?.trim()) {
     showNotification('⚠️ Customer email is required to send invoice.', 'warning');
     return;
@@ -360,102 +547,148 @@ const openEmailClient = (invoice, showNotification) => {
     return;
   }
 
-  // ✅ Enhanced email subject
+  // ✅ First generate and save the PDF
+  const pdfResult = await generateInvoicePDF(invoice, showNotification, true);
+  
+  if (!pdfResult.success) {
+    showNotification('❌ Failed to prepare PDF for email. Please try again.', 'error');
+    return;
+  }
+
   const subject = `Invoice #${invoice.invoiceNumber || invoice._id?.substring(0,8)} from ${COMPANY_INFO.name}`;
   
-  // ✅ Enhanced email body with ALL invoice contents
+  const fileName = pdfResult.filename;
+  
   const bodyLines = [
     `Dear ${invoice.customerName || 'Valued Customer'},`,
     ``,
-    `We hope this email finds you well. Please find your invoice details below:`,
+    `Please find your invoice #${invoice.invoiceNumber || invoice._id?.substring(0,8)} attached.`,
     ``,
-    `========================================`,
-    `            INVOICE DETAILS`,
-    `========================================`,
-    ``,
-    `📋 **Invoice Information**`,
-    `• Invoice Number: ${invoice.invoiceNumber || 'N/A'}`,
-    `• Invoice Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`,
-    `• Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`,
-    `• Payment Terms: ${invoice.paymentTerms || 'Due upon receipt'}`,
-    `• Status: ${invoice.status.toUpperCase().replace('_', ' ')}`,
-    ``,
-    `👤 **Customer Information**`,
-    `• Name: ${invoice.customerName}`,
-    `• Email: ${invoice.customerEmail}`,
-    `• Phone: ${invoice.customerPhone || 'Not provided'}`,
-    `• Location: ${invoice.customerLocation || 'Not provided'}`,
-    ``,
-    `📦 **Plan Details**`,
-    `• Plan Name: ${invoice.planName || 'N/A'}`,
-    `• Plan Speed: ${invoice.planSpeed || 'N/A'}`,
-    `• Connection Type: ${invoice.connectionType || 'Fiber Optic'}`,
-    `• Billing Cycle: ${invoice.billingCycle || 'Monthly'}`,
-    ``,
-    `🧾 **Invoice Items**`,
-    ...(invoice.items && invoice.items.length > 0 
-      ? invoice.items.map((item, index) => 
-          `• ${item.description || 'Item'}: ${item.quantity || 1} x Ksh ${formatPrice(item.unitPrice || item.amount)} = Ksh ${formatPrice(item.amount)}`
-        )
-      : [`• ${invoice.planName || 'Plan'}: Ksh ${formatPrice(invoice.planPrice || invoice.totalAmount)}`]
-    ),
-    ``,
-    `💰 **Payment Summary**`,
-    `• Subtotal: Ksh ${formatPrice(invoice.subtotal)}`,
-    `• VAT (${invoice.taxRate || 0}%): Ksh ${formatPrice(invoice.taxAmount)}`,
-    `• Discount: Ksh ${formatPrice(invoice.discountType === 'percentage' ? (invoice.subtotal * (invoice.discount || 0) / 100) : (invoice.discount || 0))}`,
+    `**Invoice Summary:**`,
     `• Total Amount: Ksh ${formatPrice(invoice.totalAmount)}`,
-    `• Amount Paid: Ksh ${formatPrice(invoice.amountPaid)}`,
-    `• Balance Due: Ksh ${formatPrice(invoice.balanceDue)}`,
+    `• Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`,
+    `• Plan: ${invoice.planName} (${invoice.planSpeed})`,
     ``,
-    `💳 **Payment Instructions**`,
-    `• Bank Transfer:`,
-    `  - Bank: ${COMPANY_INFO.bankName}`,
-    `  - Account Name: ${COMPANY_INFO.accountName}`,
-    `  - Account Number: ${COMPANY_INFO.accountNumber}`,
-    `  - Branch: ${COMPANY_INFO.branch}`,
+    `**Payment Methods:**`,
+    `1. *Mobile Money:* Paybill ${COMPANY_INFO.paybill}, Account: ${invoice.invoiceNumber}`,
+    `2. *Bank Transfer:* ${COMPANY_INFO.bankName}, A/C: ${COMPANY_INFO.accountNumber}`,
     ``,
-    `• Mobile Money:`,
-    `  - Paybill: ${COMPANY_INFO.paybill}`,
-    `  - Account Number: ${invoice.invoiceNumber || 'Your Name'}`,
-    `  - Please include invoice number as reference`,
+    `**Important:**`,
+    `The invoice PDF has been downloaded to your device.`,
+    `Please attach the file "${fileName}" before sending this email.`,
     ``,
-    `• Payment Methods Accepted: M-Pesa, Airtel Money, Bank Transfer, Credit Card`,
-    ``,
-    `📝 **Notes & Terms**`,
-    `${invoice.notes || 'Thank you for your business!'}`,
-    ``,
-    `${invoice.terms || 'Payment due within 30 days. Late payments may attract a penalty fee of 5% per month.'}`,
-    ``,
-    `========================================`,
-    `            CONTACT INFORMATION`,
-    `========================================`,
-    ``,
-    `For any queries or support, please contact us:`,
-    `• Email: ${COMPANY_INFO.supportEmail}`,
-    `• Phone: ${COMPANY_INFO.supportPhone}`,
-    `• Website: ${COMPANY_INFO.website}`,
-    ``,
-    `Thank you for choosing ${COMPANY_INFO.name}!`,
+    `For any queries, contact us at ${COMPANY_INFO.supportPhone} or ${COMPANY_INFO.supportEmail}`,
     ``,
     `Best regards,`,
     `The ${COMPANY_INFO.name} Team`,
     ``,
     `---`,
-    `This is an automated email. Please do not reply directly to this message.`,
-    `If you need assistance, please contact ${COMPANY_INFO.supportEmail}`
+    `*Note: This email was generated by the ${COMPANY_INFO.name} Invoice System.*`
   ];
 
   const body = encodeURIComponent(bodyLines.join('\n'));
   
-  // ✅ ADD CC: support@optimaswifi.co.ke
+  // ✅ Create mailto link with attachment suggestion in body
   const mailtoLink = `mailto:${encodeURIComponent(invoice.customerEmail.trim())}?cc=${encodeURIComponent(COMPANY_INFO.supportEmail)}&subject=${encodeURIComponent(subject)}&body=${body}`;
   
+  // ✅ Create a visual attachment guide
+  setTimeout(() => {
+    const attachmentGuide = document.createElement('div');
+    attachmentGuide.className = 'fixed bottom-4 right-4 z-50 max-w-sm animate-fade-in-up';
+    attachmentGuide.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-300 dark:border-gray-700 p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Paperclip size={18} class="text-blue-600 dark:text-blue-300" />
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-900 dark:text-white">Attachment Required</h3>
+              <p class="text-xs text-gray-600 dark:text-gray-300">Please attach the PDF before sending</p>
+            </div>
+          </div>
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600 p-1">
+            <X size={16} />
+          </button>
+        </div>
+        
+        <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-2 mb-1">
+            <FileText size={14} class="text-blue-500" />
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">File to attach:</span>
+          </div>
+          <div class="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 rounded">
+            <FileDown size={16} class="text-green-500 flex-shrink-0" />
+            <code class="text-xs font-mono text-gray-800 dark:text-gray-200 truncate">${fileName}</code>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Saved to: <strong>Downloads folder</strong>
+          </p>
+        </div>
+        
+        <div class="mb-4">
+          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Quick Steps:</h4>
+          <ol class="text-xs text-gray-600 dark:text-gray-400 space-y-1 pl-4">
+            <li class="flex items-start gap-2">
+              <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0">1</span>
+              <span>Click <strong>"Attach"</strong> or <strong>📎</strong> in your email</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0">2</span>
+              <span>Go to <strong>Downloads</strong> folder</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0">3</span>
+              <span>Select <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">${fileName}</code></span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0">4</span>
+              <span>Click <strong>"Open"</strong> then <strong>"Send"</strong></span>
+            </li>
+          </ol>
+        </div>
+        
+        <div class="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
+          <button onclick="window.open('${mailtoLink}', '_blank')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1">
+            <Mail size={12} /> Open Email Again
+          </button>
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-xs text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
+            Got it, thanks!
+          </button>
+        </div>
+      </div>
+    `;
+    
+    // Add CSS for animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 0.3s ease-out;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(attachmentGuide);
+    
+    // Auto-remove guide after 20 seconds
+    setTimeout(() => {
+      if (attachmentGuide.parentElement) {
+        attachmentGuide.remove();
+      }
+    }, 20000);
+  }, 500);
+  
+  // ✅ Open the email client
   window.open(mailtoLink, '_blank');
   
   showNotification(
-    `📧 Email client opened with invoice details. CC added to ${COMPANY_INFO.supportEmail}. Please attach the downloaded PDF manually.`,
-    'info'
+    `📧 Email client opened! The PDF "${fileName}" has been saved to your Downloads folder. Please attach it before sending.`,
+    'info',
+    8000
   );
 };
 
@@ -474,6 +707,8 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [invoiceForm, setInvoiceForm] = useState(initialFormState);
   const [whatsappText, setWhatsappText] = useState('');
   const [showPasteModal, setShowPasteModal] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(null);
+  const [generatingPDF, setGeneratingPDF] = useState(null);
 
   const resetForm = () => {
     setInvoiceForm(initialFormState);
@@ -536,6 +771,16 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       }
       const data = await response.json();
       let invoicesData = data.invoices || data.data || [];
+      
+      // ✅ Merge with locally stored invoices
+      try {
+        const localInvoices = JSON.parse(localStorage.getItem('localInvoices') || '{}');
+        const localInvoiceList = Object.values(localInvoices);
+        invoicesData = [...invoicesData, ...localInvoiceList];
+      } catch (e) {
+        console.log('Could not load local invoices:', e);
+      }
+      
       setInvoices(invoicesData);
     } catch (error) {
       console.error('Error fetching invoices:', error);
@@ -561,6 +806,47 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       return match ? Math.max(max, parseInt(match[1])) : max;
     }, 0);
     return `INV-${String(latestNumber + 1).padStart(4, '0')}`;
+  };
+
+  // ✅ NEW: Create offline invoice without backend
+  const createOfflineInvoice = () => {
+    if (!invoiceForm.customerName?.trim() || !invoiceForm.customerEmail?.trim() || !invoiceForm.planName?.trim()) {
+      let missing = [];
+      if (!invoiceForm.customerName?.trim()) missing.push('Customer Name');
+      if (!invoiceForm.customerEmail?.trim()) missing.push('Customer Email');
+      if (!invoiceForm.planName?.trim()) missing.push('Plan Name');
+      showNotification(`⚠️ Missing: ${missing.join(', ')}`, 'warning');
+      return;
+    }
+
+    const invoiceId = `local-inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const offlineInvoice = {
+      ...invoiceForm,
+      _id: invoiceId,
+      invoiceNumber: invoiceForm.invoiceNumber || generateInvoiceNumber(),
+      invoiceDate: new Date(invoiceForm.invoiceDate).toISOString(),
+      dueDate: new Date(invoiceForm.dueDate).toISOString(),
+      createdAt: new Date().toISOString(),
+      isLocal: true,
+      status: invoiceForm.amountPaid >= invoiceForm.totalAmount ? 'paid' : 'pending'
+    };
+
+    // Save to localStorage
+    const savedInvoices = JSON.parse(localStorage.getItem('localInvoices') || '{}');
+    savedInvoices[invoiceId] = offlineInvoice;
+    localStorage.setItem('localInvoices', JSON.stringify(savedInvoices));
+
+    // Update state
+    setInvoices(prev => [...prev, offlineInvoice]);
+    setShowCreateModal(false);
+    resetForm();
+    
+    showNotification('✅ Invoice created offline! PDF can be downloaded.', 'success');
+    
+    // Auto-generate PDF
+    setTimeout(() => {
+      downloadPDFHandler(offlineInvoice);
+    }, 500);
   };
 
   const parseAndPopulateFromWhatsApp = () => {
@@ -683,12 +969,89 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }
   };
 
+  // ✅ UPDATED: Enhanced PDF Download with offline support
+  const downloadPDFHandler = async (invoice) => {
+    if (!invoice) {
+      showNotification('⚠️ Invalid invoice.', 'warning');
+      return;
+    }
+    
+    setGeneratingPDF(invoice._id);
+    try {
+      await generateInvoicePDF(invoice, showNotification, true);
+    } catch (error) {
+      showNotification('❌ Failed to generate PDF. Please try again.', 'error');
+    } finally {
+      setGeneratingPDF(null);
+    }
+  };
+
+  // ✅ NEW: Quick share menu
+  const handleShareInvoice = (invoice) => {
+    setShowShareOptions(invoice._id);
+  };
+
+  // ✅ UPDATED: Enhanced Email Sending with PDF attachment flow
+  const sendInvoiceViaEmailHandler = async (invoice) => {
+    if (!invoice || !invoice.customerEmail?.trim()) {
+      showNotification('⚠️ Customer email is required to send invoice.', 'warning');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(invoice.customerEmail.trim())) {
+      showNotification('⚠️ Invalid email format.', 'warning');
+      return;
+    }
+
+    setSendingInvoice(invoice._id);
+    try {
+      // Show preparing message
+      showNotification('🔄 Preparing invoice PDF for email...', 'info');
+      
+      // Generate PDF first, then open email client
+      const pdfResult = await generateInvoicePDF(invoice, showNotification, true);
+      
+      if (pdfResult.success) {
+        // Wait a moment for file to save, then open email
+        setTimeout(() => {
+          openEmailClient(invoice, showNotification);
+        }, 500);
+      }
+    } catch (error) {
+      showNotification('❌ Failed to prepare email. Please try again.', 'error');
+    } finally {
+      setTimeout(() => setSendingInvoice(null), 2000);
+    }
+  };
+
   const markAsPaid = async (invoiceId) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
       const invoiceToPay = invoices.find(inv => inv._id === invoiceId);
       if (!invoiceToPay) throw new Error('Invoice not found.');
+      
+      // Check if it's a local invoice
+      if (invoiceToPay.isLocal) {
+        // Update local invoice
+        const savedInvoices = JSON.parse(localStorage.getItem('localInvoices') || '{}');
+        if (savedInvoices[invoiceId]) {
+          savedInvoices[invoiceId] = {
+            ...savedInvoices[invoiceId],
+            status: 'paid',
+            amountPaid: invoiceToPay.totalAmount || invoiceToPay.planPrice,
+            balanceDue: 0,
+            paidAt: new Date().toISOString()
+          };
+          localStorage.setItem('localInvoices', JSON.stringify(savedInvoices));
+          setInvoices(prev => prev.map(inv => 
+            inv._id === invoiceId ? savedInvoices[invoiceId] : inv
+          ));
+          showNotification('✅ Invoice marked as paid offline!', 'success');
+        }
+        return;
+      }
+      
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/paid`, {
         method: 'PATCH',
         headers: {
@@ -716,7 +1079,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const createInvoice = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('Authentication session expired.');
+      if (!token) {
+        // No token - create offline
+        createOfflineInvoice();
+        return;
+      }
+      
       if (!invoiceForm.customerName?.trim() || !invoiceForm.customerEmail?.trim() || !invoiceForm.planName?.trim()) {
         let missing = [];
         if (!invoiceForm.customerName?.trim()) missing.push('Customer Name');
@@ -725,6 +1093,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         showNotification(`⚠️ Missing: ${missing.join(', ')}`, 'warning');
         return;
       }
+      
       const invoiceData = {
         ...invoiceForm,
         invoiceNumber: invoiceForm.invoiceNumber || generateInvoiceNumber(),
@@ -739,6 +1108,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
         balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
       };
+      
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         method: 'POST',
         headers: {
@@ -747,6 +1117,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(invoiceData)
       });
+      
       if (response.ok) {
         const newInvoice = await response.json();
         const saved = newInvoice.invoice || newInvoice.data || newInvoice;
@@ -756,19 +1127,24 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         resetForm();
         showNotification('✅ Invoice created!', 'success');
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create invoice');
+        // If backend fails, create offline
+        createOfflineInvoice();
       }
     } catch (error) {
       console.error('Error creating invoice:', error);
-      showNotification(`🚨 Error: ${error.message}`, 'error');
+      // Fallback to offline creation
+      createOfflineInvoice();
     }
   };
 
   const updateInvoice = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('Authentication session expired.');
+      if (!token) {
+        showNotification('⚠️ Cannot update offline invoice.', 'warning');
+        return;
+      }
+      
       if (!invoiceForm.customerName?.trim() || !invoiceForm.customerEmail?.trim() || !invoiceForm.planName?.trim()) {
         let missing = [];
         if (!invoiceForm.customerName?.trim()) missing.push('Customer Name');
@@ -777,6 +1153,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         showNotification(`⚠️ Missing: ${missing.join(', ')}`, 'warning');
         return;
       }
+      
       const invoiceData = {
         ...invoiceForm,
         invoiceDate: new Date(invoiceForm.invoiceDate),
@@ -790,6 +1167,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         amountPaid: parseFloat(invoiceForm.amountPaid) || 0,
         balanceDue: parseFloat(invoiceForm.balanceDue) || 0,
       };
+      
       const response = await fetch(`${API_BASE_URL}/api/invoices/${editingInvoice._id}`, {
         method: 'PUT',
         headers: {
@@ -798,6 +1176,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         },
         body: JSON.stringify(invoiceData)
       });
+      
       if (response.ok) {
         const updatedInvoice = await response.json();
         setInvoices(prev => prev.map(inv => 
@@ -819,13 +1198,28 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
   const deleteInvoice = async (invoiceId) => {
     if (!window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return;
+    
     try {
+      // Check if it's a local invoice
+      const invoiceToDelete = invoices.find(inv => inv._id === invoiceId);
+      if (invoiceToDelete?.isLocal) {
+        // Delete from localStorage
+        const savedInvoices = JSON.parse(localStorage.getItem('localInvoices') || '{}');
+        delete savedInvoices[invoiceId];
+        localStorage.setItem('localInvoices', JSON.stringify(savedInvoices));
+        setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
+        showNotification('✅ Invoice deleted successfully!', 'success');
+        return;
+      }
+      
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Session expired.');
+      
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      
       if (response.ok) {
         setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
         showNotification('✅ Invoice deleted successfully!', 'success');
@@ -839,39 +1233,30 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     }
   };
 
-  // ✅ UPDATED: Enhanced PDF Download
-  const downloadPDFHandler = async (invoice) => {
-    if (!invoice) {
-      showNotification('⚠️ Invalid invoice.', 'warning');
-      return;
-    }
-    await generateInvoicePDF(invoice, showNotification);
-  };
-
-  // ✅ UPDATED: Enhanced Email Sending
-  const sendInvoiceViaEmailHandler = (invoice) => {
-    if (!invoice || !invoice.customerEmail?.trim()) {
-      showNotification('⚠️ Customer email is required to send invoice.', 'warning');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(invoice.customerEmail.trim())) {
-      showNotification('⚠️ Invalid email format.', 'warning');
-      return;
-    }
-
-    setSendingInvoice(invoice._id);
-    setTimeout(() => {
-      setSendingInvoice(null);
-      openEmailClient(invoice, showNotification);
-    }, 300);
-  };
-
   const exportInvoicesToExcel = async () => {
     try {
       setExportLoading(true);
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('Session expired.');
+      if (!token) {
+        // Create offline export
+        const csvContent = "data:text/csv;charset=utf-8," 
+          + "Invoice Number,Customer Name,Email,Plan,Total Amount,Status,Due Date\n"
+          + invoices.map(inv => 
+              `"${inv.invoiceNumber || ''}","${inv.customerName || ''}","${inv.customerEmail || ''}","${inv.planName || ''}","${inv.totalAmount || 0}","${inv.status || ''}","${inv.dueDate || ''}"`
+            ).join("\n");
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `invoices_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showNotification('✅ Invoices exported to CSV successfully!', 'success');
+        return;
+      }
+      
       const response = await fetch(`${API_BASE_URL}/api/invoices/export/excel`, {
         method: 'GET',
         headers: {
@@ -879,10 +1264,12 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           'Content-Type': 'application/json'
         }
       });
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `Failed to export: ${response.status}`);
       }
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -977,7 +1364,8 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     monthlyRevenue: invoices.filter(inv => inv.billingCycle === 'monthly').reduce((sum, inv) => sum + (parseFloat(inv.totalAmount) || parseFloat(inv.planPrice) || 0), 0),
     quarterlyRevenue: invoices.filter(inv => inv.billingCycle === 'quarterly').reduce((sum, inv) => sum + (parseFloat(inv.totalAmount) || parseFloat(inv.planPrice) || 0), 0),
     annualRevenue: invoices.filter(inv => inv.billingCycle === 'annually').reduce((sum, inv) => sum + (parseFloat(inv.totalAmount) || parseFloat(inv.planPrice) || 0), 0),
-    oneTimeRevenue: invoices.filter(inv => inv.billingCycle === 'one_time').reduce((sum, inv) => sum + (parseFloat(inv.totalAmount) || parseFloat(inv.planPrice) || 0), 0)
+    oneTimeRevenue: invoices.filter(inv => inv.billingCycle === 'one_time').reduce((sum, inv) => sum + (parseFloat(inv.totalAmount) || parseFloat(inv.planPrice) || 0), 0),
+    localInvoices: invoices.filter(inv => inv.isLocal).length
   };
 
   const statusData = [
@@ -1024,7 +1412,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             Invoice Management
           </h2>
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Total: {invoices.length} invoices | Total Revenue: Ksh {formatPrice(stats.totalRevenue)}
+            Total: {invoices.length} invoices | Total Revenue: Ksh {formatPrice(stats.totalRevenue)} | Offline: {stats.localInvoices}
           </p>
         </div>
         <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
@@ -1078,6 +1466,9 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             <div>
               <p className="text-sm font-medium">Total Invoices</p>
               <p className="text-2xl font-bold">{stats.totalInvoices}</p>
+              {stats.localInvoices > 0 && (
+                <p className="text-xs text-gray-500">({stats.localInvoices} offline)</p>
+              )}
             </div>
           </div>
         </div>
@@ -1202,6 +1593,9 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {invoice.invoiceNumber || `INV-${invoice._id?.substring(0,4)}`}
+                        {invoice.isLocal && (
+                          <span className="ml-1 px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded">Offline</span>
+                        )}
                       </div>
                       <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
@@ -1266,24 +1660,24 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         </button>
                         <button
                           onClick={() => downloadPDFHandler(invoice)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'}`}
+                          disabled={generatingPDF === invoice._id}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'} ${
+                            generatingPDF === invoice._id ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
                           title="Download PDF"
                         >
-                          <Download size={16} />
-                        </button>
-                        <button
-                          onClick={() => sendInvoiceViaEmailHandler(invoice)}
-                          disabled={sendingInvoice === invoice._id}
-                          className={`p-2 rounded-lg flex items-center justify-center w-8 h-8 ${darkMode ? 'text-green-400 hover:bg-gray-600' : 'text-green-600 hover:bg-gray-100'} ${
-                            sendingInvoice === invoice._id ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
-                          title="Send via Email"
-                        >
-                          {sendingInvoice === invoice._id ? (
+                          {generatingPDF === invoice._id ? (
                             <Loader2 size={16} className="animate-spin" />
                           ) : (
-                            <Send size={16} />
+                            <Download size={16} />
                           )}
+                        </button>
+                        <button
+                          onClick={() => handleShareInvoice(invoice)}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-purple-400 hover:bg-gray-600' : 'text-purple-600 hover:bg-gray-100'}`}
+                          title="Share Invoice"
+                        >
+                          <Share2 size={16} />
                         </button>
                         {invoice.status !== 'paid' && (
                           <button
@@ -1311,61 +1705,75 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         </div>
       </div>
 
-      {/* CHARTS SECTION */}
-      {filteredInvoices.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <div className={`${themeClasses.card} rounded-xl p-4`}>
-            <h3 className="text-lg font-semibold mb-4">Invoice Status Distribution</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [`${value} invoices`, 'Count']} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+      {/* Share Options Popup */}
+      {showShareOptions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-md w-full mx-4`}>
+            <div className="flex justify-between items-center border-b p-4">
+              <h3 className="text-lg font-semibold">Share Invoice</h3>
+              <button onClick={() => setShowShareOptions(null)} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                <X size={20} />
+              </button>
             </div>
-          </div>
-          <div className={`${themeClasses.card} rounded-xl p-4`}>
-            <h3 className="text-lg font-semibold mb-4">Revenue Over Time</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={timeSeriesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#e5e7eb"} />
-                  <XAxis dataKey="date" stroke={darkMode ? "#9ca3af" : "#6b7280"} />
-                  <YAxis stroke={darkMode ? "#9ca3af" : "#6b7280"} />
-                  <Tooltip 
-                    formatter={(value) => [`Ksh ${formatPrice(value)}`, 'Revenue']}
-                    labelStyle={{ color: darkMode ? '#fff' : '#333' }}
-                    contentStyle={{ 
-                      backgroundColor: darkMode ? '#1f2937' : '#fff',
-                      borderColor: darkMode ? '#374151' : '#e5e7eb'
-                    }}
-                  />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="amount" 
-                    stroke="#003366" 
-                    strokeWidth={2}
-                    dot={{ fill: '#003366', r: 4 }}
-                    activeDot={{ r: 6, fill: '#FFCC00' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    const invoice = invoices.find(inv => inv._id === showShareOptions);
+                    if (invoice) {
+                      downloadPDFHandler(invoice);
+                      setShowShareOptions(null);
+                    }
+                  }}
+                  className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex flex-col items-center"
+                >
+                  <Download size={24} className="mb-2 text-blue-500" />
+                  <span className="text-sm font-medium">Download PDF</span>
+                  <span className="text-xs text-gray-500">Professional invoice</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const invoice = invoices.find(inv => inv._id === showShareOptions);
+                    if (invoice) {
+                      sendInvoiceViaEmailHandler(invoice);
+                      setShowShareOptions(null);
+                    }
+                  }}
+                  className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex flex-col items-center"
+                >
+                  <Mail size={24} className="mb-2 text-green-500" />
+                  <span className="text-sm font-medium">Email</span>
+                  <span className="text-xs text-gray-500">Send to customer</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const invoice = invoices.find(inv => inv._id === showShareOptions);
+                    if (invoice) {
+                      shareViaWhatsApp(invoice, showNotification);
+                      setShowShareOptions(null);
+                    }
+                  }}
+                  className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex flex-col items-center"
+                >
+                  <MessageCircle size={24} className="mb-2 text-green-600" />
+                  <span className="text-sm font-medium">WhatsApp</span>
+                  <span className="text-xs text-gray-500">Share via chat</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const invoice = invoices.find(inv => inv._id === showShareOptions);
+                    if (invoice) {
+                      createShareableLink(invoice, showNotification);
+                      setShowShareOptions(null);
+                    }
+                  }}
+                  className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex flex-col items-center"
+                >
+                  <Link size={24} className="mb-2 text-purple-500" />
+                  <span className="text-sm font-medium">Export Data</span>
+                  <span className="text-xs text-gray-500">JSON format</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1570,6 +1978,19 @@ Price: Ksh 2999`}
                   </div>
                 </div>
               </div>
+              
+              {/* Offline Mode Notice */}
+              {!localStorage.getItem('token') && (
+                <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <div className="flex items-center">
+                    <AlertTriangle size={18} className="text-yellow-600 dark:text-yellow-400 mr-2" />
+                    <span className="text-sm text-yellow-700 dark:text-yellow-300">
+                      <strong>Offline Mode:</strong> Invoice will be saved locally and PDF generated client-side.
+                    </span>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex justify-end gap-3 mt-8 pt-4 border-t">
                 <button onClick={() => { setShowCreateModal(false); setEditingInvoice(null); resetForm(); }} className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>Cancel</button>
                 <button onClick={editingInvoice ? updateInvoice : createInvoice} className="px-6 py-2 rounded-lg bg-[#003366] text-white hover:bg-[#002244] transition-colors">
@@ -1649,6 +2070,11 @@ Price: Ksh 2999`}
                 }`}>
                   {selectedInvoice.status.toUpperCase().replace('_', ' ')}
                 </span>
+                {selectedInvoice.isLocal && (
+                  <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                    Offline
+                  </span>
+                )}
               </div>
               <button onClick={() => setShowInvoiceModal(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                 <X size={20} />
@@ -1723,18 +2149,30 @@ Price: Ksh 2999`}
               <div className="mt-6 text-sm text-gray-600 dark:text-gray-400">
                 <p>{selectedInvoice.terms || 'Payment due within 30 days. Late payments may attract a penalty fee of 5% per month.'}</p>
               </div>
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+              <div className="flex flex-wrap justify-end gap-3 mt-6 pt-4 border-t">
                 <button
                   onClick={() => downloadPDFHandler(selectedInvoice)}
-                  className="px-4 py-2 bg-[#003366] text-white rounded-lg hover:bg-[#002244] transition-colors flex items-center"
+                  disabled={generatingPDF === selectedInvoice._id}
+                  className="px-4 py-2 bg-[#003366] text-white rounded-lg hover:bg-[#002244] transition-colors flex items-center disabled:opacity-50"
                 >
-                  <Download size={16} className="mr-2" /> Download PDF
+                  {generatingPDF === selectedInvoice._id ? (
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                  ) : (
+                    <Download size={16} className="mr-2" />
+                  )}
+                  Download PDF
                 </button>
                 <button
                   onClick={() => sendInvoiceViaEmailHandler(selectedInvoice)}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
                 >
-                  <Send size={16} className="mr-2" /> Send via Email
+                  <Mail size={16} className="mr-2" /> Send via Email
+                </button>
+                <button
+                  onClick={() => shareViaWhatsApp(selectedInvoice, showNotification)}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
+                >
+                  <MessageCircle size={16} className="mr-2" /> WhatsApp
                 </button>
               </div>
             </div>
