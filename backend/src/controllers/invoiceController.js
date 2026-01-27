@@ -558,6 +558,140 @@ Contact: ${process.env.EMAIL_FROM} | ${process.env.COMPANY_PHONE}
   }
 };
 
+/**
+ * Send Invoice with PDF from Frontend
+ * Accepts base64 PDF data from frontend and sends via email
+ */
+export const sendInvoiceWithPdf = async (req, res) => {
+  console.log(`📧 Sending invoice ${req.params.id} with frontend PDF...`);
+  try {
+    const { customerEmail, customerName, invoiceNumber, pdfData } = req.body;
+    
+    // Validate required fields
+    if (!customerEmail || !pdfData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Customer email and PDF data are required'
+      });
+    }
+
+    // Convert base64 to buffer if necessary
+    let pdfBuffer;
+    if (typeof pdfData === 'string') {
+      // Remove data:application/pdf;base64, prefix if present
+      const base64Data = pdfData.replace(/^data:application\/pdf;base64,/, '');
+      pdfBuffer = Buffer.from(base64Data, 'base64');
+    } else {
+      pdfBuffer = pdfData;
+    }
+
+    // Verify buffer is valid
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid PDF data'
+      });
+    }
+
+    const subject = `Invoice #${invoiceNumber || 'N/A'} - ${process.env.COMPANY_NAME || 'Optimas Fiber'}`;
+    const text = `
+INVOICE FROM ${process.env.COMPANY_NAME || 'OPTIMAS FIBER'}
+Dear ${customerName || 'Customer'},
+Invoice: ${invoiceNumber || 'N/A'}
+Amount: Ksh 0
+Status: Sent
+PDF attached.
+Payment: M-Pesa Paybill ${process.env.MPESA_PAYBILL || '123456'} or Bank Transfer.
+Contact: ${process.env.EMAIL_FROM} | ${process.env.COMPANY_PHONE}
+    `.trim();
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:#003366;color:white;padding:20px;text-align:center;border-radius:5px 5px 0 0}.content{padding:20px;background:#f9f9f9}.footer{margin-top:30px;padding-top:20px;border-top:1px solid #eee;font-size:12px;color:#666}</style></head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1 style="margin:0;">${process.env.COMPANY_NAME || 'OPTIMAS FIBER'}</h1>
+    <p style="margin:5px 0 0 0;opacity:0.9;">High-Speed Internet Solutions</p>
+  </div>
+  <div class="content">
+    <h2 style="color:#003366;">Invoice #${invoiceNumber || 'N/A'}</h2>
+    <p>Dear <strong>${customerName || 'Customer'}</strong>,</p>
+    <p style="color:#28a745;font-weight:bold;">✅ Your invoice PDF is attached.</p>
+    <h3 style="color:#003366;margin-top:25px;">Payment Methods:</h3>
+    <ul style="background:#f8f9fa;padding:15px;border-radius:5px;">
+      <li style="margin-bottom:8px;"><strong>M-Pesa:</strong> Paybill <strong>${process.env.MPESA_PAYBILL || '123456'}</strong></li>
+      <li><strong>Bank:</strong> ${process.env.BANK_NAME || 'Equity Bank'}, Account: <strong>${process.env.BANK_ACCOUNT_NUMBER || '1234567890'}</strong></li>
+    </ul>
+    <p>If you have questions, contact us:</p>
+    <ul><li>📧 ${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'}</li><li>📞 ${process.env.COMPANY_PHONE || '+254741874200'}</li></ul>
+    <p>Thank you for choosing ${process.env.COMPANY_NAME || 'Optimas Fiber'}!</p>
+  </div>
+  <div class="footer">
+    <p><strong>${process.env.COMPANY_NAME || 'Optimas Fiber'}</strong></p>
+    <p>${process.env.COMPANY_ADDRESS || 'Nairobi, Kenya'}</p>
+    <p>📧 ${process.env.EMAIL_FROM} | 📞 ${process.env.COMPANY_PHONE}</p>
+    <p style="font-size:11px;color:#999;margin-top:10px;">This is an automated email.</p>
+  </div>
+</div>
+</body>
+</html>
+    `;
+
+    const attachments = [{
+      filename: `${invoiceNumber || 'invoice'}-optimas-fiber.pdf`,
+      content: pdfBuffer,
+      contentType: 'application/pdf'
+    }];
+
+    const emailResult = await emailService.sendEmail({
+      to: customerEmail,
+      subject,
+      text,
+      html,
+      attachments
+    });
+
+    if (!emailResult.success) {
+      throw new Error(emailResult.error || emailResult.message);
+    }
+
+    // Update invoice record if it exists
+    try {
+      const invoice = await Invoice.findById(req.params.id);
+      if (invoice) {
+        invoice.sentToCustomer = true;
+        invoice.lastSentAt = new Date();
+        invoice.sendCount = (invoice.sendCount || 0) + 1;
+        await invoice.save();
+      }
+    } catch (dbError) {
+      console.warn('⚠️ Could not update invoice record:', dbError.message);
+    }
+
+    res.json({
+      success: true,
+      message: `Invoice sent successfully to ${customerEmail}`,
+      emailInfo: {
+        messageId: emailResult.messageId,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('❌ Failed to send invoice with PDF:', error);
+    let userMessage = 'Failed to send invoice';
+    if (error.message.includes('authentication')) userMessage = 'Email authentication failed. Check credentials.';
+    if (error.message.includes('Invalid PDF')) userMessage = 'Invalid PDF data provided.';
+    if (error.message.includes('connect')) userMessage = 'Failed to connect to email server.';
+    res.status(500).json({ 
+      success: false, 
+      message: userMessage, 
+      error: error.message
+    });
+  }
+};
+
 // ➤ View HTML (debug)
 export const viewInvoiceHTML = async (req, res) => {
   try {

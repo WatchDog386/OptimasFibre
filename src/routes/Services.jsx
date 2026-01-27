@@ -284,7 +284,6 @@ const Services = () => {
       // Replaced conditional dark mode class with light mode default
       className={`rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-4 group bg-white border border-gray-200`}
       whileHover={{ y: -3 }}
-      style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <div className="text-center mb-4">
         <motion.div 
@@ -336,7 +335,6 @@ const Services = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
-      style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       {/* ✅ HERO SECTION — FROM NEW VERSION, USING world.jpg (modified for light mode transition) */}
       <section className="relative w-full min-h-[55vh] md:min-h-[60vh] flex items-center overflow-hidden bg-gray-900 pb-12">
@@ -638,7 +636,6 @@ const Services = () => {
               // Used light mode background/text color
               className={`rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white text-gray-900`}
               onClick={(e) => e.stopPropagation()}
-              style={{ fontFamily: "'Poppins', sans-serif" }}
             >
               <div className="p-4">
                 <div className="flex justify-between items-start mb-4">

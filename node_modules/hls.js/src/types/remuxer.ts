@@ -11,7 +11,7 @@ import type {
 import type { PlaylistLevelType } from './loader';
 import type { TrackSet } from './track';
 import type { DecryptData } from '../loader/level-key';
-import type { RationalTimestamp } from '../utils/timescale-conversion';
+import type { TimestampOffset } from '../utils/timescale-conversion';
 
 export interface Remuxer {
   remux(
@@ -30,14 +30,14 @@ export interface Remuxer {
     videoCodec: string | undefined,
     decryptdata: DecryptData | null,
   ): void;
-  resetTimeStamp(defaultInitPTS: RationalTimestamp | null): void;
+  resetTimeStamp(defaultInitPTS: TimestampOffset | null): void;
   resetNextTimestamp(): void;
   destroy(): void;
 }
 
 export interface RemuxedTrack {
-  data1: Uint8Array;
-  data2?: Uint8Array;
+  data1: Uint8Array<ArrayBuffer>;
+  data2?: Uint8Array<ArrayBuffer>;
   startPTS: number;
   endPTS: number;
   startDTS: number;
@@ -52,6 +52,7 @@ export interface RemuxedTrack {
   transferredData1?: ArrayBuffer;
   transferredData2?: ArrayBuffer;
   dropped?: number;
+  encrypted?: boolean;
 }
 
 export interface RemuxedMetadata {
@@ -99,4 +100,5 @@ export interface InitSegmentData {
   tracks?: TrackSet;
   initPTS: number | undefined;
   timescale: number | undefined;
+  trackId: number | undefined;
 }

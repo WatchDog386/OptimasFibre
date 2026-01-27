@@ -6,8 +6,11 @@ import {
   verifyToken, 
   refreshToken, 
   forgotPassword,
-  resetPassword 
+  resetPassword,
+  getMe,
+  updateProfile
 } from '../controllers/authController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -45,5 +48,19 @@ router.post('/forgot-password', forgotPassword);
  * @access  Public
  */
 router.post('/reset-password', resetPassword);
+
+/**
+ * @route   GET /api/auth/me
+ * @desc    Get current user profile
+ * @access  Private (requires valid JWT)
+ */
+router.get('/me', protect, getMe);
+
+/**
+ * @route   PUT /api/auth/update-profile
+ * @desc    Update current user profile (name, email, phone, profileImage)
+ * @access  Private (requires valid JWT)
+ */
+router.put('/update-profile', protect, updateProfile);
 
 export default router;

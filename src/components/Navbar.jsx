@@ -15,7 +15,7 @@ const COLORS = {
   text: '#334155',
 };
 
-const FONT_FAMILY = `'Proxima Nova', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+const FONT_FAMILY = `'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
 
 // --- NAV ITEMS ---
 const NAV_ITEMS = [

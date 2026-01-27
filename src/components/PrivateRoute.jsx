@@ -10,35 +10,41 @@ const PrivateRoute = ({ children }) => {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        console.warn('No authentication token found. Redirecting to login.');
         setIsAuthenticated(false);
         setLoading(false);
         return;
       }
 
+      // If token exists, allow access. Backend will reject requests if token is invalid
+      setIsAuthenticated(true);
+      setLoading(false);
+      
+      // Optional: Verify token in background without blocking
       try {
-        // ✅ FIXED: Removed extra spaces from URL
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com';
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
           },
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
 
-        if (response.ok) {
-          setIsAuthenticated(true);
-        } else {
-          console.warn('Token verification failed. Removing token and redirecting to login.');
-          localStorage.removeItem('token');
-          setIsAuthenticated(false);
+        if (!response.ok) {
+          // Only remove token if we get an explicit 401/403 response
+          if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('token');
+            setIsAuthenticated(false);
+          }
         }
       } catch (err) {
-        console.error('Network error during token verification:', err);
-        localStorage.removeItem('token');
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
+        // Don't remove token on network errors - let the user try
+        console.warn('Token verification failed:', err.message);
       }
     };
 
@@ -56,10 +62,6 @@ const PrivateRoute = ({ children }) => {
         <span className="sr-only">Loading...</span>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    console.log('User not authenticated. Redirecting to login page.');
   }
 
   return isAuthenticated ? children : <Navigate to="/admin/login" replace />;

@@ -357,6 +357,99 @@ export const sendReceiptToCustomer = async (req, res) => {
 };
 
 /**
+ * Send Receipt with PDF from Frontend
+ * Accepts base64 PDF data from frontend and sends via email
+ */
+export const sendReceiptWithPdf = async (req, res) => {
+  try {
+    const { customerEmail, customerName, receiptNumber, pdfData } = req.body;
+    
+    // Validate required fields
+    if (!customerEmail || !pdfData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Customer email and PDF data are required'
+      });
+    }
+
+    // Convert base64 to buffer if necessary
+    let pdfBuffer;
+    if (typeof pdfData === 'string') {
+      // Remove data:application/pdf;base64, prefix if present
+      const base64Data = pdfData.replace(/^data:application\/pdf;base64,/, '');
+      pdfBuffer = Buffer.from(base64Data, 'base64');
+    } else {
+      pdfBuffer = pdfData;
+    }
+
+    // Verify buffer is valid
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid PDF data'
+      });
+    }
+
+    // === Send Email using Resend ===
+    const emailService = await import('../utils/emailService.js').then(m => m.default || m);
+    
+    const subject = `Receipt ${receiptNumber || 'N/A'} from Optimas Fiber`;
+    const text = `Dear ${customerName || 'Customer'},\n\nThank you for your payment. Please find your official receipt attached.`;
+    const html = `<p>Dear <strong>${customerName || 'Customer'}</strong>,</p><p>Thank you for your payment. Please find your official receipt attached.</p><p><strong>Optimas Fiber</strong></p>`;
+
+    const attachments = [{
+      filename: `${receiptNumber || 'receipt'}-optimas-fiber.pdf`,
+      content: pdfBuffer,
+      contentType: 'application/pdf'
+    }];
+
+    const emailResult = await emailService.sendEmail({
+      to: customerEmail,
+      subject,
+      text,
+      html,
+      attachments
+    });
+
+    if (!emailResult.success) {
+      throw new Error(emailResult.error || emailResult.message);
+    }
+
+    // Update receipt record if it exists
+    try {
+      const receipt = await Receipt.findById(req.params.id);
+      if (receipt) {
+        receipt.sentToCustomer = true;
+        receipt.lastSentAt = new Date();
+        receipt.sendCount = (receipt.sendCount || 0) + 1;
+        await receipt.save();
+      }
+    } catch (dbError) {
+      console.warn('⚠️ Could not update receipt record:', dbError.message);
+    }
+
+    res.json({
+      success: true,
+      message: `Receipt sent successfully to ${customerEmail}`,
+      emailInfo: {
+        messageId: emailResult.messageId,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error sending receipt with PDF:', error);
+    let userMessage = 'Error sending receipt';
+    if (error.message.includes('authentication')) userMessage = 'Email authentication failed.';
+    if (error.message.includes('Invalid PDF')) userMessage = 'Invalid PDF data provided.';
+    res.status(500).json({ 
+      success: false, 
+      message: userMessage, 
+      error: error.message 
+    });
+  }
+};
+
+/**
  * ===============================
  *    System & Placeholder Operations
  * ===============================

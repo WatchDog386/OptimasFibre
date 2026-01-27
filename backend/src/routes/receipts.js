@@ -16,7 +16,8 @@ import {
   cleanupReceipts,
   getReceiptTemplates,
   checkReceiptSystemStatus,
-  sendReceiptToCustomer // 🔥 NEW: Import the email function
+  sendReceiptToCustomer,
+  sendReceiptWithPdf // 🔥 NEW: Import send with PDF function
 } from '../controllers/receiptController.js';
 
 const router = express.Router();
@@ -40,6 +41,7 @@ router.post('/generate-from-invoice/:invoiceId', generateReceiptFromInvoice);
 router.post('/:id/duplicate', duplicateReceipt);
 // 🔥 NEW: Send receipt via email with PDF attachment
 router.post('/:id/send', sendReceiptToCustomer);
+router.post('/:id/send-with-pdf', sendReceiptWithPdf);
 
 /** =======================
  * Status & Payment

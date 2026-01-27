@@ -19,6 +19,7 @@ import {
 
     // Email
     sendInvoiceToCustomer,
+    sendInvoiceWithPdf,
     resendInvoiceNotifications,
     testEmailSetup,
 
@@ -110,6 +111,7 @@ router.get('/date-range/:startDate/:endDate', getInvoicesByDateRange);
 ========================================================= */
 router.post('/test-email', testEmailSetup);
 router.post('/:id/send', sendInvoiceToCustomer);
+router.post('/:id/send-with-pdf', sendInvoiceWithPdf);
 router.post('/:id/resend', resendInvoiceNotifications);
 
 /* =========================================================

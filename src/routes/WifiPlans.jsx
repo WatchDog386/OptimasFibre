@@ -927,7 +927,6 @@ const WifiPlans = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
-      style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       {/* Hero Section */}
       <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">

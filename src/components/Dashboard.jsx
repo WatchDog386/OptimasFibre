@@ -3,10 +3,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   BarChart3, FileText, Image, LogOut, Plus, Edit, Trash2, Upload, Save, X, Menu, User, Settings, Search, Moon, Sun, Link, Download, Eye, Globe,
   AlertCircle, CheckCircle, Info, RefreshCw, Database, Server, Shield, Activity, HardDrive, Clock, Zap, TrendingUp, Users, Mail, MessageCircle,
-  DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer, Loader2, Send
+  DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer, Loader2, Send, ChevronRight
 } from 'lucide-react';
 import InvoiceManager from './InvoiceManager';
 import ReceiptManager from './ReceiptManager';
+
+// Brand Colors - Matching Login Page
+const BRAND = {
+  PRIMARY: "#00356B",    // Deep Navy Blue
+  ACCENT: "#D85C2C",     // Vibrant Orange/Rust
+  GREEN: "#86bc25",      // Green accent
+  DARK_BLUE: "#002244",  // Darker blue for gradients
+};
 // ✅ CHART.JS IMPORTS
 import {
   Chart as ChartJS,
@@ -102,10 +110,10 @@ const downloadInvoicePdf = async (invoiceId, API_BASE_URL, token, showNotificati
   }
 };
 
-// ✅ NEW: Send invoice via email using Resend API backend
+// ✅ NEW: Send invoice via email using Resend API backend with PDF attachment
 const sendInvoiceViaEmail = async (invoice, API_BASE_URL, token, showNotification) => {
   try {
-    console.log(`📧 Sending invoice ${invoice._id} via email...`);
+    console.log(`📧 Sending invoice ${invoice._id} via email with attachment...`);
     
     if (!invoice.customerEmail?.trim()) {
       showNotification('⚠️ Customer email is required to send.', 'warning');
@@ -118,23 +126,63 @@ const sendInvoiceViaEmail = async (invoice, API_BASE_URL, token, showNotificatio
       return { success: false };
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
-      method: 'POST',
+    // First, get the PDF
+    const pdfResponse = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/pdf`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
 
+    let pdfBase64 = '';
+    if (pdfResponse.ok && pdfResponse.headers.get('content-type') === 'application/pdf') {
+      const pdfBlob = await pdfResponse.blob();
+      const reader = new FileReader();
+      pdfBase64 = await new Promise((resolve) => {
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(pdfBlob);
+      });
+    }
+
+    // Send email with PDF attachment
+    const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send-with-pdf`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        customerEmail: invoice.customerEmail,
+        customerName: invoice.customerName || 'Valued Customer',
+        invoiceNumber: invoice.invoiceNumber,
+        pdfData: pdfBase64
+      })
+    });
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `Failed to send email (${response.status})`);
+      // Fallback to simple email if PDF attachment fails
+      const fallbackResponse = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!fallbackResponse.ok) {
+        const errorData = await fallbackResponse.json();
+        throw new Error(errorData.message || `Failed to send email (${fallbackResponse.status})`);
+      }
+      
+      showNotification('✅ Invoice sent via email! (Without attachment)', 'success');
+      return { success: true };
     }
 
     const result = await response.json();
-    console.log('✅ Email sent successfully:', result);
+    console.log('✅ Email with attachment sent successfully:', result);
     
-    showNotification('✅ Invoice sent via email successfully!', 'success');
+    showNotification('✅ Invoice sent via email with PDF attachment!', 'success');
     return { success: true, data: result };
     
   } catch (error) {
@@ -144,27 +192,114 @@ const sendInvoiceViaEmail = async (invoice, API_BASE_URL, token, showNotificatio
   }
 };
 
-// ✅ COMPACT BUTTON STYLES
+// ✅ NEW: Send receipt via email using Resend API backend with PDF attachment
+const sendReceiptViaEmail = async (receipt, API_BASE_URL, token, showNotification) => {
+  try {
+    console.log(`📧 Sending receipt ${receipt._id} via email with attachment...`);
+    
+    if (!receipt.customerEmail?.trim()) {
+      showNotification('⚠️ Customer email is required to send.', 'warning');
+      return { success: false };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(receipt.customerEmail.trim())) {
+      showNotification('⚠️ Invalid email format.', 'warning');
+      return { success: false };
+    }
+
+    // First, get the PDF
+    const pdfResponse = await fetch(`${API_BASE_URL}/api/receipts/${receipt._id}/pdf`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    let pdfBase64 = '';
+    if (pdfResponse.ok && pdfResponse.headers.get('content-type') === 'application/pdf') {
+      const pdfBlob = await pdfResponse.blob();
+      const reader = new FileReader();
+      pdfBase64 = await new Promise((resolve) => {
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(pdfBlob);
+      });
+    }
+
+    // Send email with PDF attachment
+    const response = await fetch(`${API_BASE_URL}/api/receipts/${receipt._id}/send-with-pdf`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        customerEmail: receipt.customerEmail,
+        customerName: receipt.customerName || 'Valued Customer',
+        receiptNumber: receipt.receiptNumber,
+        pdfData: pdfBase64
+      })
+    });
+
+    if (!response.ok) {
+      // Fallback to simple email if PDF attachment fails
+      const fallbackResponse = await fetch(`${API_BASE_URL}/api/receipts/${receipt._id}/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!fallbackResponse.ok) {
+        const errorData = await fallbackResponse.json();
+        throw new Error(errorData.message || `Failed to send email (${fallbackResponse.status})`);
+      }
+      
+      showNotification('✅ Receipt sent via email! (Without attachment)', 'success');
+      return { success: true };
+    }
+
+    const result = await response.json();
+    console.log('✅ Email with attachment sent successfully:', result);
+    
+    showNotification('✅ Receipt sent via email with PDF attachment!', 'success');
+    return { success: true, data: result };
+    
+  } catch (error) {
+    console.error('Error sending receipt via email:', error);
+    showNotification(`❌ Failed to send email: ${error.message}`, 'error');
+    return { success: false, error: error.message };
+  }
+};
+
+// ✅ BUTTON STYLES - Matching WhoItsForSection Design
 const BUTTON_STYLES = {
   primary: {
-    base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
-    light: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
-    dark: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
+    base: 'py-3 px-6 rounded-md font-black text-[10px] uppercase tracking-wider transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow-md',
+    light: `bg-[${BRAND.PRIMARY}] hover:bg-[#002244] text-white border border-transparent`,
+    dark: `bg-[${BRAND.PRIMARY}] hover:bg-[#002244] text-white border border-transparent`,
   },
   secondary: {
-    base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
-    light: 'bg-[#FFCC00] hover:bg-[#E6B800] text-[#003366] font-bold border border-transparent',
-    dark: 'bg-[#FFCC00] hover:bg-[#E6B800] text-[#003366] font-bold border border-transparent',
+    base: 'py-3 px-6 rounded-md font-black text-[10px] uppercase tracking-wider transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow-md',
+    light: `bg-white hover:bg-gray-50 text-[${BRAND.PRIMARY}] border border-gray-300`,
+    dark: `bg-gray-800 hover:bg-gray-700 text-white border border-gray-700`,
   },
   danger: {
-    base: 'py-2.5 px-5 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md',
-    light: 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border border-transparent',
-    dark: 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border border-transparent',
+    base: 'py-3 px-6 rounded-md font-black text-[10px] uppercase tracking-wider transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow-md',
+    light: `bg-red-600 hover:bg-red-700 text-white border border-transparent`,
+    dark: `bg-red-600 hover:bg-red-700 text-white border border-transparent`,
+  },
+  accent: {
+    base: 'py-3 px-6 rounded-md font-black text-[10px] uppercase tracking-wider transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow-md',
+    light: `bg-[${BRAND.ACCENT}] hover:bg-[#b84520] text-white border border-transparent`,
+    dark: `bg-[${BRAND.ACCENT}] hover:bg-[#b84520] text-white border border-transparent`,
   },
   small: {
-    base: 'py-1.5 px-3.5 rounded-lg font-medium text-xs transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow',
-    light: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
-    dark: 'bg-gradient-to-r from-[#003366] to-[#002244] hover:from-[#002244] hover:to-[#001122] text-white border border-transparent',
+    base: 'py-2 px-4 rounded-md font-black text-[9px] uppercase tracking-wider transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow',
+    light: `bg-[${BRAND.PRIMARY}] hover:bg-[#002244] text-white border border-transparent`,
+    dark: `bg-[${BRAND.PRIMARY}] hover:bg-[#002244] text-white border border-transparent`,
   }
 };
 
@@ -183,6 +318,19 @@ const Dashboard = () => {
     paidInvoices: 0,
     totalRevenue: 0
   });
+  // User Profile State
+  const [user, setUser] = useState({
+    id: '',
+    name: 'Admin',
+    email: 'admin@optimas.com',
+    phone: '',
+    role: 'Administrator',
+    profileImage: '',
+    createdAt: ''
+  });
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({...user});
+  
   const [editingItem, setEditingItem] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -236,7 +384,7 @@ const Dashboard = () => {
       return import.meta.env.VITE_API_BASE_URL;
     }
     if (import.meta.env.DEV) {
-      return 'http://localhost:5000';
+      return 'http://localhost:10000';
     }
     return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
   };
@@ -291,8 +439,8 @@ const Dashboard = () => {
     text: darkMode ? 'text-gray-100' : 'text-gray-800',
     card: darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
     input: darkMode
-      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#003366]'
-      : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500 focus:border-[#003366]',
+      ? `bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[${BRAND.PRIMARY}] focus:ring-1 focus:ring-[${BRAND.PRIMARY}]`
+      : `bg-white border-gray-300 text-gray-800 placeholder-gray-500 focus:border-[${BRAND.PRIMARY}] focus:ring-1 focus:ring-[${BRAND.PRIMARY}]`,
     button: BUTTON_STYLES
   };
 
@@ -309,6 +457,36 @@ const Dashboard = () => {
         const headers = {
           'Authorization': `Bearer ${token}`
         };
+        
+        // Fetch user profile
+        try {
+          const userRes = await fetch(`${API_BASE_URL}/api/auth/me`, { headers });
+          if (userRes.ok) {
+            const response = await userRes.json();
+            const userData = response.user || response; // Handle both wrapped and unwrapped responses
+            setUser({
+              id: userData._id || userData.id || '',
+              name: userData.name || 'User',
+              email: userData.email || '',
+              phone: userData.phone || '',
+              role: userData.role || 'user',
+              profileImage: userData.profileImage || '',
+              createdAt: userData.createdAt || ''
+            });
+            setProfileFormData({
+              id: userData._id || userData.id || '',
+              name: userData.name || 'User',
+              email: userData.email || '',
+              phone: userData.phone || '',
+              role: userData.role || 'user',
+              profileImage: userData.profileImage || '',
+              createdAt: userData.createdAt || ''
+            });
+          }
+        } catch (userError) {
+          console.warn('Error fetching user profile:', userError);
+        }
+        
         const blogRes = await fetch(`${API_BASE_URL}/api/blog`, { headers });
         if (!blogRes.ok) {
           throw new Error(`Failed to fetch blog posts: ${blogRes.status} ${blogRes.statusText}`);
@@ -394,6 +572,67 @@ const Dashboard = () => {
       window.location.href = '/admin/login';
     }, 1500);
   };
+
+  // Profile Management Handlers
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileFormData({
+      ...profileFormData,
+      [name]: value
+    });
+  };
+
+  const handleProfileImageChange = async (file) => {
+    if (!file) return;
+    
+    try {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileFormData({
+          ...profileFormData,
+          profileImage: reader.result
+        });
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Error reading file:', err);
+      showNotification('❌ Error reading image file', 'error');
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      showLoadingPopup('Updating profile...');
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/auth/update-profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: profileFormData.name,
+          email: profileFormData.email,
+          phone: profileFormData.phone,
+          profileImage: profileFormData.profileImage
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setUser(profileFormData);
+        setShowProfileModal(false);
+        showNotification('✅ Profile updated successfully!', 'success');
+      } else {
+        showNotification(`❌ ${data.message || 'Failed to update profile'}`, 'error');
+      }
+    } catch (err) {
+      console.error('Profile update error:', err);
+      showNotification('❌ Error updating profile. Please try again.', 'error');
+    } finally {
+      hideLoadingPopup();
+    }
+  };;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -692,6 +931,7 @@ const Dashboard = () => {
       case 'dashboard':
         return (
           <DashboardOverview
+            user={user}
             blogPosts={blogPosts}
             portfolioItems={portfolioItems}
             invoices={invoices}
@@ -706,6 +946,9 @@ const Dashboard = () => {
             API_BASE_URL={API_BASE_URL}
             showNotification={showNotification}
             emailTestStatus={emailTestStatus}
+            BRAND={BRAND}
+            setShowProfileModal={setShowProfileModal}
+            BUTTON_STYLES={BUTTON_STYLES}
           />
         );
       case 'blog':
@@ -787,9 +1030,21 @@ const Dashboard = () => {
             themeClasses={themeClasses}
           />
         );
+      case 'profile':
+        return (
+          <ProfilePanel
+            user={user}
+            setShowProfileModal={setShowProfileModal}
+            darkMode={darkMode}
+            themeClasses={themeClasses}
+            BRAND={BRAND}
+            BUTTON_STYLES={BUTTON_STYLES}
+          />
+        );
       default:
         return (
           <DashboardOverview
+            user={user}
             blogPosts={blogPosts}
             portfolioItems={portfolioItems}
             invoices={invoices}
@@ -804,6 +1059,9 @@ const Dashboard = () => {
             API_BASE_URL={API_BASE_URL}
             showNotification={showNotification}
             emailTestStatus={emailTestStatus}
+            BRAND={BRAND}
+            setShowProfileModal={setShowProfileModal}
+            BUTTON_STYLES={BUTTON_STYLES}
           />
         );
     }
@@ -815,7 +1073,7 @@ const Dashboard = () => {
       {loadingPopup.show && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div ref={loadingPopupRef} className={`rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 ${themeClasses.card} backdrop-blur-lg flex flex-col items-center`}>
-            <Loader2 className="animate-spin h-12 w-12 text-[#003366] mb-4" />
+            <Loader2 className={`animate-spin h-12 w-12 mb-4`} style={{ color: BRAND.PRIMARY }} />
             <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Loading Dashboard</h3>
             <p className={`text-center ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{loadingPopup.message}</p>
           </div>
@@ -841,52 +1099,55 @@ const Dashboard = () => {
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
-      <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-xl fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95`}>
-        <div className="p-5 border-b border-gray-200 flex justify-between items-center">
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-[#003366]`}>
-              <BarChart3 className="w-5 h-5 text-white" />
+      <div className={`${themeClasses.card} w-64 flex-shrink-0 shadow-lg fixed md:relative z-30 h-full transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 border-r ${darkMode ? 'border-gray-700' : 'border-[#00356B]/10'} backdrop-blur-sm bg-opacity-95`}>
+        <div className="p-6 border-b flex justify-between items-center" style={{ borderColor: darkMode ? '#374151' : '#e5e7eb' }}>
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold`} style={{ backgroundColor: BRAND.PRIMARY }}>
+              <BarChart3 className="w-6 h-6" />
             </div>
-            <h1 className="text-lg font-bold ml-2 text-[#003366]">Admin Panel</h1>
+            <div>
+              <h1 className="text-sm font-bold uppercase tracking-wider" style={{ color: BRAND.PRIMARY }}>Admin</h1>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: BRAND.ACCENT }}>Panel</p>
+            </div>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="md:hidden text-gray-500 hover:text-gray-700"
+            className="md:hidden text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
-        <nav className="mt-6 px-3 space-y-1">
+        <nav className="mt-6 px-3 space-y-2">
           <NavItem
-            icon={<BarChart3 size={18} />}
+            icon={<BarChart3 size={16} />}
             text="Dashboard"
             active={activeTab === 'dashboard'}
             onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }}
             darkMode={darkMode}
           />
           <NavItem
-            icon={<FileText size={18} />}
+            icon={<FileText size={16} />}
             text="Blog Posts"
             active={activeTab === 'blog'}
             onClick={() => { setActiveTab('blog'); setSidebarOpen(false); }}
             darkMode={darkMode}
           />
           <NavItem
-            icon={<Image size={18} />}
+            icon={<Image size={16} />}
             text="Portfolio"
             active={activeTab === 'portfolio'}
             onClick={() => { setActiveTab('portfolio'); setSidebarOpen(false); }}
             darkMode={darkMode}
           />
           <NavItem
-            icon={<CreditCard size={18} />}
+            icon={<CreditCard size={16} />}
             text="Invoices"
             active={activeTab === 'invoices'}
             onClick={() => { setActiveTab('invoices'); setSidebarOpen(false); }}
             darkMode={darkMode}
           />
           <NavItem
-            icon={<Receipt size={18} />}
+            icon={<Receipt size={16} />}
             text="Receipts"
             active={activeTab === 'receipts'}
             onClick={() => { setActiveTab('receipts'); setSidebarOpen(false); }}
@@ -899,34 +1160,41 @@ const Dashboard = () => {
             onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }}
             darkMode={darkMode}
           />
+          <NavItem
+            icon={<User size={18} />}
+            text="Profile"
+            active={activeTab === 'profile'}
+            onClick={() => { setActiveTab('profile'); setSidebarOpen(false); }}
+            darkMode={darkMode}
+          />
         </nav>
         <div className="mt-8 px-3 pb-4">
-          <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
+          <h3 className={`text-xs font-bold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</h3>
           <button
             onClick={() => { setActiveTab('blog'); setIsEditing(false); setEditingItem(null); setSidebarOpen(false); }}
-            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
+            className={`w-full flex items-center text-left p-3 rounded-full transition-all duration-200 text-sm font-medium ${
               darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
             }`}
           >
-            <div className={`p-1.5 rounded-md mr-2 bg-[#003366]/10`}>
-              <Plus size={16} className="text-[#003366]" />
+            <div className="p-1.5 rounded-lg mr-2" style={{ backgroundColor: `${BRAND.PRIMARY}20` }}>
+              <Plus size={16} style={{ color: BRAND.PRIMARY }} />
             </div>
             New Blog Post
           </button>
           <button
             onClick={() => { setActiveTab('portfolio'); setIsEditing(false); setEditingItem(null); setSidebarOpen(false); }}
-            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
+            className={`w-full flex items-center text-left p-3 rounded-full transition-all duration-200 mt-2 text-sm font-medium ${
               darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
             }`}
           >
-            <div className={`p-1.5 rounded-md mr-2 bg-[#FFCC00]/20`}>
-              <Plus size={16} className="text-[#003366]" />
+            <div className="p-1.5 rounded-lg mr-2" style={{ backgroundColor: `${BRAND.ACCENT}20` }}>
+              <Plus size={16} style={{ color: BRAND.PRIMARY }} />
             </div>
             New Portfolio Item
           </button>
           <button
             onClick={() => { setActiveTab('invoices'); setSidebarOpen(false); }}
-            className={`w-full flex items-center text-left p-3 rounded-lg transition-all duration-200 mt-2 text-sm font-medium ${
+            className={`w-full flex items-center text-left p-3 rounded-full transition-all duration-200 mt-2 text-sm font-medium ${
               darkMode ? 'hover:bg-gray-700 text-gray-200 hover:shadow' : 'hover:bg-gray-100 text-gray-700 hover:shadow'
             }`}
           >
@@ -947,51 +1215,70 @@ const Dashboard = () => {
             New Receipt
           </button>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t border-gray-200">
+        <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 pt-4 border-t" style={{ borderColor: darkMode ? '#374151' : '#e5e7eb' }}>
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 text-sm font-medium ${
-              darkMode ? 'bg-red-700 hover:bg-red-600 text-white shadow hover:shadow-lg' : 'bg-red-600 hover:bg-red-700 text-white shadow hover:shadow-lg'
+            className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 text-sm font-bold uppercase tracking-wider ${
+              darkMode ? 'bg-red-600/80 hover:bg-red-600 text-white shadow hover:shadow-lg' : 'bg-red-600 hover:bg-red-700 text-white shadow hover:shadow-lg'
             }`}
           >
-            <LogOut size={18} className="mr-2" />
+            <LogOut size={16} className="mr-2" />
             Sign Out
           </button>
         </div>
       </div>
       <div className="flex-1 overflow-auto">
-        <header className={`${themeClasses.card} shadow-sm p-4 md:p-5 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
+        <header className={`${themeClasses.card} shadow-md p-4 md:p-6 flex items-center justify-between border-b ${darkMode ? 'border-gray-700' : 'border-[#00356B]/10'} backdrop-blur-sm bg-opacity-95 sticky top-0 z-10`}>
           <div className="flex items-center">
             <button onClick={() => setSidebarOpen(true)} className="md:hidden mr-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <Menu size={22} className={themeClasses.text} />
             </button>
-            <h2 className="text-xl md:text-2xl font-bold capitalize bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">{activeTab}</h2>
+            <h2 className="text-lg md:text-2xl font-bold uppercase tracking-wider" style={{ color: BRAND.PRIMARY }}>{activeTab}</h2>
           </div>
           <div className="flex items-center space-x-3">
             <div className="relative hidden md:block">
-              <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              <Search size={16} className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               <input
                 type="text"
                 placeholder="Search..."
-                className={`pl-10 pr-4 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003366] focus:border-transparent transition-all duration-200 ${themeClasses.input} w-64`}
+                className={`pl-12 pr-4 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${themeClasses.input} w-64`}
+                style={{ focusColor: BRAND.PRIMARY, borderColor: darkMode ? '#4b5563' : '#e5e7eb' }}
               />
             </div>
             <button
               onClick={toggleDarkMode}
-              className={`p-2.5 rounded-xl transition-all duration-300 ${
-                darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300 hover:shadow-lg' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:shadow-md'
+              className={`p-2.5 rounded-lg transition-all duration-300 ${
+                darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300 hover:shadow-lg' : 'hover:shadow-md'
               }`}
+              style={{ backgroundColor: darkMode ? '#374151' : '#eef5ff' }}
               aria-label="Toggle theme"
+              title="Toggle dark mode"
             >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <div className="flex items-center space-x-3">
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm bg-[#003366] text-white shadow`}>
-                <User size={18} />
+            <div
+              className="flex items-center space-x-3 cursor-pointer"
+              onClick={() => setShowProfileModal(true)}
+              title="View profile"
+              style={{ transition: 'all 300ms ease' }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              <div 
+                className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 border-2`} 
+                style={{ backgroundColor: BRAND.PRIMARY, borderColor: BRAND.ACCENT, overflow: 'hidden' }}
+              >
+                {user.profileImage ? (
+                  <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full font-bold text-lg" style={{ backgroundColor: BRAND.PRIMARY }}>
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className="hidden md:block">
-                <div className="text-sm font-medium">Admin</div>
-                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Administrator</div>
+                <div className="text-[12px] font-bold text-gray-900 dark:text-white">{user.name}</div>
+                <div className={`text-[11px] uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>{user.role}</div>
               </div>
             </div>
           </div>
@@ -1000,6 +1287,127 @@ const Dashboard = () => {
           {renderContent()}
         </main>
       </div>
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className={`rounded-2xl shadow-2xl p-8 max-w-2xl w-full ${themeClasses.card} border-2`} style={{ borderColor: BRAND.PRIMARY }}>
+            <div className="flex items-center justify-between mb-8 pb-6 border-b" style={{ borderColor: darkMode ? '#374151' : '#e5e7eb' }}>
+              <div>
+                <span className="text-[9px] font-bold px-3 py-1 tracking-tighter uppercase rounded" style={{ backgroundColor: BRAND.PRIMARY, color: 'white' }}>Account Settings</span>
+                <h2 className="text-3xl md:text-4xl font-light mt-3" style={{ color: BRAND.PRIMARY }}>Edit <span className="font-bold">Profile</span></h2>
+              </div>
+              <button
+                onClick={() => { setShowProfileModal(false); setProfileFormData(user); }}
+                className={`p-2 rounded-lg transition-all duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left Column - Image Upload */}
+              <div className="flex flex-col items-center justify-center p-6 rounded-xl border-2" style={{ backgroundColor: darkMode ? '#1f2937' : '#eef5ff', borderColor: BRAND.PRIMARY }}>
+                <div className="relative mb-6">
+                  {profileFormData.profileImage ? (
+                    <img
+                      src={profileFormData.profileImage}
+                      alt="Profile"
+                      className="w-40 h-40 rounded-2xl object-cover shadow-lg"
+                      style={{ borderColor: BRAND.ACCENT, borderWidth: '4px' }}
+                    />
+                  ) : (
+                    <div
+                      className="w-40 h-40 rounded-2xl flex items-center justify-center text-white text-7xl font-bold shadow-lg"
+                      style={{ backgroundColor: BRAND.PRIMARY, borderColor: BRAND.ACCENT, borderWidth: '4px' }}
+                    >
+                      {profileFormData.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <label
+                    htmlFor="profileImageInput"
+                    className="absolute bottom-2 right-2 bg-white rounded-full p-3 shadow-lg cursor-pointer hover:shadow-xl transition-all hover:scale-110 border-2"
+                    style={{ borderColor: BRAND.ACCENT, backgroundColor: BRAND.ACCENT }}
+                  >
+                    <input
+                      type="file"
+                      id="profileImageInput"
+                      accept="image/*"
+                      onChange={(e) => handleProfileImageChange(e.target.files?.[0])}
+                      className="hidden"
+                    />
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
+                    </svg>
+                  </label>
+                </div>
+                <p className={`text-[11px] font-bold uppercase tracking-wider text-center ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>
+                  Click camera icon to change photo
+                </p>
+              </div>
+
+              {/* Right Column - Form Fields */}
+              <div className="space-y-6">
+                <div>
+                  <label className={`block text-[11px] font-bold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>Full Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={profileFormData.name}
+                    onChange={handleProfileChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:border-transparent ${themeClasses.input}`}
+                    style={{ borderColor: darkMode ? '#4b5563' : '#e5e7eb', focusRingColor: BRAND.PRIMARY }}
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-[11px] font-bold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>Email Address</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={profileFormData.email}
+                    onChange={handleProfileChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:border-transparent ${themeClasses.input}`}
+                    style={{ borderColor: darkMode ? '#4b5563' : '#e5e7eb' }}
+                    placeholder="Enter your email"
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-[11px] font-bold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>Phone Number</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={profileFormData.phone}
+                    onChange={handleProfileChange}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:border-transparent ${themeClasses.input}`}
+                    style={{ borderColor: darkMode ? '#4b5563' : '#e5e7eb' }}
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+
+                <div className="flex gap-3 mt-8 pt-6 border-t" style={{ borderColor: darkMode ? '#374151' : '#e5e7eb' }}>
+                  <button
+                    onClick={() => { setShowProfileModal(false); setProfileFormData(user); }}
+                    className={`flex-1 py-3 px-5 rounded-lg font-bold text-sm uppercase tracking-wider transition-all duration-200 border-2`}
+                    style={{ borderColor: BRAND.PRIMARY, color: BRAND.PRIMARY, backgroundColor: 'transparent' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdateProfile}
+                    className={`flex-1 py-3 px-5 rounded-lg font-bold text-sm uppercase tracking-wider transition-all duration-200 text-white shadow-md hover:shadow-lg`}
+                    style={{ backgroundColor: BRAND.ACCENT }}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1008,13 +1416,18 @@ const Dashboard = () => {
 const NavItem = ({ icon, text, active, onClick, darkMode }) => (
   <button
     onClick={onClick}
-    className={`flex items-center w-full p-3 text-sm rounded-xl transition-all duration-200 font-medium ${
+    className={`flex items-center w-full p-3 text-sm rounded-lg transition-all duration-200 font-bold ${
       active
-        ? (darkMode ? 'bg-[#003366]/20 text-white shadow-lg border border-[#003366]/30' : 'bg-[#003366]/10 text-[#003366] shadow-md border border-[#003366]/20')
-        : (darkMode ? 'text-gray-300 hover:bg-gray-700/70 hover:text-white hover:shadow' : 'text-gray-700 hover:bg-gray-100 hover:shadow hover:border hover:border-gray-200')
+        ? `shadow-md border text-white`
+        : (darkMode ? 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow' : 'text-gray-700 hover:bg-[#eef5ff] hover:shadow')
     }`}
+    style={active ? { 
+      backgroundColor: BRAND.PRIMARY, 
+      borderColor: BRAND.ACCENT,
+      color: 'white'
+    } : {}}
   >
-    <span className={`p-1.5 rounded-md mr-3 ${active ? (darkMode ? 'bg-[#003366]/30' : 'bg-[#003366]/20') : (darkMode ? 'bg-gray-700/50' : 'bg-gray-100')}`}>
+    <span className={`p-2 rounded-lg mr-3`} style={{ backgroundColor: active ? `${BRAND.ACCENT}40` : (darkMode ? 'rgba(75, 85, 99, 0.5)' : '#eef5ff') }}>
       {icon}
     </span>
     {text}
@@ -1032,7 +1445,7 @@ const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
     <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
       <div className="flex justify-between items-center mb-4">
         <h3 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>🗓️ Upcoming Schedule</h3>
-        <div className="text-sm font-medium text-[#003366] dark:text-[#FFCC00]">November 2025</div>
+        <div className="text-sm font-bold" style={{ color: BRAND.ACCENT }}>November 2025</div>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase">
         {days.map((day, index) => (
@@ -1043,11 +1456,12 @@ const CalendarPlaceholder = ({ darkMode, themeClasses }) => {
         {dates.map((date, index) => (
           <div
             key={index}
-            className={`p-1 rounded-full text-sm flex items-center justify-center h-8 w-8 mx-auto ${
+            className={`p-1 rounded-full text-sm flex items-center justify-center h-8 w-8 mx-auto font-bold ${
               !date ? 'text-transparent pointer-events-none' :
-              date === 15 ? (darkMode ? 'bg-[#FFCC00] text-[#003366] font-bold shadow-lg' : 'bg-[#003366] text-white font-bold shadow-lg') :
+              date === 15 ? 'shadow-lg text-white' :
               (darkMode ? 'text-gray-300 hover:bg-gray-700/50' : 'text-gray-800 hover:bg-gray-100/50')
             }`}
+            style={date === 15 ? { backgroundColor: BRAND.PRIMARY } : {}}
           >
             {date}
           </div>
@@ -1236,6 +1650,7 @@ const PortfolioCategoryBarChart = ({ portfolioItems, darkMode, themeClasses }) =
 
 // ✅ UPDATED DashboardOverview - removed downloadAndOpenEmail dependency
 const DashboardOverview = ({
+  user,
   blogPosts,
   portfolioItems,
   invoices,
@@ -1249,7 +1664,10 @@ const DashboardOverview = ({
   setActiveTab,
   API_BASE_URL,
   showNotification,
-  emailTestStatus
+  emailTestStatus,
+  BRAND,
+  setShowProfileModal,
+  BUTTON_STYLES
 }) => {
   const exportInvoicesToExcel = async () => {
     try {
@@ -1307,12 +1725,12 @@ const DashboardOverview = ({
     datasets: [{
       label: 'Monthly Revenue (Ksh)',
       data: monthlyRevenue.map(v => v || 0),
-      backgroundColor: 'rgba(0, 51, 102, 0.7)',
-      borderColor: '#003366',
+      backgroundColor: `${BRAND.PRIMARY}b2`,
+      borderColor: BRAND.PRIMARY,
       tension: 0.4,
       borderWidth: 3,
       pointRadius: 5,
-      pointBackgroundColor: '#FFCC00',
+      pointBackgroundColor: BRAND.ACCENT,
     }],
   };
 
@@ -1464,51 +1882,61 @@ const DashboardOverview = ({
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Dashboard Overview</h2>
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Welcome back! Here's what's happening with your **real-time data**.</p>
-        </div>
-        <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
-          <button
-            onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('blog'); }}
-            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
-          >
-            <Plus size={16} className="mr-1.5" />
-            <span>New Blog Post</span>
-          </button>
-          <button
-            onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('portfolio'); }}
-            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}
-          >
-            <Plus size={16} className="mr-1.5" />
-            <span>New Portfolio</span>
-          </button>
-          <button
-            onClick={() => { setActiveTab('invoices'); }}
-            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.small.light} flex items-center shadow-md hover:shadow-lg`}
-          >
-            <Plus size={16} className="mr-1.5" />
-            <span>Manage Invoices</span>
-          </button>
-          <button
-            onClick={exportInvoicesToExcel}
-            className={`${BUTTON_STYLES.small.base} ${BUTTON_STYLES.secondary.light} flex items-center shadow-md hover:shadow-lg`}
-          >
-            <FileSpreadsheet size={16} className="mr-1.5" />
-            <span>Export Invoices</span>
-          </button>
-          <span className={`px-4 py-2 text-sm rounded-lg bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200`}>
-            {emailTestStatus}
+      {/* Header Section */}
+      <div className="mb-10">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="bg-[#00356B] text-white text-[9px] font-bold px-3 py-1 tracking-tighter uppercase rounded">
+            Real-Time Dashboard
+          </span>
+          <span className="text-[#00356B] text-[9px] font-bold uppercase tracking-[2px]">
+            Admin Overview
           </span>
         </div>
+        <h2 className="text-3xl md:text-4xl font-light text-[#00356B] mb-3">Welcome back, <span className="font-bold">{user.name}</span>! 👋</h2>
+        <p className={`text-[13px] ${darkMode ? 'text-gray-400' : 'text-gray-600'} font-medium`}>Here's what's happening with your real-time data. Manage content, track revenue, and monitor all activities.</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-3 mb-8">
+        <button
+          onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('blog'); }}
+          className={`${BUTTON_STYLES.accent.base} ${BUTTON_STYLES.accent.light} flex items-center`}
+        >
+          <Plus size={14} className="mr-2" />
+          New Blog Post
+        </button>
+        <button
+          onClick={() => { setIsEditing(false); setEditingItem(null); setActiveTab('portfolio'); }}
+          className={`${BUTTON_STYLES.secondary.base} ${BUTTON_STYLES.secondary.light} flex items-center`}
+        >
+          <Plus size={14} className="mr-2" />
+          New Portfolio
+        </button>
+        <button
+          onClick={() => { setActiveTab('invoices'); }}
+          className={`${BUTTON_STYLES.primary.base} ${BUTTON_STYLES.primary.light} flex items-center`}
+        >
+          <Plus size={14} className="mr-2" />
+          Manage Invoices
+        </button>
+        <button
+          onClick={exportInvoicesToExcel}
+          className={`${BUTTON_STYLES.secondary.base} ${BUTTON_STYLES.secondary.light} flex items-center`}
+        >
+          <FileSpreadsheet size={14} className="mr-2" />
+          Export Invoices
+        </button>
+        <span className={`px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-md flex items-center gap-2 ${darkMode ? 'bg-[#86bc25]/20 text-[#86bc25] border border-[#86bc25]/30' : 'bg-[#86bc25]/10 text-[#86bc25] border border-[#86bc25]/20'}`}>
+          <div className="w-2 h-2 rounded-full bg-[#86bc25] animate-pulse"></div>
+          {emailTestStatus}
+        </span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <StatCard
           title="Blog Posts"
           value={blogPosts.length}
           change={`${blogPosts.length} published`}
-          icon={<FileText size={20} />}
+          icon={<FileText size={18} />}
           color="blue"
           darkMode={darkMode}
         />
@@ -1516,7 +1944,7 @@ const DashboardOverview = ({
           title="Portfolio Items"
           value={portfolioItems.length}
           change={`${portfolioItems.length} published`}
-          icon={<Image size={20} />}
+          icon={<Image size={18} />}
           color="gold"
           darkMode={darkMode}
         />
@@ -1524,7 +1952,7 @@ const DashboardOverview = ({
           title="Total Invoices"
           value={stats.totalInvoices || invoices.length}
           change={`${stats.pendingInvoices || invoices.filter(inv => inv.status === 'pending').length} pending`}
-          icon={<CreditCard size={20} />}
+          icon={<CreditCard size={18} />}
           color="green"
           darkMode={darkMode}
         />
@@ -1532,19 +1960,30 @@ const DashboardOverview = ({
           title="Total Revenue"
           value={`Ksh ${formatPrice(stats.totalRevenue || 0)}`}
           change={`${stats.paidInvoices || invoices.filter(inv => inv.status === 'paid').length} paid`}
-          icon={<DollarSign size={20} />}
-          color="purple"
+          icon={<DollarSign size={18} />}
+          color="accent"
           darkMode={darkMode}
         />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+      {/* Charts Section */}
+      <div className="mb-8">
+        <div className="inline-block mb-4">
+          <span className="bg-[#00356B] text-white text-[9px] font-bold px-3 py-1 tracking-tighter uppercase rounded">
+            Analytics & Insights
+          </span>
+        </div>
+        <h3 className="text-2xl font-light text-[#00356B] mb-3">Performance <span className="font-bold">Overview</span></h3>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-1 h-80">
-          <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
+          <div className={`${themeClasses.card} p-5 rounded-xl shadow-md border backdrop-blur-sm h-full`}>
             <Bar data={contentData} options={contentOptions} />
           </div>
         </div>
         <div className="lg:col-span-1 h-80">
-          <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
+          <div className={`${themeClasses.card} p-5 rounded-xl shadow-md border backdrop-blur-sm h-full`}>
             <Pie data={invoiceStatusData} options={invoiceStatusOptions} />
           </div>
         </div>
@@ -1552,13 +1991,13 @@ const DashboardOverview = ({
           <ReceiptStatusPieChart receipts={receipts} darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <BlogStatusPieChart blogPosts={blogPosts} darkMode={darkMode} themeClasses={themeClasses} />
         <PortfolioCategoryBarChart portfolioItems={portfolioItems} darkMode={darkMode} themeClasses={themeClasses} />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
         <div className="lg:col-span-2 h-96">
-          <div className={`${themeClasses.card} p-4 rounded-xl shadow-sm border backdrop-blur-sm h-full`}>
+          <div className={`${themeClasses.card} p-5 rounded-xl shadow-md border backdrop-blur-sm h-full`}>
             <Line data={revenueChartData} options={revenueChartOptions} />
           </div>
         </div>
@@ -1566,6 +2005,17 @@ const DashboardOverview = ({
           <CalendarPlaceholder darkMode={darkMode} themeClasses={themeClasses} />
         </div>
       </div>
+
+      {/* Recent Items Section */}
+      <div className="mb-8">
+        <div className="inline-block mb-4">
+          <span className="bg-[#00356B] text-white text-[9px] font-bold px-3 py-1 tracking-tighter uppercase rounded">
+            Recent Activity
+          </span>
+        </div>
+        <h3 className="text-2xl font-light text-[#00356B] mb-3">Latest <span className="font-bold">Updates</span></h3>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <RecentList
           title="Recent Blog Posts"
@@ -1598,6 +2048,8 @@ const DashboardOverview = ({
           onEdit={onEdit}
           onDelete={onDelete}
           type="receipts"
+          API_BASE_URL={API_BASE_URL}
+          showNotification={showNotification}
         />
       </div>
     </div>
@@ -1606,29 +2058,31 @@ const DashboardOverview = ({
 
 const StatCard = ({ title, value, change, icon, color, darkMode }) => {
   const colorClasses = {
-    blue: darkMode ? 'bg-blue-900/20 border-blue-800/30' : 'bg-blue-50 border-blue-200',
-    gold: darkMode ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200',
-    green: darkMode ? 'bg-green-900/20 border-green-800/30' : 'bg-green-50 border-green-200',
-    purple: darkMode ? 'bg-purple-900/20 border-purple-800/30' : 'bg-purple-50 border-purple-200'
+    blue: darkMode ? `bg-[#00356B]/10 border-[#00356B]/20` : `bg-[#eef5ff] border-[#00356B]/20`,
+    gold: darkMode ? 'bg-[#D85C2C]/10 border-[#D85C2C]/20' : 'bg-[#D85C2C]/5 border-[#D85C2C]/20',
+    green: darkMode ? 'bg-[#86bc25]/10 border-[#86bc25]/20' : 'bg-[#86bc25]/5 border-[#86bc25]/20',
+    accent: darkMode ? `bg-[#D85C2C]/10 border-[#D85C2C]/20` : `bg-[#D85C2C]/5 border-[#D85C2C]/20`
   };
   const iconColor = {
-    blue: 'text-blue-500',
-    gold: 'text-[#FFCC00]',
-    green: 'text-green-500',
-    purple: 'text-purple-500'
+    blue: BRAND.PRIMARY,
+    gold: BRAND.ACCENT,
+    green: '#86bc25',
+    accent: BRAND.ACCENT
   };
-  const textColor = darkMode ? 'text-gray-100' : 'text-gray-900';
+  const textColor = darkMode ? 'text-gray-100' : 'text-[#1a1a1a]';
   const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
   return (
-    <div className={`${colorClasses[color]} p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105`}>
+    <div className={`${colorClasses[color]} p-6 rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className={`text-sm font-medium ${subTextColor}`}>{title}</p>
-          <p className={`text-2xl font-bold mt-1 ${textColor}`}>{value}</p>
-          <p className={`text-xs mt-2 ${subTextColor}`}>{change}</p>
+          <p className={`text-[11px] font-bold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>{title}</p>
+          <p className={`text-3xl font-bold mt-2 ${textColor}`}>{value}</p>
+          <p className={`text-[12px] mt-3 ${subTextColor}`}>{change}</p>
         </div>
-        <div className={`p-3 rounded-xl ${iconColor[color]} bg-opacity-10 backdrop-blur-sm`}>
-          {icon}
+        <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} shadow-md`}>
+          <div style={{ color: iconColor[color] }}>
+            {icon}
+          </div>
         </div>
       </div>
     </div>
@@ -1637,23 +2091,23 @@ const StatCard = ({ title, value, change, icon, color, darkMode }) => {
 
 // ✅ Updated: use enhanced download and send functions
 const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit, onDelete, type, API_BASE_URL, showNotification }) => {
-  const handleDownloadPDF = async (invoice) => {
+  const handleDownloadPDF = async (item) => {
     const token = localStorage.getItem('token');
     if (!token) {
       showNotification('⚠️ Session expired. Please log in again.', 'error');
       return;
     }
-    await downloadInvoicePdf(invoice._id, API_BASE_URL, token, showNotification);
+    await downloadInvoicePdf(item._id, API_BASE_URL, token, showNotification);
   };
 
-  const handleSendEmail = async (invoice) => {
-    if (!invoice.customerEmail?.trim()) {
+  const handleSendEmail = async (item) => {
+    if (!item.customerEmail?.trim()) {
       showNotification('⚠️ Customer email is required to send.', 'warning');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(invoice.customerEmail.trim())) {
+    if (!emailRegex.test(item.customerEmail.trim())) {
       showNotification('⚠️ Invalid email format.', 'warning');
       return;
     }
@@ -1664,33 +2118,40 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
       return;
     }
 
-    await sendInvoiceViaEmail(invoice, API_BASE_URL, token, showNotification);
+    if (type === 'invoices') {
+      await sendInvoiceViaEmail(item, API_BASE_URL, token, showNotification);
+    } else if (type === 'receipts') {
+      await sendReceiptViaEmail(item, API_BASE_URL, token, showNotification);
+    }
   };
 
   return (
-    <div className={`${themeClasses.card} p-5 rounded-xl shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{title}</h3>
+    <div className={`${themeClasses.card} p-6 rounded-xl shadow-md border backdrop-blur-sm transition-all duration-300 hover:shadow-lg`}>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h3 className={`text-lg font-bold uppercase tracking-tight ${darkMode ? 'text-gray-100' : 'text-[#1a1a1a]'}`}>{title}</h3>
+        </div>
         <a 
           href={viewAllLink} 
-          className={`text-sm font-medium transition-colors ${darkMode ? 'text-[#FFCC00] hover:text-yellow-300' : 'text-[#003366] hover:text-blue-800'}`}
+          className={`text-sm font-bold uppercase tracking-wider transition-colors hover:opacity-80 flex items-center gap-1`}
+          style={{ color: BRAND.ACCENT }}
           onClick={(e) => {
             e.preventDefault();
             window.location.hash = viewAllLink;
           }}
         >
-          View All
+          View All <ChevronRight size={14} />
         </a>
       </div>
-      <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+      <ul className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-[#eee]'}`}>
         {items.map(item => (
-          <li key={item._id} className="py-3 flex justify-between items-center">
-            <div className="flex items-center">
+          <li key={item._id} className="py-4 flex justify-between items-center first:pt-0 last:pb-0">
+            <div className="flex items-center flex-1">
               {item.imageUrl && type === 'blog' && (
                 <img
                   src={item.imageUrl}
                   alt={item.title}
-                  className="w-12 h-12 object-cover rounded-md mr-3 flex-shrink-0"
+                  className="w-12 h-12 object-cover rounded-md mr-4 flex-shrink-0"
                   onError={(e) => {
                     e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UzZTdlOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIGZpbGw9IiM2NTc1ODI5Ij5OTyBJTUFHRTwvdGV4dD48L3N2Zz4=';
                   }}
@@ -1724,7 +2185,7 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
               </div>
             </div>
             <div className="flex space-x-2 flex-shrink-0">
-              {type === 'invoices' && (
+              {(type === 'invoices' || type === 'receipts') && (
                 <>
                   <button
                     onClick={() => handleDownloadPDF(item)}
@@ -1744,14 +2205,17 @@ const RecentList = ({ title, items, viewAllLink, darkMode, themeClasses, onEdit,
               )}
               <button
                 onClick={() => onEdit(item)}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-[#003366] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-1.5 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                style={{ color: 'inherit' }}
+                onMouseEnter={(e) => { e.target.style.color = BRAND.PRIMARY; }}
+                onMouseLeave={(e) => { e.target.style.color = 'inherit'; }}
                 title="Edit"
               >
                 <Edit size={16} />
               </button>
               <button
                 onClick={() => onDelete(item._id, type)}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-1.5 rounded-full text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 title="Delete"
               >
                 <Trash2 size={16} />
@@ -1791,20 +2255,31 @@ const ContentManager = ({
   const isPortfolio = contentType === 'portfolio';
   return (
     <div>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <h2 className="text-2xl font-bold capitalize bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">
-          {isEditing ? `Edit ${isPortfolio ? 'Portfolio Item' : 'Blog Post'}` : `Create New ${isPortfolio ? 'Portfolio Item' : 'Blog Post'}`}
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="inline-block mb-4">
+          <span className="bg-[#00356B] text-white text-[9px] font-bold px-3 py-1 tracking-tighter uppercase rounded">
+            Content Management
+          </span>
+        </div>
+        <h2 className="text-3xl md:text-4xl font-light text-[#00356B] mb-3">
+          {isEditing ? `Edit ${isPortfolio ? 'Portfolio' : 'Blog'}` : `Create New ${isPortfolio ? 'Portfolio' : 'Blog'}` }
         </h2>
-        {isEditing && (
+        <div className="h-1 w-24 bg-[#86bc25]"></div>
+      </div>
+
+      {isEditing && (
+        <div className="mb-6">
           <button
             onClick={onCancel}
-            className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light} mt-4 md:mt-0`}
+            className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light} flex items-center`}
           >
-            <X size={16} className="inline-block mr-1.5" />
+            <X size={14} className="mr-2" />
             Cancel Edit
           </button>
-        )}
-      </div>
+        </div>
+      )}
+
       <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border mb-8 backdrop-blur-sm`}>
         <div className="space-y-6">
           <InputGroup
@@ -1828,29 +2303,31 @@ const ContentManager = ({
             icon={<Globe size={18} />}
           />
           <div className="flex flex-col space-y-4">
-            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
-            <div className={`flex items-center space-x-4 p-2 rounded-lg ${darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gray-100 border border-gray-200'}`}>
+            <label className={`text-[11px] font-bold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>Image Upload</label>
+            <div className={`flex items-center space-x-3 p-2 rounded-lg ${darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-[#eef5ff] border border-[#00356B]/20'}`}>
               <button
                 type="button"
                 onClick={() => setUploadMethod('url')}
-                className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                className={`py-2 px-4 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                   uploadMethod === 'url'
-                    ? (darkMode ? 'bg-[#003366] text-white shadow-md' : 'bg-[#003366] text-white shadow-md')
-                    : (darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200')
+                    ? 'text-white shadow-md'
+                    : (darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-[#00356B] hover:bg-white')
                 }`}
+                style={uploadMethod === 'url' ? { backgroundColor: BRAND.PRIMARY } : {}}
               >
-                <Link size={16} className="inline-block mr-1.5" /> Use URL
+                <Link size={14} className="inline-block mr-1.5" /> Use URL
               </button>
               <button
                 type="button"
                 onClick={() => setUploadMethod('upload')}
-                className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                className={`py-2 px-4 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                   uploadMethod === 'upload'
-                    ? (darkMode ? 'bg-[#003366] text-white shadow-md' : 'bg-[#003366] text-white shadow-md')
-                    : (darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200')
+                    ? 'text-white shadow-md'
+                    : (darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-[#00356B] hover:bg-white')
                 }`}
+                style={uploadMethod === 'upload' ? { backgroundColor: BRAND.PRIMARY } : {}}
               >
-                <Upload size={16} className="inline-block mr-1.5" /> Upload File
+                <Upload size={14} className="inline-block mr-1.5" /> Upload File
               </button>
             </div>
             {uploadMethod === 'url' ? (
@@ -1861,15 +2338,17 @@ const ContentManager = ({
                   value={formData.imageUrl || ''}
                   onChange={(e) => onImageUrlChange(e.target.value)}
                   placeholder="Paste image URL here..."
-                  className={`w-full p-3 pl-10 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                  className={`w-full p-3 pl-10 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:border-transparent ${themeClasses.input}`}
+                  style={{ borderColor: darkMode ? '#4b5563' : '#e5e7eb' }}
                 />
                 <Link size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               </div>
             ) : (
               <div
                 className={`flex justify-center items-center w-full border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-200 ${
-                  darkMode ? 'border-gray-600 hover:border-[#003366] bg-gray-700' : 'border-gray-300 hover:border-[#003366] bg-gray-50'
+                  darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'
                 }`}
+                style={{ borderColor: darkMode ? '#4b5563' : '#d1d5db' }}
                 onClick={() => document.getElementById('file-upload').click()}
               >
                 <input
@@ -1881,7 +2360,7 @@ const ContentManager = ({
                 />
                 <div className={`flex flex-col items-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   <Upload size={24} className="mb-2" />
-                  <p className="text-sm font-medium">Click or drag & drop to upload</p>
+                  <p className="text-sm font-bold">Click or drag & drop to upload</p>
                   <p className="text-xs">PNG, JPG, GIF up to 5MB</p>
                 </div>
               </div>
@@ -1890,14 +2369,14 @@ const ContentManager = ({
               <div className="flex items-center space-x-3 mt-4">
                 <img src={formData.imageUrl} alt="Preview" className="w-24 h-auto rounded-lg shadow-md" />
                 <div>
-                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Image Preview</p>
+                  <p className={`text-sm font-bold ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Image Preview</p>
                   <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formData.image ? formData.image.name : 'Image URL'}</p>
                 </div>
               </div>
             )}
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label className={`block text-[11px] font-bold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>
               {isPortfolio ? 'Description' : 'Content'}
             </label>
             <textarea
@@ -1906,42 +2385,52 @@ const ContentManager = ({
               onChange={onInputChange}
               rows="8"
               placeholder={`Write the content for your ${isPortfolio ? 'portfolio item' : 'blog post'} here...`}
-              className={`w-full p-4 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent resize-y ${themeClasses.input}`}
+              className={`w-full p-4 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:border-transparent resize-y ${themeClasses.input}`}
+              style={{ borderColor: darkMode ? '#4b5563' : '#e5e7eb' }}
             ></textarea>
           </div>
-          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
             {isEditing && (
               <button
                 type="button"
                 onClick={onCancel}
-                className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light}`}
+                className={`${BUTTON_STYLES.secondary.base} ${darkMode ? BUTTON_STYLES.secondary.dark : BUTTON_STYLES.secondary.light} flex items-center justify-center`}
               >
-                <X size={16} className="inline-block mr-1.5" />
+                <X size={14} className="mr-2" />
                 Cancel
               </button>
             )}
             <button
               type="button"
               onClick={onSave}
-              className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center justify-center`}
+              className={`${BUTTON_STYLES.accent.base} ${darkMode ? BUTTON_STYLES.accent.dark : BUTTON_STYLES.accent.light} flex items-center justify-center`}
             >
-              <Save size={16} className="inline-block mr-1.5" />
+              <Save size={14} className="mr-2" />
               {isEditing ? `Save Changes` : `Publish ${isPortfolio ? 'Item' : 'Post'}`}
             </button>
           </div>
         </div>
       </div>
-      <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-        Existing {isPortfolio ? 'Portfolio Items' : 'Blog Posts'}
-      </h3>
-      <div className={`${themeClasses.card} p-5 rounded-xl shadow-lg border backdrop-blur-sm overflow-x-auto`}>
+
+      {/* Existing Items Section */}
+      <div className="mt-12 mb-8">
+        <div className="inline-block mb-4">
+          <span className="bg-[#00356B] text-white text-[9px] font-bold px-3 py-1 tracking-tighter uppercase rounded">
+            Manage Items
+          </span>
+        </div>
+        <h3 className="text-3xl font-light text-[#00356B] mb-3">Existing <span className="font-bold">{isPortfolio ? 'Portfolio Items' : 'Blog Posts'}</span></h3>
+        <div className="h-1 w-24 bg-[#86bc25]"></div>
+      </div>
+
+      <div className={`${themeClasses.card} p-6 rounded-xl shadow-lg border backdrop-blur-sm overflow-x-auto`}>
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className={`${darkMode ? 'bg-gray-700' : 'bg-[#eef5ff]'}`}>
             <tr>
-              <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <th className={`px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>
                 {isPortfolio ? 'Item' : 'Post'}
               </th>
-              <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <th className={`px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider hidden md:table-cell ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>
                 Category
               </th>
               <th className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -1986,15 +2475,17 @@ const ContentManager = ({
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={() => onEdit(item)}
-                        className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-100'} transition-colors`}
+                        className={`p-2 rounded-lg transition-all duration-200 ${darkMode ? 'text-gray-400 hover:bg-gray-600 hover:text-gray-200' : 'text-[#00356B] hover:bg-[#eef5ff]'}`}
                         aria-label="Edit"
+                        title="Edit"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         onClick={() => onDelete(item._id, contentType)}
-                        className={`p-2 rounded-lg ${darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-100'} transition-colors`}
+                        className={`p-2 rounded-lg transition-all duration-200 ${darkMode ? 'text-red-400 hover:bg-red-900/30 hover:text-red-300' : 'text-red-600 hover:bg-red-50'}`}
                         aria-label="Delete"
+                        title="Delete"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -2012,7 +2503,16 @@ const ContentManager = ({
 
 const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => (
   <div>
-    <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">Site & System Settings</h2>
+    {/* Header Section */}
+    <div className="mb-8">
+      <div className="inline-block mb-4">
+        <span className="bg-[#00356B] text-white text-[9px] font-bold px-3 py-1 tracking-tighter uppercase rounded">
+          Configuration
+        </span>
+      </div>
+      <h2 className="text-3xl md:text-4xl font-light text-[#00356B] mb-3">Site & System <span className="font-bold">Settings</span></h2>
+      <div className="h-1 w-24 bg-[#86bc25]"></div>
+    </div>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
         <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Site Configuration</h3>
@@ -2039,7 +2539,7 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             icon={<User size={18} />}
           />
           <div className="flex items-center justify-between">
-            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} htmlFor="notifications">
+            <label className={`text-sm font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} htmlFor="notifications">
               Enable Notifications
               <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Receive alerts for new activity.</p>
             </label>
@@ -2049,11 +2549,12 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
               name="notifications"
               checked={settingsData.notifications}
               onChange={handleSettingsChange}
-              className="h-5 w-10 rounded-full appearance-none transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 checked:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#003366] cursor-pointer"
+              className="h-5 w-10 rounded-full appearance-none transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer"
+              style={{ accentColor: BRAND.PRIMARY }}
             />
           </div>
           <div className="flex items-center justify-between">
-            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} htmlFor="autoSave">
+            <label className={`text-sm font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} htmlFor="autoSave">
               Enable Auto-Save
               <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Automatically save your work every few minutes.</p>
             </label>
@@ -2063,7 +2564,8 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
               name="autoSave"
               checked={settingsData.autoSave}
               onChange={handleSettingsChange}
-              className="h-5 w-10 rounded-full appearance-none transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 checked:bg-[#003366] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#003366] cursor-pointer"
+              className="h-5 w-10 rounded-full appearance-none transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer"
+              style={{ accentColor: BRAND.PRIMARY }}
             />
           </div>
           <div className="pt-4 flex justify-end">
@@ -2112,11 +2614,11 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
 
 const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', darkMode, themeClasses, icon }) => (
   <div>
-    <label htmlFor={name} className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+    <label htmlFor={name} className={`block text-[11px] font-bold uppercase tracking-wider mb-3 ${darkMode ? 'text-gray-400' : 'text-[#00356B]'}`}>
       {label}
     </label>
     <div className="relative">
-      <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+      <div className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
         {icon}
       </div>
       <input
@@ -2126,8 +2628,138 @@ const InputGroup = ({ label, name, value, onChange, placeholder, type = 'text', 
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full p-3 pl-10 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+        className={`w-full p-3 pl-12 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:border-transparent ${themeClasses.input}`}
+        style={{ focusRingColor: BRAND.PRIMARY }}
       />
+    </div>
+  </div>
+);
+
+const ProfilePanel = ({ user, setShowProfileModal, darkMode, themeClasses, BRAND, BUTTON_STYLES }) => (
+  <div className="bg-white dark:bg-gray-900 min-h-screen">
+    <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+      {/* Header Section */}
+      <div className="mb-12">
+        <div className="inline-block mb-6">
+          <span className="bg-[#00356B] text-white text-[9px] font-bold px-3 py-1 tracking-tighter uppercase rounded">
+            Account Management
+          </span>
+        </div>
+        <h2 className="text-4xl md:text-5xl font-light text-[#00356B] mb-3">My <span className="font-bold">Profile</span></h2>
+        <div className="h-1 w-24 bg-[#86bc25]"></div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - Profile Image and Summary */}
+        <div className="lg:col-span-1">
+          <div className={`rounded-xl shadow-lg overflow-hidden border transition-all duration-300 hover:shadow-xl ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            {/* Card Header */}
+            <div className="h-32 bg-gradient-to-r from-[#00356B] to-[#002244]" />
+            
+            {/* Profile Image */}
+            <div className="px-6 pb-6">
+              <div className="flex justify-center -mt-20 mb-4">
+                <div className="relative">
+                  {user.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
+                      className="w-40 h-40 rounded-full border-4 border-white shadow-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-40 h-40 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-white text-6xl font-bold bg-[#00356B]">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setShowProfileModal(true)}
+                    className="absolute bottom-2 right-2 bg-[#D85C2C] text-white p-2.5 rounded-full shadow-lg hover:bg-[#b84520] transition-all duration-200 border-2 border-white"
+                    title="Edit profile"
+                  >
+                    <Edit size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Name and Role */}
+              <div className="text-center mt-4">
+                <h3 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-[#1a1a1a]'}`}>{user.name}</h3>
+                <p className="text-[#D85C2C] font-bold text-sm mt-1 uppercase tracking-wider">{user.role}</p>
+              </div>
+
+              {/* Stats */}
+              <div className="mt-8 space-y-3 pt-6 border-t" style={{ borderColor: darkMode ? '#374151' : '#e5e7eb' }}>
+                <div className="flex items-center justify-between text-sm">
+                  <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Member Since</span>
+                  <span className={`font-bold ${darkMode ? 'text-gray-200' : 'text-[#1a1a1a]'}`}>
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Edit Button */}
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="w-full mt-6 bg-[#D85C2C] text-white py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-[#b84520] transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                <Edit size={16} />
+                Edit Profile
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Account Information */}
+        <div className="lg:col-span-2">
+          <div className={`rounded-xl shadow-lg border transition-all duration-300 hover:shadow-xl ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div className="p-8">
+              <h3 className={`text-2xl font-bold mb-8 ${darkMode ? 'text-gray-100' : 'text-[#1a1a1a]'}`}>Account Information</h3>
+
+              <div className="space-y-8">
+                {/* Full Name */}
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#00356B] mb-2">Full Name</p>
+                  <p className={`text-lg font-medium ${darkMode ? 'text-gray-200' : 'text-[#1a1a1a]'}`}>{user.name}</p>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#00356B] mb-2">Email Address</p>
+                  <p className={`text-lg font-medium ${darkMode ? 'text-gray-200' : 'text-[#1a1a1a]'}`}>{user.email}</p>
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#00356B] mb-2">Phone Number</p>
+                  <p className={`text-lg font-medium ${darkMode ? 'text-gray-200' : 'text-[#1a1a1a]'}`}>
+                    {user.phone || 'Not provided'}
+                  </p>
+                </div>
+
+                {/* Role */}
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#00356B] mb-2">Account Type</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#86bc25]"></div>
+                    <p className={`text-lg font-medium ${darkMode ? 'text-gray-200' : 'text-[#1a1a1a]'}`}>{user.role}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-10 pt-8 border-t flex gap-4" style={{ borderColor: darkMode ? '#374151' : '#e5e7eb' }}>
+                <button
+                  onClick={() => setShowProfileModal(true)}
+                  className="flex-1 bg-[#00356B] text-white py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-[#002244] transition-all duration-200 shadow-md hover:shadow-lg"
+                >
+                  Update Information
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 );

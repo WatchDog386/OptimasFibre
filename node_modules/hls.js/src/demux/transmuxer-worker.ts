@@ -2,7 +2,7 @@ import { EventEmitter } from 'eventemitter3';
 import Transmuxer, { isPromise } from '../demux/transmuxer';
 import { ErrorDetails, ErrorTypes } from '../errors';
 import { Events } from '../events';
-import { enableLogs, type ILogFunction, type ILogger } from '../utils/logger';
+import { enableLogs, type ILogger } from '../utils/logger';
 import type { RemuxedTrack, RemuxerResult } from '../types/remuxer';
 import type { ChunkMetadata, TransmuxerResult } from '../types/transmuxer';
 
@@ -196,7 +196,8 @@ function forwardMessage(event, data, instanceNo) {
 
 function forwardWorkerLogs(logger: ILogger, instanceNo: number) {
   for (const logFn in logger) {
-    const func: ILogFunction = (message?) => {
+    logger[logFn] = function () {
+      const message = Array.prototype.join.call(arguments, ' ');
       forwardMessage(
         'workerLog',
         {
@@ -206,7 +207,6 @@ function forwardWorkerLogs(logger: ILogger, instanceNo: number) {
         instanceNo,
       );
     };
-    logger[logFn] = func;
   }
 }
 

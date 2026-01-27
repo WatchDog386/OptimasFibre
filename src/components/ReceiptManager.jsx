@@ -106,7 +106,7 @@ const generateReceiptPDF = async (receipt, showNotification) => {
   printContainer.style.width = '800px';
   printContainer.style.backgroundColor = 'white';
   printContainer.style.padding = '40px';
-  printContainer.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+  printContainer.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
   printContainer.style.color = '#333';
 
   // Calculate totals

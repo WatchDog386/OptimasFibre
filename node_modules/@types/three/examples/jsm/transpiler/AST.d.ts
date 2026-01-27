@@ -1,9 +1,17 @@
+export class Comment {
+    constructor(comment: string);
+
+    comment: string;
+
+    readonly isComment: true;
+}
+
 export class Program {
-    constructor();
+    constructor(body?: Statement[]);
 
     body: Statement[];
 
-    isProgram: true;
+    readonly isProgram: true;
 }
 
 // Boolean seems to be handled as a Unary
@@ -23,11 +31,17 @@ export type Statement =
     | FunctionCall
     | Return
     | Discard
+    | Continue
+    | Break
     | Accessor
     | StaticElement
     | DynamicElement
     | AccessorElements
     | For
+    | While
+    | Switch
+    | SwitchCase
+    | StructMember
     | null;
 
 export class VariableDeclaration {
@@ -46,7 +60,7 @@ export class VariableDeclaration {
 
     immutable: boolean;
 
-    isVariableDeclaration: true;
+    readonly isVariableDeclaration: true;
 }
 
 export class Uniform {
@@ -55,7 +69,7 @@ export class Uniform {
     type: string;
     name: string;
 
-    isUniform: true;
+    readonly isUniform: true;
 }
 
 export class Varying {
@@ -64,7 +78,7 @@ export class Varying {
     type: string;
     name: string;
 
-    isVarying: true;
+    readonly isVarying: true;
 }
 
 export class FunctionParameter {
@@ -75,18 +89,18 @@ export class FunctionParameter {
     qualifier: string | null;
     immutable: boolean;
 
-    isFunctionParameter: true;
+    readonly isFunctionParameter: true;
 }
 
 export class FunctionDeclaration {
-    constructor(type: string, name: string, params?: FunctionParameter[]);
+    constructor(type: string, name: string, params?: FunctionParameter[], body?: Statement[]);
 
     type: string;
     name: string;
     params: FunctionParameter[];
     body: Statement[];
 
-    isFunctionDeclaration: true;
+    readonly isFunctionDeclaration: true;
 }
 
 export class Expression {
@@ -94,7 +108,7 @@ export class Expression {
 
     expression: string;
 
-    isExpression: true;
+    readonly isExpression: true;
 }
 
 export class Ternary {
@@ -104,7 +118,7 @@ export class Ternary {
     left: Statement;
     right: Statement;
 
-    isTernary: true;
+    readonly isTernary: true;
 }
 
 export class Operator {
@@ -114,7 +128,7 @@ export class Operator {
     left: Statement;
     right: Statement;
 
-    isOperator: true;
+    readonly isOperator: true;
 }
 
 export class Unary {
@@ -124,7 +138,7 @@ export class Unary {
     expression: Statement;
     after: boolean;
 
-    isUnary: true;
+    readonly isUnary: true;
 }
 
 export class Number {
@@ -133,7 +147,7 @@ export class Number {
     type: string;
     value: string;
 
-    isNumber: true;
+    readonly isNumber: true;
 }
 
 export class String {
@@ -141,18 +155,17 @@ export class String {
 
     value: string;
 
-    isString: true;
+    readonly isString: true;
 }
 
 export class Conditional {
-    constructor(cond?: Conditional | null);
+    constructor(cond?: Conditional | null, body?: Statement[]);
 
     cond: Conditional | null;
-
     body: Statement[];
     elseConditional: Conditional | null;
 
-    isConditional: true;
+    readonly isConditional: true;
 }
 
 export class FunctionCall {
@@ -161,7 +174,7 @@ export class FunctionCall {
     name: string;
     params: Statement[];
 
-    isFunctionCall: true;
+    readonly isFunctionCall: true;
 }
 
 export class Return {
@@ -169,13 +182,25 @@ export class Return {
 
     value: Statement;
 
-    isReturn: true;
+    readonly isReturn: true;
 }
 
 export class Discard {
     constructor();
 
-    isDiscard: true;
+    readonly isDiscard: true;
+}
+
+export class Continue {
+    constructor();
+
+    readonly isContinue: true;
+}
+
+export class Break {
+    constructor();
+
+    readonly isBreak: true;
 }
 
 export class Accessor {
@@ -183,7 +208,7 @@ export class Accessor {
 
     property: string;
 
-    isAccessor: true;
+    readonly isAccessor: true;
 }
 
 export class StaticElement {
@@ -191,7 +216,7 @@ export class StaticElement {
 
     value: Statement;
 
-    isStaticElement: true;
+    readonly isStaticElement: true;
 }
 
 export class DynamicElement {
@@ -199,7 +224,7 @@ export class DynamicElement {
 
     value: Statement;
 
-    isDynamicElement: true;
+    readonly isDynamicElement: true;
 }
 
 export class AccessorElements {
@@ -208,17 +233,60 @@ export class AccessorElements {
     object: FunctionCall | Accessor;
     elements: (StaticElement | DynamicElement)[];
 
-    isAccessorElements: true;
+    readonly isAccessorElements: true;
 }
 
 export class For {
-    constructor(initialization: Statement, condition: Statement, afterthought: Statement);
+    constructor(initialization: Statement, condition: Statement, afterthought: Statement, body?: Statement[]);
 
     initialization: Statement;
     condition: Statement;
     afterthought: Statement;
-
     body: Statement[];
 
-    isFor: true;
+    readonly isFor: true;
+}
+
+export class While {
+    constructor(condition: Statement, body?: Statement[]);
+
+    condition: Statement;
+    body: Statement[];
+
+    readonly isWhile: true;
+}
+
+export class Switch {
+    constructor(discriminant: Statement, cases: Statement[]);
+
+    discriminant: Statement;
+    cases: Statement[];
+
+    readonly isSwitch: true;
+}
+
+export class SwitchCase {
+    constructor(body: Statement, conditions?: Statement[] | null);
+
+    body: Statement[];
+    conditions: Statement[];
+
+    isDefault: boolean;
+    readonly isSwitchCase: true;
+}
+
+export class StructMember {
+    type: string;
+    name: string;
+    readonly isStructMember: true;
+
+    constructor(type: string, name: string);
+}
+
+export class StructDefinition {
+    name: string;
+    members: StructMember[];
+    readonly isStructDefinition: true;
+
+    constructor(name: string, members?: StructMember[]);
 }

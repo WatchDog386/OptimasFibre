@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Eye, EyeOff, ArrowRight, Loader2, 
-  Home, AlertCircle
+  Eye, EyeOff, Loader2, 
+  CheckCircle, AlertCircle, User
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+
+const BRAND = {
+  PRIMARY: "#00356B", // Deep Blue
+  ACCENT: "#D85C2C",  // The Orange/Rust color
+  GREEN: "#86bc25",   // The Green accent
+};
 
 const Login = () => {
+  // --- LOGIC: STATE (DO NOT TOUCH) ---
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   
   // Forgot Password State
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -22,12 +30,24 @@ const Login = () => {
   const navigate = useNavigate();
   const API_BASE_URL = 'https://optimasfibre.onrender.com'; 
 
-  const BG_IMAGE = "https://media.istockphoto.com/id/1494073880/photo/a-man-holding-icon-virtual-24-7-support-services-for-worldwide-nonstop-and-full-time.jpg?s=612x612&w=0&k=20&c=4YF-otaX3n8OiPOC4L_-_pAX1ibayzdvpkK1Ih2-p50=";
+  // --- LOGIC: EFFECTS & HANDLERS (DO NOT TOUCH) ---
+  const BG_IMAGE = "https://t4.ftcdn.net/jpg/03/57/34/39/360_F_357343965_u58BFcRrziBVMqgt6liwPHJKcIjHsPnc.jpg";
 
   useEffect(() => {
+    // Check if already logged in and redirect to dashboard
     const token = localStorage.getItem('token');
-    if (token) verifyToken(token);
-  }, []);
+    if (token) {
+      navigate('/admin');
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (success) {
+      setTimeout(() => {
+        navigate('/admin');
+      }, 2000);
+    }
+  }, [success, navigate]);
 
   const verifyToken = async (token) => {
     try {
@@ -64,13 +84,13 @@ const Login = () => {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
-        navigate('/admin');
+        setSuccess(true);
       } else {
         setError(data.message || 'Invalid credentials.');
+        setLoading(false);
       }
     } catch (err) {
       setError('Server unreachable.');
-    } finally {
       setLoading(false);
     }
   };
@@ -98,142 +118,151 @@ const Login = () => {
     }
   };
 
+  // --- UI RENDER ---
   return (
-    <div 
-      className="min-h-screen w-full flex items-center justify-center relative overflow-hidden font-sans"
-      style={{ 
-        backgroundImage: `url(${BG_IMAGE})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+    <div
+      className="min-h-screen w-full flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: `url('${BG_IMAGE}')`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }}
     >
-      {/* Dark Overlay Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent z-0"></div>
+      {/* Dark overlay for background */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[3px]"></div>
 
-      {/* Home Button (Top Left) */}
-      <button 
-        onClick={() => navigate('/')}
-        className="absolute top-4 left-4 z-50 flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm font-medium"
-      >
-        <Home size={16} /> Back Home
-      </button>
-
-      <div className="container mx-auto px-4 sm:px-6 relative z-10 w-full max-w-6xl">
-        <div className="flex flex-col md:flex-row justify-between items-center min-h-[80vh] gap-8 md:gap-12 py-8">
-          
-          {/* --- LEFT SIDE: WELCOME TEXT (No social icons) --- */}
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="w-full md:w-1/2 text-white space-y-5 sm:space-y-6"
-          >
-            <div>
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight">
-                Welcome <br /> Back
-              </h1>
-            </div>
+      {/* MAIN CARD CONTAINER */}
+      <div className="relative bg-white rounded-[20px] shadow-2xl overflow-hidden w-full max-w-[900px] min-h-[550px] flex flex-col md:flex-row z-10">
+        
+        {/* --- LEFT SIDE: LOGIN FORM --- */}
+        <div className="w-full md:w-[50%] p-8 sm:p-12 flex flex-col justify-center relative bg-white">
+          <div className="max-w-[320px] w-full mx-auto">
             
-            <p className="text-white/80 text-sm md:text-base max-w-md leading-relaxed">
-              Sign in to your admin portal to manage services, view customer data, and monitor network performance.
-            </p>
-            {/* ✅ Social icons removed */}
-          </motion.div>
-
-          {/* --- RIGHT SIDE: LOGIN FORM --- */}
-          <motion.div 
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="w-full max-w-md mx-auto md:mx-0 text-white"
-          >
-            <div className="mb-6">
-              <h2 className="text-3xl sm:text-4xl font-bold">Sign in</h2>
-            </div>
-
-            {error && (
-              <motion.div 
-                initial={{ height: 0, opacity: 0 }} 
-                animate={{ height: 'auto', opacity: 1 }}
-                className="bg-red-500/20 border border-red-500/50 text-red-100 p-3 rounded mb-4 text-sm flex items-center gap-2"
-              >
-                <AlertCircle size={16} /> {error}
-              </motion.div>
-            )}
+            <h1 className="text-3xl font-bold text-center mb-8" style={{ color: BRAND.PRIMARY }}>
+              Sign In
+            </h1>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium ml-1">Email Address</label>
-                <input 
+              {/* Email Input */}
+              <div className="space-y-1">
+                <input
                   type="email"
+                  placeholder="Email Address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white text-gray-900 px-4 py-3 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#d0b216] transition-all text-base"
+                  className="w-full px-5 py-3 rounded-full border border-gray-200 bg-gray-50 text-sm outline-none focus:border-[#00356B] focus:ring-1 focus:ring-[#00356B] transition-all"
                   required
                 />
               </div>
 
-              <div className="space-y-2 relative">
-                <label className="text-sm font-medium ml-1">Password</label>
-                <div className="relative">
-                  <input 
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-white text-gray-900 px-4 py-3 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#d0b216] transition-all text-base"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <div 
-                  onClick={() => setRememberMe(!rememberMe)}
-                  className={`w-4 h-4 border flex items-center justify-center cursor-pointer transition-colors ${rememberMe ? 'bg-[#d0b216] border-[#d0b216]' : 'bg-transparent border-white'}`}
-                >
-                  {/* Visual checkmark — no external lib needed */}
-                  {rememberMe && <div className="w-2 h-2 bg-black rounded-sm"></div>}
-                </div>
-                <label onClick={() => setRememberMe(!rememberMe)} className="text-sm cursor-pointer select-none">
-                  Remember Me
-                </label>
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full px-8 py-3 bg-[#d0b216] hover:bg-[#b89c0f] text-[#182b5c] font-bold rounded-sm transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
-              >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : 'Sign in now'}
-              </button>
-
-              <div className="pt-3">
-                <button 
+              {/* Password Input */}
+              <div className="space-y-1 relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-5 py-3 rounded-full border border-gray-200 bg-gray-50 text-sm outline-none focus:border-[#00356B] focus:ring-1 focus:ring-[#00356B] transition-all"
+                  required
+                />
+                <button
                   type="button"
-                  onClick={() => setShowForgotModal(true)}
-                  className="text-sm text-white/80 hover:text-white hover:underline transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  Lost your password?
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
 
+              <div className="flex justify-center w-full">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="text-xs font-semibold text-[#00356B] hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+
+              {/* Error Message */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="bg-red-50 text-red-600 text-xs p-2 rounded text-center flex items-center justify-center gap-2"
+                  >
+                    <AlertCircle size={14} /> {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Login Button - Rust/Orange Color */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-full text-white font-bold uppercase tracking-wide text-sm shadow-md hover:shadow-lg transition-all transform active:scale-95"
+                style={{ backgroundColor: BRAND.ACCENT }}
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "LOGIN"}
+              </button>
             </form>
 
-            {/* ✅ Simplified legal notice — no broken links */}
-            <div className="mt-8 text-xs text-white/60 leading-relaxed text-center md:text-left">
-              By signing in, you agree to Optimas WiFi's policies and terms of use.
+
+          </div>
+        </div>
+
+        {/* --- RIGHT SIDE: DECORATIVE PANEL (Desktop) --- */}
+        <div 
+          className="hidden md:flex w-[50%] flex-col items-center justify-center p-8 text-center text-white relative"
+          style={{ 
+            backgroundColor: BRAND.PRIMARY,
+            // These border radiuses create the specific curve shown in the image
+            borderTopLeftRadius: '100px',
+            borderBottomLeftRadius: '30px'
+          }}
+        >
+          <div className="relative z-10 flex flex-col items-center">
+            {/* User Icon Circle */}
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 border-4" style={{ borderColor: BRAND.GREEN }}>
+              <User size={32} color={BRAND.PRIMARY} />
+            </div>
+
+            {/* Admin Portal Title */}
+            <h2 className="text-3xl font-light mb-2">
+              <span style={{ color: 'white' }}>Optimas Wifi</span> <span style={{ fontWeight: 'bold', color: 'white' }}>Admin Portal</span>
+            </h2>
+            <p className="text-sm text-gray-300 mb-8 max-w-[250px]">
+              Manage your content, invoices, receipts, and more.
+            </p>
+
+            {/* UPDATED BUTTON TO "Back Home" */}
+            <button
+              onClick={() => navigate('/')} 
+              className="bg-white text-[#00356B] text-xs font-bold py-3 px-10 rounded-full shadow-lg hover:bg-gray-100 transition-colors uppercase tracking-wider"
+            >
+              Back Home
+            </button>
+          </div>
+        </div>
+
+        {/* SUCCESS OVERLAY */}
+        {success && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex items-center justify-center"
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-100">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800">Welcome Back!</h2>
+              <p className="text-gray-500 text-sm mt-1">Redirecting you to dashboard...</p>
             </div>
           </motion.div>
-        </div>
+        )}
       </div>
 
       {/* --- FORGOT PASSWORD MODAL --- */}
@@ -245,50 +274,47 @@ const Login = () => {
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }}
               onClick={() => setShowForgotModal(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }} 
               animate={{ scale: 1, opacity: 1 }} 
               exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative z-10 w-full max-w-md max-w-[90vw] p-6 sm:p-8 rounded-lg bg-[#182b5c] text-white shadow-2xl border border-white/10"
+              className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl p-8"
             >
-              <h3 className="text-xl sm:text-2xl font-bold mb-2">Password Recovery</h3>
-              <p className="text-white/60 text-sm mb-4">Enter your email to receive reset instructions.</p>
-               
+              <h3 className="text-xl font-bold mb-2 text-center" style={{ color: BRAND.PRIMARY }}>Recovery</h3>
+              <p className="text-gray-500 text-sm mb-6 text-center">Enter your email to receive a reset link.</p>
+                
               <form onSubmit={handleForgotPassword} className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider block mb-2 text-white/60">Email Address</label>
-                  <input 
-                    type="email" 
-                    value={forgotEmail}
-                    onChange={(e) => setForgotEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-sm bg-black/30 border border-white/10 text-white focus:border-[#d0b216] outline-none transition-colors text-base"
-                    placeholder="support@optimaswifi.co.ke"
-                    required
-                  />
-                </div>
+                <input 
+                  type="email" 
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  className="w-full px-5 py-3 rounded-full bg-gray-50 border border-gray-200 text-sm focus:border-[#00356B] focus:ring-1 focus:ring-[#00356B] outline-none"
+                  placeholder="admin@optimaswifi.co.ke"
+                  required
+                />
 
                 {forgotStatus.msg && (
                   <div className={`text-xs p-3 rounded text-center font-medium ${
-                    forgotStatus.type === 'error' ? 'bg-red-500/20 text-red-200' : 'bg-green-500/20 text-green-200'
+                    forgotStatus.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
                   }`}>
                     {forgotStatus.msg}
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <div className="flex gap-3 pt-2">
                   <button 
                     type="button" 
                     onClick={() => setShowForgotModal(false)} 
-                    className="w-full py-3 text-sm font-bold hover:bg-white/10 rounded-sm transition-colors"
+                    className="flex-1 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-full transition-colors border border-gray-200"
                   >
                     CANCEL
                   </button>
                   <button 
                     type="submit" 
-                    className="w-full py-3 bg-[#d0b216] text-[#182b5c] font-bold text-sm hover:bg-[#b89c0f] rounded-sm transition-colors shadow"
+                    className="flex-1 py-2.5 text-xs font-bold text-white rounded-full transition-colors hover:opacity-90 shadow"
+                    style={{ backgroundColor: BRAND.ACCENT }}
                   >
                     SEND LINK
                   </button>

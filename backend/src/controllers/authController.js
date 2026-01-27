@@ -525,3 +525,125 @@ export const checkEmail = async (req, res) => {
     });
   }
 };
+
+/**
+ * GET ME - Fetch current user profile
+ */
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Map email to display names
+    const nameMap = {
+      'fanteskorri36@gmail.com': 'Felix Ochieng',
+      'info@optimas.co.ke': 'Boisley'
+    };
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name || nameMap[user.email] || '',
+        email: user.email,
+        phone: user.phone || '',
+        role: user.role,
+        profileImage: user.profileImage || '',
+        createdAt: user.createdAt
+      }
+    });
+
+  } catch (err) {
+    console.error('🔐 Get user error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user profile'
+    });
+  }
+};
+
+/**
+ * UPDATE PROFILE - Update user profile information
+ */
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, email, phone, profileImage } = req.body;
+    const userId = req.user._id;
+
+    // Validate input
+    if (!name && !email && !phone && !profileImage) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one field is required for update'
+      });
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (email) {
+      const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already in use by another account'
+        });
+      }
+    }
+
+    // Prepare update object
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phone) updateData.phone = phone;
+    if (profileImage) updateData.profileImage = profileImage;
+
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        name: user.name || '',
+        email: user.email,
+        phone: user.phone || '',
+        role: user.role,
+        profileImage: user.profileImage || '',
+        createdAt: user.createdAt
+      }
+    });
+
+  } catch (err) {
+    console.error('🔐 Update profile error:', err.message);
+    
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: Object.values(err.errors).map(e => e.message)
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile'
+    });
+  }
+};
