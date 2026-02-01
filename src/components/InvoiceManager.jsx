@@ -79,10 +79,18 @@ const COMPANY_INFO = {
   branch: "Nairobi Main",
   supportEmail: "support@optimaswifi.co.ke",
   supportPhone: "+254 741 874 200",
-  paybill: "123456",
+  paybill: "4092707",
   address: "Nairobi, Kenya",
   website: "www.optimaswifi.co.ke",
-  vatNumber: "VAT00123456"
+  vatNumber: "VAT00123456",
+  colors: {
+    primary: '#00356B',    // Deep Navy Blue
+    accent: '#D85C2C',     // Vibrant Orange/Rust
+    success: '#86bc25',    // Green
+    warning: '#f59e0b',    // Amber
+    danger: '#ef4444',     // Red
+    info: '#3b82f6'        // Blue
+  }
 };
 
 const initialFormState = {
@@ -112,19 +120,20 @@ const initialFormState = {
   paymentTerms: 'Due upon receipt',
   notes: '',
   terms: 'Payment due within 30 days. Late payments may attract a penalty fee of 5% per month. All payments should be made to the bank details provided.',
-  billingCycle: 'monthly'
+  billingCycle: 'monthly',
+  clientAccountNumber: '' // ✅ NEW: Client account number (FBI-XXXXXXXXX)
 };
 
 // ✅ HELPER: Create attachment guidance for email
 const createAttachmentGuide = (fileName) => {
   return `
-    <div style="background:#e8f4fd; border:2px solid #2196f3; border-radius:10px; padding:20px; margin:25px 0; font-family:Arial,sans-serif;">
+    <div style="background:#e3f2fd; border:2px solid ${COMPANY_INFO.colors.primary}; border-radius:10px; padding:20px; margin:25px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;">
       <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
-        <div style="width:40px; height:40px; background:#2196f3; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+        <div style="width:40px; height:40px; background:${COMPANY_INFO.colors.primary}; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
           📎
         </div>
         <div>
-          <h4 style="margin:0 0 5px 0; font-size:18px; color:#1565c0; font-weight:bold;">ATTACHMENT REQUIRED</h4>
+          <h4 style="margin:0 0 5px 0; font-size:18px; color:${COMPANY_INFO.colors.primary}; font-weight:bold;">ATTACHMENT REQUIRED</h4>
           <p style="margin:0; font-size:14px; color:#333;">Please attach the invoice PDF before sending this email</p>
         </div>
       </div>
@@ -132,12 +141,12 @@ const createAttachmentGuide = (fileName) => {
       <div style="background:white; border-radius:8px; padding:15px; margin-bottom:15px; border:1px solid #ddd;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <span style="font-size:14px; font-weight:600; color:#333;">File to attach:</span>
-          <span style="font-size:12px; color:#2196f3; background:#e3f2fd; padding:3px 8px; border-radius:4px;">
+          <span style="font-size:12px; color:${COMPANY_INFO.colors.primary}; background:#e3f2fd; padding:3px 8px; border-radius:4px;">
             Downloaded to your device
           </span>
         </div>
         <div style="background:#f8f9fa; padding:12px 15px; border-radius:6px; border:2px dashed #ccc; font-family:'Courier New',monospace; font-size:14px; color:#333; display:flex; align-items:center; gap:10px;">
-          <span style="color:#2196f3; font-size:16px;">📄</span>
+          <span style="color:${COMPANY_INFO.colors.primary}; font-size:16px;">📄</span>
           <span style="font-weight:600;">${fileName}</span>
         </div>
         <div style="margin-top:10px; font-size:12px; color:#666;">
@@ -146,7 +155,7 @@ const createAttachmentGuide = (fileName) => {
       </div>
       
       <div style="background:#f0f7ff; border-radius:8px; padding:15px;">
-        <h5 style="margin:0 0 10px 0; font-size:14px; color:#1565c0;">Quick Attachment Steps:</h5>
+        <h5 style="margin:0 0 10px 0; font-size:14px; color:${COMPANY_INFO.colors.primary};">Quick Attachment Steps:</h5>
         <ol style="margin:0; padding-left:20px; font-size:13px; color:#444; line-height:1.6;">
           <li>Click the <strong>"Attach"</strong> or <strong>"📎"</strong> button in your email client</li>
           <li>Navigate to your <strong>Downloads</strong> folder</li>
@@ -190,18 +199,19 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
   printContainer.style.width = '800px';
   printContainer.style.backgroundColor = 'white';
   printContainer.style.padding = '40px';
-  printContainer.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-  printContainer.style.color = '#333';
+  printContainer.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif";
+  printContainer.style.color = '#1a1a1a';
+  printContainer.style.lineHeight = '1.6';
 
   // ✅ Add QR Code for mobile payments
   const qrCodeSection = includeShareOptions ? `
-    <div style="margin:20px 0; padding:15px; background:#f8f9fa; border-radius:8px; border-left:4px solid #28a745;">
+    <div style="margin:20px 0; padding:15px; background:#f8f9fa; border-radius:8px; border-left:4px solid ${COMPANY_INFO.colors.success};">
       <div style="display:flex; align-items:center; gap:15px;">
         <div style="width:80px; height:80px; background:#e9ecef; display:flex; align-items:center; justify-content:center; border-radius:6px; font-size:12px; color:#666;">
           [QR Code]
         </div>
         <div>
-          <h4 style="margin:0 0 8px 0; font-size:14px; font-weight:600; color:#333;">Quick Pay via M-Pesa</h4>
+          <h4 style="margin:0 0 8px 0; font-size:14px; font-weight:600; color:#1a1a1a;">Quick Pay via M-Pesa</h4>
           <p style="margin:0 0 5px 0; font-size:12px; color:#555;">
             <strong>Paybill:</strong> ${COMPANY_INFO.paybill}
           </p>
@@ -216,7 +226,7 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
 
   const logo = COMPANY_INFO.logoUrl 
     ? `<img src="${COMPANY_INFO.logoUrl}" alt="Logo" style="height:70px; margin-bottom:10px;" onerror="this.style.display='none'" />` 
-    : `<div style="height:70px; background:#003366; color:white; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; border-radius:8px;">${COMPANY_INFO.name}</div>`;
+    : `<div style="height:70px; background:${COMPANY_INFO.colors.primary}; color:white; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; border-radius:8px;">${COMPANY_INFO.name}</div>`;
 
   // ✅ Enhanced invoice items table
   let itemsHtml = '';
@@ -241,18 +251,18 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
 
   // ✅ Payment status badge
   const statusBadge = invoice.status === 'paid' 
-    ? '<span style="background:#28a745; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PAID</span>'
+    ? `<span style="background:${COMPANY_INFO.colors.success}; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PAID</span>`
     : invoice.status === 'partially_paid'
-    ? '<span style="background:#17a2b8; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PARTIALLY PAID</span>'
-    : '<span style="background:#ffc107; color:#333; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PENDING</span>';
+    ? `<span style="background:${COMPANY_INFO.colors.info}; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PARTIALLY PAID</span>`
+    : `<span style="background:${COMPANY_INFO.colors.warning}; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PENDING</span>`;
 
   printContainer.innerHTML = `
-    <div style="border:2px solid #003366; border-radius:12px; padding:40px; background:white;">
+    <div style="border:2px solid ${COMPANY_INFO.colors.primary}; border-radius:12px; padding:40px; background:white;">
       <!-- Header -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; border-bottom:2px solid #f0f0f0; padding-bottom:20px;">
         <div>
           ${logo}
-          <h1 style="margin:10px 0 5px 0; font-size:28px; color:#003366; font-weight:700;">${COMPANY_INFO.name}</h1>
+          <h1 style="margin:10px 0 5px 0; font-size:28px; color:${COMPANY_INFO.colors.primary}; font-weight:700;">${COMPANY_INFO.name}</h1>
           <p style="margin:0; color:#666; font-size:14px;">${COMPANY_INFO.tagline}</p>
           <p style="margin:5px 0 0 0; color:#666; font-size:12px;">
             <span style="display:inline-flex; align-items:center; margin-right:15px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>${COMPANY_INFO.address}</span>
@@ -260,7 +270,7 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
           </p>
         </div>
         <div style="text-align:right;">
-          <h2 style="margin:0 0 10px 0; font-size:32px; color:#003366; font-weight:800;">INVOICE</h2>
+          <h2 style="margin:0 0 10px 0; font-size:32px; color:${COMPANY_INFO.colors.primary}; font-weight:800;">INVOICE</h2>
           ${statusBadge}
           <p style="margin:5px 0 0 0; font-size:11px; color:#999;">Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
         </div>
@@ -272,9 +282,9 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
       <!-- Company & Customer Info -->
       <div style="display:flex; justify-content:space-between; margin-bottom:40px;">
         <div style="flex:1;">
-          <h3 style="margin:0 0 10px 0; font-size:16px; color:#003366; font-weight:600;">FROM:</h3>
-          <div style="background:#f8f9fa; padding:15px; border-radius:8px; border-left:4px solid #003366;">
-            <p style="margin:0 0 5px 0; font-weight:600; color:#003366;">${COMPANY_INFO.name}</p>
+          <h3 style="margin:0 0 10px 0; font-size:16px; color:${COMPANY_INFO.colors.primary}; font-weight:600;">FROM:</h3>
+          <div style="background:#f8f9fa; padding:15px; border-radius:8px; border-left:4px solid ${COMPANY_INFO.colors.primary};">
+            <p style="margin:0 0 5px 0; font-weight:600; color:${COMPANY_INFO.colors.primary};">${COMPANY_INFO.name}</p>
             <p style="margin:0 0 5px 0; font-size:13px; color:#555;">${COMPANY_INFO.address}</p>
             <p style="margin:0 0 5px 0; font-size:13px; color:#555;">Phone: ${COMPANY_INFO.supportPhone}</p>
             <p style="margin:0 0 5px 0; font-size:13px; color:#555;">Email: ${COMPANY_INFO.supportEmail}</p>
@@ -283,9 +293,9 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
         </div>
         
         <div style="flex:1; margin-left:40px;">
-          <h3 style="margin:0 0 10px 0; font-size:16px; color:#003366; font-weight:600;">BILL TO:</h3>
-          <div style="background:#f8f9fa; padding:15px; border-radius:8px; border-left:4px solid #FFCC00;">
-            <p style="margin:0 0 5px 0; font-weight:600; color:#333;">${invoice.customerName || 'N/A'}</p>
+          <h3 style="margin:0 0 10px 0; font-size:16px; color:${COMPANY_INFO.colors.primary}; font-weight:600;">BILL TO:</h3>
+          <div style="background:#f8f9fa; padding:15px; border-radius:8px; border-left:4px solid ${COMPANY_INFO.colors.accent};">
+            <p style="margin:0 0 5px 0; font-weight:600; color:#1a1a1a;">${invoice.customerName || 'N/A'}</p>
             <p style="margin:0 0 5px 0; font-size:13px; color:#555;">${invoice.customerEmail || ''}</p>
             <p style="margin:0 0 5px 0; font-size:13px; color:#555;">Phone: ${invoice.customerPhone || ''}</p>
             <p style="margin:0; font-size:13px; color:#555;">Location: ${invoice.customerLocation || ''}</p>
@@ -293,13 +303,13 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
         </div>
         
         <div style="flex:1; margin-left:40px;">
-          <h3 style="margin:0 0 10px 0; font-size:16px; color:#003366; font-weight:600;">INVOICE DETAILS:</h3>
-          <div style="background:#f8f9fa; padding:15px; border-radius:8px; border-left:4px solid #28a745;">
-            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#333;">Invoice #:</span> ${invoice.invoiceNumber || invoice._id?.substring(0,8) || 'N/A'}</p>
-            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#333;">Date:</span> ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#333;">Due Date:</span> ${new Date(invoice.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#333;">Payment Terms:</span> ${invoice.paymentTerms || '30 days'}</p>
-            <p style="margin:0; font-size:13px;"><span style="font-weight:600; color:#333;">Plan:</span> ${invoice.planName || 'N/A'}</p>
+          <h3 style="margin:0 0 10px 0; font-size:16px; color:${COMPANY_INFO.colors.primary}; font-weight:600;">INVOICE DETAILS:</h3>
+          <div style="background:#f8f9fa; padding:15px; border-radius:8px; border-left:4px solid ${COMPANY_INFO.colors.success};">
+            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Invoice #:</span> ${invoice.invoiceNumber || invoice._id?.substring(0,8) || 'N/A'}</p>
+            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Date:</span> ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Due Date:</span> ${new Date(invoice.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Payment Terms:</span> ${invoice.paymentTerms || '30 days'}</p>
+            <p style="margin:0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Plan:</span> ${invoice.planName || 'N/A'}</p>
           </div>
         </div>
       </div>
@@ -308,7 +318,7 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
       <div style="margin-bottom:30px;">
         <table style="width:100%; border-collapse:collapse; border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
           <thead>
-            <tr style="background:#003366; color:white;">
+            <tr style="background:${COMPANY_INFO.colors.primary}; color:white;">
               <th style="padding:15px; text-align:left; font-weight:600;">DESCRIPTION</th>
               <th style="padding:15px; text-align:center; font-weight:600;">QTY</th>
               <th style="padding:15px; text-align:right; font-weight:600;">UNIT PRICE</th>
@@ -324,7 +334,7 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
       <!-- Summary Section -->
       <div style="display:flex; justify-content:space-between; margin-bottom:40px;">
         <div style="width:60%;">
-          <h3 style="margin:0 0 15px 0; font-size:16px; color:#003366; font-weight:600;">NOTES & TERMS:</h3>
+          <h3 style="margin:0 0 15px 0; font-size:16px; color:${COMPANY_INFO.colors.primary}; font-weight:600;">NOTES & TERMS:</h3>
           <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px dashed #ddd;">
             <p style="margin:0 0 10px 0; font-size:13px; line-height:1.6;">${invoice.notes || 'Thank you for your business!'}</p>
             <p style="margin:0; font-size:13px; line-height:1.6; color:#666;">${invoice.terms || COMPANY_INFO.terms}</p>
@@ -333,7 +343,7 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
         
         <div style="width:35%;">
           <div style="background:#f8f9fa; padding:25px; border-radius:8px; border:1px solid #e0e0e0;">
-            <h3 style="margin:0 0 20px 0; font-size:18px; color:#003366; font-weight:700; text-align:center;">INVOICE SUMMARY</h3>
+            <h3 style="margin:0 0 20px 0; font-size:18px; color:${COMPANY_INFO.colors.primary}; font-weight:700; text-align:center;">INVOICE SUMMARY</h3>
             
             <div style="margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid #e0e0e0;">
               <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
@@ -388,8 +398,8 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
           <div>
             <p style="margin:0 0 10px 0; font-size:14px; font-weight:600;">Mobile Money</p>
             <p style="margin:0 0 5px 0; font-size:13px;">Paybill: ${COMPANY_INFO.paybill}</p>
-            <p style="margin:0 0 5px 0; font-size:13px;">Account: ${invoice.invoiceNumber || 'Your Name'}</p>
-            <p style="margin:0; font-size:13px;">Please include invoice number as reference</p>
+            <p style="margin:0 0 5px 0; font-size:13px; color:#ff6b35; font-weight:600;">Account: ${invoice.clientAccountNumber || 'NOT SET'}</p>
+            <p style="margin:0; font-size:13px;">Include account number when paying</p>
           </div>
         </div>
       </div>
@@ -568,22 +578,29 @@ const openEmailClient = async (invoice, showNotification) => {
     `• Total Amount: Ksh ${formatPrice(invoice.totalAmount)}`,
     `• Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`,
     `• Plan: ${invoice.planName} (${invoice.planSpeed})`,
+    `• Status: ${invoice.status === 'paid' ? '✅ PAID' : invoice.status === 'pending' ? '⏳ PENDING' : '⚠️ OVERDUE'}`,
     ``,
     `**Payment Methods:**`,
-    `1. *Mobile Money:* Paybill ${COMPANY_INFO.paybill}, Account: ${invoice.invoiceNumber}`,
-    `2. *Bank Transfer:* ${COMPANY_INFO.bankName}, A/C: ${COMPANY_INFO.accountNumber}`,
+    `1. **Mobile Money:** Paybill ${COMPANY_INFO.paybill}, Account: ${invoice.invoiceNumber}`,
+    `2. **Bank Transfer:** ${COMPANY_INFO.bankName}, A/C: ${COMPANY_INFO.accountNumber}`,
+    `3. **Contact:** ${COMPANY_INFO.supportPhone} or ${COMPANY_INFO.supportEmail}`,
     ``,
     `**Important:**`,
-    `The invoice PDF has been downloaded to your device.`,
-    `Please attach the file "${fileName}" before sending this email.`,
+    `✅ The invoice PDF has been downloaded to your device.`,
+    `📎 Please attach the file "${fileName}" before sending this email.`,
+    `💳 Include your invoice number as payment reference for quick processing.`,
     ``,
-    `For any queries, contact us at ${COMPANY_INFO.supportPhone} or ${COMPANY_INFO.supportEmail}`,
+    `For any questions or support, please contact:`,
+    `📞 Phone: ${COMPANY_INFO.supportPhone}`,
+    `📧 Email: ${COMPANY_INFO.supportEmail}`,
+    `🌐 Website: ${COMPANY_INFO.website}`,
     ``,
     `Best regards,`,
     `The ${COMPANY_INFO.name} Team`,
+    `${COMPANY_INFO.tagline}`,
     ``,
     `---`,
-    `*Note: This email was generated by the ${COMPANY_INFO.name} Invoice System.*`
+    `*This email contains important payment information. Please keep it safe for your records.*`
   ];
 
   const body = encodeURIComponent(bodyLines.join('\n'));
@@ -1557,13 +1574,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Invoice #</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">Plan/Details</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">Total</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider hidden sm:table-cell">Balance</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Invoice #</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden lg:table-cell">Plan/Details</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Total</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden sm:table-cell">Balance</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Actions</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
@@ -1827,32 +1844,45 @@ Price: Ksh 2999`}
             <div className="p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Invoice Number *</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Invoice Number *</label>
                   <input type="text" name="invoiceNumber" value={invoiceForm.invoiceNumber} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Invoice Date *</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Invoice Date *</label>
                   <input type="date" name="invoiceDate" value={invoiceForm.invoiceDate} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Customer Name *</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Customer Name *</label>
                   <input type="text" name="customerName" value={invoiceForm.customerName} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Customer Email *</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Customer Email *</label>
                   <input type="email" name="customerEmail" value={invoiceForm.customerEmail} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Customer Phone</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Customer Phone</label>
                   <input type="text" name="customerPhone" value={invoiceForm.customerPhone} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Customer Location</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Customer Location</label>
                   <input type="text" name="customerLocation" value={invoiceForm.customerLocation} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Client Account Number (FBI-XXXXXXXX) *</label>
+                  <input 
+                    type="text" 
+                    name="clientAccountNumber" 
+                    value={invoiceForm.clientAccountNumber} 
+                    onChange={handleInputChange} 
+                    placeholder="FBI-00001" 
+                    className={`w-full p-2 border rounded ${themeClasses.input}`}
+                    required 
+                  />
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Each client has a unique account number starting with FBI-</p>
                 </div>
                 <div className="md:col-span-2">
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-medium">Select Plan *</label>
+                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Select Plan *</label>
                     <button type="button" onClick={() => setShowPlanSelection(true)} className={`text-sm ${darkMode ? 'text-blue-400' : 'text-blue-600'} flex items-center`}>
                       <Wifi size={14} className="mr-1" /> Browse Plans
                     </button>
@@ -1868,11 +1898,11 @@ Price: Ksh 2999`}
               {/* Tax & Discount */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Tax Rate (%)</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Tax Rate (%)</label>
                   <input type="number" name="taxRate" value={invoiceForm.taxRate} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} step="0.01" min="0" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Discount Type</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Discount Type</label>
                   <select name="discountType" value={invoiceForm.discountType} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`}>
                     <option value="none">No Discount</option>
                     <option value="percentage">Percentage (%)</option>
@@ -1880,7 +1910,7 @@ Price: Ksh 2999`}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Discount Value</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Discount Value</label>
                   <input type="number" name="discount" value={invoiceForm.discount} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} step="0.01" min="0" />
                 </div>
               </div>

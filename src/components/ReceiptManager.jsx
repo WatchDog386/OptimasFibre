@@ -70,12 +70,12 @@ const BRAND = {
   tagline: "High-Speed Internet Solutions",
   logoUrl: "/oppo.jpg",
   colors: {
-    primary: '#003366',
-    accent: '#FFCC00',
-    success: '#28a745',
-    warning: '#ffc107',
-    danger: '#dc3545',
-    info: '#17a2b8'
+    primary: '#00356B',
+    accent: '#D85C2C',
+    success: '#86bc25',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+    info: '#3b82f6'
   },
   contact: {
     email: "support@optimaswifi.co.ke",
@@ -91,7 +91,7 @@ const BRAND = {
       swiftCode: "EQBLKENA"
     },
     paybill: {
-      number: "123456",
+      number: "4092707",
       name: "OPTIMAS FIBER"
     }
   }
@@ -106,8 +106,9 @@ const generateReceiptPDF = async (receipt, showNotification) => {
   printContainer.style.width = '800px';
   printContainer.style.backgroundColor = 'white';
   printContainer.style.padding = '40px';
-  printContainer.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-  printContainer.style.color = '#333';
+  printContainer.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif";
+  printContainer.style.color = '#1a1a1a';
+  printContainer.style.lineHeight = '1.6';
 
   // Calculate totals
   const subtotal = receipt.subtotal || 0;
@@ -376,7 +377,7 @@ const generateReceiptPDF = async (receipt, showNotification) => {
             <div style="padding-left:55px;">
               <p style="margin:0 0 8px 0; font-size:14px;"><strong>Paybill:</strong> ${BRAND.contact.paybill.number}</p>
               <p style="margin:0 0 8px 0; font-size:14px;"><strong>Business:</strong> ${BRAND.contact.paybill.name}</p>
-              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Account:</strong> ${receipt.customerName?.split(' ')[0] || 'Customer'}</p>
+              <p style="margin:0 0 8px 0; font-size:14px; color:#ff6b35; font-weight:600;"><strong>Account:</strong> ${receipt.clientAccountNumber || 'NOT SET'}</p>
               <p style="margin:0 0 8px 0; font-size:14px;"><strong>VAT Number:</strong> ${BRAND.contact.vatNumber}</p>
               <p style="margin:0; font-size:14px;"><strong>Website:</strong> ${BRAND.contact.website}</p>
             </div>
@@ -642,7 +643,8 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
     terms: 'Thank you for your business!',
     paymentReference: '',
     transactionId: '',
-    bankReference: ''
+    bankReference: '',
+    clientAccountNumber: '' // ✅ NEW: Client account number (FBI-XXXXXXXXX)
   });
 
   // Fetch receipts
@@ -1556,13 +1558,13 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Receipt #</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">Invoice #</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider hidden md:table-cell">Payment</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Receipt #</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden lg:table-cell">Invoice #</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Payment</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Actions</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
@@ -1832,6 +1834,22 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     placeholder="Customer location/address"
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
                   />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Client Account Number (FBI-XXXXXXXX) *
+                  </label>
+                  <input
+                    type="text"
+                    name="clientAccountNumber"
+                    value={receiptForm.clientAccountNumber}
+                    onChange={handleInputChange}
+                    placeholder="FBI-00001"
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                    required
+                  />
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Each client has a unique account number starting with FBI-</p>
                 </div>
                 
                 <div>

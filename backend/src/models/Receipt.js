@@ -212,6 +212,15 @@ const receiptSchema = new mongoose.Schema({
     default: 0
   },
 
+  // ✅ NEW: Client Account Number (FBI-XXXXXXXXX)
+  clientAccountNumber: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    match: [/^FBI-/, 'Client account number must start with FBI-'],
+    index: true
+  },
+
   // ✅ NEW: PDF & Export Management
   pdfUrl: {
     type: String,

@@ -153,7 +153,7 @@ const getInvoiceHTML = (invoice) => {
                 <div style="flex: 1;">
                     <p style="font-weight: bold; margin: 0 0 3px 0;">Mobile Money (M-Pesa):</p>
                     <p style="margin: 0;">Paybill: ${COMPANY_INFO.paybill}</p>
-                    <p style="margin: 0;">Account No: **${invoice.customerPhone || 'N/A'}**</p>
+                    <p style="margin: 0; color: #ff6b35; font-weight: 600;">Account No: ${invoice.clientAccountNumber || 'NOT SET'}</p>
                 </div>
             </div>
             <p style="text-align: center; margin-top: 20px; font-size: 10px; color: #999;">${invoice.terms}</p>

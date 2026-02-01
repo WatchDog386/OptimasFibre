@@ -283,8 +283,10 @@ const getReceiptHTML = (receipt) => {
         </div>
 
         <div style="margin-top: 30px; border-top: 1px dashed #ddd; padding-top: 15px; font-size: 11px; color: #666;">
-          <p>Payment Method: ${receipt.paymentMethod || 'N/A'}</p>
-          <p>Reference: ${receipt.paymentReference || 'N/A'}</p>
+          <p><strong>Payment Method:</strong> ${receipt.paymentMethod || 'N/A'}</p>
+          <p><strong>Paybill:</strong> ${COMPANY_INFO.paybill}</p>
+          <p><strong>Account Number:</strong> <span style="font-weight:600; color:#ff6b35;">${receipt.clientAccountNumber || 'NOT SET'}</span></p>
+          <p><strong>Reference:</strong> ${receipt.paymentReference || 'N/A'}</p>
           <p style="margin-top: 10px; text-align: center;">${receipt.notes || 'Thank you for your payment!'}</p>
           <p style="text-align: center; margin-top: 15px; font-weight: bold; color: #003366;">OFFICIAL RECEIPT — NO FURTHER PAYMENT REQUIRED</p>
         </div>

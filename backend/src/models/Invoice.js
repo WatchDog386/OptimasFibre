@@ -157,6 +157,15 @@ const invoiceSchema = new mongoose.Schema({
   },
   isPlanUpgrade: { type: Boolean, default: false },
 
+  // ✅ NEW: Client Account Number (FBI-XXXXXXXXX)
+  clientAccountNumber: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    match: [/^FBI-/, 'Client account number must start with FBI-'],
+    index: true
+  },
+
   // Connection management
   connectionRequestSent: { type: Boolean, default: false },
   connectionRequestSentAt: { type: Date },
