@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Roboto:wght@300;400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,18 +10,48 @@
   box-sizing: border-box;
 }
 
+:root {
+  --ast-global-color-0: #303a4d;
+  --ast-global-color-1: #676c77;
+  --ast-global-color-2: #303a4d;
+  --ast-global-color-3: #303a4d;
+  --ast-global-color-4: #f1f2f8;
+  --ast-global-color-5: #ffffff;
+  --ast-global-color-6: #ffffff;
+  --ast-global-color-7: #e1e4eb;
+  --ast-global-color-8: #000000;
+}
+
 html {
   scroll-behavior: smooth;
+  font-size: 112.5%; /* Sets base rem to 18px */
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;
+  color: var(--ast-global-color-3);
+  background-color: var(--ast-global-color-5);
+  font-size: 1rem; /* 18px */
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--ast-global-color-3);
+  line-height: 1.2;
+}
+
+h1 { font-size: 4rem; } /* 72px */
+h2 { font-size: 2.777rem; } /* 50px */
+h3 { font-size: 2.5rem; } /* 45px */
+h4 { font-size: 1.777rem; } /* 32px */
+h5 { font-size: 1.333rem; } /* 24px */
+h6 { font-size: 1rem; } /* 18px */
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+

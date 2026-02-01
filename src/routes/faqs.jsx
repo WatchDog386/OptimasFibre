@@ -11,12 +11,6 @@ import {
   Mail
 } from "lucide-react";
 
-// Optimas Design System
-const OPTIMAS_COLORS = {
-  primary: '#015B97',     // Deep blue
-  accent: '#d0b216',      // Gold/yellow
-};
-
 // --- DATA: Why Choose Optimas (Visual) ---
 const whyChooseData = [
   {
@@ -29,7 +23,7 @@ const whyChooseData = [
   },
   {
     title: "Affordable Plans 💰",
-    image: "https://www.itnewsafrica.com/wp-content/uploads/2020/03/WiFi-Nigeria.jpg",
+    image: "https://gadgets-africa.com/wp-content/uploads/2020/05/Wireless-Router-for-Home.jpg",
   },
   {
     title: "24/7 Support ☎️",
@@ -44,7 +38,7 @@ const whyChooseData = [
 // --- DATA: FAQs ---
 const faqsData = {
   "Account Management": {
-    icon: <User className="w-4 h-4 text-[#d0b216]" />,
+    icon: <User className="w-4 h-4 text-accent" />,
     items: [
       {
         question: "How do I create a self-care account?",
@@ -101,7 +95,7 @@ const faqsData = {
     ],
   },
   "Billing & Payments": {
-    icon: <CreditCard className="w-4 h-4 text-[#d0b216]" />,
+    icon: <CreditCard className="w-4 h-4 text-accent" />,
     items: [
       {
         question: "How can I view my current bill?",
@@ -166,7 +160,7 @@ const faqsData = {
     ],
   },
   "Service Management": {
-    icon: <Settings className="w-4 h-4 text-[#d0b216]" />,
+    icon: <Settings className="w-4 h-4 text-accent" />,
     items: [
       {
         question: "How do I upgrade my internet package?",
@@ -230,7 +224,7 @@ const faqsData = {
     ],
   },
   "Technical Support": {
-    icon: <HelpCircle className="w-4 h-4 text-[#d0b216]" />,
+    icon: <HelpCircle className="w-4 h-4 text-accent" />,
     items: [
       {
         question: "What should I do if my internet is down?",
@@ -326,21 +320,21 @@ export default function Faqs() {
   return (
     <motion.section 
       // UPDATED CLASSNAME: Increased padding-top (pt-32 and md:pt-40) to clear the navbar
-      className="min-h-screen pt-32 md:pt-40 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300 bg-gray-50 text-gray-800"
+      className="min-h-screen pt-32 md:pt-40 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300 bg-gray-50 text-[#182b5c]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
     >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-[#015B97]">
+        <div className="absolute top-0 left-0 w-full h-full bg-primary">
           <motion.div 
-            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[#d0b216] opacity-10"
+            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-accent opacity-10"
             animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           />
           <motion.div 
-            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-[#d0b216] opacity-10"
+            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-accent opacity-10"
             animate={{ scale: [1.2, 1, 1.2], rotate: [180, 270, 180] }}
             transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
           />
@@ -356,12 +350,12 @@ export default function Faqs() {
           className="text-center mb-8"
         >
           <motion.h2 
-            className="text-xl md:text-2xl font-bold mb-1 text-black"
+            className="text-xl md:text-2xl font-bold mb-1 text-[#182b5c]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            Optimas Fiber - Self-Care Portal
+            Optimas Home Fiber - Self-Care Portal
           </motion.h2>
           <motion.p 
             className="text-gray-600 text-xs md:text-sm"
@@ -389,7 +383,7 @@ export default function Faqs() {
         >
           {/* Section Heading - Shrunk */}
           <motion.div className="text-center mb-6" variants={itemVariants}>
-             <h3 className="text-base md:text-lg font-bold text-[#015B97]">Why Choose Optimas Fiber?</h3>
+             <h3 className="text-base md:text-lg font-bold text-[#182b5c]">Why Choose Optimas?</h3>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
@@ -411,7 +405,7 @@ export default function Faqs() {
                 </div>
                 
                 {/* Text Below - Shrunk Size (text-[10px] / text-xs) */}
-                <h4 className="font-bold text-[10px] md:text-xs text-center text-gray-900 leading-tight px-1 max-w-[140px]">
+                <h4 className="font-bold text-[10px] md:text-xs text-center text-[#182b5c] leading-tight px-1 max-w-[140px]">
                   {item.title}
                 </h4>
               </motion.div>
@@ -440,14 +434,14 @@ export default function Faqs() {
               }}
               className={`px-3 py-1.5 text-xs font-medium rounded-[50px] transition-all flex items-center gap-1.5 ${
                 activeCategory === key
-                  ? 'bg-yellow-400 text-[#015B97] shadow-sm'
-                  : 'text-[#015B97] hover:bg-yellow-100'
+                  ? 'bg-[#d0b216] text-white shadow-sm'
+                  : 'text-[#182b5c] hover:bg-gray-100'
               }`}
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <span className="text-[#d0b216]">{icon}</span>
+              <span className="text-white bg-[#182b5c] rounded-full p-1 w-6 h-6 flex items-center justify-center">{icon}</span>
               <span>{key}</span>
             </motion.button>
           ))}
@@ -465,7 +459,7 @@ export default function Faqs() {
             <input
               type="text"
               placeholder={`Search ${activeCategory} FAQs...`}
-              className="w-full pl-9 pr-4 py-1.5 rounded-[50px] text-xs bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#015B97] focus:outline-none focus:ring-1 focus:border-transparent"
+              className="w-full pl-9 pr-4 py-1.5 rounded-[50px] text-xs bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c] focus:outline-none focus:ring-1 focus:border-transparent"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -508,7 +502,7 @@ export default function Faqs() {
                   className="w-full p-3 text-left flex justify-between items-center"
                   whileTap={{ scale: 0.99 }}
                 >
-                  <h3 className="text-sm font-medium pr-4 text-black">{faq.question}</h3>
+                  <h3 className="text-sm font-bold pr-4 text-[#182b5c]">{faq.question}</h3>
                   <motion.span
                     animate={{ rotate: openIndex === i ? 180 : 0 }}
                     className="text-[#d0b216] flex-shrink-0"
@@ -550,14 +544,14 @@ export default function Faqs() {
 
         {/* Support CTA - Compact */}
         <motion.div 
-          className="mt-10 p-4 rounded-xl text-center bg-yellow-400"
+          className="mt-10 p-4 rounded-xl text-center bg-white border border-gray-200"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
           whileHover={{ y: -2 }}
         >
           <motion.h3 
-            className="text-lg font-bold mb-2 text-[#015B97]"
+            className="text-lg font-bold mb-2 text-[#182b5c]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
@@ -565,7 +559,7 @@ export default function Faqs() {
             Need More Help?
           </motion.h3>
           <motion.p 
-            className="mb-4 text-[#015B97] text-xs"
+            className="mb-4 text-gray-500 text-xs"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}
@@ -575,7 +569,7 @@ export default function Faqs() {
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
             <motion.a 
               href="tel:+254741874200" 
-              className="px-3 py-1.5 bg-[#015B97] text-white border border-[#015B97] font-bold rounded-[50px] transition-all hover:bg-white hover:text-[#015B97] flex items-center justify-center gap-2 text-xs"
+              className="px-3 py-1.5 bg-[#182b5c] text-white border border-[#182b5c] font-bold rounded-[50px] transition-all hover:bg-white hover:text-[#182b5c] flex items-center justify-center gap-2 text-xs"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -584,7 +578,7 @@ export default function Faqs() {
             </motion.a>
             <motion.a 
               href="mailto:support@knoxvilletechnologies.com" 
-              className="px-3 py-1.5 bg-white text-[#015B97] border border-[#015B97] font-bold rounded-[50px] transition-all hover:bg-[#015B97] hover:text-white flex items-center justify-center gap-2 text-xs"
+              className="px-3 py-1.5 bg-white text-[#182b5c] border border-[#182b5c] font-bold rounded-[50px] transition-all hover:bg-[#182b5c] hover:text-white flex items-center justify-center gap-2 text-xs"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

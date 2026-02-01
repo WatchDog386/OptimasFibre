@@ -9,7 +9,7 @@ const FAQSection = ({ faqData }) => {
   return (
     <section className="bg-gray-50 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8">FAQs</h2>
+        <h2 className="text-3xl font-bold text-[#182b5c] mb-8">FAQs</h2>
 
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Categories */}
@@ -21,10 +21,10 @@ const FAQSection = ({ faqData }) => {
                   setActiveCategory(category.category);
                   setOpenIndex(null);
                 }}
-                className={`w-full px-4 py-3 text-left rounded-lg transition-colors ${
+                className={`w-full px-4 py-3 text-left rounded-lg transition-colors font-medium border border-transparent ${
                   activeCategory === category.category
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-gray-100"
+                    ? "bg-[#182b5c] text-white shadow-md"
+                    : "hover:bg-gray-200 text-gray-700 bg-white border-gray-200"
                 }`}
               >
                 {category.category}
@@ -42,11 +42,11 @@ const FAQSection = ({ faqData }) => {
                     className="flex justify-between w-full items-center"
                     onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   >
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-medium text-[#182b5c]">
                       {faq.question}
                     </h3>
                     <ChevronDown
-                      className={`w-6 h-6 text-gray-400 transition-transform ${
+                      className={`w-6 h-6 text-[#d0b216] transition-transform ${
                         openIndex === i ? "rotate-180" : ""
                       }`}
                     />

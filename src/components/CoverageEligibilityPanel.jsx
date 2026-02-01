@@ -39,15 +39,15 @@ export const CoverageEligibilityPanel = ({ address, isEligible, isLoading, onClo
     >
       <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
         {/* Header */}
-        <div className={`px-6 py-4 ${isEligible ? 'bg-green-600' : 'bg-red-600'}`}>
+        <div className={`px-6 py-4 ${isEligible ? 'bg-primary' : 'bg-red-600'}`}>
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-bold text-white tracking-wide">
               {isLoading ? 'Checking Coverage...' : isEligible ? 'Coverage Available' : 'No Coverage'}
             </h3>
             <button
               onClick={onClose}
               aria-label="Close coverage panel"
-              className="text-white hover:text-gray-200 p-1 rounded-full transition-colors"
+              className="text-white hover:text-accent p-1 rounded-full transition-colors"
             >
               <CrossIcon />
             </button>

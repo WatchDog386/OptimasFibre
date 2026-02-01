@@ -40,12 +40,12 @@ const plans = [
 
 const LandingPage = () => {
   return (
-    <main className="bg-black text-white font-sans">
+    <main className="bg-white text-gray-900 font-sans">
       <Hero />
 
       {/* Features */}
-      <section className="py-20 px-6 sm:px-12 lg:px-24 bg-gray-900">
-        <h2 className="text-4xl font-bold mb-12 text-center">Why Choose Us</h2>
+      <section className="py-20 px-6 sm:px-12 lg:px-24 bg-gray-50">
+        <h2 className="text-4xl font-bold mb-12 text-center text-primary">Why Choose Us</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
           {[
             {
@@ -75,37 +75,45 @@ const LandingPage = () => {
           ].map((feat, i) => (
             <div
               key={i}
-              className="bg-white/5 rounded-xl p-6 backdrop-blur-sm hover:bg-white/10 transition"
+              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100"
             >
-              <h3 className="text-xl font-semibold text-cyan-400 mb-2">{feat.title}</h3>
-              <p className="text-gray-300">{feat.desc}</p>
+              <h3 className="text-xl font-bold text-primary mb-2">{feat.title}</h3>
+              <p className="text-gray-600 font-light">{feat.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Pricing */}
-      <section className="py-20 px-6 sm:px-12 lg:px-24 bg-gradient-to-b from-black to-gray-900">
-        <h2 className="text-4xl font-bold mb-12 text-center">Simple Pricing</h2>
+      <section className="py-20 px-6 sm:px-12 lg:px-24 bg-white">
+        <h2 className="text-4xl font-bold mb-12 text-center text-primary">Simple Pricing</h2>
         <div className="flex flex-wrap justify-center gap-8">
           {plans.map((plan, i) => (
             <div
               key={i}
               className={`w-full sm:w-[300px] p-6 rounded-xl border ${
                 plan.highlight
-                  ? "bg-blue-800/20 border-blue-500"
-                  : "border-white/10 bg-white/5"
-              } shadow-lg hover:scale-105 transition-all`}
+                  ? "bg-gray-50 border-accent shadow-lg scale-105"
+                  : "border-gray-200 bg-white shadow-sm"
+              } hover:shadow-xl transition-all`}
             >
-              <h3 className="text-2xl font-bold text-blue-400 mb-2">{plan.title}</h3>
-              <p className="text-xl mb-4 text-white">{plan.price}</p>
-              <p className="text-sm mb-4 text-gray-300">{plan.speed}</p>
-              <ul className="text-gray-200 space-y-2 text-sm mb-6">
+              <h3 className={`text-2xl font-bold mb-2 ${plan.highlight ? "text-accent" : "text-primary"}`}>{plan.title}</h3>
+              <p className="text-xl mb-4 text-primary font-bold">{plan.price}</p>
+              <p className="text-sm mb-4 text-gray-500 font-medium">{plan.speed}</p>
+              <ul className="text-gray-600 space-y-2 text-sm mb-8">
                 {plan.features.map((f, idx) => (
-                  <li key={idx}>✔ {f}</li>
+                  <li key={idx} className="flex items-center gap-2">
+                    <span className="text-accent">✔</span> {f}
+                  </li>
                 ))}
               </ul>
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium">
+              <button 
+                className={`w-full py-3 rounded-full font-bold uppercase text-sm tracking-wider transition-colors ${
+                  plan.highlight 
+                    ? "bg-accent hover:bg-green-400 text-white" 
+                    : "bg-primary hover:bg-slate-700 text-white"
+                }`}
+              >
                 Choose Plan
               </button>
             </div>
@@ -114,39 +122,48 @@ const LandingPage = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 px-6 sm:px-12 lg:px-24 bg-gray-800">
-        <h2 className="text-4xl font-bold mb-12 text-center">Customer Reviews</h2>
+      <section className="py-20 px-6 sm:px-12 lg:px-24 bg-gray-50">
+        <h2 className="text-4xl font-bold mb-12 text-center text-primary">Customer Reviews</h2>
         <div className="flex flex-wrap gap-8 justify-center">
           {testimonials.map((t, idx) => (
             <div
               key={idx}
-              className="bg-white/10 p-6 rounded-xl max-w-sm text-left shadow-md"
+              className="bg-white p-8 rounded-xl max-w-sm text-left shadow-md border border-gray-100 hover:-translate-y-1 transition-transform duration-300"
             >
-              <p className="text-gray-100 italic mb-4">“{t.feedback}”</p>
-              <div className="text-blue-300 font-semibold">{t.name}</div>
-              <div className="text-sm text-gray-400">{t.location}</div>
+              <p className="text-gray-600 italic mb-6 leading-relaxed">“{t.feedback}”</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-primary font-bold">
+                  {t.name[0]}
+                </div>
+                <div>
+                  <div className="text-primary font-bold">{t.name}</div>
+                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wide">{t.location}</div>
+                </div>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
       {/* CTA / Coverage */}
-      <section className="py-20 text-center bg-gradient-to-t from-black to-gray-900 px-6">
-        <h2 className="text-4xl font-bold mb-6">
-          See If We Cover Your Area
-        </h2>
-        <p className="text-gray-300 max-w-xl mx-auto mb-8">
-          Enter your zip code and check if Knoxville Technologies is available in your neighborhood.
-        </p>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition">
-          Check Coverage
-        </button>
+      <section className="py-24 text-center bg-primary px-6 relative overflow-hidden">
+        {/* Decorative background element */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+        
+        <div className="relative z-10">
+          <h2 className="text-3xl md:text-5xl font-black mb-6 text-white font-sans">
+            See If We Cover Your Area
+          </h2>
+          <p className="text-gray-300 max-w-xl mx-auto mb-10 text-lg font-light">
+            Enter your zip code and check if Optimas Home Fiber is available in your neighborhood.
+          </p>
+          <button className="bg-accent hover:bg-green-400 text-white px-10 py-4 rounded-full font-bold text-sm uppercase tracking-widest shadow-xl hover:shadow-2xl transition-all transform hover:scale-105">
+            Check Coverage
+          </button>
+        </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-black py-12 px-6 text-center text-gray-500 text-sm border-t border-gray-700">
-        &copy; {new Date().getFullYear()} Knoxville Technologies. All rights reserved.
-      </footer>
+      {/* Footer removed as it is handled by MainLayout */}
     </main>
   );
 };

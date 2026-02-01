@@ -29,18 +29,18 @@ const animalImages = {
 const BUTTON_STYLES = {
   primary: {
     base: 'py-3 px-8 rounded-full transition-colors duration-300 font-medium text-base',
-    dark: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
-    light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
+    dark: 'bg-primary hover:bg-slate-700 text-white',
+    light: 'bg-primary hover:bg-slate-700 text-white',
   },
   secondary: {
     base: 'py-3 px-8 rounded-full transition-colors duration-300 font-medium text-base',
-    dark: 'border border-gray-600 text-gray-300 hover:border-[#182b5c] hover:text-[#182b5c]',
-    light: 'border border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white',
+    dark: 'border border-gray-400 text-gray-700 hover:border-primary hover:text-primary',
+    light: 'border border-primary text-primary hover:bg-primary hover:text-white',
   },
   small: {
     base: 'py-2 px-6 rounded-full font-medium transition-all text-sm',
-    light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
-    dark: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
+    light: 'bg-primary hover:bg-slate-700 text-white',
+    dark: 'bg-primary hover:bg-slate-700 text-white',
   }
 };
 
@@ -48,28 +48,28 @@ const BUTTON_STYLES = {
 const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
   const colorMap = {
     blue: {
-      bg: darkMode ? "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)" : "linear-gradient(135deg, #182b5c 0%, #0f1f45 100%)",
-      button: darkMode ? BUTTON_STYLES.small.dark : BUTTON_STYLES.small.light,
+      bg: "linear-gradient(135deg, #303a4d 0%, #1e293b 100%)", // Primary Blue
+      button: BUTTON_STYLES.small.light,
     },
     red: {
-      bg: darkMode ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)" : "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
-      button: "bg-red-600 hover:bg-red-700 text-white",
+      bg: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)",
+      button: "bg-white/20 hover:bg-white/30 text-white",
     },
     goldenYellow: {
-      bg: darkMode ? "linear-gradient(135deg, #92400e 0%, #d97706 100%)" : "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
-      button: "bg-yellow-600 hover:bg-yellow-700 text-white",
+      bg: "linear-gradient(135deg, #00d084 0%, #059669 100%)", // Converted to Vuma Green (Accent)
+      button: "bg-white/20 hover:bg-white/30 text-white",
     },
     goldenGreen: {
-      bg: darkMode ? "linear-gradient(135deg, #047857 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)",
-      button: "bg-green-600 hover:bg-green-700 text-white",
+      bg: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+      button: "bg-white/20 hover:bg-white/30 text-white",
     },
     purple: {
-      bg: darkMode ? "linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)" : "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
-      button: "bg-purple-600 hover:bg-purple-700 text-white",
+      bg: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+      button: "bg-white/20 hover:bg-white/30 text-white",
     },
     pink: {
-      bg: darkMode ? "linear-gradient(135deg, #be185d 0%, #db2777 100%)" : "linear-gradient(135deg, #db2777 0%, #be185d 100%)",
-      button: "bg-pink-600 hover:bg-pink-700 text-white",
+      bg: "linear-gradient(135deg, #db2777 0%, #be185d 100%)",
+      button: "bg-white/20 hover:bg-white/30 text-white",
     }
   };
   
@@ -89,13 +89,11 @@ const DomeCard = ({ plan, color, index, onSelect, darkMode }) => {
       ref={ref}
       initial={{ opacity: 0, y: 20 }}
       animate={controls}
-      className={`rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative h-full flex flex-col group ${
-        darkMode ? 'border border-gray-700' : 'border border-gray-200'
-      }`}
+      className={`rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative h-full flex flex-col group border border-gray-100 bg-white`}
       whileHover={{ y: -5 }}
     >
       {plan.popular && (
-        <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md">
+        <div className="absolute top-4 right-4 bg-accent text-white px-3 py-1 text-xs font-bold rounded-full z-10 flex items-center shadow-md">
           <Star size={12} className="mr-1 fill-current" />
           Popular
         </div>

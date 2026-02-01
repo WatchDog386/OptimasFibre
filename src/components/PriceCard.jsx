@@ -5,35 +5,39 @@ import { Zap, CheckCircle } from "lucide-react";
 const PriceCard = ({ plan, isPopular }) => (
   <motion.div
     className={`p-8 rounded-xl border-2 ${
-      isPopular ? "border-blue-600 bg-blue-50" : "border-gray-200"
-    } transition-all`}
+      isPopular ? "border-accent bg-gray-50" : "border-gray-200 bg-white"
+    } transition-all shadow-sm hover:shadow-md`}
     whileHover={{ y: -5 }}
   >
     <div className="flex items-center gap-2 mb-6">
-      <Zap className="w-6 h-6 text-blue-600" />
-      <h3 className="text-2xl font-bold">{plan.speed}</h3>
+      <Zap className={`w-6 h-6 ${isPopular ? "text-accent" : "text-primary"}`} />
+      <h3 className="text-2xl font-bold text-primary">{plan.speed}</h3>
       {isPopular && (
-        <span className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
+        <span className="px-3 py-1 bg-accent text-white rounded-full text-xs font-bold uppercase tracking-wider">
           Most Popular
         </span>
       )}
     </div>
 
     <div className="mb-6">
-      <span className="text-4xl font-bold">${plan.price}</span>
-      <span className="text-gray-600">/month</span>
+      <span className="text-4xl font-black text-primary">${plan.price}</span>
+      <span className="text-gray-500 font-medium">/month</span>
     </div>
 
     <ul className="space-y-4 mb-8">
       {plan.features.map((feature, i) => (
         <li key={i} className="flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-green-600" />
-          <span className="text-gray-700">{feature}</span>
+          <CheckCircle className="w-5 h-5 text-accent" />
+          <span className="text-gray-600 font-light">{feature}</span>
         </li>
       ))}
     </ul>
 
-    <button className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+    <button className={`w-full py-3 rounded-full font-bold uppercase tracking-wide transition-colors ${
+      isPopular 
+        ? "bg-accent text-white hover:bg-green-400" 
+        : "bg-primary text-white hover:bg-slate-700"
+    }`}>
       Select Plan
     </button>
   </motion.div>

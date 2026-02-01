@@ -5,15 +5,31 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#7e22ce",
-        secondary: "#3b82f6",
+        primary: "#303a4d", // Vuma Dark Blue
+        secondary: "#676c77", // Vuma Grey
+        accent: "#00d084", // Vuma Greenish accent (from HTML styles)
         gray: {
-          800: "#1f2937",
+          50: "#f9fafb",
+          100: "#f1f2f8", // Vuma Light Grey
+          200: "#e1e4eb", // Vuma Border Grey
+          800: "#303a4d", // Re-mapped to primary for existing dark usage
           900: "#111827",
         },
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: [
+          "Poppins",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Oxygen-Sans",
+          "Ubuntu",
+          "Cantarell",
+          "Helvetica Neue",
+          "sans-serif",
+        ],
+        heading: ["inherit", "sans-serif"],
       },
       backdropBlur: {
         xs: "2px",
@@ -23,16 +39,9 @@ module.exports = {
         lg: "16px",
         xl: "24px",
       },
-      borderOpacity: {
-        10: "0.1",
-        20: "0.2",
-        30: "0.3",
-      },
       backgroundImage: {
-        "main-gradient":
-          "linear-gradient(145deg, #000000 0%, #2d2d2d 50%, #ffffff 100%)",
-        "radial-white-black":
-          "radial-gradient(circle at center, #ffffff 0%, #000000 100%)",
+        "vuma-gradient": "linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%)", // Vivid Cyan Blue to Vivid Purple
+        "vuma-cta-gradient": "linear-gradient(-45deg, #007bff, #ff0000, #ff7300, #00c3ff)",
       },
       keyframes: {
         pulseRadial: {

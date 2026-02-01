@@ -19,10 +19,10 @@ const ServiceCard = ({ title, description, icon: Icon }) => (
     whileHover={{ y: -5 }}
     className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
   >
-    <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-      <Icon className="text-blue-700" size={20} />
+    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+      <Icon className="text-secondary" size={20} />
     </div>
-    <h3 className="font-bold text-gray-900 text-base mb-2">{title}</h3>
+    <h3 className="font-bold text-primary text-base mb-2">{title}</h3>
     <p className="text-gray-500 text-xs leading-relaxed">{description}</p>
   </motion.div>
 );
@@ -43,7 +43,7 @@ const ProjectRow = ({ item, index, onClick }) => {
     >
       {/* Image Side - Strictly sized to 48 (12rem/192px) on desktop to force compactness */}
       <div className="w-full md:w-1/2 h-40 md:h-full relative overflow-hidden">
-        <div className="absolute inset-0 bg-blue-900/0 group-hover:bg-blue-900/10 transition-colors z-10 duration-500" />
+        <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors z-10 duration-500" />
         {item.imageUrl ? (
           <img 
             src={item.imageUrl} 
@@ -60,14 +60,14 @@ const ProjectRow = ({ item, index, onClick }) => {
       {/* Text Side - Reduced padding and font sizes */}
       <div className="w-full md:w-1/2 bg-white p-6 md:px-8 md:py-0 flex flex-col justify-center items-start hover:bg-gray-50 transition-colors duration-300 h-auto md:h-full">
         <div className="flex items-center gap-2 mb-2">
-          <span className="w-4 h-[1px] bg-blue-600"></span>
-          <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest">
+          <span className="w-4 h-[1px] bg-secondary"></span>
+          <span className="text-[9px] font-bold text-secondary uppercase tracking-widest">
             {item.category || 'Infrastructure'}
           </span>
         </div>
         
         {/* Compact Heading */}
-        <h3 className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-blue-700 transition-colors line-clamp-1">
+        <h3 className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-primary transition-colors line-clamp-1">
           {item.title}
         </h3>
         
@@ -126,9 +126,9 @@ const About = () => {
       <header className="fixed top-0 w-full z-50 bg-white shadow-sm">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="font-black text-xl tracking-tighter">
-            OPTIMAS<span className="text-blue-600">FIBER</span>
+            OPTIMAS
           </div>
-          <button className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded-full font-bold text-[10px] uppercase tracking-wide transition-colors">
+          <button className="bg-primary hover:bg-gray-800 text-white px-5 py-2 rounded-full font-bold text-[10px] uppercase tracking-wide transition-colors">
             Get Quote
           </button>
         </div>
@@ -137,7 +137,7 @@ const About = () => {
       {/* --- HERO TITLE --- */}
       <section className="pt-28 pb-10 bg-white border-b border-gray-100">
         <div className="container mx-auto px-6 text-center">
-           <h1 className="text-3xl font-bold text-blue-900 mb-2">About Optimas</h1>
+           <h1 className="text-3xl font-bold text-primary mb-2">About Optimas</h1>
            <p className="text-gray-500 text-sm max-w-xl mx-auto">Connecting communities with next-generation technology.</p>
         </div>
       </section>
@@ -149,10 +149,10 @@ const About = () => {
           {/* ROW 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center mb-16">
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-              <h2 className="text-2xl font-bold text-blue-700 mb-4">What to know of Optimas</h2>
+              <h2 className="text-2xl font-bold text-primary mb-4">What to know of Optimas</h2>
               <div className="space-y-3 text-gray-600 leading-relaxed text-sm">
                 <p>
-                  Founded by an experienced team, <span className="font-bold text-gray-900">Optimas Fiber</span> offers simple, affordable access to its <span className="font-bold text-gray-900">full-fibre</span> network for everyone.
+                  Founded by an experienced team, <span className="font-bold text-gray-900">Optimas</span> offers simple, affordable access to its <span className="font-bold text-gray-900">full-fibre</span> network for everyone.
                 </p>
                 <p>
                   We deliver the fastest broadband in the outskirts of Nairobi and Kiambu, ensuring homes and businesses experience life-changing connectivity.
@@ -162,7 +162,7 @@ const About = () => {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative">
-              <div className="absolute inset-0 bg-yellow-400 rounded-tl-[80px] rounded-br-[80px] rounded-bl-[30px] rounded-tr-[10px] transform translate-x-3 translate-y-3 -z-10 h-full w-full"></div>
+              <div className="absolute inset-0 bg-accent/20 rounded-tl-[80px] rounded-br-[80px] rounded-bl-[30px] rounded-tr-[10px] transform translate-x-3 translate-y-3 -z-10 h-full w-full"></div>
               <div className="relative rounded-tl-[80px] rounded-br-[80px] rounded-bl-[30px] rounded-tr-[10px] overflow-hidden h-[300px] w-full bg-gray-200 shadow-lg">
                 <img src="/connection.jpg" onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1531297461136-82lw8?q=80&w=2070&auto=format&fit=crop"; }} alt="Happy customer" className="w-full h-full object-cover" />
               </div>
@@ -178,12 +178,12 @@ const About = () => {
              </motion.div>
 
              <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="order-1 md:order-2">
-                <h2 className="text-2xl font-bold text-blue-700 mb-4">Our Goal and Plan</h2>
+                <h2 className="text-2xl font-bold text-primary mb-4">Our Goal and Plan</h2>
                 <div className="space-y-3 text-gray-600 leading-relaxed text-sm mb-6">
-                  <p>Optimas Fiber plans to open its network to more areas across Nairobi & Kiambu over the next 5 years.</p>
+                  <p>Optimas plans to open its network to more areas across Nairobi & Kiambu over the next 5 years.</p>
                   <p>We believe reliable internet is a fundamental right, bridging the digital divide for education and business.</p>
                 </div>
-                <button onClick={goToContact} className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2.5 px-6 rounded-full shadow-lg text-xs transition-transform transform hover:scale-105">
+                <button onClick={goToContact} className="bg-primary hover:bg-gray-800 text-white font-bold py-2.5 px-6 rounded-full shadow-lg text-xs transition-transform transform hover:scale-105">
                   Get Connected
                 </button>
              </motion.div>
@@ -214,7 +214,7 @@ const About = () => {
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900">Selected Works</h2>
                     </div>
-                    <button onClick={handleAddPortfolio} className="hidden md:block text-blue-600 text-[10px] font-bold uppercase tracking-widest hover:underline">
+                    <button onClick={handleAddPortfolio} className="hidden md:block text-primary text-[10px] font-bold uppercase tracking-widest hover:underline">
                         + Add Project
                     </button>
                 </div>
@@ -257,7 +257,7 @@ const About = () => {
                </div>
                <div className="p-6">
                   <div className="flex items-center justify-between mb-3">
-                     <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
+                     <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
                         {selectedPortfolioItem.category || 'Project'}
                      </span>
                      <span className="text-[10px] text-gray-400">
@@ -269,7 +269,7 @@ const About = () => {
                     {selectedPortfolioItem.description || "No description available."}
                   </p>
                   <div className="flex gap-3">
-                      <button onClick={goToContact} className="flex-1 bg-blue-800 text-white py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-blue-900 transition-colors">
+                      <button onClick={goToContact} className="flex-1 bg-primary text-white py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors">
                         Inquire
                       </button>
                       <button onClick={handleCloseModal} className="px-5 border border-gray-300 text-gray-600 text-xs font-bold uppercase tracking-wider hover:bg-gray-50 transition-colors">
@@ -282,11 +282,6 @@ const About = () => {
         )}
       </AnimatePresence>
       
-      {/* Floating WhatsApp */}
-      <a href="https://wa.me/254741874200" className="fixed bottom-6 right-6 bg-green-500 text-white p-3.5 rounded-full shadow-xl hover:bg-green-600 transition-colors z-40">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382C17.112 14.022 15.344 13.153 14.984 13.064C14.624 12.974 14.384 13.153 14.144 13.513C13.904 13.873 13.243 14.653 13.003 14.893C12.763 15.133 12.523 15.193 12.163 15.013C11.803 14.833 10.642 14.453 9.26196 13.223C8.18196 12.263 7.45296 11.074 7.21296 10.654C6.97296 10.234 7.18796 10.012 7.36796 9.832C7.52496 9.676 7.71696 9.426 7.89696 9.186C8.07696 8.946 8.13696 8.766 8.25696 8.526C8.37696 8.286 8.31696 8.076 8.22696 7.896C8.13696 7.716 7.41696 5.946 7.11696 5.226C6.82396 4.529 6.53096 4.624 6.30996 4.636C6.10496 4.646 5.86496 4.646 5.62496 4.646C5.38496 4.646 4.99496 4.736 4.66496 5.096C4.33496 5.456 3.40496 6.326 3.40496 8.096C3.40496 9.866 4.69496 11.576 4.87496 11.816C5.05496 12.056 7.42496 15.716 11.055 17.276C11.918 17.647 12.593 17.868 13.12 18.035C14.075 18.338 14.95 18.297 15.642 18.194C16.415 18.079 18.025 17.219 18.355 16.289C18.685 15.359 18.685 14.579 18.595 14.429C18.505 14.279 18.265 14.149 17.905 13.969L17.472 14.382Z" /></svg>
-      </a>
-
     </div>
   );
 };

@@ -265,15 +265,15 @@ const Services = () => {
     }
   };
 
-  // ✅ UPDATED BUTTON STYLES (simplified for light mode)
+  // ✅ UPDATED BUTTON STYLES (Vuma Fiber Theme)
   const BUTTON_STYLES = {
     primary: {
       base: 'py-2 px-6 rounded-full transition-colors duration-300 font-medium text-sm whitespace-nowrap',
-      light: 'bg-[#182b5c] hover:bg-[#0f1f45] text-white',
+      light: 'bg-primary hover:bg-slate-700 text-white',
     },
     secondary: {
       base: 'py-2 px-6 rounded-full transition-colors duration-300 font-medium text-sm whitespace-nowrap',
-      light: 'border border-[#182b5c] text-[#182b5c] hover:bg-[#182b5c] hover:text-white',
+      light: 'border border-primary text-primary hover:bg-primary hover:text-white',
     }
   };
 
@@ -281,20 +281,18 @@ const Services = () => {
   const ServiceCard = ({ service, index }) => (
     <motion.div
       variants={itemVariants}
-      // Replaced conditional dark mode class with light mode default
-      className={`rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-4 group bg-white border border-gray-200`}
+      className={`rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6 group bg-white border border-gray-100 hover:border-gray-200`}
       whileHover={{ y: -3 }}
     >
-      <div className="text-center mb-4">
+      <div className="text-center mb-6">
         <motion.div 
-          // Replaced conditional dark mode class with light mode default
-          className={`group-hover:text-[#d0b216] transition-colors duration-300 inline-block mb-2 text-[#182b5c]`}
+          className={`group-hover:text-accent transition-colors duration-300 inline-block mb-4 text-primary p-3 bg-gray-50 rounded-full`}
           whileHover={{ rotate: 360 }}
           transition={{ duration: 0.5 }}
         >
           {service.icon}
         </motion.div>
-        <h3 className={`font-semibold mb-2 text-sm md:text-base text-[#182b5c]`}>
+        <h3 className={`font-bold mb-2 text-lg md:text-xl text-primary`}>
           {service.title}
         </h3>
         {/* Replaced conditional dark mode class with light mode default */}

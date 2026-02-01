@@ -18,18 +18,11 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="relative w-full bg-[#020617] text-white overflow-hidden font-sans">
+      <footer className="relative w-full bg-white text-black border-t border-gray-200 overflow-hidden font-sans">
         
-        {/* 1. Background Wave Pattern */}
-        <div 
-          className="absolute inset-0 z-0 opacity-10 pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z' fill='none' stroke='%23ffffff' stroke-width='3' opacity='0.5'/%3E%3Cpath d='M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05c99.41,75.27,251.83,52.35,366.63-8.86C502.5,37.37,564.13,3.81,664.18,3c113-.92,186.29,66.5,278,92.16C1033.43,120.67,1123,98,1200,52.47V0Z' fill='none' stroke='%23ffffff' stroke-width='3' opacity='0.3'/%3E%3C/svg%3E")`,
-            backgroundSize: '100% 100px',
-            backgroundRepeat: 'repeat'
-          }}
-        />
-
+        {/* 1. Background Wave Pattern - Optional, keeping it subtle or removing if Vuma is plain white */}
+        {/* Keeping subtle decoration but ensuring it doesn't darken the white bg too much */}
+        
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 md:h-32 flex flex-col md:flex-row items-center justify-between">
           
           {/* Spacer for centering logic on desktop */}
@@ -44,8 +37,8 @@ export default function Footer() {
                 <Link 
                   key={link.name} 
                   to={link.path} 
-                  className={`transition-colors duration-200 hover:text-blue-400 ${
-                    link.isActive ? "border-b-2 border-blue-500 pb-0.5 text-blue-400" : "text-gray-300"
+                  className={`transition-colors duration-200 hover:text-[#182b5c] ${
+                    link.isActive ? "border-b-2 border-[#182b5c] pb-0.5 text-[#182b5c]" : "text-black"
                   }`}
                 >
                   {link.name}
@@ -54,8 +47,8 @@ export default function Footer() {
             </div>
 
             {/* Copyright */}
-            <p className="text-xs text-slate-500 font-light tracking-wide mt-2">
-              Copyright © {new Date().getFullYear()} Optimas Fiber LTD
+            <p className="text-xs text-gray-500 font-light tracking-wide mt-2">
+              Copyright © {new Date().getFullYear()} Vuma Fiber LTD
             </p>
           </div>
 
@@ -65,7 +58,7 @@ export default function Footer() {
               onClick={scrollToTop}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="p-2 rounded-full border border-slate-700 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-300"
+              className="p-2 rounded-full border border-gray-300 text-gray-400 hover:bg-[#182b5c] hover:text-white hover:border-[#182b5c] transition-colors duration-300"
               aria-label="Back to top"
             >
               <ArrowUp size={20} />

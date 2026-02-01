@@ -83,14 +83,14 @@ const CoveragePage = () => {
     <div className={`font-sans min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-700'}`}>
       
       {/* Navbar */}
-      <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${darkMode ? 'bg-gray-900/90' : 'bg-white/90'} backdrop-blur-md shadow-sm`}>
+      <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${darkMode ? 'bg-gray-900/90' : 'bg-white/95'} backdrop-blur-md shadow-sm border-b border-gray-100`}>
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
                {/* Brand Logo Area */}
                <div className="flex flex-col leading-none">
-                  <span className={`text-xl font-extrabold ${darkMode ? 'text-blue-400' : 'text-[#182B5C]'}`}>OPTIMAS</span>
-                  <span className="text-sm font-bold text-[#d0b216] tracking-widest">FIBRE</span>
+                  <span className={`text-xl font-black ${darkMode ? 'text-blue-400' : 'text-primary'}`}>OPTIMAS</span>
+                  <span className="text-sm font-bold text-secondary tracking-widest uppercase">Home Fiber</span>
                </div>
             </div>
             
@@ -101,8 +101,8 @@ const CoveragePage = () => {
                   href="#" 
                   className={`font-medium text-sm uppercase tracking-wide transition-colors ${
                     item === 'Our Coverage' 
-                    ? 'text-[#d0b216]' 
-                    : (darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-[#182B5C]')
+                    ? 'text-accent' 
+                    : (darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-primary')
                   }`}
                 >
                   {item}
@@ -114,13 +114,14 @@ const CoveragePage = () => {
               <button onClick={toggleDarkMode} className={`p-2 rounded-full ${darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-gray-100 text-gray-600'}`}>
                 {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-              <a href="tel:+254709517917" className="bg-[#d0b216] hover:bg-[#b89b14] text-white px-4 py-2 rounded text-sm font-bold transition-colors">
+              <a href="tel:+254709517917" className="bg-accent hover:bg-[#b89b14] text-white px-4 py-2 rounded text-sm font-bold transition-colors">
                 0709 517 917
               </a>
             </div>
           </div>
         </div>
       </header>
+       */}
 
       {/* Hero Section with "Cloud" Divider */}
       <section className="relative pt-20 h-[500px] flex items-center justify-center overflow-hidden">
@@ -128,7 +129,7 @@ const CoveragePage = () => {
         <div className="absolute inset-0 z-0">
            {/* Use a city image here */}
            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')" }}></div>
-           <div className={`absolute inset-0 ${darkMode ? 'bg-gray-900/80' : 'bg-[#182B5C]/70'}`}></div>
+           <div className={`absolute inset-0 ${darkMode ? 'bg-gray-900/80' : 'bg-primary/90'}`}></div>
         </div>
 
         {/* Content */}
@@ -137,7 +138,7 @@ const CoveragePage = () => {
           <motion.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="mx-auto w-20 h-20 mb-6 text-cyan-400 opacity-80"
+            className="mx-auto w-20 h-20 mb-6 text-accent opacity-80"
           >
             <Wifi className="w-full h-full" />
           </motion.div>
@@ -146,7 +147,7 @@ const CoveragePage = () => {
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-4xl md:text-6xl font-bold text-white mb-2 drop-shadow-lg"
+            className="text-4xl md:text-6xl font-black text-white mb-2 drop-shadow-lg font-sans "
           >
             Areas We Get You Connected
           </motion.h1>
