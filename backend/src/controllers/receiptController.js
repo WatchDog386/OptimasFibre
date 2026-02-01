@@ -396,8 +396,30 @@ export const sendReceiptWithPdf = async (req, res) => {
     const emailService = await import('../utils/emailService.js').then(m => m.default || m);
     
     const subject = `Receipt ${receiptNumber || 'N/A'} from Optimas Fiber`;
-    const text = `Dear ${customerName || 'Customer'},\n\nThank you for your payment. Please find your official receipt attached.`;
-    const html = `<p>Dear <strong>${customerName || 'Customer'}</strong>,</p><p>Thank you for your payment. Please find your official receipt attached.</p><p><strong>Optimas Fiber</strong></p>`;
+    const text = `Dear ${customerName || 'Customer'},\n\nYour receipt is attached.`;
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;line-height:1.6;color:#1a1a1a;background:#f5f5f5;margin:0;padding:0}.container{max-width:600px;margin:0 auto;padding:0;background:white}.header{background:#00356B;color:white;padding:30px;text-align:center}.header h1{margin:0;font-size:28px;font-weight:700;letter-spacing:1px}.content{padding:40px;text-align:center;border-bottom:1px solid #e0e0e0}.content p{margin:0 0 20px 0;font-size:15px;line-height:1.6}.attachment{background:#f0f7ff;border:2px solid #00356B;border-radius:8px;padding:20px;margin:25px 0;display:inline-block}.attachment p{margin:0;font-size:13px;color:#00356B;font-weight:600}.footer{padding:20px;text-align:center;font-size:12px;color:#666}</style></head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>OPTIMAS FIBER</h1>
+  </div>
+  <div class="content">
+    <p>Dear <strong>${customerName || 'Customer'}</strong>,</p>
+    <p>Your Receipt #<strong>${receiptNumber || 'N/A'}</strong> is attached below.</p>
+    <div class="attachment">
+      <p>📎 PDF Attached</p>
+    </div>
+  </div>
+  <div class="footer">
+    <p>Optimas Fiber</p>
+  </div>
+</div>
+</body>
+</html>
+    `;
 
     const attachments = [{
       filename: `${receiptNumber || 'receipt'}-optimas-fiber.pdf`,

@@ -594,45 +594,26 @@ export const sendInvoiceWithPdf = async (req, res) => {
     }
 
     const subject = `Invoice #${invoiceNumber || 'N/A'} - ${process.env.COMPANY_NAME || 'Optimas Fiber'}`;
-    const text = `
-INVOICE FROM ${process.env.COMPANY_NAME || 'OPTIMAS FIBER'}
-Dear ${customerName || 'Customer'},
-Invoice: ${invoiceNumber || 'N/A'}
-Amount: Ksh 0
-Status: Sent
-PDF attached.
-Payment: M-Pesa Paybill ${process.env.MPESA_PAYBILL || '123456'} or Bank Transfer.
-Contact: ${process.env.EMAIL_FROM} | ${process.env.COMPANY_PHONE}
-    `.trim();
+    const text = `Dear ${customerName || 'Customer'},\n\nYour Invoice #${invoiceNumber || 'N/A'} is attached.\n\n${process.env.COMPANY_NAME || 'Optimas Fiber'}`;
 
     const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:#003366;color:white;padding:20px;text-align:center;border-radius:5px 5px 0 0}.content{padding:20px;background:#f9f9f9}.footer{margin-top:30px;padding-top:20px;border-top:1px solid #eee;font-size:12px;color:#666}</style></head>
+<head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;line-height:1.6;color:#1a1a1a;background:#f5f5f5;margin:0;padding:0}.container{max-width:600px;margin:0 auto;padding:0;background:white}.header{background:#00356B;color:white;padding:30px;text-align:center}.header h1{margin:0;font-size:28px;font-weight:700;letter-spacing:1px}.content{padding:40px;text-align:center;border-bottom:1px solid #e0e0e0}.content p{margin:0 0 20px 0;font-size:15px;line-height:1.6}.attachment{background:#f0f7ff;border:2px solid #00356B;border-radius:8px;padding:20px;margin:25px 0;display:inline-block}.attachment p{margin:0;font-size:13px;color:#00356B;font-weight:600}.footer{padding:20px;text-align:center;font-size:12px;color:#666}</style></head>
 <body>
 <div class="container">
   <div class="header">
-    <h1 style="margin:0;">${process.env.COMPANY_NAME || 'OPTIMAS FIBER'}</h1>
-    <p style="margin:5px 0 0 0;opacity:0.9;">High-Speed Internet Solutions</p>
+    <h1>${process.env.COMPANY_NAME || 'OPTIMAS FIBER'}</h1>
   </div>
   <div class="content">
-    <h2 style="color:#003366;">Invoice #${invoiceNumber || 'N/A'}</h2>
     <p>Dear <strong>${customerName || 'Customer'}</strong>,</p>
-    <p style="color:#28a745;font-weight:bold;">✅ Your invoice PDF is attached.</p>
-    <h3 style="color:#003366;margin-top:25px;">Payment Methods:</h3>
-    <ul style="background:#f8f9fa;padding:15px;border-radius:5px;">
-      <li style="margin-bottom:8px;"><strong>M-Pesa:</strong> Paybill <strong>${process.env.MPESA_PAYBILL || '123456'}</strong></li>
-      <li><strong>Bank:</strong> ${process.env.BANK_NAME || 'Equity Bank'}, Account: <strong>${process.env.BANK_ACCOUNT_NUMBER || '1234567890'}</strong></li>
-    </ul>
-    <p>If you have questions, contact us:</p>
-    <ul><li>📧 ${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'}</li><li>📞 ${process.env.COMPANY_PHONE || '+254741874200'}</li></ul>
-    <p>Thank you for choosing ${process.env.COMPANY_NAME || 'Optimas Fiber'}!</p>
+    <p>Your Invoice #<strong>${invoiceNumber || 'N/A'}</strong> is attached below.</p>
+    <div class="attachment">
+      <p>📎 PDF Attached</p>
+    </div>
   </div>
   <div class="footer">
-    <p><strong>${process.env.COMPANY_NAME || 'Optimas Fiber'}</strong></p>
-    <p>${process.env.COMPANY_ADDRESS || 'Nairobi, Kenya'}</p>
-    <p>📧 ${process.env.EMAIL_FROM} | 📞 ${process.env.COMPANY_PHONE}</p>
-    <p style="font-size:11px;color:#999;margin-top:10px;">This is an automated email.</p>
+    <p>${process.env.COMPANY_NAME || 'Optimas Fiber'}</p>
   </div>
 </div>
 </body>

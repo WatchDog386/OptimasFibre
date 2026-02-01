@@ -257,172 +257,132 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
     : `<span style="background:${COMPANY_INFO.colors.warning}; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PENDING</span>`;
 
   printContainer.innerHTML = `
-    <div style="border:2px solid ${COMPANY_INFO.colors.primary}; border-radius:12px; padding:40px; background:white;">
+    <div style="padding:20px; background:white; font-size:13px;">
       <!-- Header -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; border-bottom:2px solid #f0f0f0; padding-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #e0e0e0;">
         <div>
-          ${logo}
-          <h1 style="margin:10px 0 5px 0; font-size:28px; color:${COMPANY_INFO.colors.primary}; font-weight:700;">${COMPANY_INFO.name}</h1>
-          <p style="margin:0; color:#666; font-size:14px;">${COMPANY_INFO.tagline}</p>
-          <p style="margin:5px 0 0 0; color:#666; font-size:12px;">
-            <span style="display:inline-flex; align-items:center; margin-right:15px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>${COMPANY_INFO.address}</span>
-            <span style="display:inline-flex; align-items:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>${COMPANY_INFO.supportPhone}</span>
-          </p>
+          <h1 style="margin:0; font-size:22px; color:${COMPANY_INFO.colors.primary}; font-weight:900;">INVOICE</h1>
+          <p style="margin:5px 0 0 0; font-size:12px; color:#666;">${COMPANY_INFO.name} | ${COMPANY_INFO.tagline}</p>
         </div>
         <div style="text-align:right;">
-          <h2 style="margin:0 0 10px 0; font-size:32px; color:${COMPANY_INFO.colors.primary}; font-weight:800;">INVOICE</h2>
-          ${statusBadge}
-          <p style="margin:5px 0 0 0; font-size:11px; color:#999;">Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
+          <div style="font-size:16px; font-weight:800; color:${balanceDue > 0 ? '#dc3545' : '#28a745'}; margin-bottom:5px;">${balanceDue > 0 ? 'UNPAID' : 'PAID'}</div>
+          <div style="font-size:11px; color:#666;">#${invoice.invoiceNumber || invoice._id?.substring(0,8) || 'N/A'}</div>
         </div>
       </div>
 
-      <!-- QR Code Section (optional) -->
-      ${qrCodeSection}
-
-      <!-- Company & Customer Info -->
-      <div style="display:flex; justify-content:space-between; margin-bottom:40px;">
-        <div style="flex:1;">
-          <h3 style="margin:0 0 10px 0; font-size:16px; color:${COMPANY_INFO.colors.primary}; font-weight:600;">FROM:</h3>
-          <div style="background:#f8f9fa; padding:15px; border-radius:8px; border-left:4px solid ${COMPANY_INFO.colors.primary};">
-            <p style="margin:0 0 5px 0; font-weight:600; color:${COMPANY_INFO.colors.primary};">${COMPANY_INFO.name}</p>
-            <p style="margin:0 0 5px 0; font-size:13px; color:#555;">${COMPANY_INFO.address}</p>
-            <p style="margin:0 0 5px 0; font-size:13px; color:#555;">Phone: ${COMPANY_INFO.supportPhone}</p>
-            <p style="margin:0 0 5px 0; font-size:13px; color:#555;">Email: ${COMPANY_INFO.supportEmail}</p>
-            <p style="margin:0; font-size:13px; color:#555;">VAT: ${COMPANY_INFO.vatNumber}</p>
-          </div>
-        </div>
-        
-        <div style="flex:1; margin-left:40px;">
-          <h3 style="margin:0 0 10px 0; font-size:16px; color:${COMPANY_INFO.colors.primary}; font-weight:600;">BILL TO:</h3>
-          <div style="background:#f8f9fa; padding:15px; border-radius:8px; border-left:4px solid ${COMPANY_INFO.colors.accent};">
-            <p style="margin:0 0 5px 0; font-weight:600; color:#1a1a1a;">${invoice.customerName || 'N/A'}</p>
-            <p style="margin:0 0 5px 0; font-size:13px; color:#555;">${invoice.customerEmail || ''}</p>
-            <p style="margin:0 0 5px 0; font-size:13px; color:#555;">Phone: ${invoice.customerPhone || ''}</p>
-            <p style="margin:0; font-size:13px; color:#555;">Location: ${invoice.customerLocation || ''}</p>
-          </div>
-        </div>
-        
-        <div style="flex:1; margin-left:40px;">
-          <h3 style="margin:0 0 10px 0; font-size:16px; color:${COMPANY_INFO.colors.primary}; font-weight:600;">INVOICE DETAILS:</h3>
-          <div style="background:#f8f9fa; padding:15px; border-radius:8px; border-left:4px solid ${COMPANY_INFO.colors.success};">
-            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Invoice #:</span> ${invoice.invoiceNumber || invoice._id?.substring(0,8) || 'N/A'}</p>
-            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Date:</span> ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Due Date:</span> ${new Date(invoice.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-            <p style="margin:0 0 8px 0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Payment Terms:</span> ${invoice.paymentTerms || '30 days'}</p>
-            <p style="margin:0; font-size:13px;"><span style="font-weight:600; color:#1a1a1a;">Plan:</span> ${invoice.planName || 'N/A'}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Items Table -->
-      <div style="margin-bottom:30px;">
-        <table style="width:100%; border-collapse:collapse; border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
-          <thead>
-            <tr style="background:${COMPANY_INFO.colors.primary}; color:white;">
-              <th style="padding:15px; text-align:left; font-weight:600;">DESCRIPTION</th>
-              <th style="padding:15px; text-align:center; font-weight:600;">QTY</th>
-              <th style="padding:15px; text-align:right; font-weight:600;">UNIT PRICE</th>
-              <th style="padding:15px; text-align:right; font-weight:600;">AMOUNT</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml || `<tr><td colspan="4" style="padding:20px; text-align:center; color:#999;">No items</td></tr>`}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Summary Section -->
-      <div style="display:flex; justify-content:space-between; margin-bottom:40px;">
-        <div style="width:60%;">
-          <h3 style="margin:0 0 15px 0; font-size:16px; color:${COMPANY_INFO.colors.primary}; font-weight:600;">NOTES & TERMS:</h3>
-          <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px dashed #ddd;">
-            <p style="margin:0 0 10px 0; font-size:13px; line-height:1.6;">${invoice.notes || 'Thank you for your business!'}</p>
-            <p style="margin:0; font-size:13px; line-height:1.6; color:#666;">${invoice.terms || COMPANY_INFO.terms}</p>
-          </div>
-        </div>
-        
-        <div style="width:35%;">
-          <div style="background:#f8f9fa; padding:25px; border-radius:8px; border:1px solid #e0e0e0;">
-            <h3 style="margin:0 0 20px 0; font-size:18px; color:${COMPANY_INFO.colors.primary}; font-weight:700; text-align:center;">INVOICE SUMMARY</h3>
-            
-            <div style="margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid #e0e0e0;">
-              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <span style="color:#666;">Subtotal:</span>
-                <span style="font-weight:600;">Ksh ${formatPrice(subtotal)}</span>
-              </div>
-              
-              ${invoice.taxRate > 0 ? `
-              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <span style="color:#666;">VAT (${invoice.taxRate || 0}%):</span>
-                <span style="font-weight:600;">Ksh ${formatPrice(taxAmount)}</span>
-              </div>
-              ` : ''}
-              
-              ${discountAmount > 0 ? `
-              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <span style="color:#666;">Discount:</span>
-                <span style="font-weight:600; color:#28a745;">- Ksh ${formatPrice(discountAmount)}</span>
-              </div>
-              ` : ''}
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px; padding:15px; background:white; border-radius:6px; border:2px solid #003366;">
-              <span style="font-size:18px; font-weight:700; color:#003366;">TOTAL AMOUNT:</span>
-              <span style="font-size:20px; font-weight:800; color:#003366;">Ksh ${formatPrice(totalAmount)}</span>
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="color:#666;">Amount Paid:</span>
-              <span style="font-weight:600; color:#28a745;">Ksh ${formatPrice(amountPaid)}</span>
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; padding-top:15px; border-top:2px solid #e0e0e0;">
-              <span style="font-size:16px; font-weight:700;">BALANCE DUE:</span>
-              <span style="font-size:18px; font-weight:800; color:${balanceDue > 0 ? '#dc3545' : '#28a745'};">Ksh ${formatPrice(balanceDue)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payment Instructions -->
-      <div style="margin-bottom:30px; padding:20px; background:linear-gradient(135deg, #003366 0%, #002244 100%); border-radius:8px; color:white;">
-        <h3 style="margin:0 0 15px 0; font-size:18px; font-weight:600; color:#FFCC00;">PAYMENT INSTRUCTIONS</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-          <div>
-            <p style="margin:0 0 10px 0; font-size:14px; font-weight:600;">Bank Transfer</p>
-            <p style="margin:0 0 5px 0; font-size:13px;">Bank: ${COMPANY_INFO.bankName}</p>
-            <p style="margin:0 0 5px 0; font-size:13px;">Account: ${COMPANY_INFO.accountName}</p>
-            <p style="margin:0 0 5px 0; font-size:13px;">Account No: ${COMPANY_INFO.accountNumber}</p>
-            <p style="margin:0; font-size:13px;">Branch: ${COMPANY_INFO.branch}</p>
+      <!-- Two Column Layout -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-bottom:25px;">
+        <!-- Left Column -->
+        <div>
+          <div style="margin-bottom:20px;">
+            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">FROM</p>
+            <p style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:${COMPANY_INFO.colors.primary};">${COMPANY_INFO.name}</p>
+            <p style="margin:0 0 2px 0; font-size:11px; color:#666;">${COMPANY_INFO.address}</p>
+            <p style="margin:0 0 2px 0; font-size:11px; color:#666;">${COMPANY_INFO.supportEmail}</p>
+            <p style="margin:0; font-size:11px; color:#666;">${COMPANY_INFO.supportPhone}</p>
           </div>
           <div>
-            <p style="margin:0 0 10px 0; font-size:14px; font-weight:600;">Mobile Money</p>
-            <p style="margin:0 0 5px 0; font-size:13px;">Paybill: ${COMPANY_INFO.paybill}</p>
-            <p style="margin:0 0 5px 0; font-size:13px; color:#ff6b35; font-weight:600;">Account: ${invoice.clientAccountNumber || 'NOT SET'}</p>
-            <p style="margin:0; font-size:13px;">Include account number when paying</p>
+            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">BILL TO</p>
+            <p style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:#1a1a1a;">${invoice.customerName || 'Customer'}</p>
+            <p style="margin:0 0 2px 0; font-size:11px; color:#666;">${invoice.customerEmail || ''}</p>
+            <p style="margin:0 0 2px 0; font-size:11px; color:#666;">${invoice.customerPhone || ''}</p>
+            <p style="margin:0; font-size:11px; color:#666;">${invoice.customerLocation || ''}</p>
           </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+          <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">DATES & PLAN</p>
+          <div style="margin-bottom:15px;">
+            <p style="margin:0 0 2px 0; font-size:11px;"><span style="font-weight:600;">Invoice Date:</span> ${new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+            <p style="margin:0 0 2px 0; font-size:11px;"><span style="font-weight:600;">Due Date:</span> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
+            <p style="margin:0; font-size:11px;"><span style="font-weight:600;">Plan:</span> ${invoice.planName || 'Service'} ${invoice.planSpeed ? '(' + invoice.planSpeed + ')' : ''}</p>
+          </div>
+          <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">INVOICE #</p>
+          <p style="margin:0; font-size:18px; font-weight:900; color:${COMPANY_INFO.colors.primary};">${invoice.invoiceNumber || invoice._id?.substring(0,8) || 'N/A'}</p>
         </div>
       </div>
 
-      <!-- Footer with Share Options -->
-      <div style="padding-top:20px; border-top:2px solid #f0f0f0; text-align:center; color:#666; font-size:12px;">
-        <div style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;">
-          <button style="padding:6px 12px; background:#003366; color:white; border:none; border-radius:6px; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-            Share via WhatsApp
-          </button>
-          <button style="padding:6px 12px; background:#28a745; color:white; border:none; border-radius:6px; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-            Email Invoice
-          </button>
+      <!-- Items Table - Clean Minimal -->
+      <table style="width:100%; margin-bottom:25px; border-collapse:collapse; font-size:12px;">
+        <thead>
+          <tr style="background:#f5f5f5; border-top:1px solid #ddd; border-bottom:1px solid #ddd;">
+            <th style="padding:10px; text-align:left; font-weight:700; color:#333;">DESCRIPTION</th>
+            <th style="padding:10px; text-align:center; font-weight:700; color:#333;">QTY</th>
+            <th style="padding:10px; text-align:right; font-weight:700; color:#333;">PRICE</th>
+            <th style="padding:10px; text-align:right; font-weight:700; color:#333;">TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(invoice.items && invoice.items.length > 0) ? invoice.items.map(item => `
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:10px; text-align:left;">${item.description || 'Service'}</td>
+            <td style="padding:10px; text-align:center;">${item.quantity || 1}</td>
+            <td style="padding:10px; text-align:right;">Ksh ${formatPrice(item.unitPrice || item.amount)}</td>
+            <td style="padding:10px; text-align:right; font-weight:600;">Ksh ${formatPrice(item.amount)}</td>
+          </tr>
+          `).join('') : `
+          <tr style="border-bottom:1px solid #eee;">
+            <td colspan="4" style="padding:15px; text-align:center; color:#999;">No line items</td>
+          </tr>
+          `}
+        </tbody>
+      </table>
+
+      <!-- Totals - Right Aligned -->
+      <div style="display:flex; justify-content:flex-end; margin-bottom:25px; max-width:400px; margin-left:auto;">
+        <div style="width:100%;">
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
+            <span>Subtotal:</span>
+            <span>Ksh ${formatPrice(subtotal)}</span>
+          </div>
+          ${invoice.taxRate > 0 ? `
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
+            <span>VAT (${invoice.taxRate}%):</span>
+            <span>Ksh ${formatPrice(taxAmount)}</span>
+          </div>
+          ` : ''}
+          ${discountAmount > 0 ? `
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
+            <span>Discount:</span>
+            <span style="color:#28a745;">- Ksh ${formatPrice(discountAmount)}</span>
+          </div>
+          ` : ''}
+          <div style="display:flex; justify-content:space-between; padding:12px 0; margin-top:8px; border-top:2px solid ${COMPANY_INFO.colors.primary}; font-weight:700; font-size:14px; color:${COMPANY_INFO.colors.primary};">
+            <span>TOTAL:</span>
+            <span>Ksh ${formatPrice(totalAmount)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:8px 0; margin-top:8px; font-size:12px; color:${amountPaid > 0 ? '#28a745' : '#999'};">
+            <span>Paid:</span>
+            <span style="font-weight:700;">Ksh ${formatPrice(amountPaid)}</span>
+          </div>
+          ${balanceDue > 0 ? `
+          <div style="display:flex; justify-content:space-between; padding:8px 0; font-size:12px; color:#dc3545;">
+            <span>Balance Due:</span>
+            <span style="font-weight:700;">Ksh ${formatPrice(balanceDue)}</span>
+          </div>
+          ` : ''}
         </div>
-        <p style="margin:0 0 10px 0;">Thank you for choosing ${COMPANY_INFO.name}!</p>
-        <p style="margin:0; display:flex; justify-content:center; gap:20px;">
-          <span>📧 ${COMPANY_INFO.supportEmail}</span>
-          <span>📱 ${COMPANY_INFO.supportPhone}</span>
-          <span>🌐 ${COMPANY_INFO.website}</span>
-        </p>
-        <p style="margin:10px 0 0 0; font-size:11px; color:#999;">Invoice ID: ${invoiceId} | Generated client-side | No signature required</p>
+      </div>
+
+      <!-- Payment Section -->
+      <div style="padding:15px; background:#f0f7ff; border-left:4px solid ${COMPANY_INFO.colors.primary}; margin-bottom:20px; font-size:11px;">
+        <p style="margin:0 0 8px 0; font-weight:700; color:${COMPANY_INFO.colors.primary};">PAYMENT DETAILS</p>
+        <p style="margin:0 0 4px 0;"><span style="font-weight:600;">M-Pesa Paybill:</span> ${COMPANY_INFO.paybill}</p>
+        <p style="margin:0 0 4px 0;"><span style="font-weight:600;">Account Number:</span> ${invoice.clientAccountNumber || invoice.invoiceNumber || 'Account Name'}</p>
+        <p style="margin:0 0 4px 0;"><span style="font-weight:600;">Bank:</span> ${COMPANY_INFO.bankName} - ${COMPANY_INFO.accountNumber}</p>
+        <p style="margin:0; font-size:10px; color:#666; margin-top:6px;"><em>Include account/invoice number as payment reference</em></p>
+      </div>
+
+      <!-- Footer Info -->
+      <div style="padding-top:15px; border-top:1px solid #e0e0e0; font-size:10px; color:#666; text-align:center;">
+        <p style="margin:0 0 8px 0; font-weight:700; color:${COMPANY_INFO.colors.primary};">Thank you for your business!</p>
+        <div style="margin-bottom:8px;">
+          <span style="margin:0 10px;">📧 ${COMPANY_INFO.supportEmail}</span>
+          <span style="margin:0 10px;">📱 ${COMPANY_INFO.supportPhone}</span>
+          <span style="margin:0 10px;">🌐 ${COMPANY_INFO.website}</span>
+        </div>
+        <p style="margin:0; color:#999;">Generated: ${new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
       </div>
     </div>
   `;

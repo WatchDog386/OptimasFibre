@@ -107,7 +107,7 @@ const BRAND = {
   }
 };
 
-// ✅ ENHANCED: Generate professional receipt PDF (client-side)
+// ✅ PROFESSIONAL: Clean, minimal receipt PDF layout
 const generateReceiptPDF = async (receipt, showNotification) => {
   const printContainer = document.createElement('div');
   printContainer.style.position = 'absolute';
@@ -115,10 +115,10 @@ const generateReceiptPDF = async (receipt, showNotification) => {
   printContainer.style.top = '-10000px';
   printContainer.style.width = '800px';
   printContainer.style.backgroundColor = 'white';
-  printContainer.style.padding = '40px';
-  printContainer.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif";
+  printContainer.style.padding = '35px';
+  printContainer.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif";
   printContainer.style.color = '#1a1a1a';
-  printContainer.style.lineHeight = '1.6';
+  printContainer.style.lineHeight = '1.5';
 
   // Calculate totals
   const subtotal = receipt.subtotal || 0;
@@ -129,7 +129,7 @@ const generateReceiptPDF = async (receipt, showNotification) => {
   
   // Payment status
   const isFullyPaid = balance === 0;
-  const statusText = isFullyPaid ? 'PAID IN FULL' : 'PARTIAL PAYMENT';
+  const statusText = isFullyPaid ? '✓ PAID IN FULL' : 'PARTIAL PAYMENT';
   const statusColor = isFullyPaid ? BRAND.colors.success : BRAND.colors.warning;
 
   // Format payment method
@@ -144,299 +144,125 @@ const generateReceiptPDF = async (receipt, showNotification) => {
   const paymentMethod = paymentMethodMap[receipt.paymentMethod] || receipt.paymentMethod || 'Cash';
 
   printContainer.innerHTML = `
-    <div style="border:2px solid ${BRAND.colors.primary}; border-radius:12px; padding:40px; background:white; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+    <div style="padding:20px; background:white; font-size:13px;">
       <!-- Header -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; padding-bottom:20px; border-bottom:2px solid ${BRAND.colors.primary};">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #e0e0e0;">
         <div>
-          ${BRAND.logoUrl ? `<img src="${BRAND.logoUrl}" alt="${BRAND.name} Logo" style="height:70px; margin-bottom:15px; border-radius:8px;" onerror="this.style.display='none'" />` : ''}
-          <h1 style="margin:5px 0; font-size:28px; color:${BRAND.colors.primary}; font-weight:800; letter-spacing:-0.5px;">${BRAND.name}</h1>
-          <p style="margin:0; color:#666; font-size:14px; font-weight:500;">${BRAND.tagline}</p>
-          <div style="margin-top:10px; display:flex; align-items:center; gap:15px; font-size:12px; color:#666;">
-            <span style="display:inline-flex; align-items:center;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              ${BRAND.contact.address}
-            </span>
-            <span style="display:inline-flex; align-items:center;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg>
-              ${BRAND.contact.phone}
-            </span>
-            <span style="display:inline-flex; align-items:center;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-              </svg>
-              ${BRAND.contact.email}
-            </span>
-          </div>
+          <h1 style="margin:0; font-size:22px; color:${BRAND.colors.primary}; font-weight:900;">RECEIPT</h1>
+          <p style="margin:5px 0 0 0; font-size:12px; color:#666;">${BRAND.name} | ${BRAND.tagline}</p>
         </div>
         <div style="text-align:right;">
-          <div style="background:${BRAND.colors.accent}; color:white; padding:8px 20px; border-radius:20px; display:inline-block; font-weight:700; font-size:12px; letter-spacing:1px; margin-bottom:10px;">
-            OFFICIAL RECEIPT
+          <div style="font-size:18px; font-weight:800; color:${statusColor}; margin-bottom:5px;">${statusText}</div>
+          <div style="font-size:11px; color:#666;">#${receipt.receiptNumber || 'N/A'}</div>
+        </div>
+      </div>
+
+      <!-- Two Column Layout -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-bottom:25px;">
+        <!-- Left Column -->
+        <div>
+          <div style="margin-bottom:20px;">
+            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">CUSTOMER</p>
+            <p style="margin:0 0 4px 0; font-size:14px; font-weight:700; color:#1a1a1a;">${receipt.customerName || 'Customer'}</p>
+            <p style="margin:0 0 2px 0; font-size:11px; color:#666;">${receipt.customerEmail || 'N/A'}</p>
+            <p style="margin:0; font-size:11px; color:#666;">${receipt.customerPhone || 'N/A'}</p>
           </div>
-          <h2 style="margin:0 0 10px 0; font-size:36px; color:${BRAND.colors.primary}; font-weight:900; letter-spacing:-1px;">RECEIPT</h2>
-          <div style="background:${statusColor}; color:white; padding:10px 25px; border-radius:25px; display:inline-block; font-weight:700; font-size:14px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-            ${statusText}
+          <div>
+            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">SERVICE</p>
+            <p style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:${BRAND.colors.primary};">${receipt.planName || 'Service'}</p>
+            <p style="margin:0; font-size:11px; color:#666;">${receipt.planSpeed ? receipt.planSpeed + ' - ' : ''}${receipt.serviceDescription || 'Internet Service'}</p>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+          <div style="margin-bottom:20px;">
+            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">DATES</p>
+            <p style="margin:0 0 4px 0; font-size:11px; color:#666;">Receipt: ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A'}</p>
+            <p style="margin:0; font-size:11px; color:#666;">Payment: ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
+          </div>
+          <div>
+            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">PAYMENT METHOD</p>
+            <p style="margin:0; font-size:13px; font-weight:700; color:${BRAND.colors.success};">${paymentMethod}</p>
           </div>
         </div>
       </div>
 
-      <!-- Receipt Details -->
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:30px; margin-bottom:40px;">
-        <!-- Customer Information -->
-        <div>
-          <h3 style="margin:0 0 15px 0; font-size:16px; color:${BRAND.colors.primary}; font-weight:700; padding-bottom:8px; border-bottom:2px solid #f0f0f0;">CUSTOMER INFORMATION</h3>
-          <div style="background:#f8f9fa; padding:20px; border-radius:10px; border-left:4px solid ${BRAND.colors.primary}; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
-            <p style="margin:0 0 8px 0; font-size:16px; font-weight:700; color:#333;">${receipt.customerName || 'Customer'}</p>
-            <p style="margin:0 0 6px 0; font-size:14px; color:#555;">
-              <span style="font-weight:600;">Email:</span> ${receipt.customerEmail || 'N/A'}
-            </p>
-            <p style="margin:0 0 6px 0; font-size:14px; color:#555;">
-              <span style="font-weight:600;">Phone:</span> ${receipt.customerPhone || 'N/A'}
-            </p>
-            <p style="margin:0; font-size:14px; color:#555;">
-              <span style="font-weight:600;">Location:</span> ${receipt.customerLocation || receipt.customerAddress || 'N/A'}
-            </p>
-          </div>
-        </div>
-        
-        <!-- Receipt Information -->
-        <div>
-          <h3 style="margin:0 0 15px 0; font-size:16px; color:${BRAND.colors.primary}; font-weight:700; padding-bottom:8px; border-bottom:2px solid #f0f0f0;">RECEIPT DETAILS</h3>
-          <div style="background:#f8f9fa; padding:20px; border-radius:10px; border-left:4px solid ${BRAND.colors.accent}; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
-            <p style="margin:0 0 8px 0; font-size:14px;">
-              <span style="font-weight:700; color:#333;">Receipt #:</span> 
-              <span style="font-weight:800; color:${BRAND.colors.primary}; font-size:16px;">${receipt.receiptNumber || 'N/A'}</span>
-            </p>
-            <p style="margin:0 0 8px 0; font-size:14px;">
-              <span style="font-weight:600; color:#333;">Invoice #:</span> ${receipt.invoiceNumber || 'N/A'}
-            </p>
-            <p style="margin:0 0 8px 0; font-size:14px;">
-              <span style="font-weight:600; color:#333;">Receipt Date:</span> ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
-            </p>
-            <p style="margin:0 0 8px 0; font-size:14px;">
-              <span style="font-weight:600; color:#333;">Payment Date:</span> ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
-            </p>
-            <p style="margin:0; font-size:14px;">
-              <span style="font-weight:600; color:#333;">Payment Method:</span> 
-              <span style="font-weight:700; color:${BRAND.colors.success};">${paymentMethod}</span>
-            </p>
-          </div>
-        </div>
-        
-        <!-- Service Details -->
-        <div>
-          <h3 style="margin:0 0 15px 0; font-size:16px; color:${BRAND.colors.primary}; font-weight:700; padding-bottom:8px; border-bottom:2px solid #f0f0f0;">SERVICE DETAILS</h3>
-          <div style="background:#f8f9fa; padding:20px; border-radius:10px; border-left:4px solid ${BRAND.colors.success}; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
-            <p style="margin:0 0 8px 0; font-size:14px;">
-              <span style="font-weight:600; color:#333;">Plan:</span> ${receipt.planName || 'N/A'}
-            </p>
-            <p style="margin:0 0 8px 0; font-size:14px;">
-              <span style="font-weight:600; color:#333;">Speed:</span> ${receipt.planSpeed || 'N/A'}
-            </p>
-            <p style="margin:0 0 8px 0; font-size:14px;">
-              <span style="font-weight:600; color:#333;">Service:</span> ${receipt.serviceDescription || 'Internet Service'}
-            </p>
-            ${receipt.paymentReference ? `
-            <p style="margin:0; font-size:14px;">
-              <span style="font-weight:600; color:#333;">Reference:</span> ${receipt.paymentReference}
-            </p>
-            ` : ''}
-            ${receipt.transactionId ? `
-            <p style="margin:8px 0 0 0; font-size:14px;">
-              <span style="font-weight:600; color:#333;">Transaction ID:</span> ${receipt.transactionId}
-            </p>
-            ` : ''}
-          </div>
-        </div>
-      </div>
-
-      <!-- Items Table -->
-      <div style="margin-bottom:40px;">
-        <h3 style="margin:0 0 20px 0; font-size:18px; color:${BRAND.colors.primary}; font-weight:700;">PAYMENT BREAKDOWN</h3>
-        <table style="width:100%; border-collapse:separate; border-spacing:0; border:1px solid #e0e0e0; border-radius:10px; overflow:hidden; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
-          <thead>
-            <tr style="background:linear-gradient(135deg, ${BRAND.colors.primary} 0%, #002244 100%); color:white;">
-              <th style="padding:18px 20px; text-align:left; font-weight:700; font-size:14px; border-right:1px solid rgba(255,255,255,0.1);">DESCRIPTION</th>
-              <th style="padding:18px 20px; text-align:center; font-weight:700; font-size:14px; border-right:1px solid rgba(255,255,255,0.1);">QUANTITY</th>
-              <th style="padding:18px 20px; text-align:right; font-weight:700; font-size:14px; border-right:1px solid rgba(255,255,255,0.1);">UNIT PRICE</th>
-              <th style="padding:18px 20px; text-align:right; font-weight:700; font-size:14px;">AMOUNT</th>
+      <!-- Items Table - Clean Minimal -->
+      <table style="width:100%; margin-bottom:25px; border-collapse:collapse; font-size:12px;">
+        <thead>
+          <tr style="background:#f5f5f5; border-top:1px solid #ddd; border-bottom:1px solid #ddd;">
+            <th style="padding:10px; text-align:left; font-weight:700; color:#333;">DESCRIPTION</th>
+            <th style="padding:10px; text-align:center; font-weight:700; color:#333;">QTY</th>
+            <th style="padding:10px; text-align:right; font-weight:700; color:#333;">PRICE</th>
+            <th style="padding:10px; text-align:right; font-weight:700; color:#333;">TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(receipt.items && receipt.items.length > 0 ? receipt.items : [{
+              description: receipt.planName ? `${receipt.planName} - ${receipt.planSpeed}` : 'Service',
+              quantity: 1,
+              unitPrice: receipt.total || 0,
+              amount: receipt.total || 0
+            }]).map(item => `
+            <tr style="border-bottom:1px solid #eee;">
+              <td style="padding:10px; text-align:left;">${item.description || 'Service'}</td>
+              <td style="padding:10px; text-align:center;">${item.quantity || 1}</td>
+              <td style="padding:10px; text-align:right;">Ksh ${formatPrice(item.unitPrice || 0)}</td>
+              <td style="padding:10px; text-align:right; font-weight:600;">Ksh ${formatPrice(item.amount || 0)}</td>
             </tr>
-          </thead>
-          <tbody>
-            ${(receipt.items && receipt.items.length > 0 ? receipt.items : [{
-                description: receipt.serviceDescription || (receipt.planName ? `${receipt.planName} - ${receipt.planSpeed}` : 'Internet Service'),
-                quantity: 1,
-                unitPrice: receipt.planPrice || receipt.total || 0,
-                amount: receipt.total || 0
-              }]).map((item, index) => `
-                <tr style="${index % 2 === 0 ? 'background:#f8f9fa;' : 'background:white;'} border-bottom:1px solid #eee;">
-                  <td style="padding:15px 20px; text-align:left; font-size:14px; border-right:1px solid #eee;">${item.description || 'Service'}</td>
-                  <td style="padding:15px 20px; text-align:center; font-size:14px; border-right:1px solid #eee;">${item.quantity || 1}</td>
-                  <td style="padding:15px 20px; text-align:right; font-size:14px; border-right:1px solid #eee;">Ksh ${formatPrice(item.unitPrice || 0)}</td>
-                  <td style="padding:15px 20px; text-align:right; font-size:14px; font-weight:600;">Ksh ${formatPrice(item.amount || 0)}</td>
-                </tr>
-              `).join('')}
-          </tbody>
-        </table>
-      </div>
+          `).join('')}
+        </tbody>
+      </table>
 
-      <!-- Payment Summary -->
-      <div style="display:flex; justify-content:space-between; margin-bottom:40px; gap:40px;">
-        <div style="flex:1;">
-          <h3 style="margin:0 0 15px 0; font-size:16px; color:${BRAND.colors.primary}; font-weight:700;">PAYMENT NOTES</h3>
-          <div style="background:#f8f9fa; padding:25px; border-radius:10px; border:1px solid #e0e0e0; min-height:150px;">
-            <p style="margin:0 0 10px 0; font-size:14px; line-height:1.6; color:#333;">
-              ${receipt.notes || 'Thank you for your payment! Your business is greatly appreciated.'}
-            </p>
-            <div style="margin-top:15px; padding:12px; background:rgba(0,51,102,0.05); border-radius:6px; border-left:3px solid ${BRAND.colors.primary};">
-              <p style="margin:0; font-size:12px; color:#666; line-height:1.5;">
-                <strong>Important:</strong> This receipt serves as official proof of payment. Please retain for your records.
-                For any billing inquiries, please quote receipt number: <strong>${receipt.receiptNumber || 'N/A'}</strong>
-              </p>
-            </div>
+      <!-- Totals - Right Aligned -->
+      <div style="display:flex; justify-content:flex-end; margin-bottom:25px; max-width:400px; margin-left:auto;">
+        <div style="width:100%;">
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
+            <span>Subtotal:</span>
+            <span>Ksh ${formatPrice(subtotal)}</span>
           </div>
-        </div>
-        
-        <div style="width:380px;">
-          <div style="background:#f8f9fa; padding:30px; border-radius:10px; border:1px solid #e0e0e0; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
-            <h3 style="margin:0 0 25px 0; font-size:20px; color:${BRAND.colors.primary}; font-weight:800; text-align:center; padding-bottom:15px; border-bottom:2px solid ${BRAND.colors.primary};">PAYMENT SUMMARY</h3>
-            
-            <div style="margin-bottom:20px;">
-              <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #ddd;">
-                <span style="color:#666; font-size:15px;">Subtotal:</span>
-                <span style="font-weight:600; font-size:15px;">Ksh ${formatPrice(subtotal)}</span>
-              </div>
-              
-              ${receipt.taxRate > 0 ? `
-              <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #ddd;">
-                <span style="color:#666; font-size:15px;">VAT (${receipt.taxRate || 0}%):</span>
-                <span style="font-weight:600; font-size:15px;">Ksh ${formatPrice(taxAmount)}</span>
-              </div>
-              ` : ''}
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; margin-bottom:25px; padding:20px; background:white; border-radius:8px; border:2px solid ${BRAND.colors.primary};">
-              <span style="font-size:18px; font-weight:700; color:${BRAND.colors.primary};">TOTAL AMOUNT:</span>
-              <span style="font-size:22px; font-weight:900; color:${BRAND.colors.primary};">Ksh ${formatPrice(total)}</span>
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px; padding:15px; background:rgba(40,167,69,0.1); border-radius:8px; border-left:4px solid ${BRAND.colors.success};">
-              <span style="font-size:16px; font-weight:700; color:#333;">Amount Paid:</span>
-              <span style="font-size:18px; font-weight:800; color:${BRAND.colors.success};">Ksh ${formatPrice(amountPaid)}</span>
-            </div>
-            
-            ${balance > 0 ? `
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px; padding:15px; background:rgba(220,53,69,0.1); border-radius:8px; border-left:4px solid ${BRAND.colors.danger};">
-              <span style="font-size:16px; font-weight:700; color:#333;">Balance Due:</span>
-              <span style="font-size:18px; font-weight:800; color:${BRAND.colors.danger};">Ksh ${formatPrice(balance)}</span>
-            </div>
-            ` : ''}
-            
-            <div style="display:flex; justify-content:space-between; padding-top:20px; border-top:2px solid #e0e0e0;">
-              <span style="font-size:16px; font-weight:700;">PAYMENT STATUS:</span>
-              <span style="font-size:18px; font-weight:900; color:${statusColor};">${statusText}</span>
-            </div>
+          ${receipt.taxRate > 0 ? `
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
+            <span>VAT (${receipt.taxRate}%):</span>
+            <span>Ksh ${formatPrice(taxAmount)}</span>
           </div>
+          ` : ''}
+          <div style="display:flex; justify-content:space-between; padding:12px 0; margin-top:8px; border-top:2px solid ${BRAND.colors.primary}; font-weight:700; font-size:14px; color:${BRAND.colors.primary};">
+            <span>TOTAL:</span>
+            <span>Ksh ${formatPrice(total)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:8px 0; margin-top:8px; font-size:12px; color:${BRAND.colors.success};">
+            <span>Paid:</span>
+            <span style="font-weight:700;">Ksh ${formatPrice(amountPaid)}</span>
+          </div>
+          ${balance > 0 ? `
+          <div style="display:flex; justify-content:space-between; padding:8px 0; font-size:12px; color:${BRAND.colors.danger};">
+            <span>Balance Due:</span>
+            <span style="font-weight:700;">Ksh ${formatPrice(balance)}</span>
+          </div>
+          ` : ''}
         </div>
       </div>
 
-      <!-- Company Information -->
-      <div style="margin-bottom:30px; padding:25px; background:linear-gradient(135deg, ${BRAND.colors.primary} 0%, #002244 100%); border-radius:10px; color:white; box-shadow:0 8px 25px rgba(0,51,102,0.2);">
-        <h3 style="margin:0 0 20px 0; font-size:20px; font-weight:700; color:${BRAND.colors.accent}; text-align:center; letter-spacing:0.5px;">${BRAND.name} - BANKING INFORMATION</h3>
-        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:30px;">
+      <!-- Footer Info -->
+      <div style="padding-top:15px; border-top:1px solid #e0e0e0; font-size:10px; color:#666; line-height:1.6;">
+        <p style="margin:0 0 8px 0; font-weight:700; color:${BRAND.colors.primary};">${BRAND.name}</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:10px;">
           <div>
-            <div style="display:flex; align-items:center; margin-bottom:15px;">
-              <div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-right:15px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                  <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                  <path d="M6 10h4"></path><path d="M14 10h4"></path>
-                  <path d="M6 14h12"></path>
-                </svg>
-              </div>
-              <div>
-                <p style="margin:0 0 5px 0; font-size:16px; font-weight:700;">Bank Transfer</p>
-              </div>
-            </div>
-            <div style="padding-left:55px;">
-              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Bank:</strong> ${BRAND.contact.bank.name}</p>
-              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Account Name:</strong> ${BRAND.contact.bank.accountName}</p>
-              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Account Number:</strong> ${BRAND.contact.bank.accountNumber}</p>
-              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Branch:</strong> ${BRAND.contact.bank.branch}</p>
-              <p style="margin:0; font-size:14px;"><strong>SWIFT Code:</strong> ${BRAND.contact.bank.swiftCode}</p>
-            </div>
+            <p style="margin:0 0 4px 0; font-weight:600;">CONTACT</p>
+            <p style="margin:0 0 2px 0;">${BRAND.contact.email}</p>
+            <p style="margin:0;">${BRAND.contact.phone}</p>
           </div>
-          
           <div>
-            <div style="display:flex; align-items:center; margin-bottom:15px;">
-              <div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-right:15px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                  <rect x="2" y="6" width="20" height="12" rx="2"></rect>
-                  <circle cx="12" cy="12" r="2"></circle>
-                  <path d="M6 12h.01M18 12h.01"></path>
-                </svg>
-              </div>
-              <div>
-                <p style="margin:0 0 5px 0; font-size:16px; font-weight:700;">Mobile Payments</p>
-              </div>
-            </div>
-            <div style="padding-left:55px;">
-              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Paybill:</strong> ${BRAND.contact.paybill.number}</p>
-              <p style="margin:0 0 8px 0; font-size:14px;"><strong>Business:</strong> ${BRAND.contact.paybill.name}</p>
-              <p style="margin:0 0 8px 0; font-size:14px; color:#ff6b35; font-weight:600;"><strong>Account:</strong> ${receipt.clientAccountNumber || 'NOT SET'}</p>
-              <p style="margin:0 0 8px 0; font-size:14px;"><strong>VAT Number:</strong> ${BRAND.contact.vatNumber}</p>
-              <p style="margin:0; font-size:14px;"><strong>Website:</strong> ${BRAND.contact.website}</p>
-            </div>
+            <p style="margin:0 0 4px 0; font-weight:600;">PAYMENT</p>
+            <p style="margin:0 0 2px 0;">Paybill: ${BRAND.contact.paybill.number}</p>
+            <p style="margin:0;">Bank: ${BRAND.contact.bank.accountNumber}</p>
           </div>
         </div>
-      </div>
-
-      <!-- Footer -->
-      <div style="padding-top:25px; border-top:2px solid #f0f0f0; text-align:center; color:#666; font-size:12px;">
-        <div style="display:flex; justify-content:center; align-items:center; gap:30px; margin-bottom:15px; flex-wrap:wrap;">
-          <div style="display:flex; align-items:center; background:rgba(0,51,102,0.05); padding:8px 15px; border-radius:20px;">
-            <Check size={14} style="margin-right:8px; color:${BRAND.colors.success};" />
-            <span style="font-weight:600;">Payment Confirmed</span>
-          </div>
-          <div style="display:flex; align-items:center; background:rgba(0,51,102,0.05); padding:8px 15px; border-radius:20px;">
-            <Shield size={14} style="margin-right:8px; color:${BRAND.colors.primary};" />
-            <span style="font-weight:600;">Official Document</span>
-          </div>
-          <div style="display:flex; align-items:center; background:rgba(0,51,102,0.05); padding:8px 15px; border-radius:20px;">
-            <Clock size={14} style="margin-right:8px; color:${BRAND.colors.warning};" />
-            <span style="font-weight:600;">Generated: ${new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-          </div>
-        </div>
-        <p style="margin:0 0 15px 0; font-size:16px; font-weight:700; color:${BRAND.colors.primary};">Thank you for choosing ${BRAND.name}!</p>
-        <div style="display:flex; justify-content:center; gap:30px; margin-bottom:10px; flex-wrap:wrap;">
-          <span style="display:flex; align-items:center; font-size:13px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-              <polyline points="22,6 12,13 2,6"></polyline>
-            </svg>
-            ${BRAND.contact.email}
-          </span>
-          <span style="display:flex; align-items:center; font-size:13px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-            </svg>
-            ${BRAND.contact.phone}
-          </span>
-          <span style="display:flex; align-items:center; font-size:13px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
-              <circle cx="12" cy="9" r="3"></circle>
-            </svg>
-            ${BRAND.contact.website}
-          </span>
-        </div>
-        <p style="margin:10px 0 0 0; font-size:11px; color:#999; line-height:1.4;">
-          This is an official receipt generated by ${BRAND.name}. Please retain for your records.<br/>
-          For any billing inquiries, please contact ${BRAND.contact.email} or call ${BRAND.contact.phone}
+        <p style="margin:0; color:#999; font-size:9px; text-align:center; padding-top:8px; border-top:1px solid #eee;">
+          Official Receipt Document | Retain for your records<br/>
+          Generated: ${new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
     </div>
