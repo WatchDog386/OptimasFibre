@@ -64,6 +64,16 @@ const formatPrice = (price) => {
   return isNaN(num) ? price : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
+// WiFi Plans
+const WIFI_PLANS = [
+  { id: 1, name: "Jumbo", price: "1499", speed: "8Mbps", features: ["Great for browsing", "24/7 Support", "Free Installation"], type: "home", popular: false },
+  { id: 2, name: "Buffalo", price: "1999", speed: "15Mbps", features: ["Streaming & Social Media", "24/7 Support", "Free Installation"], type: "home", popular: false },
+  { id: 3, name: "Ndovu", price: "2499", speed: "25Mbps", features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"], type: "home", popular: false },
+  { id: 4, name: "Gazzelle", price: "2999", speed: "30Mbps", features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"], type: "home", popular: true },
+  { id: 5, name: "Tiger", price: "3999", speed: "40Mbps", features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"], type: "home", popular: false },
+  { id: 6, name: "Chui", price: "4999", speed: "60Mbps", features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], type: "home", popular: false },
+];
+
 // Brand configuration
 const BRAND = {
   name: "OPTIMAS FIBER",
@@ -1915,19 +1925,60 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               </div>
               
               {/* Plan Information */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Plan Name
+                    Select Plan
                   </label>
-                  <input
-                    type="text"
-                    name="planName"
-                    value={receiptForm.planName}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Jumbo, Buffalo, etc."
+                  <select 
+                    name="planName" 
+                    value={receiptForm.planName} 
+                    onChange={(e) => {
+                      const selectedPlan = WIFI_PLANS.find(p => p.name === e.target.value);
+                      if (selectedPlan) {
+                        handleInputChange({ 
+                          target: { 
+                            name: 'planName', 
+                            value: selectedPlan.name 
+                          } 
+                        });
+                        handleInputChange({ 
+                          target: { 
+                            name: 'planSpeed', 
+                            value: selectedPlan.speed 
+                          } 
+                        });
+                        handleInputChange({ 
+                          target: { 
+                            name: 'planPrice', 
+                            value: selectedPlan.price 
+                          } 
+                        });
+                        // Auto-populate items
+                        const updatedItems = [{
+                          description: `${selectedPlan.name} - ${selectedPlan.speed}`,
+                          quantity: 1,
+                          unitPrice: parseFloat(selectedPlan.price),
+                          amount: parseFloat(selectedPlan.price)
+                        }];
+                        setReceiptForm(prev => ({
+                          ...prev,
+                          items: updatedItems,
+                          planName: selectedPlan.name,
+                          planSpeed: selectedPlan.speed,
+                          planPrice: parseFloat(selectedPlan.price)
+                        }));
+                      }
+                    }}
                     className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
-                  />
+                  >
+                    <option value="">Choose a plan...</option>
+                    {WIFI_PLANS.map(plan => (
+                      <option key={plan.id} value={plan.name}>
+                        {plan.name} - Ksh {plan.price} ({plan.speed})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -1938,8 +1989,8 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     name="planSpeed"
                     value={receiptForm.planSpeed}
                     onChange={handleInputChange}
-                    placeholder="e.g., 8Mbps, 15Mbps, etc."
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input} bg-gray-100 dark:bg-gray-700`}
+                    readOnly
                   />
                 </div>
                 <div>
@@ -1951,9 +2002,10 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     name="planPrice"
                     value={receiptForm.planPrice}
                     onChange={handleInputChange}
-                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input}`}
+                    className={`w-full p-3 border rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent ${themeClasses.input} bg-gray-100 dark:bg-gray-700`}
                     step="1"
                     min="0"
+                    readOnly
                   />
                 </div>
               </div>
@@ -2262,150 +2314,171 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       {/* Receipt Details Modal */}
       {showReceiptModal && selectedReceipt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  Receipt Details - {selectedReceipt.receiptNumber || 'N/A'}
-                </h3>
+          <div className={`${themeClasses.card} rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            {/* Header with Logo and Title */}
+            <div className={`relative ${darkMode ? 'bg-gradient-to-r from-gray-900 to-gray-800' : 'bg-gradient-to-r from-[#003366] to-[#004488]'} p-8 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-4">
+                  <img src="/oppo.jpg" alt="OPTIMAS Logo" className="h-16 w-16 rounded-lg shadow-lg object-cover" />
+                  <div>
+                    <h2 className="text-3xl font-bold text-white">{BRAND.name}</h2>
+                    <p className="text-gray-200 text-sm mt-1">{BRAND.tagline}</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowReceiptModal(false)}
-                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-white hover:bg-opacity-20 text-white'}`}
                 >
-                  <X size={20} />
+                  <X size={24} />
                 </button>
               </div>
+              <div className="flex gap-3 mt-4">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  selectedReceipt.status === 'paid' ? 'bg-green-500 text-white'
+                    : selectedReceipt.status === 'issued' ? 'bg-blue-500 text-white'
+                    : selectedReceipt.status === 'partially_paid' ? 'bg-amber-500 text-white'
+                    : 'bg-gray-500 text-white'
+                }`}>
+                  {selectedReceipt.status?.toUpperCase() || 'ISSUED'}
+                </span>
+              </div>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Content */}
+            <div className="p-8 space-y-8">
+              {/* Receipt Number and Dates */}
+              <div className="grid grid-cols-3 gap-6">
+                <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-blue-50 to-blue-100'} border ${darkMode ? 'border-gray-700' : 'border-blue-200'}`}>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-blue-600'}`}>Receipt Number</p>
+                  <p className="text-xl font-bold mt-2">{selectedReceipt.receiptNumber || 'N/A'}</p>
+                </div>
+                <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-purple-50 to-purple-100'} border ${darkMode ? 'border-gray-700' : 'border-purple-200'}`}>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-purple-600'}`}>Receipt Date</p>
+                  <p className="text-lg font-semibold mt-2">{selectedReceipt.receiptDate ? new Date(selectedReceipt.receiptDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : (selectedReceipt.createdAt ? new Date(selectedReceipt.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A')}</p>
+                </div>
+                <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-green-50 to-green-100'} border ${darkMode ? 'border-gray-700' : 'border-green-200'}`}>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-green-600'}`}>Payment Status</p>
+                  <p className={`text-lg font-semibold mt-2 ${selectedReceipt.status === 'paid' ? 'text-green-600' : 'text-amber-600'}`}>
+                    {selectedReceipt.status === 'paid' ? '✓ Paid' : 'Pending'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Customer and Service Details */}
+              <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Customer Information</h4>
-                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <strong>Name:</strong> {selectedReceipt.customerName || 'N/A'}<br/>
-                      <strong>Email:</strong> {selectedReceipt.customerEmail || 'N/A'}<br/>
-                      <strong>Phone:</strong> {selectedReceipt.customerPhone || 'N/A'}<br/>
-                      <strong>Address:</strong> {selectedReceipt.customerLocation || selectedReceipt.customerAddress || 'N/A'}
-                    </p>
+                  <h3 className={`text-sm font-bold uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Customer Information</h3>
+                  <div className="mt-3 space-y-2">
+                    <p className="text-lg font-semibold">{selectedReceipt.customerName || 'N/A'}</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedReceipt.customerEmail || 'N/A'}</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedReceipt.customerPhone || 'N/A'}</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedReceipt.customerLocation || selectedReceipt.customerAddress || 'N/A'}</p>
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Receipt Details</h4>
-                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <strong>Receipt Date:</strong> {selectedReceipt.receiptDate ? new Date(selectedReceipt.receiptDate).toLocaleDateString() : 
-                                                      selectedReceipt.createdAt ? new Date(selectedReceipt.createdAt).toLocaleDateString() : 'N/A'}<br/>
-                      <strong>Payment Date:</strong> {selectedReceipt.paymentDate ? new Date(selectedReceipt.paymentDate).toLocaleDateString() : 'N/A'}<br/>
-                      <strong>Invoice #:</strong> {selectedReceipt.invoiceNumber || 'N/A'}<br/>
-                      <strong>Payment Method:</strong> {selectedReceipt.paymentMethod?.toUpperCase() || 'CASH'}<br/>
-                      <strong>Status:</strong> <span className={`font-semibold ${
-                        selectedReceipt.status === 'paid' ? 'text-green-600' : 
-                        selectedReceipt.status === 'issued' ? 'text-blue-600' : 
-                        selectedReceipt.status === 'partially_paid' ? 'text-yellow-600' :
-                        'text-gray-600'
-                      }`}>{selectedReceipt.status?.toUpperCase() || 'ISSUED'}</span>
-                    </p>
+                  <h3 className={`text-sm font-bold uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Service & Account</h3>
+                  <div className="mt-3 space-y-2">
+                    <p className="text-lg font-semibold text-[#003366]">{selectedReceipt.planName || 'Internet Service'}</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Speed: <span className="font-semibold">{selectedReceipt.planSpeed || 'N/A'}</span></p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Account: <span className="font-bold text-orange-600">{selectedReceipt.clientAccountNumber || 'N/A'}</span></p>
                   </div>
                 </div>
               </div>
-              
-              {(selectedReceipt.planName || selectedReceipt.serviceDescription) && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Service Details</h4>
-                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                    <p className="text-sm">
-                      <strong>Plan:</strong> {selectedReceipt.planName || 'N/A'} • {selectedReceipt.planSpeed || 'N/A'}<br/>
-                      <strong>Description:</strong> {selectedReceipt.serviceDescription || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              )}
-              
+
+              {/* Items Table */}
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Payment Items</h4>
-                <div className={`border rounded-lg ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Payment Items</h3>
+                <div className={`rounded-xl overflow-hidden border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <table className="w-full">
+                    <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
                       <tr>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Description</th>
-                        <th className="px-4 py-2 text-center text-sm font-medium">Qty</th>
-                        <th className="px-4 py-2 text-right text-sm font-medium">Unit Price</th>
-                        <th className="px-4 py-2 text-right text-sm font-medium">Amount</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold">Description</th>
+                        <th className="px-6 py-3 text-center text-sm font-semibold">Qty</th>
+                        <th className="px-6 py-3 text-right text-sm font-semibold">Unit Price</th>
+                        <th className="px-6 py-3 text-right text-sm font-semibold">Amount</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                      {(selectedReceipt.items || [{ description: 'Internet Service', quantity: 1, unitPrice: selectedReceipt.total || 0, amount: selectedReceipt.total || 0 }]).map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-2 text-sm">{item.description}</td>
-                          <td className="px-4 py-2 text-sm text-center">{item.quantity || 1}</td>
-                          <td className="px-4 py-2 text-sm text-right">Ksh {formatPrice(item.unitPrice || item.amount)}</td>
-                          <td className="px-4 py-2 text-sm text-right">Ksh {formatPrice(item.amount)}</td>
+                      {(selectedReceipt.items || [{ description: 'Internet Service', quantity: 1, unitPrice: selectedReceipt.total || 0, amount: selectedReceipt.total || 0 }]).map((item, idx) => (
+                        <tr key={idx} className={`${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
+                          <td className="px-6 py-4 text-sm">{item.description}</td>
+                          <td className="px-6 py-4 text-sm text-center font-medium">{item.quantity || 1}</td>
+                          <td className="px-6 py-4 text-sm text-right">Ksh {formatPrice(item.unitPrice || item.amount)}</td>
+                          <td className="px-6 py-4 text-sm text-right font-semibold">Ksh {formatPrice(item.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                      <tr>
-                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-right">Subtotal</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedReceipt.subtotal || selectedReceipt.total || 0)}</td>
-                      </tr>
-                      <tr>
-                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-right">Tax</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedReceipt.taxAmount || 0)}</td>
-                      </tr>
-                      <tr>
-                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-right">Total</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right">Ksh {formatPrice(selectedReceipt.total || 0)}</td>
-                      </tr>
-                      <tr className="border-t">
-                        <td colSpan="3" className="px-4 py-2 text-sm font-bold text-green-600 text-right">Amount Paid</td>
-                        <td className="px-4 py-2 text-sm font-bold text-right text-green-600">Ksh {formatPrice(selectedReceipt.amountPaid || 0)}</td>
-                      </tr>
-                      {selectedReceipt.balance > 0 && (
-                        <tr>
-                          <td colSpan="3" className="px-4 py-2 text-sm font-bold text-red-600 text-right">Balance Due</td>
-                          <td className="px-4 py-2 text-sm font-bold text-right text-red-600">Ksh {formatPrice(selectedReceipt.balance || 0)}</td>
-                        </tr>
-                      )}
-                    </tfoot>
                   </table>
                 </div>
               </div>
-              
+
+              {/* Summary Section */}
+              <div className="grid grid-cols-2 gap-8">
+                <div></div>
+                <div className={`rounded-xl p-6 ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-gray-50 to-gray-100'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Summary</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal</span>
+                      <span className="font-medium">Ksh {formatPrice(selectedReceipt.subtotal || selectedReceipt.total || 0)}</span>
+                    </div>
+                    {selectedReceipt.taxAmount && selectedReceipt.taxAmount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span>Tax</span>
+                        <span className="font-medium">Ksh {formatPrice(selectedReceipt.taxAmount)}</span>
+                      </div>
+                    )}
+                    <div className={`border-t pt-3 flex justify-between ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+                      <span className="font-bold">Total Amount</span>
+                      <span className="text-xl font-bold text-[#003366]">Ksh {formatPrice(selectedReceipt.total || 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Amount Paid</span>
+                      <span className="font-medium text-green-600 dark:text-green-400">Ksh {formatPrice(selectedReceipt.amountPaid || 0)}</span>
+                    </div>
+                    {selectedReceipt.balance > 0 && (
+                      <div className={`border-t pt-3 flex justify-between ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+                        <span className="font-bold">Balance Due</span>
+                        <span className="text-lg font-bold text-red-600 dark:text-red-400">Ksh {formatPrice(selectedReceipt.balance || 0)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes Section */}
               {selectedReceipt.notes && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Notes</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    {selectedReceipt.notes}
-                  </p>
+                <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-blue-50'} border ${darkMode ? 'border-gray-700' : 'border-blue-200'}`}>
+                  <h3 className={`text-sm font-bold uppercase tracking-wide mb-2 ${darkMode ? 'text-gray-400' : 'text-blue-600'}`}>Notes</h3>
+                  <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{selectedReceipt.notes}</p>
                 </div>
               )}
-              
-              <div className="flex flex-wrap gap-3 pt-4">
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => exportReceiptPDF(selectedReceipt)}
-                  className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center`}
+                  className="px-6 py-2.5 bg-[#003366] hover:bg-[#002244] text-white rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
-                  <Download size={16} className="mr-1.5" />
+                  <Download size={18} />
                   Download PDF
                 </button>
                 <button
                   onClick={() => sendReceiptToClient(selectedReceipt)}
                   disabled={sendingReceipt === selectedReceipt._id}
-                  className={`${themeClasses.button.small.base} ${darkMode ? themeClasses.button.small.dark : themeClasses.button.small.light} flex items-center ${
-                    sendingReceipt === selectedReceipt._id ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 ${sendingReceipt === selectedReceipt._id ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <Send size={16} className="mr-1.5" />
-                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send via Email'}
+                  <Send size={18} />
+                  {sendingReceipt === selectedReceipt._id ? 'Sending...' : 'Send Email'}
                 </button>
                 <button
                   onClick={() => {
                     setShowReceiptModal(false);
                     editReceipt(selectedReceipt);
                   }}
-                  className={`${themeClasses.button.secondary.base} ${darkMode ? themeClasses.button.secondary.dark : themeClasses.button.secondary.light} flex items-center`}
+                  className="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
-                  <Edit size={16} className="mr-1.5" />
+                  <Edit size={18} />
                   Edit Receipt
                 </button>
               </div>
