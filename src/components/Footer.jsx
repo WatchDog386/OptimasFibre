@@ -37,8 +37,8 @@ export default function Footer() {
                 <Link 
                   key={link.name} 
                   to={link.path} 
-                  className={`transition-colors duration-200 hover:text-[#182b5c] ${
-                    link.isActive ? "border-b-2 border-[#182b5c] pb-0.5 text-[#182b5c]" : "text-black"
+                  className={`transition-colors duration-200 hover:text-[#d0b216] ${
+                    link.isActive ? "border-b-2 border-[#182b5c] pb-0.5 text-[#182b5c]" : "text-gray-600"
                   }`}
                 >
                   {link.name}

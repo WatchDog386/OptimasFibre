@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -11,7 +11,7 @@ import {
   Mail
 } from "lucide-react";
 
-// --- DATA: Why Choose Optimas (Visual) ---
+// --- DATA: Why Choose Optimas (Visual) - Kept your content ---
 const whyChooseData = [
   {
     title: "Blazing Fast Speeds 🚀",
@@ -30,15 +30,15 @@ const whyChooseData = [
     image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE_bUnRvdSggNRAinqM6sQGTE_9JZknwTHQg&s",
   },
   {
-    title: "Easy Setup", 
+    title: "Easy Setup",
     image: "https://www.cyber.gov.au/sites/default/files/2024-10/secure-wifi-router-1.jpg",
   }
 ];
 
-// --- DATA: FAQs ---
+// --- DATA: FAQs - Kept your content ---
 const faqsData = {
   "Account Management": {
-    icon: <User className="w-4 h-4 text-accent" />,
+    icon: <User className="w-4 h-4 text-[#182b5c]" />,
     items: [
       {
         question: "How do I create a self-care account?",
@@ -95,7 +95,7 @@ const faqsData = {
     ],
   },
   "Billing & Payments": {
-    icon: <CreditCard className="w-4 h-4 text-accent" />,
+    icon: <CreditCard className="w-4 h-4 text-[#182b5c]" />,
     items: [
       {
         question: "How can I view my current bill?",
@@ -160,7 +160,7 @@ const faqsData = {
     ],
   },
   "Service Management": {
-    icon: <Settings className="w-4 h-4 text-accent" />,
+    icon: <Settings className="w-4 h-4 text-[#182b5c]" />,
     items: [
       {
         question: "How do I upgrade my internet package?",
@@ -224,7 +224,7 @@ const faqsData = {
     ],
   },
   "Technical Support": {
-    icon: <HelpCircle className="w-4 h-4 text-accent" />,
+    icon: <HelpCircle className="w-4 h-4 text-[#182b5c]" />,
     items: [
       {
         question: "What should I do if my internet is down?",
@@ -291,303 +291,158 @@ const faqsData = {
   },
 };
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { type: "spring", stiffness: 100, damping: 12 }
-  }
-};
-
 export default function Faqs() {
   const [activeCategory, setActiveCategory] = useState("Account Management");
   const [openIndex, setOpenIndex] = useState(null);
   const [search, setSearch] = useState("");
-
+  
   const filteredFaqs = faqsData[activeCategory].items.filter((faq) =>
     faq.question.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <motion.section 
-      // UPDATED CLASSNAME: Increased padding-top (pt-32 and md:pt-40) to clear the navbar
-      className="min-h-screen pt-32 md:pt-40 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300 bg-gray-50 text-[#182b5c]"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.7 }}
-    >
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-primary">
-          <motion.div 
-            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-accent opacity-10"
-            animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div 
-            className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full bg-accent opacity-10"
-            animate={{ scale: [1.2, 1, 1.2], rotate: [180, 270, 180] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-          />
-        </div>
+    <section className="min-h-screen pt-24 md:pt-32 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-white text-[#182b5c]">
+      {/* Background Pattern - Simplified to match Vuma Fiber */}
+      <div className="absolute inset-0 bg-[#f8f9fa]">
+        <div className="absolute top-0 left-0 w-full h-full" />
       </div>
       
       <div className="relative z-10 max-w-6xl mx-auto">
-        {/* Header - Shrunk Text */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-8"
-        >
-          <motion.h2 
-            className="text-xl md:text-2xl font-bold mb-1 text-[#182b5c]"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
+        {/* Header - Updated to match Vuma Fiber style */}
+        <div className="text-center mb-12">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2 text-[#182b5c]">
             Optimas Home Fiber - Self-Care Portal
-          </motion.h2>
-          <motion.p 
-            className="text-gray-600 text-xs md:text-sm"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
+          </h2>
+          <p className="text-gray-600 text-base">
             Manage your account, services, and get support 24/7
-          </motion.p>
-          <motion.div 
-            className="w-16 h-1 bg-[#d0b216] mx-auto mt-3"
-            initial={{ width: 0 }}
-            animate={{ width: 64 }}
-            transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
-          />
-        </motion.div>
-
-        {/* --- Why Choose Optimas (Compact & Shrunk) --- */}
-        <motion.div 
-          className="mb-12"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-20px" }}
-          variants={containerVariants}
-        >
-          {/* Section Heading - Shrunk */}
-          <motion.div className="text-center mb-6" variants={itemVariants}>
-             <h3 className="text-base md:text-lg font-bold text-[#182b5c]">Why Choose Optimas?</h3>
-          </motion.div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+          </p>
+        </div>
+        
+        {/* --- Why Choose Optimas (Updated to match Vuma Fiber) --- */}
+        <div className="mb-16">
+          {/* Section Heading - Simplified */}
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-[#182b5c]">Why Choose Optimas?</h3>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
             {whyChooseData.map((item, index) => (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                className="flex flex-col items-center group cursor-default"
-                whileHover={{ y: -3 }}
-              >
-                {/* Image Container - Reduced Height */}
-                <div className="w-full h-20 md:h-28 overflow-hidden shadow-sm mb-2 border border-gray-100">
-                  <img 
-                    src={item.image} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              <div key={index} className="flex flex-col items-center">
+                {/* Image Container - Simplified */}
+                <div className="w-full h-32 md:h-40 mb-4 overflow-hidden rounded-lg">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
                     loading="lazy"
                   />
                 </div>
-                
-                {/* Text Below - Shrunk Size (text-[10px] / text-xs) */}
-                <h4 className="font-bold text-[10px] md:text-xs text-center text-[#182b5c] leading-tight px-1 max-w-[140px]">
+                {/* Text Below - Simplified */}
+                <h4 className="font-bold text-lg text-center text-[#182b5c] leading-tight">
                   {item.title}
                 </h4>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
-        {/* --- END NEW SECTION --- */}
-
-        {/* Separator - Thinner */}
-        <div className="border-t border-gray-200 my-6 max-w-2xl mx-auto opacity-50" />
-
-        {/* Category Tabs - Shrunk Text */}
-        <motion.div 
-          className="flex flex-wrap justify-center gap-2 mb-6"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
+        </div>
+        
+        {/* Category Tabs - Simplified to match Vuma Fiber */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
           {Object.entries(faqsData).map(([key, { icon }]) => (
-            <motion.button
+            <button
               key={key}
               onClick={() => {
                 setActiveCategory(key);
                 setOpenIndex(null);
                 setSearch("");
               }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-[50px] transition-all flex items-center gap-1.5 ${
+              className={`px-4 py-2 text-sm font-medium rounded-full transition-all flex items-center gap-2 ${
                 activeCategory === key
-                  ? 'bg-[#d0b216] text-white shadow-sm'
+                  ? 'bg-[#d0b216] text-white'
                   : 'text-[#182b5c] hover:bg-gray-100'
               }`}
-              variants={itemVariants}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
             >
-              <span className="text-white bg-[#182b5c] rounded-full p-1 w-6 h-6 flex items-center justify-center">{icon}</span>
+              <span className="text-white bg-[#182b5c] rounded-full p-1.5 w-6 h-6 flex items-center justify-center">
+                {icon}
+              </span>
               <span>{key}</span>
-            </motion.button>
+            </button>
           ))}
-        </motion.div>
-
-        {/* Search Bar - Shrunk Text & Padding */}
-        <motion.div 
-          className="max-w-lg mx-auto mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          <div className="relative bg-white border border-gray-300 rounded-[50px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        </div>
+        
+        {/* Search Bar - Simplified */}
+        <div className="max-w-xl mx-auto mb-8">
+          <div className="relative">
             <input
               type="text"
               placeholder={`Search ${activeCategory} FAQs...`}
-              className="w-full pl-9 pr-4 py-1.5 rounded-[50px] text-xs bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-[#182b5c] focus:outline-none focus:ring-1 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-900 focus:ring-1 focus:ring-[#d0b216] focus:outline-none"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             {search && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0 }}
+              <button
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 onClick={() => setSearch("")}
               >
                 ×
-              </motion.button>
+              </button>
             )}
           </div>
-        </motion.div>
-
-        {/* FAQ List - Shrunk Questions */}
-        <motion.div 
-          className="grid md:grid-cols-2 gap-3"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          key={activeCategory}
-        >
-          <AnimatePresence mode="popLayout">
-            {filteredFaqs.map((faq, i) => (
-              <motion.div
-                key={i}
-                layout
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 bg-white border border-gray-200"
-                whileHover={{ y: -2 }}
+        </div>
+        
+        {/* FAQ List - Simplified */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {filteredFaqs.map((faq, i) => (
+            <div
+              key={i}
+              className="rounded-lg overflow-hidden bg-white border border-gray-200"
+            >
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="w-full p-4 text-left flex justify-between items-center"
               >
-                <motion.button
-                  onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full p-3 text-left flex justify-between items-center"
-                  whileTap={{ scale: 0.99 }}
-                >
-                  <h3 className="text-sm font-bold pr-4 text-[#182b5c]">{faq.question}</h3>
-                  <motion.span
-                    animate={{ rotate: openIndex === i ? 180 : 0 }}
-                    className="text-[#d0b216] flex-shrink-0"
-                    transition={{ duration: 0.3 }}
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </motion.span>
-                </motion.button>
-                <AnimatePresence>
-                  {openIndex === i && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ 
-                        opacity: 1, 
-                        height: "auto",
-                        transition: {
-                          height: { duration: 0.3 },
-                          opacity: { duration: 0.4, delay: 0.1 }
-                        }
-                      }}
-                      exit={{ 
-                        opacity: 0, 
-                        height: 0,
-                        transition: {
-                          height: { duration: 0.3 },
-                          opacity: { duration: 0.2 }
-                        }
-                      }}
-                      className="px-3 pb-3 text-gray-600 text-xs"
-                    >
-                      {faq.answer}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* Support CTA - Compact */}
-        <motion.div 
-          className="mt-10 p-4 rounded-xl text-center bg-white border border-gray-200"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          whileHover={{ y: -2 }}
-        >
-          <motion.h3 
-            className="text-lg font-bold mb-2 text-[#182b5c]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
+                <h3 className="text-base font-medium text-[#182b5c]">{faq.question}</h3>
+                <span className={`text-[#d0b216] transform transition-transform ${openIndex === i ? 'rotate-180' : ''}`}>
+                  <ChevronDown className="h-5 w-5" />
+                </span>
+              </button>
+              <div className={`overflow-hidden transition-all duration-300 ${openIndex === i ? 'max-h-96' : 'max-h-0'}`}>
+                <div className="p-4 border-t border-gray-200">
+                  {faq.answer}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Support CTA - Simplified */}
+        <div className="mt-12 p-6 rounded-xl bg-white border border-gray-200 max-w-2xl mx-auto">
+          <h3 className="text-xl font-bold mb-3 text-[#182b5c] text-center">
             Need More Help?
-          </motion.h3>
-          <motion.p 
-            className="mb-4 text-gray-500 text-xs"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-          >
+          </h3>
+          <p className="mb-4 text-gray-600 text-center text-base">
             Our support team is available 24/7 to assist you
-          </motion.p>
-          <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <motion.a 
-              href="tel:+254741874200" 
-              className="px-3 py-1.5 bg-[#182b5c] text-white border border-[#182b5c] font-bold rounded-[50px] transition-all hover:bg-white hover:text-[#182b5c] flex items-center justify-center gap-2 text-xs"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href="tel:+254741874200"
+              className="px-4 py-2.5 bg-[#182b5c] text-white border border-[#182b5c] font-medium rounded-full transition-all hover:bg-[#0f1c3d] flex items-center justify-center gap-2"
             >
-              <Phone className="w-3 h-3" />
+              <Phone className="w-4 h-4" />
               Call Support: 0741874200
-            </motion.a>
-            <motion.a 
-              href="mailto:support@knoxvilletechnologies.com" 
-              className="px-3 py-1.5 bg-white text-[#182b5c] border border-[#182b5c] font-bold rounded-[50px] transition-all hover:bg-[#182b5c] hover:text-white flex items-center justify-center gap-2 text-xs"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            </a>
+            <a
+              href="mailto:support@knoxvilletechnologies.com"
+              className="px-4 py-2.5 bg-white text-[#182b5c] border border-[#182b5c] font-medium rounded-full transition-all hover:bg-[#f8f9fa] flex items-center justify-center gap-2"
             >
-              <Mail className="w-3 h-3" />
+              <Mail className="w-4 h-4" />
               Email Us
-            </motion.a>
+            </a>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </motion.section>
+    </section>
   );
 }
