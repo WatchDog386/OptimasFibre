@@ -9,10 +9,10 @@
   },
 
   "scripts": {
-    "dev": "npx vite",
-    "build": "npx vite build",
+    "dev": "vite",
+    "build": "vite build",
     "postbuild": "node generate-sitemap.cjs",
-    "preview": "npx vite preview"
+    "preview": "vite preview"
   },
 
   "dependencies": {
