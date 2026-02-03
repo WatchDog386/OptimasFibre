@@ -92,8 +92,10 @@ const HeroSlider = () => {
     exit: { opacity: 0, transition: { duration: 0.8 } }
   };
 
+  const fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif";
+
   return (
-    <section className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[85vh] flex items-center overflow-hidden bg-white font-sans">
+    <section className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[85vh] flex items-center overflow-hidden bg-white" style={{ fontFamily }}>
       {/* BACKGROUND IMAGE */}
       <div className="absolute inset-0 z-0">
         <AnimatePresence initial={false}>
