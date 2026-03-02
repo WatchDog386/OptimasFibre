@@ -1,0 +1,8 @@
+# Allow all web crawlers to access everything
+User-agent: *
+
+# Allow crawling of all content
+Allow: /
+
+# Point to your sitemap
+Sitemap: https://knoxvilletechnologies.com/sitemap.xml

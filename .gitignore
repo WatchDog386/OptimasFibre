@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# production build
+dist/
+
+# environment variables
+.env
+.env.*.local
+
+# local dev logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# VSCode settings
+.vscode/
+
+# system files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+
+# lockfiles - track the one you use
+package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
