@@ -149,126 +149,153 @@ const generateReceiptPDF = async (receipt, showNotification, brandInfo = null) =
   const paymentMethod = paymentMethodMap[receipt.paymentMethod] || receipt.paymentMethod || 'Cash';
 
   printContainer.innerHTML = `
-    <div style="padding:20px; background:white; font-size:13px;">
-      <!-- Header -->
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:25px; padding-bottom:15px; border-bottom:1px solid #e0e0e0;">
-        <div>
-          <h1 style="margin:0; font-size:22px; color:${BRAND.colors.primary}; font-weight:900;">RECEIPT</h1>
-          <p style="margin:5px 0 0 0; font-size:12px; color:#666;">${BRAND.name} | ${BRAND.tagline}</p>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:18px; font-weight:800; color:${statusColor}; margin-bottom:5px;">${statusText}</div>
-          <div style="font-size:11px; color:#666;">#${receipt.receiptNumber || 'N/A'}</div>
-        </div>
-      </div>
+    <div style="padding:10px; background:white; font-size:11px; width:100%; box-sizing:border-box;">
+      <div style="display:grid; grid-template-columns:1.1fr 0.15fr; gap:0; min-height:540px; border:1px solid #dcdcdc;">
+        <!-- Main Content Area (left) -->
+        <div style="padding:18px 22px 16px 24px; position:relative;">
+          <!-- Top header strip -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+            <div style="max-width:55%;">
+              <p style="margin:0 0 2px 0; font-size:10px; letter-spacing:1.8px; color:${BRAND.colors.primary}; text-transform:uppercase; font-weight:700;">RECEIPT</p>
+              <p style="margin:2px 0 0 0; font-size:11px; color:#444; font-weight:600;">${BRAND.name}</p>
+              <p style="margin:1px 0 0 0; font-size:9px; color:#777;">${BRAND.tagline || ''}</p>
+            </div>
+            <div style="text-align:right; font-size:9px;">
+              <p style="margin:0 0 2px 0; text-transform:uppercase; letter-spacing:1px; color:${statusColor}; font-weight:600;">${statusText}</p>
+              <p style="margin:0 0 2px 0; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600;">Receipt No:</p>
+              <p style="margin:0 0 6px 0; font-size:11px; font-weight:800; color:#222;">${receipt.receiptNumber || 'N/A'}</p>
+              <p style="margin:0; font-size:9px; color:#777;">Payment: ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
+            </div>
+          </div>
 
-      <!-- Two Column Layout -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-bottom:25px;">
-        <!-- Left Column -->
-        <div>
-          <div style="margin-bottom:20px;">
-            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">CUSTOMER</p>
-            <p style="margin:0 0 4px 0; font-size:14px; font-weight:700; color:#1a1a1a;">${receipt.customerName || 'Customer'}</p>
-            <p style="margin:0 0 2px 0; font-size:11px; color:#666;">${receipt.customerEmail || 'N/A'}</p>
-            <p style="margin:0; font-size:11px; color:#666;">${receipt.customerPhone || 'N/A'}</p>
+          <!-- Customer / Service block -->
+          <div style="display:grid; grid-template-columns:1.1fr 1fr; column-gap:18px; margin-bottom:10px; border-top:1px solid #e0e0e0; padding-top:10px;">
+            <div>
+              <p style="margin:0 0 4px 0; font-size:9px; font-weight:700; color:#777; text-transform:uppercase; letter-spacing:1px;">Customer</p>
+              <p style="margin:0 0 2px 0; font-size:11px; font-weight:700; color:#1a1a1a;">${receipt.customerName || 'Customer Name'}</p>
+              <p style="margin:0 0 1px 0; font-size:9px; color:#555;">${receipt.customerEmail || ''}</p>
+              <p style="margin:0 0 1px 0; font-size:9px; color:#555;">${receipt.customerPhone || ''}</p>
+            </div>
+            <div>
+              <p style="margin:0 0 4px 0; font-size:9px; font-weight:700; color:#777; text-transform:uppercase; letter-spacing:1px;">Service</p>
+              <p style="margin:0 0 2px 0; font-size:11px; font-weight:700; color:${BRAND.colors.primary};">
+                ${receipt.planName || 'Service Plan'} ${receipt.planSpeed ? '(' + receipt.planSpeed + ')' : ''}
+              </p>
+              <p style="margin:0; font-size:9px; color:#555;">${receipt.serviceDescription || 'Internet Service'}</p>
+            </div>
           </div>
-          <div>
-            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">SERVICE</p>
-            <p style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:${BRAND.colors.primary};">${receipt.planName || 'Service'}</p>
-            <p style="margin:0; font-size:11px; color:#666;">${receipt.planSpeed ? receipt.planSpeed + ' - ' : ''}${receipt.serviceDescription || 'Internet Service'}</p>
+
+          <!-- Dates / method strip -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
+            <div style="font-size:9px;">
+              <p style="margin:0 0 1px 0;"><span style="font-weight:600;">Receipt Date:</span> ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A'}</p>
+              <p style="margin:0;"><span style="font-weight:600;">Invoice No:</span> ${receipt.invoiceNumber || 'N/A'}</p>
+            </div>
+            <div style="text-align:right; font-size:9px;">
+              <p style="margin:0 0 1px 0;"><span style="font-weight:600;">Payment Method:</span> ${paymentMethod}</p>
+            </div>
+          </div>
+
+          <!-- Items table -->
+          <table style="width:100%; margin-top:4px; margin-bottom:12px; border-collapse:collapse; font-size:9px;">
+            <thead>
+              <tr style="background:#f0f2f7; border-top:1px solid #d0d5dd; border-bottom:1px solid #d0d5dd;">
+                <th style="padding:6px 6px; text-align:left; font-weight:700; color:#333;">Description</th>
+                <th style="padding:6px 4px; text-align:center; font-weight:700; color:#333; width:40px;">Qty</th>
+                <th style="padding:6px 4px; text-align:right; font-weight:700; color:#333; width:70px;">Price</th>
+                <th style="padding:6px 4px; text-align:right; font-weight:700; color:#333; width:80px;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(receipt.items && receipt.items.length > 0 ? receipt.items : [{
+                description: receipt.planName ? `${receipt.planName} - ${receipt.planSpeed || ''}`.trim() : 'Service',
+                quantity: 1,
+                unitPrice: receipt.total || 0,
+                amount: receipt.total || 0
+              }]).map(item => `
+              <tr style="border-bottom:1px solid #eeeeee;">
+                <td style="padding:6px 6px; text-align:left;">${item.description || 'Service'}</td>
+                <td style="padding:6px 4px; text-align:center;">${item.quantity || 1}</td>
+                <td style="padding:6px 4px; text-align:right;">Ksh ${formatPrice(item.unitPrice || 0)}</td>
+                <td style="padding:6px 4px; text-align:right; font-weight:600;">Ksh ${formatPrice(item.amount || 0)}</td>
+              </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <!-- Totals + payment column layout -->
+          <div style="display:grid; grid-template-columns:1.1fr 0.9fr; column-gap:18px; align-items:flex-start; margin-top:4px;">
+            <!-- Payment / note information (left) -->
+            <div style="border-right:1px solid #e0e0e0; padding-right:12px; font-size:9px;">
+              <p style="margin:0 0 3px 0; font-size:9px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:1px;">Payment Information</p>
+              <p style="margin:0 0 2px 0; font-size:9px;"><strong>Paybill No:</strong> ${BRAND.contact.paybill.number}</p>
+              <p style="margin:0 0 2px 0; font-size:9px;"><strong>Account:</strong> ${BRAND.contact.paybill.account}</p>
+              <p style="margin:0 0 2px 0; font-size:9px;"><strong>Bank:</strong> ${BRAND.contact.bank.name}</p>
+              <p style="margin:0 0 2px 0; font-size:9px;"><strong>Acc No:</strong> ${BRAND.contact.bank.accountNumber}</p>
+              <p style="margin:4px 0 0 0; font-size:8px; color:#777;">Keep this receipt safely for your records.</p>
+            </div>
+
+            <!-- Totals block -->
+            <div style="font-size:9px;">
+              <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #eeeeee;">
+                <span>Sub Total</span>
+                <span>Ksh ${formatPrice(subtotal)}</span>
+              </div>
+              ${receipt.taxRate > 0 ? `
+              <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #eeeeee;">
+                <span>VAT (${receipt.taxRate}%)</span>
+                <span>Ksh ${formatPrice(taxAmount)}</span>
+              </div>
+              ` : ''}
+              <div style="display:flex; justify-content:space-between; padding:5px 0; margin-top:4px; border-top:2px solid ${BRAND.colors.primary}; font-weight:700; font-size:11px; color:${BRAND.colors.primary};">
+                <span>Total</span>
+                <span>Ksh ${formatPrice(total)}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:3px 0; font-size:9px; color:${BRAND.colors.success};">
+                <span>Paid</span>
+                <span style="font-weight:700;">Ksh ${formatPrice(amountPaid)}</span>
+              </div>
+              ${balance > 0 ? `
+              <div style="display:flex; justify-content:space-between; padding:3px 0; font-size:9px; color:${BRAND.colors.danger};">
+                <span>Balance</span>
+                <span style="font-weight:700;">Ksh ${formatPrice(balance)}</span>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Footer small -->
+          <div style="position:absolute; left:24px; right:24px; bottom:10px; display:flex; justify-content:space-between; align-items:flex-end; font-size:8px; color:#777;">
+            <div>
+              <p style="margin:0 0 2px 0; font-weight:700; color:${BRAND.colors.primary};">Thank you!</p>
+              <p style="margin:0;">Payment received as indicated above.</p>
+            </div>
+            <div style="text-align:right;">
+              <p style="margin:0 0 1px 0;">Email: ${BRAND.contact.email}</p>
+              <p style="margin:0 0 1px 0;">Phone: ${BRAND.contact.phone}</p>
+              <p style="margin:0;">Generated: ${new Date().toLocaleDateString()}</p>
+            </div>
           </div>
         </div>
 
-        <!-- Right Column -->
-        <div>
-          <div style="margin-bottom:20px;">
-            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">DATES</p>
-            <p style="margin:0 0 4px 0; font-size:11px; color:#666;">Receipt: ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin:0; font-size:11px; color:#666;">Payment: ${receipt.paymentDate ? new Date(receipt.paymentDate).toLocaleDateString() : 'N/A'}</p>
+        <!-- Blue side bar (right) to match invoice -->
+        <div style="background:linear-gradient(180deg, ${BRAND.colors.primary} 0%, #003366 40%, #0055aa 100%); color:white; position:relative; display:flex; flex-direction:column; justify-content:space-between; align-items:center; padding:16px 4px;">
+          <!-- Receipt vertical text -->
+          <div style="writing-mode:vertical-rl; transform:rotate(180deg); text-transform:uppercase; letter-spacing:2px; font-size:10px; font-weight:700; margin-top:20px;">
+            Receipt
           </div>
-          <div>
-            <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">PAYMENT METHOD</p>
-            <p style="margin:0; font-size:13px; font-weight:700; color:${BRAND.colors.success};">${paymentMethod}</p>
+
+          <!-- Receipt number strip -->
+          <div style="writing-mode:vertical-rl; transform:rotate(180deg); margin:20px 0; font-size:8px; text-align:center;">
+            <span style="opacity:0.8;">No:</span>
+            <span style="font-weight:700; display:block; margin-top:4px;">${receipt.receiptNumber || 'N/A'}</span>
+          </div>
+
+          <!-- Brand name / logo at bottom -->
+          <div style="margin-bottom:8px; text-align:center; font-size:9px; font-weight:700;">
+            ${BRAND.name}
           </div>
         </div>
-      </div>
-
-      <!-- Items Table - Clean Minimal -->
-      <table style="width:100%; margin-bottom:25px; border-collapse:collapse; font-size:12px;">
-        <thead>
-          <tr style="background:#f5f5f5; border-top:1px solid #ddd; border-bottom:1px solid #ddd;">
-            <th style="padding:10px; text-align:left; font-weight:700; color:#333;">DESCRIPTION</th>
-            <th style="padding:10px; text-align:center; font-weight:700; color:#333;">QTY</th>
-            <th style="padding:10px; text-align:right; font-weight:700; color:#333;">PRICE</th>
-            <th style="padding:10px; text-align:right; font-weight:700; color:#333;">TOTAL</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(receipt.items && receipt.items.length > 0 ? receipt.items : [{
-              description: receipt.planName ? `${receipt.planName} - ${receipt.planSpeed}` : 'Service',
-              quantity: 1,
-              unitPrice: receipt.total || 0,
-              amount: receipt.total || 0
-            }]).map(item => `
-            <tr style="border-bottom:1px solid #eee;">
-              <td style="padding:10px; text-align:left;">${item.description || 'Service'}</td>
-              <td style="padding:10px; text-align:center;">${item.quantity || 1}</td>
-              <td style="padding:10px; text-align:right;">Ksh ${formatPrice(item.unitPrice || 0)}</td>
-              <td style="padding:10px; text-align:right; font-weight:600;">Ksh ${formatPrice(item.amount || 0)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-
-      <!-- Totals - Right Aligned -->
-      <div style="display:flex; justify-content:flex-end; margin-bottom:25px; max-width:400px; margin-left:auto;">
-        <div style="width:100%;">
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
-            <span>Subtotal:</span>
-            <span>Ksh ${formatPrice(subtotal)}</span>
-          </div>
-          ${receipt.taxRate > 0 ? `
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
-            <span>VAT (${receipt.taxRate}%):</span>
-            <span>Ksh ${formatPrice(taxAmount)}</span>
-          </div>
-          ` : ''}
-          <div style="display:flex; justify-content:space-between; padding:12px 0; margin-top:8px; border-top:2px solid ${BRAND.colors.primary}; font-weight:700; font-size:14px; color:${BRAND.colors.primary};">
-            <span>TOTAL:</span>
-            <span>Ksh ${formatPrice(total)}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; padding:8px 0; margin-top:8px; font-size:12px; color:${BRAND.colors.success};">
-            <span>Paid:</span>
-            <span style="font-weight:700;">Ksh ${formatPrice(amountPaid)}</span>
-          </div>
-          ${balance > 0 ? `
-          <div style="display:flex; justify-content:space-between; padding:8px 0; font-size:12px; color:${BRAND.colors.danger};">
-            <span>Balance Due:</span>
-            <span style="font-weight:700;">Ksh ${formatPrice(balance)}</span>
-          </div>
-          ` : ''}
-        </div>
-      </div>
-
-      <!-- Footer Info -->
-      <div style="padding-top:15px; border-top:1px solid #e0e0e0; font-size:10px; color:#666; line-height:1.6;">
-        <p style="margin:0 0 8px 0; font-weight:700; color:${BRAND.colors.primary};">${BRAND.name}</p>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:10px;">
-          <div>
-            <p style="margin:0 0 4px 0; font-weight:600;">CONTACT</p>
-            <p style="margin:0 0 2px 0;">${BRAND.contact.email}</p>
-            <p style="margin:0;">${BRAND.contact.phone}</p>
-          </div>
-          <div>
-            <p style="margin:0 0 4px 0; font-weight:600;">PAYMENT</p>
-            <p style="margin:0 0 2px 0;">Paybill: ${BRAND.contact.paybill.number}</p>
-            <p style="margin:0;">Bank: ${BRAND.contact.bank.accountNumber}</p>
-          </div>
-        </div>
-        <p style="margin:0; color:#999; font-size:9px; text-align:center; padding-top:8px; border-top:1px solid #eee;">
-          Official Receipt Document | Retain for your records<br/>
-          Generated: ${new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-        </p>
       </div>
     </div>
   `;
