@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   BarChart3, FileText, Image, LogOut, Plus, Edit, Trash2, Upload, Save, X, Menu, User, Settings, Search, Moon, Sun, Link, Download, Eye, Globe,
   AlertCircle, CheckCircle, Info, RefreshCw, Database, Server, Shield, Activity, HardDrive, Clock, Zap, TrendingUp, Users, Mail, MessageCircle,
-  DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer, Loader2, Send, ChevronRight
+  DollarSign, Calendar, Filter, CreditCard, Receipt, FileSpreadsheet, Printer, Loader2, Send, ChevronRight, Building, MapPin, Phone
 } from 'lucide-react';
 import InvoiceManager from './InvoiceManager';
 import ReceiptManager from './ReceiptManager';
@@ -327,7 +327,23 @@ const Dashboard = () => {
     adminEmail: 'admin@optimas.com',
     notifications: true,
     autoSave: false,
-    language: 'en'
+    language: 'en',
+    companyInfo: {
+      name: 'OPTIMAS NETWORK',
+      tagline: 'High-Speed Internet Solutions',
+      address: 'Nairobi, Kenya',
+      phone: '+254 741 874 200',
+      email: 'support@optimaswifi.co.ke',
+      website: 'www.optimaswifi.co.ke',
+      vatNumber: 'VAT00123456',
+      paybill: '4092707',
+      paybillName: 'OPTIMAS NETWORK',
+      bankName: 'Equity Bank',
+      bankAccountName: 'Optimas Network Ltd',
+      bankAccountNumber: '1234567890',
+      bankBranch: 'Nairobi Main',
+      bankSwiftCode: 'EQBLKENA'
+    }
   });
   const [loading, setLoading] = useState(true);
   const [uploadMethod, setUploadMethod] = useState('url');
@@ -523,8 +539,17 @@ const Dashboard = () => {
         try {
           const settingsRes = await fetch(`${API_BASE_URL}/api/settings`, { headers });
           if (settingsRes.ok) {
-            const settings = await settingsRes.json();
-            setSettingsData(settings);
+            const settingsResponse = await settingsRes.json();
+            // Handle both direct settings object and nested settings property
+            const settings = settingsResponse.settings || settingsResponse;
+            setSettingsData(prev => ({
+              ...prev,
+              ...settings,
+              companyInfo: {
+                ...prev.companyInfo,
+                ...(settings.companyInfo || {})
+              }
+            }));
           }
         } catch (settingsError) {
           console.warn('Settings endpoint not available');
@@ -633,6 +658,18 @@ const Dashboard = () => {
     });
   };
 
+  // Handler for nested companyInfo fields
+  const handleCompanyInfoChange = (e) => {
+    const { name, value } = e.target;
+    setSettingsData(prev => ({
+      ...prev,
+      companyInfo: {
+        ...prev.companyInfo,
+        [name]: value
+      }
+    }));
+  };
+
   const saveSettings = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -649,7 +686,16 @@ const Dashboard = () => {
       });
       const responseData = await res.json();
       if (res.ok) {
-        setSettingsData(responseData);
+        // Handle both direct settings object and nested settings property
+        const settings = responseData.settings || responseData;
+        setSettingsData(prev => ({
+          ...prev,
+          ...settings,
+          companyInfo: {
+            ...prev.companyInfo,
+            ...(settings.companyInfo || {})
+          }
+        }));
         showNotification('Settings saved successfully!', 'success');
       } else {
         throw new Error(responseData.message || 'Failed to save settings');
@@ -1008,6 +1054,7 @@ const Dashboard = () => {
           <SettingsPanel
             settingsData={settingsData}
             handleSettingsChange={handleSettingsChange}
+            handleCompanyInfoChange={handleCompanyInfoChange}
             saveSettings={saveSettings}
             darkMode={darkMode}
             themeClasses={themeClasses}
@@ -2488,7 +2535,7 @@ const ContentManager = ({
   );
 };
 
-const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkMode, themeClasses }) => (
+const SettingsPanel = ({ settingsData, handleSettingsChange, handleCompanyInfoChange, saveSettings, darkMode, themeClasses }) => (
   <div>
     {/* Header Section */}
     <div className="mb-8">
@@ -2555,15 +2602,6 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
               style={{ accentColor: BRAND.PRIMARY }}
             />
           </div>
-          <div className="pt-4 flex justify-end">
-            <button
-              onClick={saveSettings}
-              className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center`}
-            >
-              <Save size={16} className="mr-1.5" />
-              Save Settings
-            </button>
-          </div>
         </div>
       </div>
       <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
@@ -2594,6 +2632,204 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, saveSettings, darkM
             <span className="font-medium">Security: <span className="text-green-500">Up to date</span></span>
           </div>
         </div>
+      </div>
+    </div>
+
+    {/* Payment Settings Section */}
+    <div className="mt-8">
+      <div className="inline-block mb-4">
+        <span className="bg-[#D85C2C] text-white text-[9px] font-bold px-3 py-1 tracking-tighter uppercase rounded">
+          Payment Configuration
+        </span>
+      </div>
+      <h2 className="text-2xl md:text-3xl font-light text-[#00356B] mb-3">Payment <span className="font-bold">Settings</span></h2>
+      <p className={`text-sm mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+        Configure payment details for invoices and receipts. Changes here will automatically reflect in all generated documents.
+      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Company Information */}
+        <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
+          <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white flex items-center gap-2">
+            <Building size={20} className="text-[#00356B]" />
+            Company Information
+          </h3>
+          <div className="space-y-4">
+            <InputGroup
+              label="Company Name"
+              name="name"
+              value={settingsData.companyInfo?.name || ''}
+              onChange={handleCompanyInfoChange}
+              placeholder="e.g., OPTIMAS NETWORK"
+              darkMode={darkMode}
+              themeClasses={themeClasses}
+              icon={<Building size={18} />}
+            />
+            <InputGroup
+              label="Company Tagline"
+              name="tagline"
+              value={settingsData.companyInfo?.tagline || ''}
+              onChange={handleCompanyInfoChange}
+              placeholder="e.g., High-Speed Internet Solutions"
+              darkMode={darkMode}
+              themeClasses={themeClasses}
+              icon={<FileText size={18} />}
+            />
+            <InputGroup
+              label="Address"
+              name="address"
+              value={settingsData.companyInfo?.address || ''}
+              onChange={handleCompanyInfoChange}
+              placeholder="e.g., Nairobi, Kenya"
+              darkMode={darkMode}
+              themeClasses={themeClasses}
+              icon={<MapPin size={18} />}
+            />
+            <InputGroup
+              label="Support Phone"
+              name="phone"
+              value={settingsData.companyInfo?.phone || ''}
+              onChange={handleCompanyInfoChange}
+              placeholder="e.g., +254 741 874 200"
+              darkMode={darkMode}
+              themeClasses={themeClasses}
+              icon={<Phone size={18} />}
+            />
+            <InputGroup
+              label="Support Email"
+              name="email"
+              value={settingsData.companyInfo?.email || ''}
+              onChange={handleCompanyInfoChange}
+              placeholder="e.g., support@optimaswifi.co.ke"
+              type="email"
+              darkMode={darkMode}
+              themeClasses={themeClasses}
+              icon={<Mail size={18} />}
+            />
+            <InputGroup
+              label="Website"
+              name="website"
+              value={settingsData.companyInfo?.website || ''}
+              onChange={handleCompanyInfoChange}
+              placeholder="e.g., www.optimaswifi.co.ke"
+              darkMode={darkMode}
+              themeClasses={themeClasses}
+              icon={<Globe size={18} />}
+            />
+            <InputGroup
+              label="VAT Number"
+              name="vatNumber"
+              value={settingsData.companyInfo?.vatNumber || ''}
+              onChange={handleCompanyInfoChange}
+              placeholder="e.g., VAT00123456"
+              darkMode={darkMode}
+              themeClasses={themeClasses}
+              icon={<FileText size={18} />}
+            />
+          </div>
+        </div>
+
+        {/* Payment Methods */}
+        <div className={`${themeClasses.card} p-6 md:p-8 rounded-xl shadow-lg border backdrop-blur-sm`}>
+          <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white flex items-center gap-2">
+            <CreditCard size={20} className="text-[#86bc25]" />
+            Payment Methods
+          </h3>
+          
+          {/* M-Pesa Paybill Section */}
+          <div className="mb-6 p-4 rounded-lg border-2 border-dashed" style={{ borderColor: '#86bc25', backgroundColor: darkMode ? 'rgba(134, 188, 37, 0.1)' : 'rgba(134, 188, 37, 0.05)' }}>
+            <h4 className={`text-sm font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>📱 M-Pesa Paybill</h4>
+            <div className="space-y-3">
+              <InputGroup
+                label="Paybill Number"
+                name="paybill"
+                value={settingsData.companyInfo?.paybill || ''}
+                onChange={handleCompanyInfoChange}
+                placeholder="e.g., 4092707"
+                darkMode={darkMode}
+                themeClasses={themeClasses}
+                icon={<DollarSign size={18} />}
+              />
+              <InputGroup
+                label="Paybill Name"
+                name="paybillName"
+                value={settingsData.companyInfo?.paybillName || ''}
+                onChange={handleCompanyInfoChange}
+                placeholder="e.g., OPTIMAS NETWORK"
+                darkMode={darkMode}
+                themeClasses={themeClasses}
+                icon={<Building size={18} />}
+              />
+            </div>
+          </div>
+
+          {/* Bank Details Section */}
+          <div className="p-4 rounded-lg border-2 border-dashed" style={{ borderColor: '#00356B', backgroundColor: darkMode ? 'rgba(0, 53, 107, 0.1)' : 'rgba(0, 53, 107, 0.05)' }}>
+            <h4 className={`text-sm font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>🏦 Bank Details</h4>
+            <div className="space-y-3">
+              <InputGroup
+                label="Bank Name"
+                name="bankName"
+                value={settingsData.companyInfo?.bankName || ''}
+                onChange={handleCompanyInfoChange}
+                placeholder="e.g., Equity Bank"
+                darkMode={darkMode}
+                themeClasses={themeClasses}
+                icon={<Building size={18} />}
+              />
+              <InputGroup
+                label="Account Name"
+                name="bankAccountName"
+                value={settingsData.companyInfo?.bankAccountName || ''}
+                onChange={handleCompanyInfoChange}
+                placeholder="e.g., Optimas Network Ltd"
+                darkMode={darkMode}
+                themeClasses={themeClasses}
+                icon={<User size={18} />}
+              />
+              <InputGroup
+                label="Account Number"
+                name="bankAccountNumber"
+                value={settingsData.companyInfo?.bankAccountNumber || ''}
+                onChange={handleCompanyInfoChange}
+                placeholder="e.g., 1234567890"
+                darkMode={darkMode}
+                themeClasses={themeClasses}
+                icon={<CreditCard size={18} />}
+              />
+              <InputGroup
+                label="Branch"
+                name="bankBranch"
+                value={settingsData.companyInfo?.bankBranch || ''}
+                onChange={handleCompanyInfoChange}
+                placeholder="e.g., Nairobi Main"
+                darkMode={darkMode}
+                themeClasses={themeClasses}
+                icon={<MapPin size={18} />}
+              />
+              <InputGroup
+                label="SWIFT Code"
+                name="bankSwiftCode"
+                value={settingsData.companyInfo?.bankSwiftCode || ''}
+                onChange={handleCompanyInfoChange}
+                placeholder="e.g., EQBLKENA"
+                darkMode={darkMode}
+                themeClasses={themeClasses}
+                icon={<Globe size={18} />}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Save All Settings Button */}
+      <div className="mt-6 flex justify-end">
+        <button
+          onClick={saveSettings}
+          className={`${BUTTON_STYLES.primary.base} ${darkMode ? BUTTON_STYLES.primary.dark : BUTTON_STYLES.primary.light} flex items-center px-6 py-3`}
+        >
+          <Save size={18} className="mr-2" />
+          Save All Settings
+        </button>
       </div>
     </div>
   </div>

@@ -32,7 +32,7 @@ const whyChooseData = [
   },
   {
     title: "Wide Coverage & Easy Setup",
-    image: "https://www.cyber.gov.au/sites/default/files/2024-10/secure-wifi-router-1.jpg",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
   }
 ];
 
@@ -54,7 +54,7 @@ const faqsData = {
               <li>Complete your profile details</li>
             </ol>
             {/* Using precise Vuma Blue tint */}
-            <div className="bg-[#2562AE]/10 p-3 rounded-lg border border-[#2562AE]/20 text-xs text-[#2562AE] font-semibold mt-3">
+            <div className="bg-[#004080]/10 p-3 rounded-lg border border-[#004080]/20 text-xs text-[#004080] font-semibold mt-3">
               <p>Note: Your account number can be found on your invoice or by contacting customer care.</p>
             </div>
           </div>
@@ -71,7 +71,7 @@ const faqsData = {
               <li>Follow the OTP verification process</li>
               <li>Set a new strong password</li>
             </ul>
-            <div className="bg-[#FFA000]/10 p-3 rounded-lg border border-[#FFA000]/20 text-xs text-[#B37000] font-semibold mt-3">
+            <div className="bg-[#FF6B35]/10 p-3 rounded-lg border border-[#FF6B35]/20 text-xs text-[#C54D23] font-semibold mt-3">
               <p>Security Tip: Use a combination of letters, numbers and special characters for your password.</p>
             </div>
           </div>
@@ -88,7 +88,7 @@ const faqsData = {
               <li>Edit the information you want to change</li>
               <li>Save your changes</li>
             </ol>
-            <div className="bg-[#3EA369]/10 p-3 rounded-lg border border-[#3EA369]/20 text-xs text-[#2A7549] font-semibold mt-3">
+            <div className="bg-[#004080]/10 p-3 rounded-lg border border-[#004080]/20 text-xs text-[#004080] font-semibold mt-3">
               <p>Important: Some changes may require verification for security purposes.</p>
             </div>
           </div>
@@ -109,7 +109,7 @@ const faqsData = {
               <li>Email notifications (if subscribed)</li>
               <li>Mobile app under 'Billing' section</li>
             </ul>
-            <div className="bg-[#7F38A8]/10 p-3 rounded-lg border border-[#7F38A8]/20 text-xs text-[#5C297A] font-semibold mt-3">
+            <div className="bg-[#FF6B35]/10 p-3 rounded-lg border border-[#FF6B35]/20 text-xs text-[#C54D23] font-semibold mt-3">
               <p>Tip: Enable auto-notifications to receive bills directly to your email.</p>
             </div>
           </div>
@@ -122,7 +122,7 @@ const faqsData = {
             <p className="text-gray-600">We accept multiple payment options:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                <h4 className="font-bold mb-2 text-xs text-[#2562AE] uppercase tracking-wider">Online Payments</h4>
+                <h4 className="font-bold mb-2 text-xs text-[#004080] tracking-wide">Online Payments</h4>
                 <ul className="space-y-1 text-xs text-gray-600 font-medium">
                   <li>• M-Pesa paybill: 4136553</li>
                   <li>• Credit/Debit Cards</li>
@@ -130,7 +130,7 @@ const faqsData = {
                 </ul>
               </div>
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                <h4 className="font-bold mb-2 text-xs text-[#2562AE] uppercase tracking-wider">Offline Payments</h4>
+                <h4 className="font-bold mb-2 text-xs text-[#004080] tracking-wide">Offline Payments</h4>
                 <ul className="space-y-1 text-xs text-gray-600 font-medium">
                   <li>• Optimas Payment Centers</li>
                   <li>• Authorized Agents</li>
@@ -153,7 +153,7 @@ const faqsData = {
               <li>Choose your preferred payment method</li>
               <li>Set payment threshold and confirm</li>
             </ol>
-            <div className="bg-[#FFA000]/10 p-3 rounded-lg border border-[#FFA000]/20 text-xs text-[#B37000] font-semibold mt-3">
+            <div className="bg-[#004080]/10 p-3 rounded-lg border border-[#004080]/20 text-xs text-[#004080] font-semibold mt-3">
               <p>Note: You'll receive notifications before each auto-payment is processed.</p>
             </div>
           </div>
@@ -174,7 +174,7 @@ const faqsData = {
               <li>Via mobile app by selecting new package</li>
               <li>By contacting customer support</li>
             </ul>
-            <div className="bg-[#2562AE]/10 p-3 rounded-lg border border-[#2562AE]/20 text-xs text-[#2562AE] font-semibold mt-3">
+            <div className="bg-[#004080]/10 p-3 rounded-lg border border-[#004080]/20 text-xs text-[#004080] font-semibold mt-3">
               <p>Changes take effect immediately or at next billing cycle based on your selection.</p>
             </div>
           </div>
@@ -191,7 +191,7 @@ const faqsData = {
               <li>Reduced monthly charges during suspension</li>
               <li>Reactivate anytime through self-care</li>
             </ol>
-            <div className="bg-[#7F38A8]/10 p-3 rounded-lg border border-[#7F38A8]/20 text-xs text-[#5C297A] font-semibold mt-3">
+            <div className="bg-[#FF6B35]/10 p-3 rounded-lg border border-[#FF6B35]/20 text-xs text-[#C54D23] font-semibold mt-3">
               <p>Note: Equipment must remain connected during suspension.</p>
             </div>
           </div>
@@ -204,7 +204,7 @@ const faqsData = {
             <p className="text-gray-600">Service issue reporting channels:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                <h4 className="font-bold mb-2 text-xs text-[#DD126B] uppercase tracking-wider">Self-Service</h4>
+                <h4 className="font-bold mb-2 text-xs text-[#FF6B35] tracking-wide">Self-Service</h4>
                 <ul className="space-y-1 text-xs text-gray-600 font-medium">
                   <li>• Online troubleshooting</li>
                   <li>• Service status check</li>
@@ -212,7 +212,7 @@ const faqsData = {
                 </ul>
               </div>
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                <h4 className="font-bold mb-2 text-xs text-[#0D71BA] uppercase tracking-wider">Support</h4>
+                <h4 className="font-bold mb-2 text-xs text-[#004080] tracking-wide">Support</h4>
                 <ul className="space-y-1 text-xs text-gray-600 font-medium">
                   <li>• Live chat (24/7)</li>
                   <li>• Phone support</li>
@@ -240,7 +240,7 @@ const faqsData = {
               <li>Run speed test from self-care portal</li>
               <li>Submit trouble ticket if issue persists</li>
             </ol>
-            <div className="bg-[#EB4956]/10 p-3 rounded-lg border border-[#EB4956]/20 text-xs text-[#C2303D] font-bold mt-3">
+            <div className="bg-[#FF6B35]/10 p-3 rounded-lg border border-[#FF6B35]/20 text-xs text-[#C54D23] font-bold mt-3">
               <p>Emergency: Call 0741874200 for immediate assistance with outages.</p>
             </div>
           </div>
@@ -253,7 +253,7 @@ const faqsData = {
             <p className="text-gray-600">Wi-Fi optimization tips:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                <h4 className="font-bold mb-2 text-xs text-[#0D71BA] uppercase tracking-wider">Placement</h4>
+                <h4 className="font-bold mb-2 text-xs text-[#004080] tracking-wide">Placement</h4>
                 <ul className="space-y-1 text-xs text-gray-600 font-medium">
                   <li>• Central location</li>
                   <li>• Elevated position</li>
@@ -261,7 +261,7 @@ const faqsData = {
                 </ul>
               </div>
               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                <h4 className="font-bold mb-2 text-xs text-[#3EA369] uppercase tracking-wider">Settings</h4>
+                <h4 className="font-bold mb-2 text-xs text-[#FF6B35] tracking-wide">Settings</h4>
                 <ul className="space-y-1 text-xs text-gray-600 font-medium">
                   <li>• 5GHz for speed</li>
                   <li>• 2.4GHz for range</li>
@@ -283,7 +283,7 @@ const faqsData = {
               <li>Use wired connections for stationary devices</li>
               <li>Enable guest network for visitors</li>
             </ul>
-            <div className="bg-[#8141FF]/10 p-3 rounded-lg border border-[#8141FF]/20 text-xs text-[#5B21D4] font-medium mt-3">
+            <div className="bg-[#004080]/10 p-3 rounded-lg border border-[#004080]/20 text-xs text-[#004080] font-medium mt-3">
               <p>Tip: Monitor connected devices through self-care portal.</p>
             </div>
           </div>
@@ -313,7 +313,7 @@ export default function Faqs() {
         
         {/* --- Header Section for Self Care --- */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-black mb-4 text-[#004080] tracking-tight uppercase">
+          <h2 className="text-3xl md:text-5xl font-black mb-4 text-[#004080] tracking-tight">
             Self-Care Portal & FAQs
           </h2>
           <p className="text-gray-600 font-bold text-sm md:text-base max-w-2xl mx-auto">
@@ -324,7 +324,7 @@ export default function Faqs() {
         {/* --- Why Choose Optimas (Color Matched) --- */}
         <div className="mb-24">
           <div className="text-center mb-10">
-            <h3 className="text-xl md:text-2xl font-black text-[#004080] tracking-tight uppercase">
+            <h3 className="text-xl md:text-2xl font-black text-[#004080] tracking-tight">
               Why Choose Optimas Fiber?
             </h3>
           </div>
@@ -361,7 +361,7 @@ export default function Faqs() {
                   setOpenIndex(null);
                   setSearch("");
                 }}
-                className={`px-5 py-2.5 text-[12px] font-black uppercase tracking-wide rounded-md border transition-all flex items-center gap-2 ${
+                className={`px-5 py-2.5 text-[12px] font-black tracking-wide rounded-md border transition-all flex items-center gap-2 ${
                   isActive
                     ? 'bg-[#004080] text-white border-[#004080] shadow-md'
                     : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-[#004080] border-gray-200'
@@ -411,7 +411,7 @@ export default function Faqs() {
                   onClick={() => setOpenIndex(isOpen ? null : i)}
                   className="w-full p-5 text-left flex justify-between items-center bg-white"
                 >
-                  <h3 className={`text-[14px] pr-4 font-extrabold uppercase tracking-wide transition-colors ${isOpen ? 'text-[#004080]' : 'text-[#1A1A24]'}`}>
+                  <h3 className={`text-[14px] pr-4 font-extrabold tracking-wide transition-colors ${isOpen ? 'text-[#004080]' : 'text-[#1A1A24]'}`}>
                     {faq.question}
                   </h3>
                   <span className={`transform transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180 text-[#FF6B35]' : 'text-gray-400'}`}>
@@ -426,7 +426,7 @@ export default function Faqs() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
-                    >
+                    >    
                       <div className="p-5 pt-0 border-t border-gray-50 mt-1">
                         {faq.answer}
                       </div>
@@ -442,7 +442,7 @@ export default function Faqs() {
         <div className="mt-16 p-8 md:p-12 rounded-xl bg-gradient-to-r from-[#004080] via-[#0D71BA] to-[#116BC7] shadow-xl max-w-4xl mx-auto relative overflow-hidden">
           
           <div className="relative z-10 text-center">
-            <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight mb-3 text-white">
+            <h3 className="text-2xl md:text-3xl font-black tracking-tight mb-3 text-white">
               Need More Help?
             </h3>
             <p className="mb-8 text-white/90 text-sm md:text-[15px] font-semibold max-w-lg mx-auto">
@@ -451,14 +451,14 @@ export default function Faqs() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="tel:+254741874200"
-                className="px-8 py-3.5 bg-[#FF6B35] text-white font-black rounded-md transition-transform hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-[12px] uppercase tracking-widest"
+                className="px-8 py-3.5 bg-[#FF6B35] text-white font-black rounded-md transition-transform hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-[12px] tracking-wide"
               >
                 <Phone className="w-4 h-4" />
                 Call Support
               </a>
               <a
                 href="mailto:support@ecomnetwork.com"
-                className="px-8 py-3.5 bg-white text-[#004080] font-black rounded-md transition-transform hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-[12px] uppercase tracking-widest border border-white/70"
+                className="px-8 py-3.5 bg-white text-[#004080] font-black rounded-md transition-transform hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-[12px] tracking-wide border border-white/70"
               >
                 <Mail className="w-4 h-4" />
                 Email Us

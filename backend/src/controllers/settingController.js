@@ -31,7 +31,7 @@ export const getSettings = async (req, res) => {
  */
 export const updateSettings = async (req, res) => {
   try {
-    const { siteTitle, adminEmail, notifications, autoSave, language, logoUrl, maintenanceMode } = req.body;
+    const { siteTitle, adminEmail, notifications, autoSave, language, logoUrl, maintenanceMode, companyInfo } = req.body;
 
     // Validate siteTitle
     if (siteTitle !== undefined) {
@@ -85,7 +85,7 @@ export const updateSettings = async (req, res) => {
     validateBoolean(autoSave, 'AutoSave');
     validateBoolean(maintenanceMode, 'MaintenanceMode');
 
-    // Validate logoUrl (if provided)
+    // Validate logoUrl (if provided) - allow relative paths
     if (logoUrl !== undefined) {
       if (typeof logoUrl !== 'string') {
         return res.status(400).json({
@@ -93,24 +93,52 @@ export const updateSettings = async (req, res) => {
           message: 'Logo URL must be a string'
         });
       }
-      if (logoUrl && !/^https?:\/\/.+\.(png|jpg|jpeg|svg|webp)$/i.test(logoUrl)) {
+      if (logoUrl && !/^(\/|https?:\/\/).+/i.test(logoUrl)) {
         return res.status(400).json({
           success: false,
-          message: 'Logo URL must be a valid image URL (png, jpg, jpeg, svg, webp)'
+          message: 'Logo URL must be a valid URL or relative path'
         });
       }
     }
 
+    // Build update object
+    const updates = {};
+    if (siteTitle !== undefined) updates.siteTitle = siteTitle.trim();
+    if (adminEmail !== undefined) updates.adminEmail = adminEmail.trim();
+    if (notifications !== undefined) updates.notifications = notifications;
+    if (autoSave !== undefined) updates.autoSave = autoSave;
+    if (language !== undefined) updates.language = language;
+    if (logoUrl !== undefined) updates.logoUrl = logoUrl;
+    if (maintenanceMode !== undefined) updates.maintenanceMode = maintenanceMode;
+    
+    // ✅ NEW: Handle companyInfo updates (for paybill, bank details, etc.)
+    if (companyInfo !== undefined && typeof companyInfo === 'object') {
+      // Get current settings to merge with new companyInfo
+      const currentSettings = await Setting.getSettings();
+      const currentCompanyInfo = currentSettings.companyInfo?.toObject ? currentSettings.companyInfo.toObject() : (currentSettings.companyInfo || {});
+      
+      // Merge new companyInfo with existing
+      updates.companyInfo = {
+        ...currentCompanyInfo,
+        ...companyInfo
+      };
+      
+      // Validate key fields
+      if (companyInfo.name !== undefined && typeof companyInfo.name !== 'string') {
+        return res.status(400).json({ success: false, message: 'Company name must be a string' });
+      }
+      if (companyInfo.paybill !== undefined && typeof companyInfo.paybill !== 'string') {
+        return res.status(400).json({ success: false, message: 'Paybill must be a string' });
+      }
+      if (companyInfo.email !== undefined) {
+        if (typeof companyInfo.email !== 'string' || !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(companyInfo.email)) {
+          return res.status(400).json({ success: false, message: 'Company email must be a valid email address' });
+        }
+      }
+    }
+
     // Use model's built-in update method for consistency
-    const updatedSettings = await Setting.updateSettings({
-      siteTitle: siteTitle?.trim(),
-      adminEmail: adminEmail?.trim(),
-      notifications,
-      autoSave,
-      language,
-      logoUrl,
-      maintenanceMode
-    });
+    const updatedSettings = await Setting.updateSettings(updates);
 
     // Clean response
     const { __v, _id, createdAt, updatedAt, ...cleanSettings } = updatedSettings.toObject();

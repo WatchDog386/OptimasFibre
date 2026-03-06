@@ -74,8 +74,8 @@ const WIFI_PLANS = [
   { id: 6, name: "Chui", price: "4999", speed: "60Mbps", features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], type: "home", popular: false },
 ];
 
-// Brand configuration
-const BRAND = {
+// ✅ DEFAULT BRAND configuration (Editable via Admin Settings)
+const DEFAULT_BRAND = {
   name: "OPTIMAS NETWORK",
   tagline: "High-Speed Internet Solutions",
   logoUrl: "/oppo.jpg",
@@ -110,7 +110,10 @@ const BRAND = {
 const WEBMAIL_URL = 'https://pld109.truehost.cloud:2096/cpsess2481723632/3rdparty/roundcube/?_task=mail&_mbox=INBOX';
 
 // ✅ PROFESSIONAL: Clean, minimal receipt PDF layout
-const generateReceiptPDF = async (receipt, showNotification) => {
+const generateReceiptPDF = async (receipt, showNotification, brandInfo = null) => {
+  // Use provided brandInfo or fall back to DEFAULT
+  const BRAND = brandInfo || DEFAULT_BRAND;
+  
   const printContainer = document.createElement('div');
   printContainer.style.position = 'absolute';
   printContainer.style.left = '-10000px';
@@ -302,7 +305,10 @@ const generateReceiptPDF = async (receipt, showNotification) => {
 };
 
 // ✅ ENHANCED: Prepare comprehensive email content
-const prepareReceiptEmailContent = (receipt) => {
+const prepareReceiptEmailContent = (receipt, brandInfo = null) => {
+  // Use provided brandInfo or fall back to DEFAULT
+  const BRAND = brandInfo || DEFAULT_BRAND;
+  
   const paymentMethodMap = {
     'mobile_money': 'Mobile Money',
     'bank_transfer': 'Bank Transfer',
@@ -450,6 +456,168 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
   const [showInvoiceSearch, setShowInvoiceSearch] = useState(false);
   const [copiedReceipt, setCopiedReceipt] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
+  
+  // ✅ NEW: Editable Company Settings State
+  const [companySettings, setCompanySettings] = useState(DEFAULT_BRAND);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsForm, setSettingsForm] = useState({
+    name: DEFAULT_BRAND.name,
+    tagline: DEFAULT_BRAND.tagline,
+    logoUrl: DEFAULT_BRAND.logoUrl,
+    address: DEFAULT_BRAND.contact.address,
+    phone: DEFAULT_BRAND.contact.phone,
+    email: DEFAULT_BRAND.contact.email,
+    website: DEFAULT_BRAND.contact.website,
+    vatNumber: DEFAULT_BRAND.contact.vatNumber,
+    paybill: DEFAULT_BRAND.contact.paybill?.number || '4092707',
+    paybillName: DEFAULT_BRAND.contact.paybill?.name || DEFAULT_BRAND.name,
+    bankName: DEFAULT_BRAND.contact.bank.name,
+    bankAccountName: DEFAULT_BRAND.contact.bank.accountName,
+    bankAccountNumber: DEFAULT_BRAND.contact.bank.accountNumber,
+    bankBranch: DEFAULT_BRAND.contact.bank.branch,
+    bankSwiftCode: DEFAULT_BRAND.contact.bank.swiftCode || 'EQBLKENA'
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+  
+  // ✅ Dynamic BRAND that uses state
+  const BRAND = {
+    ...DEFAULT_BRAND,
+    name: companySettings.name || DEFAULT_BRAND.name,
+    tagline: companySettings.tagline || DEFAULT_BRAND.tagline,
+    logoUrl: companySettings.logoUrl || DEFAULT_BRAND.logoUrl,
+    contact: {
+      ...DEFAULT_BRAND.contact,
+      email: companySettings.email || companySettings.contact?.email || DEFAULT_BRAND.contact.email,
+      phone: companySettings.phone || companySettings.contact?.phone || DEFAULT_BRAND.contact.phone,
+      address: companySettings.address || companySettings.contact?.address || DEFAULT_BRAND.contact.address,
+      website: companySettings.website || companySettings.contact?.website || DEFAULT_BRAND.contact.website,
+      vatNumber: companySettings.vatNumber || companySettings.contact?.vatNumber || DEFAULT_BRAND.contact.vatNumber,
+      bank: {
+        name: companySettings.bankName || companySettings.contact?.bank?.name || DEFAULT_BRAND.contact.bank.name,
+        accountName: companySettings.bankAccountName || companySettings.contact?.bank?.accountName || DEFAULT_BRAND.contact.bank.accountName,
+        accountNumber: companySettings.bankAccountNumber || companySettings.contact?.bank?.accountNumber || DEFAULT_BRAND.contact.bank.accountNumber,
+        branch: companySettings.bankBranch || companySettings.contact?.bank?.branch || DEFAULT_BRAND.contact.bank.branch,
+        swiftCode: companySettings.bankSwiftCode || companySettings.contact?.bank?.swiftCode || DEFAULT_BRAND.contact.bank.swiftCode
+      },
+      paybill: {
+        number: companySettings.paybill || companySettings.contact?.paybill?.number || DEFAULT_BRAND.contact.paybill?.number || '4092707',
+        name: companySettings.paybillName || companySettings.contact?.paybill?.name || DEFAULT_BRAND.name
+      }
+    }
+  };
+
+  // ✅ Fetch company settings from API
+  const fetchCompanySettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const response = await fetch(`${API_BASE_URL}/api/settings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.settings?.companyInfo) {
+          const info = data.settings.companyInfo;
+          setCompanySettings({
+            name: info.name || DEFAULT_BRAND.name,
+            tagline: info.tagline || DEFAULT_BRAND.tagline,
+            logoUrl: data.settings.logoUrl || info.logoUrl || DEFAULT_BRAND.logoUrl,
+            address: info.address || DEFAULT_BRAND.contact.address,
+            phone: info.phone || DEFAULT_BRAND.contact.phone,
+            email: info.email || DEFAULT_BRAND.contact.email,
+            website: info.website || DEFAULT_BRAND.contact.website,
+            vatNumber: info.vatNumber || DEFAULT_BRAND.contact.vatNumber,
+            paybill: info.paybill || DEFAULT_BRAND.contact.paybill?.number || '4092707',
+            paybillName: info.paybillName || DEFAULT_BRAND.name,
+            bankName: info.bankName || DEFAULT_BRAND.contact.bank.name,
+            bankAccountName: info.bankAccountName || DEFAULT_BRAND.contact.bank.accountName,
+            bankAccountNumber: info.bankAccountNumber || DEFAULT_BRAND.contact.bank.accountNumber,
+            bankBranch: info.bankBranch || DEFAULT_BRAND.contact.bank.branch,
+            bankSwiftCode: info.bankSwiftCode || DEFAULT_BRAND.contact.bank.swiftCode
+          });
+          setSettingsForm({
+            name: info.name || DEFAULT_BRAND.name,
+            tagline: info.tagline || DEFAULT_BRAND.tagline,
+            logoUrl: data.settings.logoUrl || info.logoUrl || DEFAULT_BRAND.logoUrl,
+            address: info.address || DEFAULT_BRAND.contact.address,
+            phone: info.phone || DEFAULT_BRAND.contact.phone,
+            email: info.email || DEFAULT_BRAND.contact.email,
+            website: info.website || DEFAULT_BRAND.contact.website,
+            vatNumber: info.vatNumber || DEFAULT_BRAND.contact.vatNumber,
+            paybill: info.paybill || DEFAULT_BRAND.contact.paybill?.number || '4092707',
+            paybillName: info.paybillName || DEFAULT_BRAND.name,
+            bankName: info.bankName || DEFAULT_BRAND.contact.bank.name,
+            bankAccountName: info.bankAccountName || DEFAULT_BRAND.contact.bank.accountName,
+            bankAccountNumber: info.bankAccountNumber || DEFAULT_BRAND.contact.bank.accountNumber,
+            bankBranch: info.bankBranch || DEFAULT_BRAND.contact.bank.branch,
+            bankSwiftCode: info.bankSwiftCode || DEFAULT_BRAND.contact.bank.swiftCode
+          });
+        }
+      }
+    } catch (error) {
+      console.log('Could not fetch company settings:', error);
+    }
+  };
+  
+  // ✅ Save company settings to API
+  const saveCompanySettings = async () => {
+    try {
+      setSavingSettings(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showNotification('⚠️ Please log in to save settings', 'warning');
+        return;
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/api/settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          logoUrl: settingsForm.logoUrl,
+          companyInfo: {
+            name: settingsForm.name,
+            tagline: settingsForm.tagline,
+            address: settingsForm.address,
+            phone: settingsForm.phone,
+            email: settingsForm.email,
+            website: settingsForm.website,
+            vatNumber: settingsForm.vatNumber,
+            paybill: settingsForm.paybill,
+            paybillName: settingsForm.paybillName,
+            bankName: settingsForm.bankName,
+            bankAccountName: settingsForm.bankAccountName,
+            bankAccountNumber: settingsForm.bankAccountNumber,
+            bankBranch: settingsForm.bankBranch,
+            bankSwiftCode: settingsForm.bankSwiftCode
+          }
+        })
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setCompanySettings({ ...settingsForm });
+        showNotification('✅ Company settings saved successfully!', 'success');
+        setShowSettingsModal(false);
+      } else {
+        showNotification(`❌ ${data.message || 'Failed to save settings'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      showNotification('❌ Failed to save settings. Please try again.', 'error');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+  
+  // Load company settings on mount
+  useEffect(() => {
+    fetchCompanySettings();
+  }, []);
   
   // Form state
   const [receiptForm, setReceiptForm] = useState({
@@ -906,7 +1074,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
   // ✅ ENHANCED: Download PDF with professional receipt design
   const exportReceiptPDF = async (receipt) => {
-    await generateReceiptPDF(receipt, showNotification);
+    await generateReceiptPDF(receipt, showNotification, BRAND);
   };
 
   // ✅ ENHANCED: Send receipt via email with all details and CC support
@@ -927,14 +1095,14 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       }
 
       // 1) Download receipt PDF first
-      const pdfResult = await generateReceiptPDF(receipt, showNotification);
+      const pdfResult = await generateReceiptPDF(receipt, showNotification, BRAND);
       if (!pdfResult?.success) {
         showNotification('❌ Failed to prepare receipt PDF', 'error');
         return;
       }
       
       // 2) Prepare draft content and copy to clipboard
-      const { subject, body } = prepareReceiptEmailContent(receipt);
+      const { subject, body } = prepareReceiptEmailContent(receipt, BRAND);
 
       const decodedSubject = decodeURIComponent(subject);
       const decodedBody = decodeURIComponent(body);
@@ -1253,6 +1421,32 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             className={`${themeClasses.button.primary.base} ${darkMode ? themeClasses.button.primary.dark : themeClasses.button.primary.light} flex items-center`}
           >
             <Plus size={16} className="mr-1.5" /> New Receipt
+          </button>
+          <button 
+            onClick={() => {
+              setSettingsForm({
+                name: companySettings.name || DEFAULT_BRAND.name,
+                tagline: companySettings.tagline || DEFAULT_BRAND.tagline,
+                logoUrl: companySettings.logoUrl || DEFAULT_BRAND.logoUrl,
+                address: companySettings.address || DEFAULT_BRAND.contact.address,
+                phone: companySettings.phone || DEFAULT_BRAND.contact.phone,
+                email: companySettings.email || DEFAULT_BRAND.contact.email,
+                website: companySettings.website || DEFAULT_BRAND.contact.website,
+                vatNumber: companySettings.vatNumber || DEFAULT_BRAND.contact.vatNumber,
+                paybill: companySettings.paybill || DEFAULT_BRAND.contact.paybill?.number || '4092707',
+                paybillName: companySettings.paybillName || DEFAULT_BRAND.name,
+                bankName: companySettings.bankName || DEFAULT_BRAND.contact.bank.name,
+                bankAccountName: companySettings.bankAccountName || DEFAULT_BRAND.contact.bank.accountName,
+                bankAccountNumber: companySettings.bankAccountNumber || DEFAULT_BRAND.contact.bank.accountNumber,
+                bankBranch: companySettings.bankBranch || DEFAULT_BRAND.contact.bank.branch,
+                bankSwiftCode: companySettings.bankSwiftCode || DEFAULT_BRAND.contact.bank.swiftCode
+              });
+              setShowSettingsModal(true);
+            }}
+            className={`${themeClasses.button.small.base} bg-gradient-to-r from-purple-600 to-purple-800 text-white hover:from-purple-700 hover:to-purple-900 flex items-center`}
+            title="Edit Company & Billing Settings"
+          >
+            <Edit size={16} className="mr-1.5" /> Company Settings
           </button>
         </div>
       </div>
@@ -2464,6 +2658,288 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                   {sendingReceipt === selectedReceipt._id ? 'Opening Webmail...' : 'Download & Open Webmail'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ COMPANY SETTINGS MODAL - Editable by Admin */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className={`${themeClasses.card} rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl`}>
+            <div className={`sticky top-0 z-10 ${darkMode ? 'bg-gray-900' : 'bg-white'} px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex justify-between items-center`}>
+              <div>
+                <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+                  ⚙️ Company & Billing Settings
+                </h3>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Edit paybill, bank details, and company info for receipts
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className={`p-2 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Company Information */}
+              <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800/50' : 'bg-gradient-to-br from-blue-50 to-indigo-50'} border ${darkMode ? 'border-gray-700' : 'border-blue-200'}`}>
+                <h4 className="font-semibold mb-4 flex items-center gap-2 text-blue-600">
+                  <Building size={18} /> Company Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Company Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.name}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, name: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      placeholder="OPTIMAS NETWORK"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Tagline
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.tagline}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, tagline: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      placeholder="High-Speed Internet Solutions"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={settingsForm.email}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, email: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      placeholder="support@optimaswifi.co.ke"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Phone
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.phone}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, phone: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      placeholder="+254 741 874 200"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.address}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, address: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      placeholder="Nairobi, Kenya"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Website
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.website}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, website: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      placeholder="www.optimaswifi.co.ke"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      VAT Number
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.vatNumber}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, vatNumber: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      placeholder="VAT00123456"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Logo URL
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.logoUrl}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, logoUrl: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      placeholder="/oppo.jpg"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* M-Pesa Paybill Settings */}
+              <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800/50' : 'bg-gradient-to-br from-green-50 to-emerald-50'} border ${darkMode ? 'border-gray-700' : 'border-green-200'}`}>
+                <h4 className="font-semibold mb-4 flex items-center gap-2 text-green-600">
+                  <Phone size={18} /> M-Pesa Paybill Settings
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Paybill Number *
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.paybill}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, paybill: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-green-500 text-lg font-mono`}
+                      placeholder="4092707"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Paybill Business Name
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.paybillName}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, paybillName: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-green-500`}
+                      placeholder="OPTIMAS NETWORK"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bank Details */}
+              <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800/50' : 'bg-gradient-to-br from-amber-50 to-orange-50'} border ${darkMode ? 'border-gray-700' : 'border-amber-200'}`}>
+                <h4 className="font-semibold mb-4 flex items-center gap-2 text-amber-600">
+                  <CreditCard size={18} /> Bank Account Details
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Bank Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.bankName}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, bankName: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500`}
+                      placeholder="Equity Bank"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Account Name
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.bankAccountName}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, bankAccountName: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500`}
+                      placeholder="Optimas Network Ltd"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Account Number *
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.bankAccountNumber}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, bankAccountNumber: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500 font-mono`}
+                      placeholder="1234567890"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Branch
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.bankBranch}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, bankBranch: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500`}
+                      placeholder="Nairobi Main"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      SWIFT Code
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.bankSwiftCode}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, bankSwiftCode: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500 font-mono`}
+                      placeholder="EQBLKENA"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div className={`p-4 rounded-xl ${darkMode ? 'bg-blue-900/20' : 'bg-blue-50'} border ${darkMode ? 'border-blue-800' : 'border-blue-200'}`}>
+                <h4 className="font-semibold mb-3 flex items-center gap-2 text-blue-600">
+                  <Eye size={18} /> Preview (How it will appear on receipts)
+                </h4>
+                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="font-bold text-lg">{settingsForm.name || 'Company Name'}</p>
+                      <p className="text-gray-500">{settingsForm.tagline || 'Tagline'}</p>
+                      <p className="mt-2">{settingsForm.email}</p>
+                      <p>{settingsForm.phone}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">M-Pesa Paybill: <span className="text-green-600 font-mono">{settingsForm.paybill}</span></p>
+                      <p className="text-xs text-gray-500 mt-1">Bank: {settingsForm.bankName}</p>
+                      <p className="text-xs text-gray-500">A/C: {settingsForm.bankAccountNumber}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className={`sticky bottom-0 ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} px-6 py-4 border-t flex justify-end gap-3`}>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} transition-colors`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveCompanySettings}
+                disabled={savingSettings}
+                className={`px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-colors flex items-center gap-2 ${savingSettings ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {savingSettings ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={18} />
+                    Save Settings
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

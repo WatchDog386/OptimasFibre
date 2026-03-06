@@ -10,6 +10,7 @@ import mongoose from 'mongoose';
  * @property {boolean} notifications - Enable/disable system notifications
  * @property {boolean} autoSave - Enable/disable auto-save features
  * @property {string} language - Default site language
+ * @property {Object} companyInfo - Company details for invoices/receipts
  * @property {Date} createdAt - Document creation timestamp
  * @property {Date} updatedAt - Last update timestamp
  */
@@ -46,18 +47,99 @@ const settingSchema = new mongoose.Schema({
   // Optional: Add logo URL or theme settings
   logoUrl: {
     type: String,
-    default: '',
+    default: '/oppo.jpg',
     validate: {
       validator: function(v) {
         if (!v) return true;
-        return /^https?:\/\/.+\.(png|jpg|jpeg|svg|webp)$/i.test(v);
+        // Allow relative paths and full URLs
+        return /^(\/|https?:\/\/).+/i.test(v);
       },
-      message: 'Logo URL must be a valid image URL'
+      message: 'Logo URL must be a valid URL or relative path'
     }
   },
   maintenanceMode: {
     type: Boolean,
     default: false
+  },
+  
+  // ✅ NEW: Company Information for Invoices & Receipts (Editable by Admin)
+  companyInfo: {
+    name: {
+      type: String,
+      default: 'OPTIMAS NETWORK',
+      trim: true,
+      maxlength: [100, 'Company name cannot exceed 100 characters']
+    },
+    tagline: {
+      type: String,
+      default: 'High-Speed Internet Solutions',
+      trim: true,
+      maxlength: [150, 'Tagline cannot exceed 150 characters']
+    },
+    address: {
+      type: String,
+      default: 'Nairobi, Kenya',
+      trim: true,
+      maxlength: [200, 'Address cannot exceed 200 characters']
+    },
+    phone: {
+      type: String,
+      default: '+254 741 874 200',
+      trim: true
+    },
+    email: {
+      type: String,
+      default: 'support@optimaswifi.co.ke',
+      trim: true,
+      lowercase: true
+    },
+    website: {
+      type: String,
+      default: 'www.optimaswifi.co.ke',
+      trim: true
+    },
+    vatNumber: {
+      type: String,
+      default: 'VAT00123456',
+      trim: true
+    },
+    // M-Pesa Paybill Details
+    paybill: {
+      type: String,
+      default: '4092707',
+      trim: true
+    },
+    paybillName: {
+      type: String,
+      default: 'OPTIMAS NETWORK',
+      trim: true
+    },
+    // Bank Details
+    bankName: {
+      type: String,
+      default: 'Equity Bank',
+      trim: true
+    },
+    bankAccountName: {
+      type: String,
+      default: 'Optimas Network Ltd',
+      trim: true
+    },
+    bankAccountNumber: {
+      type: String,
+      default: '1234567890',
+      trim: true
+    },
+    bankBranch: {
+      type: String,
+      default: 'Nairobi Main',
+      trim: true
+    },
+    bankSwiftCode: {
+      type: String,
+      default: 'EQBLKENA',
+      trim: true
+    }
   }
 }, {
   timestamps: true,
