@@ -20,6 +20,7 @@ import portfolioRoutes from './routes/portfolioRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
 import receiptRoutes from './routes/receipts.js';
+import vacancyRoutes from './routes/vacancyRoutes.js';
 
 // Middleware
 import { protect } from './middleware/authMiddleware.js';
@@ -126,6 +127,7 @@ app.use('/api/settings', protect, settingRoutes);
 // 🔥🔥🔥 CRITICAL FIX — NO `protect` HERE
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/receipts', receiptRoutes);
+app.use('/api/vacancies', vacancyRoutes);
 
 /* =========================================================
    404

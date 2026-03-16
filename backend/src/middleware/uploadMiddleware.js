@@ -147,6 +147,48 @@ export const uploadArray = (fieldName = 'images', maxCount = 5) => {
   };
 };
 
+// ✅ Document upload specific setup
+const documentFilter = (req, file, cb) => {
+  const allowedMimeTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+  const allowedExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+  
+  const fileExtension = path.extname(file.originalname).toLowerCase();
+  
+  if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(fileExtension)) {
+    return cb(null, true);
+  } else {
+    cb(new Error(`Invalid document type: ${file.mimetype}. Only PDF, DOC, DOCX, JPG, PNG are allowed.`), false);
+  }
+};
+
+const uploadDocs = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: documentFilter
+});
+
+export const uploadDocumentSingle = (fieldName = 'document') => {
+  return (req, res, next) => {
+    uploadDocs.single(fieldName)(req, res, (err) => {
+      if (err) {
+        return handleMulterError(err, req, res, next);
+      }
+      next();
+    });
+  };
+};
+
+export const uploadDocumentArray = (fieldName = 'documents', maxCount = 5) => {
+  return (req, res, next) => {
+    uploadDocs.array(fieldName, maxCount)(req, res, (err) => {
+      if (err) {
+        return handleMulterError(err, req, res, next);
+      }
+      next();
+    });
+  };
+};
+
 // ✅ Fields upload middleware
 export const uploadFields = (fields = [{ name: 'image', maxCount: 1 }]) => {
   return (req, res, next) => {

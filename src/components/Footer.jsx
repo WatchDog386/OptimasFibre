@@ -13,6 +13,7 @@ export default function Footer() {
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
     { name: 'Our Coverage', path: '/coverage' },
+    { name: 'Careers', path: '/vacancies' },
     { name: 'Contact', path: '/contact', isActive: true }
   ];
 
