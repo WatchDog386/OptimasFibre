@@ -17,6 +17,7 @@ import Articles from "./routes/Articles";
 import ArticleDetail from "./routes/ArticleDetail";
 import CoverageMap from "./routes/CoverageMap";
 import BlogList from "./routes/BlogList";
+import Vacancies from "./routes/Vacancies";
 
 // Admin Components
 import Login from "./components/Login";
@@ -54,6 +55,7 @@ function AppRoutes() {
         <Route path="blog" element={<BlogList />} />
         <Route path="articles/:slug" element={<ArticleDetail />} />
         <Route path="coverage" element={<CoverageMap />} />
+        <Route path="vacancies" element={<Vacancies />} />
       </Route>
 
       {/* Admin Login */}

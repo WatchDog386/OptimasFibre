@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { label: "About", route: "/about", id: "about" },
   { label: "Services", route: "/services", id: "services" },
   { label: "Blog", route: "/blog", id: "blog" },
+  { label: "Careers", route: "/vacancies", id: "vacancies" },
   { label: "FAQs", route: "/faqs", id: "faqs" },
   { label: "Contact", route: "/contact", id: "contact" },
 ];

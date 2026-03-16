@@ -60,304 +60,373 @@ const formatPrice = (price) => {
   return isNaN(num) ? price : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-// Redesigned PDF generator to match provided invoice layout
-const generateInvoicePDF = async (invoice, showNotification, includeShareOptions = false, companyInfo = null) => {
+const WIFI_PLANS = [
+  { id: 1, name: "Jumbo", price: "1499", speed: "8Mbps", features: ["Great for browsing", "24/7 Support", "Free Installation"], type: "home", popular: false },
+  { id: 2, name: "Buffalo", price: "1999", speed: "15Mbps", features: ["Streaming & Social Media", "24/7 Support", "Free Installation"], type: "home", popular: false },
+  { id: 3, name: "Ndovu", price: "2499", speed: "25Mbps", features: ["Work from Home", "Streaming", "24/7 Support", "Free Installation"], type: "home", popular: false },
+  { id: 4, name: "Gazzelle", price: "2999", speed: "30Mbps", features: ["Multiple Devices", "Low Latency", "24/7 Support", "Free Installation"], type: "home", popular: true },
+  { id: 5, name: "Tiger", price: "3999", speed: "40Mbps", features: ["Heavy Streaming", "Gaming Ready", "24/7 Support", "Free Installation"], type: "home", popular: false },
+  { id: 6, name: "Chui", price: "4999", speed: "60Mbps", features: ["High-Speed Everything", "Gaming & 4K", "24/7 Support", "Free Installation"], type: "home", popular: false },
+];
+
+// ✅ DEFAULT COMPANY INFO (Editable via Admin Settings)
+const DEFAULT_COMPANY_INFO = {
+  name: "OPTIMAS NETWORK",
+  tagline: "High-Speed Internet Solutions",
+  logoUrl: "/oppo.jpg",
+  bankName: "Equity Bank",
+  accountName: "Optimas Network Ltd",
+  accountNumber: "1234567890",
+  branch: "Nairobi Main",
+  supportEmail: "support@optimaswifi.co.ke",
+  supportPhone: "+254 741 874 200",
+  paybill: "4092707",
+  paybillName: "OPTIMAS NETWORK",
+  address: "Nairobi, Kenya",
+  website: "www.optimaswifi.co.ke",
+  vatNumber: "VAT00123456",
+  bankSwiftCode: "EQBLKENA",
+  colors: {
+    primary: '#00356B',    // Deep Navy Blue
+    accent: '#D85C2C',     // Vibrant Orange/Rust
+    success: '#86bc25',    // Green
+    warning: '#f59e0b',    // Amber
+    danger: '#ef4444',     // Red
+    info: '#3b82f6'        // Blue
+  }
+};
+
+const WEBMAIL_URL = 'https://pld109.truehost.cloud:2096/cpsess2481723632/3rdparty/roundcube/?_task=mail&_mbox=INBOX';
+
+const initialFormState = {
+  invoiceNumber: '',
+  customerName: '',
+  customerEmail: '',
+  customerPhone: '',
+  customerLocation: '',
+  planName: '',
+  planPrice: 0,
+  planSpeed: '',
+  features: [],
+  connectionType: 'Fiber Optic',
+  invoiceDate: new Date().toISOString().split('T')[0],
+  dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  items: [],
+  subtotal: 0,
+  taxRate: 16, // Default VAT rate for Kenya
+  taxAmount: 0,
+  discount: 0,
+  discountType: 'none',
+  totalAmount: 0,
+  amountPaid: 0,
+  balanceDue: 0,
+  status: 'pending',
+  paymentMethod: 'mobile_money',
+  paymentTerms: 'Due upon receipt',
+  notes: '',
+  terms: 'Payment due within 30 days. Late payments may attract a penalty fee of 5% per month. All payments should be made to the bank details provided.',
+  billingCycle: 'monthly',
+  clientAccountNumber: '' // ✅ NEW: Client account number (FBI-XXXXXXXXX)
+};
+
+// ✅ HELPER: Create attachment guidance for email
+const createAttachmentGuide = (fileName, companyInfo = null) => {
   const COMPANY_INFO = companyInfo || DEFAULT_COMPANY_INFO;
+  return `
+    <div style="background:#e3f2fd; border:2px solid ${COMPANY_INFO.colors.primary}; border-radius:10px; padding:20px; margin:25px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;">
+      <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+        <div style="width:40px; height:40px; background:${COMPANY_INFO.colors.primary}; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+          📎
+        </div>
+        <div>
+          <h4 style="margin:0 0 5px 0; font-size:18px; color:${COMPANY_INFO.colors.primary}; font-weight:bold;">ATTACHMENT REQUIRED</h4>
+          <p style="margin:0; font-size:14px; color:#333;">Please attach the invoice PDF before sending this email</p>
+        </div>
+      </div>
+      
+      <div style="background:white; border-radius:8px; padding:15px; margin-bottom:15px; border:1px solid #ddd;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:14px; font-weight:600; color:#333;">File to attach:</span>
+          <span style="font-size:12px; color:${COMPANY_INFO.colors.primary}; background:#e3f2fd; padding:3px 8px; border-radius:4px;">
+            Downloaded to your device
+          </span>
+        </div>
+        <div style="background:#f8f9fa; padding:12px 15px; border-radius:6px; border:2px dashed #ccc; font-family:'Courier New',monospace; font-size:14px; color:#333; display:flex; align-items:center; gap:10px;">
+          <span style="color:${COMPANY_INFO.colors.primary}; font-size:16px;">📄</span>
+          <span style="font-weight:600;">${fileName}</span>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:#666;">
+          <strong>Location:</strong> Your browser's Downloads folder
+        </div>
+      </div>
+      
+      <div style="background:#f0f7ff; border-radius:8px; padding:15px;">
+        <h5 style="margin:0 0 10px 0; font-size:14px; color:${COMPANY_INFO.colors.primary};">Quick Attachment Steps:</h5>
+        <ol style="margin:0; padding-left:20px; font-size:13px; color:#444; line-height:1.6;">
+          <li>Click the <strong>"Attach"</strong> or <strong>"📎"</strong> button in your email client</li>
+          <li>Navigate to your <strong>Downloads</strong> folder</li>
+          <li>Select the file: <code style="background:#e9ecef; padding:2px 6px; border-radius:3px; font-family:monospace;">${fileName}</code></li>
+          <li>Click <strong>"Open"</strong> or <strong>"Choose"</strong></li>
+          <li>Verify the attachment appears in your email</li>
+          <li>Click <strong>"Send"</strong> to deliver the invoice</li>
+        </ol>
+      </div>
+      
+      <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ccc; font-size:12px; color:#777; text-align:center;">
+        The PDF file has been automatically saved to your device. If you can't find it, check your Downloads folder.
+      </div>
+    </div>
+  `;
+};
+
+// ✅ UPDATED: OFFLINE PDF GENERATOR WITH EMAIL ATTACHMENT FLOW
+const generateInvoicePDF = async (invoice, showNotification, includeShareOptions = false, companyInfo = null) => {
+  // Use provided companyInfo or fall back to DEFAULT
+  const COMPANY_INFO = companyInfo || DEFAULT_COMPANY_INFO;
+  
+  // Create a unique invoice ID for offline storage
   const invoiceId = invoice._id || `local-inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  // ✅ Save invoice to localStorage for offline access
+  try {
+    const savedInvoices = JSON.parse(localStorage.getItem('localInvoices') || '{}');
+    savedInvoices[invoiceId] = {
+      ...invoice,
+      _id: invoiceId,
+      savedAt: new Date().toISOString(),
+      isLocal: true
+    };
+    localStorage.setItem('localInvoices', JSON.stringify(savedInvoices));
+  } catch (e) {
+    console.log('Local storage save skipped:', e);
+  }
+
+  const printContainer = document.createElement('div');
+  printContainer.style.position = 'absolute';
+  printContainer.style.left = '-10000px';
+  printContainer.style.top = '-10000px';
+  printContainer.style.width = '800px';
+  printContainer.style.backgroundColor = 'white';
+  printContainer.style.padding = '40px';
+  printContainer.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif";
+  printContainer.style.color = '#1a1a1a';
+  printContainer.style.lineHeight = '1.6';
+
+  // ✅ Add QR Code for mobile payments
+  const qrCodeSection = includeShareOptions ? `
+    <div style="margin:20px 0; padding:15px; background:#f8f9fa; border-radius:8px; border-left:4px solid ${COMPANY_INFO.colors.success};">
+      <div style="display:flex; align-items:center; gap:15px;">
+        <div style="width:80px; height:80px; background:#e9ecef; display:flex; align-items:center; justify-content:center; border-radius:6px; font-size:12px; color:#666;">
+          [QR Code]
+        </div>
+        <div>
+          <h4 style="margin:0 0 8px 0; font-size:14px; font-weight:600; color:#1a1a1a;">Quick Pay via M-Pesa</h4>
+          <p style="margin:0 0 5px 0; font-size:12px; color:#555;">
+            <strong>Paybill:</strong> ${COMPANY_INFO.paybill}
+          </p>
+          <p style="margin:0 0 5px 0; font-size:12px; color:#555;">
+            <strong>Account:</strong> ${invoice.invoiceNumber || 'Your Name'}
+          </p>
+          <p style="margin:0; font-size:11px; color:#777;">Scan or share this invoice for quick payment</p>
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  const logo = COMPANY_INFO.logoUrl 
+    ? `<img src="${COMPANY_INFO.logoUrl}" alt="Logo" style="height:70px; margin-bottom:10px;" onerror="this.style.display='none'" />` 
+    : `<div style="height:70px; background:${COMPANY_INFO.colors.primary}; color:white; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; border-radius:8px;">${COMPANY_INFO.name}</div>`;
+
+  // ✅ Enhanced invoice items table
+  let itemsHtml = '';
+  (invoice.items || []).forEach((item, index) => {
+    itemsHtml += `<tr style="border-bottom:1px solid #eee;">
+      <td style="padding:12px 8px; width:50%;">${item.description || ''}</td>
+      <td style="padding:12px 8px; text-align:center;">${item.quantity || 1}</td>
+      <td style="padding:12px 8px; text-align:right;">Ksh ${formatPrice(item.unitPrice || item.amount)}</td>
+      <td style="padding:12px 8px; text-align:right; font-weight:600;">Ksh ${formatPrice(item.amount)}</td>
+    </tr>`;
+  });
+
+  // ✅ Enhanced invoice summary
   const subtotal = invoice.subtotal || 0;
   const taxAmount = invoice.taxAmount || 0;
-  const totalAmount = invoice.totalAmount || 0;
+  const discountAmount = invoice.discountType === 'percentage' 
+    ? (subtotal * (invoice.discount || 0)) / 100 
+    : (invoice.discountType === 'fixed' ? (invoice.discount || 0) : 0);
+  const totalAmount = invoice.totalAmount || subtotal + taxAmount - discountAmount;
   const amountPaid = invoice.amountPaid || 0;
-  const balanceDue = Math.max(0, totalAmount - amountPaid);
-  const discountAmount = invoice.discount || 0;
+  const balanceDue = totalAmount - amountPaid;
 
-  // Main container with flex for sidebar
+  // ✅ Payment status badge
+  const statusBadge = invoice.status === 'paid' 
+    ? `<span style="background:${COMPANY_INFO.colors.success}; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PAID</span>`
+    : invoice.status === 'partially_paid'
+    ? `<span style="background:${COMPANY_INFO.colors.info}; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PARTIALLY PAID</span>`
+    : `<span style="background:${COMPANY_INFO.colors.warning}; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PENDING</span>`;
+
   printContainer.innerHTML = `
-    <div style="display:flex; flex-direction:row; width:1000px; min-height:700px; background:#fff; font-family:'Segoe UI',Arial,sans-serif;">
-      <!-- Sidebar -->
-      <div style="width:220px; background:linear-gradient(160deg, #00356B 80%, #00509e 100%); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:space-between; border-top-right-radius:32px; border-bottom-right-radius:32px; position:relative;">
-        <div style="width:100%; padding:38px 0 0 0; text-align:center;">
-          <div style="font-size:32px; font-weight:900; letter-spacing:2px; margin-bottom:12px;">INVOICE</div>
-          <div style="font-size:13px; font-weight:600; margin-bottom:8px;">NO: <span style='font-weight:400;'>${invoice.invoiceNumber || invoiceId}</span></div>
-        </div>
-        <div style="margin:0 auto 0 auto;">
-          <img src="${COMPANY_INFO.logoUrl || '/oppo.jpg'}" alt="Logo" style="width:110px; height:auto; margin:30px 0 0 0;" />
-        </div>
-        <div style="width:100%; text-align:center; padding-bottom:38px;">
-          <div style="font-size:22px; font-weight:700; margin-top:30px;">Thank You!</div>
-        </div>
-        <div style="position:absolute; top:0; right:0; width:100%; height:100%; border-top-right-radius:32px; border-bottom-right-radius:32px; background:radial-gradient(circle at 80% 10%,rgba(255,255,255,0.08) 0,rgba(0,0,0,0) 80%); pointer-events:none;"></div>
-      </div>
-      <!-- Main Content -->
-      <div style="flex:1; padding:38px 38px 28px 38px; display:flex; flex-direction:column; justify-content:space-between;">
-        <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:flex-start;">
-          <!-- Bill To -->
-          <div style="min-width:260px;">
-            <div style="font-size:17px; font-weight:700; color:#00356B; margin-bottom:6px;">Bill To:</div>
-            <div style="font-size:15px; font-weight:600; color:#222;">${invoice.customerName || 'Customer'}</div>
-            <div style="font-size:13px; color:#444;">${invoice.customerEmail || ''}</div>
-            <div style="font-size:13px; color:#444;">${invoice.customerPhone || ''}</div>
-            <div style="font-size:13px; color:#444;">${invoice.customerLocation || ''}</div>
-            <div style="font-size:13px; color:#444;">Account: <b>${invoice.clientAccountNumber || invoice.invoiceNumber || 'N/A'}</b></div>
-            <div style="font-size:13px; color:#444; margin-top:10px;">Date: ${invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : ''}</div>
+    <div style="padding:10px; background:white; font-size:11px; width:100%; box-sizing:border-box;">
+      <div style="display:grid; grid-template-columns:1.1fr 0.15fr; gap:0; min-height:540px; border:1px solid #dcdcdc;">
+        <!-- Main Content Area (left) -->
+        <div style="padding:18px 22px 16px 24px; position:relative;">
+          <!-- Top header strip -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+            <div style="max-width:55%;">
+              <p style="margin:0 0 2px 0; font-size:10px; letter-spacing:1.8px; color:${COMPANY_INFO.colors.primary}; text-transform:uppercase; font-weight:700;">INVOICE</p>
+              <p style="margin:2px 0 0 0; font-size:11px; color:#444; font-weight:600;">${COMPANY_INFO.name}</p>
+              <p style="margin:1px 0 0 0; font-size:9px; color:#777;">${COMPANY_INFO.tagline || ''}</p>
+            </div>
+            <div style="text-align:right; font-size:9px;">
+              <p style="margin:0 0 2px 0; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600;">Invoice No:</p>
+              <p style="margin:0 0 6px 0; font-size:11px; font-weight:800; color:#222;">${invoice.invoiceNumber || invoice._id?.substring(0,8) || 'N/A'}</p>
+              <p style="margin:0; font-size:9px; color:#777;">Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+            </div>
           </div>
-          <!-- From -->
-          <div style="min-width:220px; text-align:right;">
-            <div style="font-size:17px; font-weight:700; color:#00356B; margin-bottom:6px;">From:</div>
-            <div style="font-size:15px; font-weight:600; color:#222;">${COMPANY_INFO.name}</div>
-            <div style="font-size:13px; color:#444;">${COMPANY_INFO.supportPhone}</div>
-            <div style="font-size:13px; color:#444;">${COMPANY_INFO.address}</div>
+
+          <!-- From / To block -->
+          <div style="display:grid; grid-template-columns:1.1fr 1fr; column-gap:18px; margin-bottom:10px; border-top:1px solid #e0e0e0; padding-top:10px;">
+            <div>
+              <p style="margin:0 0 4px 0; font-size:9px; font-weight:700; color:#777; text-transform:uppercase; letter-spacing:1px;">Bill To:</p>
+              <p style="margin:0 0 2px 0; font-size:11px; font-weight:700; color:#1a1a1a;">${invoice.customerName || 'Customer Name'}</p>
+              <p style="margin:0 0 1px 0; font-size:9px; color:#555;">${invoice.customerEmail || ''}</p>
+              <p style="margin:0 0 1px 0; font-size:9px; color:#555;">${invoice.customerPhone || ''}</p>
+              <p style="margin:0; font-size:9px; color:#555;">${invoice.customerLocation || ''}</p>
+            </div>
+            <div>
+              <p style="margin:0 0 4px 0; font-size:9px; font-weight:700; color:#777; text-transform:uppercase; letter-spacing:1px;">From:</p>
+              <p style="margin:0 0 2px 0; font-size:11px; font-weight:700; color:${COMPANY_INFO.colors.primary};">${COMPANY_INFO.name}</p>
+              <p style="margin:0 0 1px 0; font-size:9px; color:#555;">${COMPANY_INFO.address}</p>
+              <p style="margin:0 0 1px 0; font-size:9px; color:#555;">${COMPANY_INFO.supportEmail}</p>
+              <p style="margin:0; font-size:9px; color:#555;">${COMPANY_INFO.supportPhone}</p>
+            </div>
           </div>
-        </div>
-        <!-- Table -->
-        <div style="margin:32px 0 0 0;">
-          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+
+          <!-- Plan / dates strip -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
+            <div>
+              <p style="margin:0 0 2px 0; font-size:9px; font-weight:700; color:#777; text-transform:uppercase; letter-spacing:1px;">Package / Plan</p>
+              <p style="margin:0; font-size:10px; color:#333; font-weight:600;">
+                ${invoice.planName || 'Service Plan'} ${invoice.planSpeed ? '(' + invoice.planSpeed + ')' : ''}
+              </p>
+            </div>
+            <div style="text-align:right; font-size:9px;">
+              <p style="margin:0 0 1px 0;"><span style="font-weight:600;">Due Date:</span> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
+              <p style="margin:0;"><span style="font-weight:600;">Account No:</span> ${invoice.clientAccountNumber || invoice.invoiceNumber || 'N/A'}</p>
+            </div>
+          </div>
+
+          <!-- Items table -->
+          <table style="width:100%; margin-top:4px; margin-bottom:12px; border-collapse:collapse; font-size:9px;">
             <thead>
-              <tr style="background:#00356B; color:#fff;">
-                <th style="padding:10px 8px; text-align:left; font-weight:700;">Description</th>
-                <th style="padding:10px 8px; text-align:center; font-weight:700;">Qty</th>
-                <th style="padding:10px 8px; text-align:right; font-weight:700;">Price</th>
-                <th style="padding:10px 8px; text-align:right; font-weight:700;">Total</th>
+              <tr style="background:#f0f2f7; border-top:1px solid #d0d5dd; border-bottom:1px solid #d0d5dd;">
+                <th style="padding:6px 6px; text-align:left; font-weight:700; color:#333;">Description</th>
+                <th style="padding:6px 4px; text-align:center; font-weight:700; color:#333; width:40px;">Qty</th>
+                <th style="padding:6px 4px; text-align:right; font-weight:700; color:#333; width:70px;">Price</th>
+                <th style="padding:6px 4px; text-align:right; font-weight:700; color:#333; width:80px;">Total</th>
               </tr>
             </thead>
             <tbody>
               ${(invoice.items && invoice.items.length > 0) ? invoice.items.map(item => `
-                <tr style="border-bottom:1px solid #e0e0e0;">
-                  <td style="padding:10px 8px; text-align:left;">${item.description || 'Service'}</td>
-                  <td style="padding:10px 8px; text-align:center;">${item.quantity || 1}</td>
-                  <td style="padding:10px 8px; text-align:right;">Ksh ${formatPrice(item.unitPrice || item.amount)}</td>
-                  <td style="padding:10px 8px; text-align:right; font-weight:700;">Ksh ${formatPrice(item.amount)}</td>
-                </tr>
+              <tr style="border-bottom:1px solid #eeeeee;">
+                <td style="padding:6px 6px; text-align:left;">${item.description || 'Service'}</td>
+                <td style="padding:6px 4px; text-align:center;">${item.quantity || 1}</td>
+                <td style="padding:6px 4px; text-align:right;">Ksh ${formatPrice(item.unitPrice || item.amount)}</td>
+                <td style="padding:6px 4px; text-align:right; font-weight:600;">Ksh ${formatPrice(item.amount)}</td>
+              </tr>
               `).join('') : `
-                <tr><td colspan="4" style="padding:15px; text-align:center; color:#999;">No line items</td></tr>
+              <tr style="border-bottom:1px solid #eeeeee;">
+                <td colspan="4" style="padding:10px; text-align:center; color:#999;">No line items</td>
+              </tr>
               `}
             </tbody>
           </table>
-        </div>
-        <!-- Totals and Payment Info -->
-        <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:flex-end; margin-top:32px;">
-          <!-- Payment Info -->
-          <div style="font-size:14px; color:#00356B; min-width:220px;">
-            <div style="font-weight:700; margin-bottom:6px;">Payment Information:</div>
-            <div>MPESA Paybill: <b>${COMPANY_INFO.paybill}</b></div>
-            <div>Acc: <b>${invoice.clientAccountNumber || invoice.invoiceNumber || 'N/A'}</b></div>
-            <div>Details: <b>${COMPANY_INFO.supportEmail}</b></div>
-          </div>
-          <!-- Totals -->
-          <div style="min-width:220px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-size:15px; font-weight:700; color:#00356B;">Sub Total</span>
-              <span style="font-size:15px; font-weight:700; color:#00356B;">Ksh ${formatPrice(subtotal)}</span>
+
+          <!-- Totals + payment column layout -->
+          <div style="display:grid; grid-template-columns:1.1fr 0.9fr; column-gap:18px; align-items:flex-start; margin-top:4px;">
+            <!-- Payment information (MPESA style, left bottom like template) -->
+            <div style="border-right:1px solid #e0e0e0; padding-right:12px; font-size:9px;">
+              <p style="margin:0 0 3px 0; font-size:9px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:1px;">Payment Information</p>
+              <p style="margin:0 0 2px 0; font-size:9px;"><strong>MPESA Paybill No:</strong> ${COMPANY_INFO.paybill}</p>
+              <p style="margin:0 0 2px 0; font-size:9px;"><strong>Account:</strong> ${invoice.clientAccountNumber || invoice.invoiceNumber || 'Account Name'}</p>
+              <p style="margin:0 0 2px 0; font-size:9px;"><strong>Bank:</strong> ${COMPANY_INFO.bankName}</p>
+              <p style="margin:0 0 2px 0; font-size:9px;"><strong>Acc No:</strong> ${COMPANY_INFO.accountNumber}</p>
+              <p style="margin:4px 0 0 0; font-size:8px; color:#777;">Include invoice or account number as payment reference.</p>
             </div>
-            ${invoice.taxRate > 0 ? `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><span>VAT (${invoice.taxRate}%)</span><span>Ksh ${formatPrice(taxAmount)}</span></div>` : ''}
-            ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><span>Discount</span><span style='color:#28a745;'>- Ksh ${formatPrice(discountAmount)}</span></div>` : ''}
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-top:2px solid #00356B; padding-top:8px;">
-              <span style="font-size:16px; font-weight:900; color:#00356B;">TOTAL</span>
-              <span style="font-size:16px; font-weight:900; color:#00356B;">Ksh ${formatPrice(totalAmount)}</span>
+
+            <!-- Totals block -->
+            <div style="font-size:9px;">
+              <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #eeeeee;">
+                <span>Sub Total</span>
+                <span>Ksh ${formatPrice(subtotal)}</span>
+              </div>
+              ${invoice.taxRate > 0 ? `
+              <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #eeeeee;">
+                <span>VAT (${invoice.taxRate}%)</span>
+                <span>Ksh ${formatPrice(taxAmount)}</span>
+              </div>
+              ` : ''}
+              ${discountAmount > 0 ? `
+              <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #eeeeee;">
+                <span>Discount</span>
+                <span style="color:#28a745;">- Ksh ${formatPrice(discountAmount)}</span>
+              </div>
+              ` : ''}
+              <div style="display:flex; justify-content:space-between; padding:5px 0; margin-top:4px; border-top:2px solid ${COMPANY_INFO.colors.primary}; font-weight:700; font-size:11px; color:${COMPANY_INFO.colors.primary};">
+                <span>Total</span>
+                <span>Ksh ${formatPrice(totalAmount)}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:3px 0; font-size:9px; color:${amountPaid > 0 ? '#28a745' : '#555'};">
+                <span>Paid</span>
+                <span style="font-weight:700;">Ksh ${formatPrice(amountPaid)}</span>
+              </div>
+              ${balanceDue > 0 ? `
+              <div style="display:flex; justify-content:space-between; padding:3px 0; font-size:9px; color:#dc3545;">
+                <span>Balance Due</span>
+                <span style="font-weight:700;">Ksh ${formatPrice(balanceDue)}</span>
+              </div>
+              ` : ''}
+              <div style="margin-top:6px; font-size:8px; color:#777;">
+                <span>Status: </span>${statusBadge}
+              </div>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span>Paid</span>
-              <span style="font-weight:700; color:#28a745;">Ksh ${formatPrice(amountPaid)}</span>
+          </div>
+
+          <!-- Optional QR / extra note strip -->
+          ${qrCodeSection}
+
+          <!-- Footer small -->
+          <div style="position:absolute; left:24px; right:24px; bottom:10px; display:flex; justify-content:space-between; align-items:flex-end; font-size:8px; color:#777;">
+            <div>
+              <p style="margin:0 0 2px 0; font-weight:700; color:${COMPANY_INFO.colors.primary};">Thank you!</p>
+              <p style="margin:0;">For choosing ${COMPANY_INFO.name}.</p>
             </div>
-            ${balanceDue > 0 ? `<div style="display:flex; justify-content:space-between; align-items:center; color:#dc3545;"><span>Balance Due</span><span style='font-weight:700;'>Ksh ${formatPrice(balanceDue)}</span></div>` : ''}
+            <div style="text-align:right;">
+              <p style="margin:0 0 1px 0;">Email: ${COMPANY_INFO.supportEmail}</p>
+              <p style="margin:0 0 1px 0;">Phone: ${COMPANY_INFO.supportPhone}</p>
+              <p style="margin:0;">Generated: ${new Date().toLocaleDateString()}</p>
+            </div>
           </div>
         </div>
-        <!-- Note Section -->
-        <div style="margin-top:24px; font-size:13px; color:#00356B;">
-          <b>Note:</b> ${invoice.planName || ''} ${invoice.planSpeed ? `- ${invoice.planSpeed}` : ''}<br/>
-          <b>Due Date:</b> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : ''}
+
+        <!-- Blue side bar (right) mimicking template -->
+        <div style="background:linear-gradient(180deg, ${COMPANY_INFO.colors.primary} 0%, #003366 40%, #0055aa 100%); color:white; position:relative; display:flex; flex-direction:column; justify-content:space-between; align-items:center; padding:16px 4px;">
+          <!-- Invoice vertical text -->
+          <div style="writing-mode:vertical-rl; transform:rotate(180deg); text-transform:uppercase; letter-spacing:2px; font-size:10px; font-weight:700; margin-top:20px;">
+            Invoice
+          </div>
+
+          <!-- Invoice number strip -->
+          <div style="writing-mode:vertical-rl; transform:rotate(180deg); margin:20px 0; font-size:8px; text-align:center;">
+            <span style="opacity:0.8;">No:</span>
+            <span style="font-weight:700; display:block; margin-top:4px;">${invoice.invoiceNumber || invoice._id?.substring(0,8) || 'N/A'}</span>
+          </div>
+
+          <!-- Logo / brand at bottom -->
+          <div style="margin-bottom:8px; text-align:center;">
+            ${logo}
+          </div>
         </div>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(printContainer);
-  try {
-    const opt = {
-      margin: [0, 0, 0, 0],
-      filename: `Invoice_${invoice.invoiceNumber || invoiceId}_${COMPANY_INFO.name}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, allowTaint: true, windowWidth: 1000, width: 1000, backgroundColor: '#ffffff', logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-    await html2canvas(printContainer, { scale: 2, useCORS: true });
-    await jsPDF().html(printContainer, { callback: function (doc) { doc.save(opt.filename); } });
-    showNotification('✅ Invoice PDF downloaded successfully!', 'success');
-    return { success: true };
-  } catch (err) {
-    console.error('PDF generation error:', err);
-    showNotification('❌ Failed to generate PDF. Please try again.', 'error');
-    return { success: false };
-  } finally {
-    document.body.removeChild(printContainer);
-  }
-};
-          <div style="font-size:12px; color:#222; margin-bottom:2px;"><b>Plan:</b> ${invoice.planName || 'Service'} ${invoice.planSpeed ? '(' + invoice.planSpeed + ')' : ''}</div>
-          <div style="font-size:12px; color:#222; margin-bottom:2px;"><b>Invoice Date:</b> ${new Date(invoice.invoiceDate).toLocaleDateString()}</div>
-          <div style="font-size:12px; color:#222;"><b>Due Date:</b> ${new Date(invoice.dueDate).toLocaleDateString()}</div>
-        </div>
-          <h4 style="margin:0 0 8px 0; font-size:14px; font-weight:600; color:#1a1a1a;">Quick Pay via M-Pesa</h4>
-          <p style="margin:0 0 5px 0; font-size:12px; color:#555;">
-
-      <!-- Items Table - Clean Minimal -->
-      <table style="width:100%; margin-bottom:28px; border-collapse:collapse; font-size:12px;">
-        <thead>
-          <tr style="background:#f5f7fa; border-top:2px solid #e0e0e0; border-bottom:2px solid #e0e0e0;">
-            <th style="padding:12px 8px; text-align:left; font-weight:800; color:${COMPANY_INFO.colors.primary}; letter-spacing:0.5px;">Description</th>
-            <th style="padding:12px 8px; text-align:center; font-weight:800; color:${COMPANY_INFO.colors.primary}; letter-spacing:0.5px;">Qty</th>
-            <th style="padding:12px 8px; text-align:right; font-weight:800; color:${COMPANY_INFO.colors.primary}; letter-spacing:0.5px;">Price</th>
-            <th style="padding:12px 8px; text-align:right; font-weight:800; color:${COMPANY_INFO.colors.primary}; letter-spacing:0.5px;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(invoice.items && invoice.items.length > 0) ? invoice.items.map(item => `
-          <tr style="border-bottom:1px solid #f0f0f0;">
-            <td style="padding:12px 8px; text-align:left;">${item.description || 'Service'}</td>
-            <td style="padding:12px 8px; text-align:center;">${item.quantity || 1}</td>
-            <td style="padding:12px 8px; text-align:right;">Ksh ${formatPrice(item.unitPrice || item.amount)}</td>
-            <td style="padding:12px 8px; text-align:right; font-weight:700;">Ksh ${formatPrice(item.amount)}</td>
-          </tr>
-          `).join('') : `
-          <tr style="border-bottom:1px solid #eee;">
-            <td colspan="4" style="padding:15px; text-align:center; color:#999;">No line items</td>
-          </tr>
-          `}
-        </tbody>
-      </table>
-    ? `<span style="background:${COMPANY_INFO.colors.info}; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">PARTIALLY PAID</span>`
-
-      <!-- Totals - Right Aligned -->
-      <div style="display:flex; justify-content:flex-end; margin-bottom:24px; max-width:420px; margin-left:auto;">
-        <div style="width:100%;">
-          <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #eee; font-size:12px;">
-            <span>Subtotal</span>
-            <span>Ksh ${formatPrice(subtotal)}</span>
-          </div>
-          ${invoice.taxRate > 0 ? `
-          <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #eee; font-size:12px;">
-            <span>VAT (${invoice.taxRate}%)</span>
-            <span>Ksh ${formatPrice(taxAmount)}</span>
-          </div>
-          ` : ''}
-          ${discountAmount > 0 ? `
-          <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #eee; font-size:12px;">
-            <span>Discount</span>
-            <span style="color:#28a745;">- Ksh ${formatPrice(discountAmount)}</span>
-          </div>
-          ` : ''}
-          <div style="display:flex; justify-content:space-between; padding:12px 0; margin-top:8px; border-top:2px solid ${COMPANY_INFO.colors.primary}; font-weight:800; font-size:15px; color:${COMPANY_INFO.colors.primary}; letter-spacing:0.5px;">
-            <span>TOTAL</span>
-            <span>Ksh ${formatPrice(totalAmount)}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; padding:7px 0; margin-top:8px; font-size:12px; color:${amountPaid > 0 ? '#28a745' : '#999'};">
-            <span>Paid</span>
-            <span style="font-weight:700;">Ksh ${formatPrice(amountPaid)}</span>
-          </div>
-          ${balanceDue > 0 ? `
-          <div style="display:flex; justify-content:space-between; padding:7px 0; font-size:12px; color:#dc3545;">
-            <span>Balance Due</span>
-            <span style="font-weight:700;">Ksh ${formatPrice(balanceDue)}</span>
-          </div>
-          ` : ''}
-        </div>
-      </div>
-
-
-      <!-- Payment Section -->
-      <div style="padding:16px 18px; background:#f6faff; border-left:5px solid ${COMPANY_INFO.colors.primary}; margin-bottom:22px; font-size:12px; border-radius:7px;">
-        <div style="font-weight:800; color:${COMPANY_INFO.colors.primary}; margin-bottom:7px; letter-spacing:0.5px;">Payment Information</div>
-        <div style="margin-bottom:2px;"><b>M-Pesa Paybill:</b> ${COMPANY_INFO.paybill}</div>
-        <div style="margin-bottom:2px;"><b>Account Number:</b> ${invoice.clientAccountNumber || invoice.invoiceNumber || 'Account Name'}</div>
-        <div style="margin-bottom:2px;"><b>Bank:</b> ${COMPANY_INFO.bankName} - ${COMPANY_INFO.accountNumber}</div>
-        <div style="margin-bottom:2px;"><b>Branch:</b> ${COMPANY_INFO.branch || 'N/A'}</div>
-        <div style="margin-bottom:2px;"><b>SWIFT:</b> ${COMPANY_INFO.bankSwiftCode || 'N/A'}</div>
-        <div style="font-size:10px; color:#666; margin-top:6px;"><em>Include account/invoice number as payment reference</em></div>
-      </div>
-          <p style="margin:0 0 8px 0; font-size:11px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:0.5px;">INVOICE #</p>
-      <!-- Footer Info -->
-      <div style="padding-top:18px; border-top:1.5px solid #e0e0e0; font-size:10.5px; color:#666; text-align:center;">
-        <div style="font-weight:800; color:${COMPANY_INFO.colors.primary}; margin-bottom:6px;">Thank you for your business!</div>
-        <div style="margin-bottom:7px;">
-          <span style="margin:0 10px;">📧 ${COMPANY_INFO.supportEmail}</span>
-          <span style="margin:0 10px;">📱 ${COMPANY_INFO.supportPhone}</span>
-          <span style="margin:0 10px;">🌐 ${COMPANY_INFO.website}</span>
-        </div>
-        <div style="color:#999;">Generated: ${new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-      </div>
-            <th style="padding:10px; text-align:right; font-weight:700; color:#333;">PRICE</th>
-            <th style="padding:10px; text-align:right; font-weight:700; color:#333;">TOTAL</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(invoice.items && invoice.items.length > 0) ? invoice.items.map(item => `
-          <tr style="border-bottom:1px solid #eee;">
-            <td style="padding:10px; text-align:left;">${item.description || 'Service'}</td>
-            <td style="padding:10px; text-align:center;">${item.quantity || 1}</td>
-            <td style="padding:10px; text-align:right;">Ksh ${formatPrice(item.unitPrice || item.amount)}</td>
-            <td style="padding:10px; text-align:right; font-weight:600;">Ksh ${formatPrice(item.amount)}</td>
-          </tr>
-          `).join('') : `
-          <tr style="border-bottom:1px solid #eee;">
-            <td colspan="4" style="padding:15px; text-align:center; color:#999;">No line items</td>
-          </tr>
-          `}
-        </tbody>
-      </table>
-
-      <!-- Totals - Right Aligned -->
-      <div style="display:flex; justify-content:flex-end; margin-bottom:25px; max-width:400px; margin-left:auto;">
-        <div style="width:100%;">
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
-            <span>Subtotal:</span>
-            <span>Ksh ${formatPrice(subtotal)}</span>
-          </div>
-          ${invoice.taxRate > 0 ? `
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
-            <span>VAT (${invoice.taxRate}%):</span>
-            <span>Ksh ${formatPrice(taxAmount)}</span>
-          </div>
-          ` : ''}
-          ${discountAmount > 0 ? `
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;">
-            <span>Discount:</span>
-            <span style="color:#28a745;">- Ksh ${formatPrice(discountAmount)}</span>
-          </div>
-          ` : ''}
-          <div style="display:flex; justify-content:space-between; padding:12px 0; margin-top:8px; border-top:2px solid ${COMPANY_INFO.colors.primary}; font-weight:700; font-size:14px; color:${COMPANY_INFO.colors.primary};">
-            <span>TOTAL:</span>
-            <span>Ksh ${formatPrice(totalAmount)}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; padding:8px 0; margin-top:8px; font-size:12px; color:${amountPaid > 0 ? '#28a745' : '#999'};">
-            <span>Paid:</span>
-            <span style="font-weight:700;">Ksh ${formatPrice(amountPaid)}</span>
-          </div>
-          ${balanceDue > 0 ? `
-          <div style="display:flex; justify-content:space-between; padding:8px 0; font-size:12px; color:#dc3545;">
-            <span>Balance Due:</span>
-            <span style="font-weight:700;">Ksh ${formatPrice(balanceDue)}</span>
-          </div>
-          ` : ''}
-        </div>
-      </div>
-
-      <!-- Payment Section -->
-      <div style="padding:15px; background:#f0f7ff; border-left:4px solid ${COMPANY_INFO.colors.primary}; margin-bottom:20px; font-size:11px;">
-        <p style="margin:0 0 8px 0; font-weight:700; color:${COMPANY_INFO.colors.primary};">PAYMENT DETAILS</p>
-        <p style="margin:0 0 4px 0;"><span style="font-weight:600;">M-Pesa Paybill:</span> ${COMPANY_INFO.paybill}</p>
-        <p style="margin:0 0 4px 0;"><span style="font-weight:600;">Account Number:</span> ${invoice.clientAccountNumber || invoice.invoiceNumber || 'Account Name'}</p>
-        <p style="margin:0 0 4px 0;"><span style="font-weight:600;">Bank:</span> ${COMPANY_INFO.bankName} - ${COMPANY_INFO.accountNumber}</p>
-        <p style="margin:0; font-size:10px; color:#666; margin-top:6px;"><em>Include account/invoice number as payment reference</em></p>
-      </div>
-
-      <!-- Footer Info -->
-      <div style="padding-top:15px; border-top:1px solid #e0e0e0; font-size:10px; color:#666; text-align:center;">
-        <p style="margin:0 0 8px 0; font-weight:700; color:${COMPANY_INFO.colors.primary};">Thank you for your business!</p>
-        <div style="margin-bottom:8px;">
-          <span style="margin:0 10px;">📧 ${COMPANY_INFO.supportEmail}</span>
-          <span style="margin:0 10px;">📱 ${COMPANY_INFO.supportPhone}</span>
-          <span style="margin:0 10px;">🌐 ${COMPANY_INFO.website}</span>
-        </div>
-        <p style="margin:0; color:#999;">Generated: ${new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
       </div>
     </div>
   `;
@@ -382,23 +451,28 @@ const generateInvoicePDF = async (invoice, showNotification, includeShareOptions
     });
     
     const imgData = canvas.toDataURL('image/png');
+    // Back to portrait PDF while keeping the new layout
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgWidth = 190;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth - 20;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    // Add header
+    // Header bar
     pdf.setFillColor(0, 51, 102);
-    pdf.rect(0, 0, 210, 15, 'F');
+    pdf.rect(0, 0, pageWidth, 12, 'F');
     pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(12);
-    pdf.text('INVOICE', 105, 9, { align: 'center' });
+    pdf.setFontSize(11);
+    pdf.text('INVOICE', pageWidth / 2, 8, { align: 'center' });
     
-    pdf.addImage(imgData, 'PNG', 10, 20, imgWidth, imgHeight);
+    // Center the rendered layout within the portrait page
+    const yOffset = 14;
+    pdf.addImage(imgData, 'PNG', 10, yOffset, imgWidth, imgHeight);
     
-    // Add footer
-    pdf.setFontSize(8);
+    // Footer
+    pdf.setFontSize(7);
     pdf.setTextColor(100, 100, 100);
-    pdf.text(`Generated: ${new Date().toLocaleDateString()} | Page 1/1`, 105, 290, { align: 'center' });
+    pdf.text(`Generated: ${new Date().toLocaleDateString()} | Page 1/1`, pageWidth / 2, pageHeight - 4, { align: 'center' });
     
     const filename = `Invoice_${invoice.invoiceNumber || invoice._id || Date.now()}_${COMPANY_INFO.name.replace(/\s+/g, '_')}.pdf`;
     
