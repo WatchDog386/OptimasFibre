@@ -60,6 +60,8 @@ const allowedOrigins = [
   'https://www.optimaswifi.co.ke',
   'https://optimaswifi.co.ke',
   'https://optimasfibre.onrender.com',
+  'https://optimas-fibre.vercel.app',
+  'https://optimasfibre.com',
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:3002'
