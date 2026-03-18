@@ -121,7 +121,6 @@ const CoveragePage = () => {
           </div>
         </div>
       </header>
-       */}
 
       {/* Hero Section with "Cloud" Divider */}
       <section className="relative pt-20 h-[500px] flex items-center justify-center overflow-hidden">
