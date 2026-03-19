@@ -66,17 +66,17 @@ ${formData.message}
             className="flex flex-col items-center justify-center p-0 lg:col-span-5 bg-white/50 rounded-sm"
           >
             <div className="w-full mx-auto shadow-2xl rounded-sm overflow-hidden border-4 border-white transform hover:scale-[1.02] transition-transform duration-300">
-               {/* Displaying PDF seamlessly without a dark container. Using an object/embed suited for visual display */}
-               <embed 
-                  src="/JOb%20openning%20cc.pdf#toolbar=0&navpanes=0&scrollbar=0&view=FitH"
-                  type="application/pdf"
-                  className="w-full h-[700px] object-contain bg-white"
+               {/* Displaying Image seamlessly */}
+               <img 
+                  src="/job.jpeg"
+                  alt="Job Vacancy"
+                  className="w-full h-auto object-contain bg-white"
                   style={{ pointerEvents: 'auto' }}
                 />
             </div>
             <div className="mt-8 text-center pb-4">
                <a 
-                href="/JOb%20openning%20cc.pdf" 
+                href="/job.jpeg" 
                 download
                 className="inline-flex items-center px-8 py-3 bg-[#00356B] text-white rounded-sm text-sm font-bold uppercase tracking-wider hover:bg-[#002244] transition-colors shadow-md"
               >
