@@ -1,8 +1,30 @@
 // backend/src/utils/emailService.js — RESEND INTEGRATION
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { Resend } from 'resend';
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure backend/.env is loaded even when the process is started from workspace root.
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+let resendClient;
+
+const getResendClient = () => {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  if (!resendClient) {
+    resendClient = new Resend(apiKey);
+  }
+
+  return resendClient;
+};
 
 // Validate configuration
 const validateEmailConfig = () => {
@@ -28,6 +50,11 @@ export const sendEmail = async ({ to, subject, text, html, attachments = [] }) =
     const config = validateEmailConfig();
     if (!config.valid) {
       throw new Error(`Email config error: ${config.errors.join('; ')}`);
+    }
+
+    const resend = getResendClient();
+    if (!resend) {
+      throw new Error('Email config error: RESEND_API_KEY is missing in .env');
     }
 
     const emailData = {

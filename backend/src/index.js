@@ -1,5 +1,5 @@
 // src/index.js
-import 'dotenv/config';
+import dotenv from 'dotenv';
 
 import express from 'express';
 import path from 'path';
@@ -28,10 +28,16 @@ import { protect } from './middleware/authMiddleware.js';
 // DB
 import connectDB from './config/db.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Always load backend/.env regardless of where node is started from.
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 /* =========================================================
    ENV VALIDATION
 ========================================================= */
-const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI', 'FRONTEND_URL', 'RESEND_API_KEY'];
+const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI', 'FRONTEND_URL'];
 const missingEnvVars = requiredEnvVars.filter(v => !process.env[v]);
 if (missingEnvVars.length) {
   console.error('❌ Missing env vars:', missingEnvVars);
@@ -41,9 +47,6 @@ if (missingEnvVars.length) {
 /* =========================================================
    APP SETUP
 ========================================================= */
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
 const PORT = process.env.PORT || 10000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
