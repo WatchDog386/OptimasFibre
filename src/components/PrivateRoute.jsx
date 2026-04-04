@@ -6,10 +6,26 @@ const PrivateRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const isTokenUsable = (token) => {
+      if (!token || typeof token !== 'string') return false;
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+
+      try {
+        const payload = JSON.parse(atob(parts[1]));
+        if (!payload?.exp) return true;
+        return payload.exp * 1000 > Date.now();
+      } catch {
+        return false;
+      }
+    };
+
     const verifyToken = async () => {
       const token = localStorage.getItem('token');
       
-      if (!token) {
+      if (!isTokenUsable(token)) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         setIsAuthenticated(false);
         setLoading(false);
         return;

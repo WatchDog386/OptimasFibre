@@ -842,10 +842,36 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       setLoading(true);
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication session expired. Please log in again.');
+
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        throw new Error('Session token is invalid. Please log in again.');
+      }
+
+      try {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload?.exp && payload.exp * 1000 <= Date.now()) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          throw new Error('Session expired. Please log in again.');
+        }
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        throw new Error('Session token is unreadable. Please log in again.');
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/invoices`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          throw new Error('Authentication failed. Please log in again.');
+        }
         const errorText = await response.text();
         throw new Error(`Failed to fetch invoices: ${response.status} - ${errorText}`);
       }

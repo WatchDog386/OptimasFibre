@@ -85,25 +85,32 @@ function AppRoutes() {
 
 // Main App Component
 export default function App() {
+  const isLocal = typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
   return (
     <HelmetProvider>
       <ParallaxProvider>
         {/* Google Analytics Scripts */}
         <Helmet>
-          <script
-            async
-            src="https://www.googletagmanager.com/gtag/js?id=G-6TTHG2D146"
-          />
-          <script>
-            {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag() {
-                dataLayer.push(arguments);
-              }
-              gtag('js', new Date());
-              gtag('config', 'G-6TTHG2D146');
-            `}
-          </script>
+          {!isLocal && (
+            <>
+              <script
+                async
+                src="https://www.googletagmanager.com/gtag/js?id=G-6TTHG2D146"
+              />
+              <script>
+                {`
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag() {
+                    dataLayer.push(arguments);
+                  }
+                  gtag('js', new Date());
+                  gtag('config', 'G-6TTHG2D146');
+                `}
+              </script>
+            </>
+          )}
 
           {/* PERMANENT LIGHT MODE */}
           <body className="bg-white text-primary transition-colors duration-300" />

@@ -31,6 +31,20 @@ const Login = () => {
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000'; 
 
+  const isTokenUsable = (token) => {
+    if (!token || typeof token !== 'string') return false;
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+
+    try {
+      const payload = JSON.parse(atob(parts[1]));
+      if (!payload?.exp) return true;
+      return payload.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
+  };
+
   // --- LOGIC: EFFECTS & HANDLERS (DO NOT TOUCH) ---
   const BG_IMAGE = "https://t4.ftcdn.net/jpg/03/57/34/39/360_F_357343965_u58BFcRrziBVMqgt6liwPHJKcIjHsPnc.jpg";
 
@@ -38,7 +52,9 @@ const Login = () => {
     const checkExistingSession = async () => {
       const token = localStorage.getItem('token');
 
-      if (!token) {
+      if (!isTokenUsable(token)) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         setCheckingSession(false);
         return;
       }

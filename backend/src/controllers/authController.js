@@ -112,8 +112,9 @@ export const verifyToken = async (req, res) => {
     // Fallback: manual token verification
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
-      return res.status(401).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
+        valid: false,
         message: 'No token provided'
       });
     }
@@ -122,8 +123,9 @@ export const verifyToken = async (req, res) => {
     const user = await User.findById(decoded.id).select('-password');
 
     if (!user) {
-      return res.status(401).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
+        valid: false,
         message: 'Invalid token'
       });
     }
@@ -140,8 +142,9 @@ export const verifyToken = async (req, res) => {
 
   } catch (err) {
     console.error('🔐 Token verification error:', err.message);
-    res.status(401).json({
-      success: false,
+    res.status(200).json({
+      success: true,
+      valid: false,
       message: 'Invalid or expired token'
     });
   }
