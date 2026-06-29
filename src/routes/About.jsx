@@ -149,7 +149,7 @@ const About = () => {
           {/* ROW 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center mb-16">
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-              <h2 className="text-2xl font-bold text-primary mb-4">What to know of Optimas</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">What to know of Optimas</h2>
               <div className="space-y-3 text-gray-600 leading-relaxed text-sm">
                 <p>
                   Founded by an experienced team, <span className="font-bold text-gray-900">Optimas</span> offers simple, affordable access to its <span className="font-bold text-gray-900">full-fibre</span> network for everyone.
@@ -178,7 +178,7 @@ const About = () => {
              </motion.div>
 
              <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="order-1 md:order-2">
-                <h2 className="text-2xl font-bold text-primary mb-4">Our Goal and Plan</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Our Goal and Plan</h2>
                 <div className="space-y-3 text-gray-600 leading-relaxed text-sm mb-6">
                   <p>Optimas plans to open its network to more areas across Nairobi & Kiambu over the next 5 years.</p>
                   <p>We believe reliable internet is a fundamental right, bridging the digital divide for education and business.</p>
@@ -195,7 +195,7 @@ const About = () => {
       <section className="py-16 bg-gray-50 border-t border-gray-200">
         <div className="container mx-auto px-6 max-w-5xl">
             <div className="text-center mb-10">
-                <h2 className="text-2xl font-bold text-gray-900">Our Services</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900">Our Services</h2>
                 <p className="text-gray-500 text-xs mt-1">Connectivity solutions.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -212,7 +212,7 @@ const About = () => {
             <div className="container mx-auto px-6 max-w-5xl pt-16 pb-8">
                 <div className="flex justify-between items-end mb-6">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Selected Works</h2>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-900">Selected Works</h2>
                     </div>
                     <button onClick={handleAddPortfolio} className="hidden md:block text-primary text-[10px] font-bold uppercase tracking-widest hover:underline">
                         + Add Project

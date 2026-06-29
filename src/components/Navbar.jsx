@@ -54,10 +54,10 @@ export default function Navbar() {
     <header className="w-full z-[1000] bg-[#F2F7F6] font-sans">
       
       {/* --- TOP UTILITY BAR --- */}
-      <div className="bg-[#004080] text-white py-3 text-[13px]">
+      <div className="hidden sm:block bg-[#004080] text-white py-3 text-[13px]">
         <div className="max-w-6xl mx-auto px-2.5 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <a href="tel:+254741874200" className="flex items-center gap-1.5 hover:text-[#FF6B35]">
+            <a href="tel:+254741874200" className="hidden sm:flex items-center gap-1.5 hover:text-[#FF6B35]">
               <Phone size={14} /> +254 741 874 200
             </a>
             <span className="hidden sm:inline">|</span>
@@ -82,7 +82,7 @@ export default function Navbar() {
                 <div key={item.id} className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className={`flex items-center gap-1 text-[16px] font-bold tracking-wide transition-colors ${
+                    className={`flex items-center gap-1 text-[14px] md:text-[16px] font-bold tracking-wide transition-colors ${
                       location.pathname.startsWith("/about") || location.pathname === "/services" || location.pathname === "/blog" || location.pathname === "/vacancies"
                         ? "text-[#004080]" : "text-gray-700 hover:text-[#004080]"
                     }`}
@@ -120,7 +120,7 @@ export default function Navbar() {
                   key={item.id}
                   to={item.route}
                   className={({ isActive }) => 
-                    `text-[16px] font-bold tracking-wide transition-colors ${
+                    `text-[14px] md:text-[16px] font-bold tracking-wide transition-colors ${
                       isActive ? "text-[#004080]" : "text-gray-700 hover:text-[#004080]"
                     }`
                   }
@@ -134,7 +134,7 @@ export default function Navbar() {
           <div className="hidden xl:flex">
             <NavLink
               to="/coverage"
-              className="px-6 py-3 bg-[#2CA118] text-white text-[13px] uppercase font-bold shadow-lg hover:bg-[#238a13] transition-all"
+              className="px-6 py-3 bg-[#2CA118] text-white text-[12px] md:text-[13px] uppercase font-bold shadow-lg hover:bg-[#238a13] transition-all"
             >
               Book An Installation
             </NavLink>
@@ -175,7 +175,7 @@ export default function Navbar() {
                 <div className="flex justify-between items-center">
                   <div className="flex flex-col">
                     <img src="/logo.png" alt="OptimasFiber Logo" className="h-8 w-auto" />
-                    <span className="text-[7px] sm:text-[8px] font-semibold text-[#004080] tracking-[0.15em] uppercase mt-0.5">
+                    <span className="text-[6px] sm:text-[7px] md:text-[8px] font-semibold text-[#004080] tracking-[0.15em] uppercase mt-0.5">
                       The Best Internet
                     </span>
                   </div>

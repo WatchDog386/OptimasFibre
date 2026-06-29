@@ -941,7 +941,7 @@ const WifiPlans = () => {
             className="max-w-4xl mx-auto"
           >
             <motion.h1 
-              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
+              className="text-2xl md:text-4xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.8 }}
@@ -952,7 +952,7 @@ const WifiPlans = () => {
             </motion.h1>
             
             <motion.p 
-              className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto text-gray-200 leading-relaxed"
+              className="text-sm md:text-xl lg:text-2xl mb-8 max-w-2xl mx-auto text-gray-200 leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.8 }}
@@ -1023,7 +1023,7 @@ const WifiPlans = () => {
               viewport={{ once: true }}
             >
               <motion.h2 
-                className={`text-2xl md:text-4xl font-bold text-center mb-8 ${
+                className={`text-xl md:text-2xl lg:text-4xl font-bold text-center mb-8 ${
                   darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
                 }`}
                 initial={{ opacity: 0, y: 10 }}
@@ -1082,7 +1082,7 @@ const WifiPlans = () => {
             >
               <div className="text-center mb-12">
                 <motion.h2 
-                  className="text-2xl md:text-4xl font-bold mb-6"
+                  className="text-xl md:text-2xl lg:text-4xl font-bold mb-6"
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
@@ -1143,7 +1143,7 @@ const WifiPlans = () => {
               viewport={{ once: true }}
             >
               <motion.h2 
-                className={`text-2xl md:text-4xl font-bold text-center mb-8 ${
+                className={`text-xl md:text-2xl lg:text-4xl font-bold text-center mb-8 ${
                   darkMode ? 'text-[#d0b216]' : 'text-[#182b5c]'
                 }`}
                 initial={{ opacity: 0, y: 10 }}
@@ -1187,7 +1187,7 @@ const WifiPlans = () => {
               }`}
             >
               <motion.h2 
-                className="text-2xl md:text-4xl font-bold mb-6"
+                className="text-xl md:text-2xl lg:text-4xl font-bold mb-6"
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -1197,7 +1197,7 @@ const WifiPlans = () => {
               </motion.h2>
               
               <motion.p 
-                className="text-xl mb-8 max-w-2xl mx-auto text-blue-100"
+                className="text-sm md:text-xl mb-8 max-w-2xl mx-auto text-blue-100"
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}

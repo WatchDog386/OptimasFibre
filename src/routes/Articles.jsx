@@ -55,7 +55,7 @@ const FeaturedArticle = ({ article }) => {
           className="w-full h-72 object-cover rounded-t-3xl"
         />
         <div className="p-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">{article.title}</h2>
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{article.title}</h2>
           <p className="text-gray-600">{article.excerpt}</p>
         </div>
       </Link>
@@ -98,7 +98,7 @@ export default function Articles() {
   return (
     <section className="relative min-h-screen py-24 px-4 md:px-10 overflow-hidden bg-white text-gray-800">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-5xl font-bold text-center text-cyan-600 mb-12">
+        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center text-cyan-600 mb-12">
           {t("titles.knowledgeHub") || "Knowledge Hub"}
         </h1>
 

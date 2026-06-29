@@ -50,7 +50,7 @@ ${formData.message}
         
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-[#00356B] mb-4">Join Our Team</h1>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#00356B] mb-4">Join Our Team</h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             We are always looking for talented individuals to join our growing company. Check out our latest opening!
           </p>
@@ -101,7 +101,7 @@ ${formData.message}
                 <span className="inline-block bg-[#D85C2C] text-white text-xs font-black uppercase tracking-widest px-3 py-1.5 mb-4 rounded-sm shadow-sm">
                   Apply Today
                 </span>
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3 drop-shadow-sm tracking-tight" style={{ color: 'white' }}>
+                <h2 className="text-xl md:text-3xl lg:text-4xl font-extrabold text-white mb-3 drop-shadow-sm tracking-tight" style={{ color: 'white' }}>
                   Submit Application
                 </h2>
                 <p className="text-blue-100/90 text-sm sm:text-base font-medium max-w-md">
@@ -197,7 +197,7 @@ ${formData.message}
                   <div className="pt-6 pb-2">
                     <button
                       type="submit"
-                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-sm shadow-xl text-lg font-bold text-white bg-[#D85C2C] hover:bg-[#b84c22] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D85C2C] transition-all transform hover:-translate-y-0.5 tracking-wide uppercase"
+                      className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-sm shadow-xl text-base md:text-lg font-bold text-white bg-[#D85C2C] hover:bg-[#b84c22] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D85C2C] transition-all transform hover:-translate-y-0.5 tracking-wide uppercase"
                     >
                       <FaPaperPlane className="mr-3" />
                       Compose Email Application

@@ -349,11 +349,11 @@ const Services = () => {
           <div className="w-full md:w-1/2 pt-20 md:pt-0">
             <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
               <p className="text-[#d0b216] text-xs font-bold uppercase tracking-[0.2em] mb-2">Premium Solutions</p>
-              <h1 className="text-4xl md:text-5xl font-bold uppercase mb-2 text-white">
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold uppercase mb-2 text-white">
                 World Class <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d0b216] to-amber-400">Fiber Services</span>
               </h1>
-              <p className="text-gray-300 text-xs md:text-sm max-w-sm mb-6 leading-relaxed">
+              <p className="text-gray-300 text-[10px] md:text-xs lg:text-sm max-w-sm mb-6 leading-relaxed">
                 Whether for home entertainment or enterprise operations, our dedicated fiber infrastructure delivers the speed and reliability you deserve.
               </p>
               <div className="flex gap-4">
@@ -391,7 +391,7 @@ const Services = () => {
         >
           <motion.h1 
             // Replaced conditional dark mode class with light mode default
-            className={`text-lg md:text-2xl font-semibold mb-2 text-[#182b5c]`}
+            className={`text-base md:text-lg lg:text-2xl font-semibold mb-2 text-[#182b5c]`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -400,7 +400,7 @@ const Services = () => {
           </motion.h1>
           <motion.p 
             // Replaced conditional dark mode class with light mode default
-            className={`text-xs md:text-base max-w-3xl mx-auto text-gray-600`}
+            className={`text-[10px] md:text-xs lg:text-base max-w-3xl mx-auto text-gray-600`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -454,7 +454,7 @@ const Services = () => {
       <section className="container mx-auto px-4 mb-6 md:mb-12 relative z-10">
         <motion.h2 
           // Replaced conditional dark mode class with light mode default
-          className={`text-base md:text-xl font-semibold text-center mb-3 md:mb-6 capitalize text-[#182b5c]`}
+          className={`text-sm md:text-base lg:text-xl font-semibold text-center mb-3 md:mb-6 capitalize text-[#182b5c]`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -485,8 +485,8 @@ const Services = () => {
         >
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <div className="p-4 md:p-6 text-white">
-              <h2 className="text-base md:text-xl font-semibold mb-2">Check Our Coverage</h2>
-              <p className="text-blue-100 mb-3 text-xs md:text-sm">
+              <h2 className="text-sm md:text-base lg:text-xl font-semibold mb-2">Check Our Coverage</h2>
+              <p className="text-blue-100 mb-3 text-[10px] md:text-xs lg:text-sm">
                 See if our high-speed fiber network is available in your area.
               </p>
               <ul className="space-y-2 mb-4">
@@ -569,8 +569,8 @@ const Services = () => {
           transition={{ delay: 0.6, duration: 0.5 }}
         >
           <div className="text-center mb-4">
-            <h2 className="text-base md:text-xl font-semibold mb-2 text-white">Value-Added Services</h2>
-            <p className="text-xs md:text-sm text-blue-200">
+            <h2 className="text-sm md:text-base lg:text-xl font-semibold mb-2 text-white">Value-Added Services</h2>
+            <p className="text-[10px] md:text-xs lg:text-sm text-blue-200">
               Enhance your internet experience
             </p>
           </div>
@@ -641,7 +641,7 @@ const Services = () => {
                     <div className={`mr-3 text-lg text-[#182b5c]`}>
                       {selectedService.icon}
                     </div>
-                    <h2 className={`text-base md:text-xl font-semibold text-[#182b5c]`}>
+                    <h2 className={`text-sm md:text-base lg:text-xl font-semibold text-[#182b5c]`}>
                       {selectedService.title}
                     </h2>
                   </div>
@@ -655,7 +655,7 @@ const Services = () => {
                     <FaTimes className="text-lg" />
                   </motion.button>
                 </div>
-                <p className={`text-xs md:text-sm mb-4 text-gray-600`}>
+                <p className={`text-[10px] md:text-xs lg:text-sm mb-4 text-gray-600`}>
                   {selectedService.description}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -762,10 +762,10 @@ const Services = () => {
           // Used light mode background/shadow
           className={`rounded-xl p-4 bg-white shadow-md`}
         >
-          <h2 className={`text-base md:text-xl font-semibold mb-2 text-[#182b5c]`}>
+          <h2 className={`text-sm md:text-base lg:text-xl font-semibold mb-2 text-[#182b5c]`}>
             Ready to Experience True Fiber?
           </h2>
-          <p className={`text-xs md:text-base mb-4 max-w-2xl mx-auto text-gray-600`}>
+          <p className={`text-[10px] md:text-xs lg:text-base mb-4 max-w-2xl mx-auto text-gray-600`}>
             Join thousands of satisfied customers enjoying lightning-fast internet.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">

@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="flex flex-col items-center justify-center space-y-4 w-full md:w-auto">
             
             {/* Navigation Links */}
-            <div className="flex flex-wrap justify-center gap-6 md:gap-8 text-sm md:text-base font-medium tracking-wide">
+            <div className="flex flex-wrap justify-center gap-6 md:gap-8 text-xs md:text-sm lg:text-base font-medium tracking-wide">
               {links.map((link) => (
                 <Link 
                   key={link.name} 
@@ -45,7 +45,7 @@ export default function Footer() {
             </div>
 
             {/* Copyright */}
-            <p className="text-xs text-white/70 font-light tracking-wide mt-2">
+            <p className="text-[10px] md:text-xs text-white/70 font-light tracking-wide mt-2">
               Copyright © {new Date().getFullYear()} Optimas Fiber LTD
             </p>
           </div>
@@ -71,7 +71,7 @@ export default function Footer() {
         href="https://wa.me/254741874200"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] rounded-full shadow-lg hover:shadow-2xl transition-shadow duration-300"
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-[#25D366] rounded-full shadow-lg hover:shadow-2xl transition-shadow duration-300"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         aria-label="Chat on WhatsApp"

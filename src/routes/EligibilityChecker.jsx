@@ -106,7 +106,7 @@ export default function EligibilityChecker() {
             Back
           </button>
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-gray-900">Vuma Fibre Coverage Checker</h1>
+            <h1 className="text-lg md:text-xl font-bold text-gray-900">Vuma Fibre Coverage Checker</h1>
             <p className="text-sm text-gray-600">Verify your area's network availability</p>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function EligibilityChecker() {
           {/* Header Section */}
           <div className="bg-gradient-to-r from-blue-800 to-blue-600 text-white p-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Check Your Coverage</h2>
+              <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-2">Check Your Coverage</h2>
               <p className="text-blue-100 text-sm">
                 Verify your area's network availability and expansion plans
               </p>
@@ -237,7 +237,7 @@ export default function EligibilityChecker() {
             {/* Selected Area Details */}
             {selectedArea && (
               <div className="mb-6 p-5 bg-gray-50 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <h3 className="text-sm md:text-base lg:text-lg font-semibold text-gray-800 mb-3 flex items-center">
                   <FiWifi className="text-blue-600 mr-2" />
                   {selectedArea.name} Coverage Details
                 </h3>

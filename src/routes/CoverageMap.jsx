@@ -146,7 +146,7 @@ const CoveragePage = () => {
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-4xl md:text-6xl font-black text-white mb-2 drop-shadow-lg font-sans "
+            className="text-2xl md:text-4xl lg:text-6xl font-black text-white mb-2 drop-shadow-lg font-sans "
           >
             Areas We Get You Connected
           </motion.h1>
@@ -173,7 +173,7 @@ const CoveragePage = () => {
       <section className={`py-12 md:py-20 px-4 relative z-20 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className={`text-2xl md:text-3xl font-bold mb-2 ${darkMode ? 'text-blue-400' : 'text-[#182B5C]'}`}>
+            <h2 className={`text-xl md:text-2xl lg:text-3xl font-bold mb-2 ${darkMode ? 'text-blue-400' : 'text-[#182B5C]'}`}>
               Optimas Fiber Coverage Areas
             </h2>
             <div className="w-24 h-1 bg-[#d0b216] mx-auto rounded-full"></div>
@@ -192,7 +192,7 @@ const CoveragePage = () => {
                     }`}
                   >
                     <Wifi className={`w-4 h-4 mr-3 flex-shrink-0 ${darkMode ? 'text-blue-400' : 'text-[#182B5C]'}`} />
-                    <span className="font-medium text-sm md:text-base">{area}</span>
+                    <span className="font-medium text-xs md:text-sm lg:text-base">{area}</span>
                   </div>
                 ))}
               </div>
@@ -224,7 +224,7 @@ const CoveragePage = () => {
       {/* FAQ Section */}
       <section className={`py-16 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="container mx-auto px-4 max-w-4xl">
-           <h2 className={`text-3xl font-bold text-center mb-10 ${darkMode ? 'text-white' : 'text-[#182B5C]'}`}>Support & Billing</h2>
+           <h2 className={`text-xl md:text-2xl lg:text-3xl font-bold text-center mb-10 ${darkMode ? 'text-white' : 'text-[#182B5C]'}`}>Support & Billing</h2>
            
            {/* Simple Tabs */}
            <div className="flex justify-center gap-4 mb-8 flex-wrap">

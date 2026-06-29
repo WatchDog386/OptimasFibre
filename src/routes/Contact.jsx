@@ -129,7 +129,7 @@ const Contact = () => {
                 <card.icon />
               </div>
               {/* Shrunk title text */}
-              <h3 className="text-[#015B97] font-bold text-base mb-1">{card.title}</h3>
+              <h3 className="text-[#015B97] font-bold text-sm md:text-base mb-1">{card.title}</h3>
               {/* Shrunk subtitle text */}
               <p className="text-gray-500 text-xs mb-3 leading-relaxed">{card.subtitle}</p>
               <a 
@@ -153,11 +153,11 @@ const Contact = () => {
             transition={{ delay: 0.4 }}
           >
             {/* Reduced heading size */}
-            <h2 className="text-3xl md:text-4xl font-bold text-[#015B97] mb-4">
+            <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-[#015B97] mb-4">
               Get in touch
             </h2>
             {/* Reduced body text size */}
-            <p className="text-gray-600 text-sm leading-relaxed mb-6">
+            <p className="text-gray-600 text-xs md:text-sm leading-relaxed mb-6">
               Ready to connect? Whether you need faster internet or support, 
               Optimas WiFi's team is here to help with reliable fiber solutions.
             </p>

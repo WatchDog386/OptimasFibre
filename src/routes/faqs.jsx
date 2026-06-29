@@ -322,7 +322,7 @@ export default function Faqs() {
         {/* --- Header Section for Self Care --- */}
         <div className="text-center mb-16">
           <p className="text-[#004080] text-[11px] font-bold lowercase tracking-[0.08em] mb-2">self-care portal</p>
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-4 text-[#004080] tracking-tight lowercase">
+          <h2 className="text-xl md:text-3xl lg:text-5xl font-extrabold mb-4 text-[#004080] tracking-tight lowercase">
             self-care portal & faqs
           </h2>
           <p className="text-gray-600 font-bold text-sm md:text-base max-w-2xl mx-auto">
@@ -338,7 +338,7 @@ export default function Faqs() {
                 <span className="w-2 h-2 bg-[#22c55e] rounded-full"></span>
                 network
               </div>
-              <h2 className="text-3xl md:text-[42px] font-extrabold text-[#1A1A24] leading-tight tracking-tight lowercase">
+              <h2 className="text-2xl md:text-3xl lg:text-[42px] font-extrabold text-[#1A1A24] leading-tight tracking-tight lowercase">
                 explore the magic <br className="hidden md:block" /> of the <span className="text-[#22c55e]">network</span>
               </h2>
             </div>
@@ -369,7 +369,7 @@ export default function Faqs() {
                   {item.icon}
                 </div>
 
-                <h4 className="font-extrabold text-[17px] mb-3 lowercase">{item.title}</h4>
+                <h4 className="font-extrabold text-[15px] md:text-[17px] mb-3 lowercase">{item.title}</h4>
                 <p className={`text-sm leading-relaxed ${item.highlighted ? "text-red-50" : "text-gray-500"}`}>
                   {item.description}
                 </p>
@@ -382,7 +382,7 @@ export default function Faqs() {
         <div className="mb-24 max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <p className="text-[#004080] text-[11px] font-bold lowercase tracking-[0.08em] mb-2">support</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#004080] tracking-tight lowercase">
+            <h2 className="text-xl md:text-3xl lg:text-4xl font-extrabold text-[#004080] tracking-tight lowercase">
               frequently asked questions
             </h2>
           </div>

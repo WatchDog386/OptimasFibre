@@ -60,64 +60,64 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <div className="bg-[#2C3E6B] w-full min-h-[550px] md:min-h-[650px] flex items-center" style={{ fontFamily: "'Nunito', sans-serif" }}>
+    <div className="bg-[#2C3E6B] w-full min-h-[460px] md:min-h-[650px] flex items-center relative overflow-hidden rounded-b-[40px] md:rounded-b-none" style={{ fontFamily: "'Nunito', sans-serif" }}>
       <motion.div
-        className="max-w-6xl mx-auto px-2.5 md:px-8 w-full py-10 lg:grid lg:grid-cols-2 gap-12 items-center"
+        className="max-w-6xl mx-auto px-2.5 md:px-8 w-full py-10 lg:grid lg:grid-cols-2 gap-12 items-center relative z-10"
         variants={containerVariantsHero}
         initial="hidden"
         animate="visible"
       >
         <motion.div className="max-w-xl relative z-20" variants={itemLeft}>
-          <motion.h1 className="text-[2rem] md:text-[2.5rem] font-extrabold text-white leading-[1.15] mb-5 tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }} variants={itemLeft}>
+          <motion.h1 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-extrabold text-white leading-[1.15] mb-5 tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }} variants={itemLeft}>
             Fast, Reliable & Affordable<br />
             <span className="text-white">Fiber Network</span>
           </motion.h1>
-          <motion.div className="space-y-2 mb-10" variants={itemLeft}>
-            <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
-              <CheckCircle size={18} className="text-[#FF6B35]" /> Unlimited Internet
+          <motion.div className="grid grid-cols-2 gap-x-3 gap-y-1 md:block md:space-y-2 mb-6 md:mb-10" variants={itemLeft}>
+            <div className="flex items-center gap-2 text-gray-200 text-sm md:text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <CheckCircle size={16} className="text-[#FF6B35] flex-shrink-0" /> Unlimited Internet
             </div>
-            <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
-              <CheckCircle size={18} className="text-[#FF6B35]" /> Free Installation
+            <div className="flex items-center gap-2 text-gray-200 text-sm md:text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <CheckCircle size={16} className="text-[#FF6B35] flex-shrink-0" /> Free Installation
             </div>
-            <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
-              <CheckCircle size={18} className="text-[#FF6B35]" /> No Contracts
+            <div className="flex items-center gap-2 text-gray-200 text-sm md:text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <CheckCircle size={16} className="text-[#FF6B35] flex-shrink-0" /> No Contracts
             </div>
-            <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
-              <CheckCircle size={18} className="text-[#FF6B35]" /> Speeds from 8 Mbps
+            <div className="flex items-center gap-2 text-gray-200 text-sm md:text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <CheckCircle size={16} className="text-[#FF6B35] flex-shrink-0" /> Speeds from 8 Mbps
             </div>
           </motion.div>
 
           <motion.div className="flex flex-wrap gap-4 mb-6" variants={itemLeft}>
-            <button className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
+            <button className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-6 md:px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
               View Packages
             </button>
-            <button className="bg-white hover:bg-gray-100 text-[#2C3E6B] px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
+            <button className="bg-white hover:bg-gray-100 text-[#2C3E6B] px-6 md:px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
               Check Coverage
             </button>
           </motion.div>
 
-          <motion.div variants={itemLeft}>
+          <motion.div className="hidden md:block" variants={itemLeft}>
             <p className="text-gray-300 text-[0.8125rem] mb-4 font-semibold tracking-wide uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>Trusted across Kenya</p>
             <div className="flex items-center gap-8">
               <div className="flex flex-col">
-                <span className="text-[1.625rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>10K+</span>
-                <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Customers</span>
+                <span className="text-[1.25rem] md:text-[1.625rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>10K+</span>
+                <span className="text-[0.6rem] md:text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Customers</span>
               </div>
               <div className="h-8 w-px bg-white/20"></div>
               <div className="flex flex-col">
-                <span className="text-[1.625rem] font-extrabold text-[#FF6B35] leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>99.9%</span>
+                <span className="text-[1.25rem] md:text-[1.625rem] font-extrabold text-[#FF6B35] leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>99.9%</span>
                 <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Uptime</span>
               </div>
               <div className="h-8 w-px bg-white/20"></div>
               <div className="flex flex-col">
-                <span className="text-[1.625rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>24/7</span>
+                <span className="text-[1.25rem] md:text-[1.625rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>24/7</span>
                 <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Support</span>
               </div>
             </div>
           </motion.div>
         </motion.div>
 
-        <motion.div className="relative mt-16 lg:mt-0 hidden md:block h-[450px]" variants={itemRight}>
+        <motion.div className="relative mt-8 md:mt-16 lg:mt-0 h-[200px] md:h-[450px]" variants={itemRight}>
           <div className="relative z-10 flex items-center justify-center h-full">
             <AnimatePresence mode="popLayout">
               <motion.img
@@ -133,7 +133,31 @@ const HeroSection = () => {
             </AnimatePresence>
           </div>
         </motion.div>
+
+        {/* Mobile stats - below image */}
+        <motion.div className="md:hidden mt-6" variants={itemLeft}>
+          <p className="text-gray-300 text-[0.8125rem] mb-4 font-semibold tracking-wide uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>Trusted across Kenya</p>
+          <div className="flex items-center gap-8">
+            <div className="flex flex-col">
+              <span className="text-[1.25rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>10K+</span>
+              <span className="text-[0.6rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Customers</span>
+            </div>
+            <div className="h-8 w-px bg-white/20"></div>
+            <div className="flex flex-col">
+              <span className="text-[1.25rem] font-extrabold text-[#FF6B35] leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>99.9%</span>
+              <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Uptime</span>
+            </div>
+            <div className="h-8 w-px bg-white/20"></div>
+            <div className="flex flex-col">
+              <span className="text-[1.25rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>24/7</span>
+              <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Support</span>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
+
+      {/* Bottom curve overlay */}
+      <div className="absolute bottom-0 left-0 w-full h-10 md:hidden bg-white rounded-t-[40px]"></div>
     </div>
   );
 };
@@ -184,12 +208,13 @@ const hotspotPlans = [
   { name: "Power Dual", price: "1000", duration: "30 Days", color: "from-[#00897B] to-[#26A69A]" }
 ];
 
-// ================================
+  // ================================
 // MAIN CONTENT
 // ================================
 
 const MainContent = () => {
   const [showForm, setShowForm] = useState(false);
+  const [showAllWhoWeAre, setShowAllWhoWeAre] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", location: "", connectionType: "" });
   const [isLoading, setIsLoading] = useState(false);
@@ -221,6 +246,7 @@ const MainContent = () => {
     }, 1500);
   };
 
+
   const fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 
   return (
@@ -233,53 +259,68 @@ const MainContent = () => {
         <div className="max-w-6xl mx-auto px-2.5">
           <div className="grid lg:grid-cols-2 gap-10 md:gap-14 items-end">
             
-            {/* Left: Image & Badge */}
-            <div className="relative flex items-end pl-6 md:pl-10">
+            {/* Left: Image & Badge — Desktop only */}
+            <div className="hidden lg:block relative flex items-end pl-6 md:pl-10">
               <img 
                 src="/browse.png" 
                 alt="Optimas Team" 
-                className="w-full object-contain h-[380px] md:h-[500px]"
+                className="w-full object-contain h-[380px] lg:h-[500px]"
               />
 
-              <div className="absolute top-10 -left-6 md:-left-10 bg-white w-32 h-32 md:w-40 md:h-40 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.15)] flex flex-col items-center justify-center border-[6px] border-white z-20">
-                <span className="text-4xl md:text-5xl font-black text-[#FF6B35]">10+</span>
-                <span className="text-[0.6rem] md:text-xs font-bold text-[#2C3E6B] uppercase tracking-widest mt-1 text-center">Years of<br/>Experience</span>
+              <div className="absolute top-10 -left-6 md:-left-10 bg-white w-32 h-32 lg:w-40 lg:h-40 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.15)] flex flex-col items-center justify-center border-[6px] border-white z-20">
+                <span className="md:text-4xl lg:text-5xl font-black text-[#FF6B35]">10+</span>
+                <span className="md:text-[0.6rem] lg:text-xs font-bold text-[#2C3E6B] uppercase tracking-widest mt-1 text-center">Years of<br/>Experience</span>
               </div>
             </div>
 
-            {/* Right: Text Content */}
-            <div className="pr-4 md:pr-10 pt-12 md:pt-20 pb-8 md:pb-12">
+            {/* Right: Text Content + Mobile Background Image */}
+            <div className="md:mt-0 md:mx-0 bg-white md:bg-transparent rounded-2xl md:rounded-none shadow-md md:shadow-none border border-gray-100 md:border-0 md:px-0 pb-6 md:pb-12 overflow-hidden mt-8 relative">
+              {/* Mobile background image */}
+              <div className="md:hidden absolute bottom-0 left-0 right-0 flex items-end">
+                <img src="/browse.png" alt="" className="w-full object-contain opacity-30 scale-75 origin-bottom" />
+              </div>
+              <div className="px-4 md:px-0 pt-4 md:pt-20 relative z-10">
               <p className="text-[#FF6B35] font-black text-xs uppercase tracking-[0.2em] mb-4" style={{ fontFamily: "'Inter', sans-serif" }}>Who We Are</p>
               
-              <h2 className="text-[2rem] md:text-[2.5rem] font-extrabold text-[#2C3E6B] leading-[1.15] mb-5 tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>
+              <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-extrabold text-[#2C3E6B] leading-[1.15] mb-5 tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>
                 Real people delivering real results.
               </h2>
               
-              <p className="text-gray-500 mb-10 text-base md:text-lg leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <p className="text-gray-500 mb-10 text-sm md:text-base lg:text-lg leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
                 We are dedicated to providing the most reliable and high-speed fiber internet across Kenya. Our infrastructure ensures that your connectivity never drops when you need it the most.
               </p>
 
               <div className="space-y-8">
-                <div className="flex gap-5">
-                  <div className="flex-shrink-0 w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF6B35] shadow-sm">
-                    <BarChart2 className="w-7 h-7" />
+                <div className={`${showAllWhoWeAre ? 'block' : 'hidden'} md:block`}>
+                  <div className="flex gap-5">
+                    <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF6B35] shadow-sm">
+                      <BarChart2 className="w-6 h-6 md:w-7 md:h-7" />
+                    </div>
+                    <div>
+                      <h4 className="text-base md:text-lg lg:text-xl font-extrabold text-[#2C3E6B] mb-2" style={{ fontFamily: "'Nunito', sans-serif" }}>Enterprise Network</h4>
+                      <p className="text-sm text-gray-500 leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>Tailored fiber optic connections designed to keep your business operations running smoothly without interruptions.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-lg md:text-xl font-extrabold text-[#2C3E6B] mb-2" style={{ fontFamily: "'Nunito', sans-serif" }}>Enterprise Network</h4>
-                    <p className="text-sm text-gray-500 leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>Tailored fiber optic connections designed to keep your business operations running smoothly without interruptions.</p>
+
+                  <div className="flex gap-5 mt-8">
+                    <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF6B35] shadow-sm">
+                      <Rocket className="w-6 h-6 md:w-7 md:h-7" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg md:text-xl font-extrabold text-[#2C3E6B] mb-2" style={{ fontFamily: "'Nunito', sans-serif" }}>High-Speed Home Fiber</h4>
+                      <p className="text-sm text-gray-500 leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>Experience seamless 4K streaming, low-latency gaming, and rapid downloads with our premium residential packages.</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-5">
-                  <div className="flex-shrink-0 w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF6B35] shadow-sm">
-                    <Rocket className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg md:text-xl font-extrabold text-[#2C3E6B] mb-2" style={{ fontFamily: "'Nunito', sans-serif" }}>High-Speed Home Fiber</h4>
-                    <p className="text-sm text-gray-500 leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>Experience seamless 4K streaming, low-latency gaming, and rapid downloads with our premium residential packages.</p>
-                  </div>
-                </div>
+                <button
+                  onClick={() => setShowAllWhoWeAre(!showAllWhoWeAre)}
+                  className="md:hidden flex items-center gap-2 text-[#FF6B35] font-bold text-sm"
+                >
+                  {showAllWhoWeAre ? 'Show Less' : 'View All'} <ChevronRight className={`w-4 h-4 transition-transform ${showAllWhoWeAre ? 'rotate-90' : ''}`} />
+                </button>
               </div>
+            </div>
             </div>
 
           </div>
@@ -291,12 +332,13 @@ const MainContent = () => {
         <div className="max-w-6xl mx-auto px-2.5 relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
             <p className="text-[#2562AE] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">our packages</p>
-            <h2 className="text-2xl md:text-3xl font-extrabold mb-2 text-[#2562AE] tracking-tight lowercase">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold mb-2 text-[#2562AE] tracking-tight lowercase">
               unlimited internet
             </h2>
             <p className="text-gray-500 text-sm md:text-base font-bold">Free installation. 24/7 support. Reliable connection.</p>
           </div>
 
+          {/* Desktop grid */}
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
             variants={containerVariants}
@@ -312,11 +354,11 @@ const MainContent = () => {
                   variants={cardVariants}
                   className="rounded-2xl overflow-hidden bg-white shadow-md border border-gray-100 hover:shadow-xl transition-shadow duration-300"
                 >
-                  <div className="h-32 md:h-40 relative overflow-hidden">
+                  <div className="h-24 md:h-32 lg:h-40 relative overflow-hidden">
                       <img src={plan.image} alt={plan.name} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/25 z-10" />
                       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pb-1">
-                          <h2 className="text-2xl md:text-4xl font-black text-white tracking-tighter drop-shadow-lg">
+                          <h2 className="text-xl md:text-2xl lg:text-4xl font-black text-white tracking-tighter drop-shadow-lg">
                             {plan.speed}
                           </h2>
                       </div>
@@ -327,7 +369,7 @@ const MainContent = () => {
                       )}
                   </div>
 
-                  <div className="relative -mt-4 bg-white rounded-t-[18px] p-3.5 md:p-4 pt-0 z-30">
+                  <div className="relative -mt-4 bg-white rounded-t-[18px] p-2.5 md:p-3.5 lg:p-4 pt-0 z-30">
                       <div className="flex justify-center -mt-2.5 mb-2.5">
                         <div className={`px-4 py-1.5 rounded-full text-white font-black text-[10px] tracking-widest uppercase bg-gradient-to-r ${theme.gradient} shadow-md`}>
                            {plan.name}
@@ -335,7 +377,7 @@ const MainContent = () => {
                       </div>
 
                       <div className="text-center mb-3 border-b border-gray-100 pb-2.5">
-                        <span className="text-lg md:text-xl font-black text-[#1A1A24]">{plan.price}</span>
+                        <span className="text-base md:text-lg lg:text-xl font-black text-[#1A1A24]">{plan.price}</span>
                         <span className="text-gray-400 font-black text-[10px] uppercase ml-1">/mo</span>
                       </div>
 
@@ -367,7 +409,7 @@ const MainContent = () => {
         <div className="max-w-6xl mx-auto px-2.5">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
             <p className="text-[#E6007E] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">public zones</p>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-[#1A1A24] tracking-tight lowercase">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-[#1A1A24] tracking-tight lowercase">
               wifi <span className="text-[#E6007E]">hotspots</span>
             </h2>
             <p className="text-gray-500 text-sm md:text-base font-bold">Fast internet on the go.</p>
@@ -381,17 +423,17 @@ const MainContent = () => {
                    onClick={handleHotspotSelect}
                    className={`rounded-2xl p-4 md:p-5 cursor-pointer relative overflow-hidden bg-gradient-to-br ${plan.color} shadow-md`}
                 >
-                   <Wifi className="absolute top-0 right-0 w-10 h-10 md:w-16 md:h-16 text-white opacity-20 m-2" />
-                   <div className="relative z-10 text-white h-24 md:h-32 flex flex-col justify-between">
+                   <Wifi className="absolute top-0 right-0 w-8 h-8 md:w-10 md:h-10 lg:w-16 lg:h-16 text-white opacity-20 m-2" />
+                   <div className="relative z-10 text-white h-20 md:h-24 lg:h-32 flex flex-col justify-between">
                        <div>
-                           <h3 className="font-bold text-xs md:text-sm lowercase tracking-[0.08em] mb-1.5">{plan.name}</h3>
+                           <h3 className="font-bold text-[10px] md:text-xs lg:text-sm lowercase tracking-[0.08em] mb-1.5">{plan.name}</h3>
                            <span className="inline-block bg-white/30 backdrop-blur-sm text-[10px] font-bold px-2 py-1 rounded-md lowercase">
                               {plan.duration}
                            </span>
                        </div>
                        <div>
                            <p className="text-[10px] opacity-80 lowercase font-bold mb-0.5">only</p>
-                           <p className="text-xl md:text-2xl font-bold leading-none">Ksh {plan.price}</p>
+                           <p className="text-lg md:text-xl lg:text-2xl font-bold leading-none">Ksh {plan.price}</p>
                        </div>
                    </div>
                 </motion.div>
@@ -414,11 +456,11 @@ const MainContent = () => {
       <motion.a 
         href="https://wa.me/254741874200  " 
         target="_blank" 
-        className="fixed bottom-6 right-6 z-40 bg-[#25d366] text-white p-4 md:p-5 rounded-full shadow-2xl"
+        className="fixed bottom-6 right-6 z-40 bg-[#25d366] text-white p-3 md:p-4 lg:p-5 rounded-full shadow-2xl"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
       >
-        <WhatsAppIcon className="w-7 h-7 md:w-8 md:h-8" />
+        <WhatsAppIcon className="w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8" />
       </motion.a>
     </div>
   );
@@ -474,7 +516,7 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
 
 const SuccessPopup = ({ onClose }) => (
   <div className="fixed inset-0 bg-[#1A1A24]/80 flex items-center justify-center z-[110] p-4 backdrop-blur-sm" onClick={onClose}>
-    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-xs w-full">
+    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="bg-white p-6 md:p-8 rounded-3xl shadow-2xl text-center max-w-xs w-full">
       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <CheckCircle className="w-8 h-8 text-green-500" />
       </div>

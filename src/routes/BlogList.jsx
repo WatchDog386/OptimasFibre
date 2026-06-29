@@ -113,7 +113,7 @@ const BlogList = () => {
       <div className="max-w-5xl mx-auto px-4 mb-8">
         <div className="flex flex-col md:flex-row justify-between items-end gap-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-black text-[#015B97] tracking-tight mb-2">
+            <h1 className="text-xl md:text-3xl lg:text-4xl font-black text-[#015B97] tracking-tight mb-2">
               Optimas<span className="text-[#d0b216]">.</span>Insights
             </h1>
             <p className="text-gray-500 text-sm max-w-md">
@@ -268,7 +268,7 @@ const BlogList = () => {
                          </span>
                       </div>
 
-                      <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-[#015B97] transition-colors line-clamp-2">
+                      <h3 className="text-base md:text-xl lg:text-2xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-[#015B97] transition-colors line-clamp-2">
                         {post.title}
                       </h3>
 
@@ -376,7 +376,7 @@ const BlogDetailViewer = ({ blogPost, onClose }) => {
               <span className="bg-[#d0b216] text-white text-[10px] font-bold px-3 py-1 rounded-full mb-4 inline-block uppercase tracking-wider shadow-lg">
                 {blogPost.category || 'News'}
               </span>
-              <h1 className="text-3xl md:text-5xl font-black leading-tight max-w-4xl shadow-black drop-shadow-lg">
+              <h1 className="text-xl md:text-3xl lg:text-5xl font-black leading-tight max-w-4xl shadow-black drop-shadow-lg">
                 {blogPost.title}
               </h1>
            </div>

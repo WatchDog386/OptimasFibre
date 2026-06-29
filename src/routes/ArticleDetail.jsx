@@ -54,7 +54,7 @@ const ArticleDetail = () => {
           <img
             src={post.imageUrl}
             alt={post.title}
-            className="w-full h-96 object-cover rounded-xl mb-8"
+            className="w-full h-48 md:h-72 lg:h-96 object-cover rounded-xl mb-8"
           />
         )}
         <div className="flex items-center text-sm text-gray-500 mb-4">
@@ -62,7 +62,7 @@ const ArticleDetail = () => {
           <span className="mx-2">•</span>
           <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
         </div>
-        <h1 className="text-4xl font-bold mb-6">{post.title}</h1>
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-bold mb-6">{post.title}</h1>
         <div className="prose lg:prose-xl max-w-none">
           <p className="text-lg leading-relaxed text-gray-700">
             {post.content}
