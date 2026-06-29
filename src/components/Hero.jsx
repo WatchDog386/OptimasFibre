@@ -60,7 +60,7 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <div className="bg-[#2C3E6B] w-full min-h-[460px] md:min-h-[650px] flex items-center relative overflow-hidden rounded-b-[40px] md:rounded-b-none" style={{ fontFamily: "'Nunito', sans-serif" }}>
+    <div className="bg-[#2C3E6B] w-full min-h-[460px] md:min-h-[650px] flex items-center relative overflow-hidden" style={{ fontFamily: "'Nunito', sans-serif" }}>
       <motion.div
         className="max-w-6xl mx-auto px-2.5 md:px-8 w-full py-10 lg:grid lg:grid-cols-2 gap-12 items-center relative z-10"
         variants={containerVariantsHero}
@@ -156,8 +156,12 @@ const HeroSection = () => {
         </motion.div>
       </motion.div>
 
-      {/* Bottom curve overlay */}
-      <div className="absolute bottom-0 left-0 w-full h-10 md:hidden bg-white rounded-t-[40px]"></div>
+      {/* Bottom downward curve */}
+      <div className="absolute bottom-0 left-0 w-full leading-[0] pointer-events-none md:hidden" style={{ height: '40px' }}>
+        <svg viewBox="0 0 1440 40" className="w-full h-full" preserveAspectRatio="none">
+          <path fill="white" d="M0,0 C360,40 1080,40 1440,0 L1440,40 L0,40 Z" />
+        </svg>
+      </div>
     </div>
   );
 };
@@ -276,8 +280,8 @@ const MainContent = () => {
             {/* Right: Text Content + Mobile Background Image */}
             <div className="md:mt-0 md:mx-0 bg-white md:bg-transparent rounded-2xl md:rounded-none shadow-md md:shadow-none border border-gray-100 md:border-0 md:px-0 pb-6 md:pb-12 overflow-hidden mt-8 relative">
               {/* Mobile background image */}
-              <div className="md:hidden absolute bottom-0 left-0 right-0 flex items-end">
-                <img src="/browse.png" alt="" className="w-full object-contain opacity-30 scale-75 origin-bottom" />
+              <div className="md:hidden absolute bottom-0 left-0 right-0 h-64">
+                <img src="/browse.png" alt="" className="w-full h-full object-contain opacity-70" />
               </div>
               <div className="px-4 md:px-0 pt-4 md:pt-20 relative z-10">
               <p className="text-[#FF6B35] font-black text-xs uppercase tracking-[0.2em] mb-4" style={{ fontFamily: "'Inter', sans-serif" }}>Who We Are</p>
@@ -286,7 +290,7 @@ const MainContent = () => {
                 Real people delivering real results.
               </h2>
               
-              <p className="text-gray-500 mb-10 text-sm md:text-base lg:text-lg leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <p className="text-gray-800 mb-10 text-sm md:text-base lg:text-lg leading-relaxed font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
                 We are dedicated to providing the most reliable and high-speed fiber internet across Kenya. Our infrastructure ensures that your connectivity never drops when you need it the most.
               </p>
 
@@ -298,7 +302,7 @@ const MainContent = () => {
                     </div>
                     <div>
                       <h4 className="text-base md:text-lg lg:text-xl font-extrabold text-[#2C3E6B] mb-2" style={{ fontFamily: "'Nunito', sans-serif" }}>Enterprise Network</h4>
-                      <p className="text-sm text-gray-500 leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>Tailored fiber optic connections designed to keep your business operations running smoothly without interruptions.</p>
+                      <p className="text-sm text-gray-700 leading-relaxed font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>Tailored fiber optic connections designed to keep your business operations running smoothly without interruptions.</p>
                     </div>
                   </div>
 
@@ -308,7 +312,7 @@ const MainContent = () => {
                     </div>
                     <div>
                       <h4 className="text-lg md:text-xl font-extrabold text-[#2C3E6B] mb-2" style={{ fontFamily: "'Nunito', sans-serif" }}>High-Speed Home Fiber</h4>
-                      <p className="text-sm text-gray-500 leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>Experience seamless 4K streaming, low-latency gaming, and rapid downloads with our premium residential packages.</p>
+                      <p className="text-sm text-gray-700 leading-relaxed font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>Experience seamless 4K streaming, low-latency gaming, and rapid downloads with our premium residential packages.</p>
                     </div>
                   </div>
                 </div>
@@ -405,7 +409,7 @@ const MainContent = () => {
       </section>
 
       {/* HOTSPOT SECTION */}
-      <section id="hotspot-section" className="py-16 md:py-24 bg-[#2C3E6B]">
+      <section id="hotspot-section" className="py-16 md:py-24 bg-[#F8F9FA]">
         <div className="max-w-6xl mx-auto px-2.5">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
             <p className="text-[#E6007E] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">public zones</p>
