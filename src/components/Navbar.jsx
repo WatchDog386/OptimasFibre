@@ -55,7 +55,7 @@ export default function Navbar() {
       
       {/* --- TOP UTILITY BAR --- */}
       <div className="bg-[#004080] text-white py-3 text-[13px]">
-        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
+        <div className="max-w-6xl mx-auto px-2.5 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <a href="tel:+254741874200" className="flex items-center gap-1.5 hover:text-[#FF6B35]">
               <Phone size={14} /> +254 741 874 200
@@ -70,9 +70,9 @@ export default function Navbar() {
 
       {/* --- MAIN NAVBAR --- */}
       <div className="bg-[#F2F7F6] py-4 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-2.5 flex items-center justify-between gap-8 lg:gap-14">
           
-          <NavLink to="/" className="flex items-center">
+          <NavLink to="/" className="flex items-center flex-shrink-0">
              <img src="/logo.png" alt="OptimasFiber Logo" className="h-10 md:h-12 w-auto" />
           </NavLink>
 
@@ -82,7 +82,7 @@ export default function Navbar() {
                 <div key={item.id} className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className={`flex items-center gap-1 text-[15px] font-semibold tracking-wide transition-colors ${
+                    className={`flex items-center gap-1 text-[16px] font-bold tracking-wide transition-colors ${
                       location.pathname.startsWith("/about") || location.pathname === "/services" || location.pathname === "/blog" || location.pathname === "/vacancies"
                         ? "text-[#004080]" : "text-gray-700 hover:text-[#004080]"
                     }`}
@@ -120,7 +120,7 @@ export default function Navbar() {
                   key={item.id}
                   to={item.route}
                   className={({ isActive }) => 
-                    `text-[15px] font-semibold tracking-wide transition-colors ${
+                    `text-[16px] font-bold tracking-wide transition-colors ${
                       isActive ? "text-[#004080]" : "text-gray-700 hover:text-[#004080]"
                     }`
                   }
@@ -134,7 +134,7 @@ export default function Navbar() {
           <div className="hidden xl:flex">
             <NavLink
               to="/coverage"
-              className="px-6 py-3 bg-[#FF6B35] text-white text-[13px] uppercase font-bold rounded-full shadow-lg hover:bg-[#e55a2b] transition-all"
+              className="px-6 py-3 bg-[#2CA118] text-white text-[13px] uppercase font-bold shadow-lg hover:bg-[#238a13] transition-all"
             >
               Book An Installation
             </NavLink>

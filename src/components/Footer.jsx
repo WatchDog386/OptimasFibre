@@ -21,7 +21,7 @@ export default function Footer() {
     <>
       <footer className="relative w-full bg-[#004080] text-white overflow-hidden font-sans">
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 md:h-32 flex flex-col md:flex-row items-center justify-between">
+        <div className="relative z-10 max-w-6xl mx-auto px-2.5 py-8 md:h-32 flex flex-col md:flex-row items-center justify-between">
           
           {/* Spacer for centering logic on desktop */}
           <div className="hidden md:block w-12"></div>

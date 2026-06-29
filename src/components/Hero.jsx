@@ -20,6 +20,35 @@ const WhatsAppIcon = ({ className }) => (
 // --- HERO SECTION ---
 const heroImages = ["/hero.png", "/hero1.png", "/availble.png", "/hero2.png"];
 
+const containerVariantsHero = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemLeft = {
+  hidden: { opacity: 0, x: -200 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring", stiffness: 60, damping: 20 },
+  },
+};
+
+const itemRight = {
+  hidden: { opacity: 0, x: 200 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring", stiffness: 60, damping: 20 },
+  },
+};
+
 const HeroSection = () => {
   const [heroImgIndex, setHeroImgIndex] = useState(0);
 
@@ -32,14 +61,18 @@ const HeroSection = () => {
 
   return (
     <div className="bg-[#2C3E6B] w-full min-h-[550px] md:min-h-[650px] flex items-center" style={{ fontFamily: "'Nunito', sans-serif" }}>
-      <div className="max-w-7xl mx-auto px-4 md:px-8 w-full py-10 lg:grid lg:grid-cols-2 gap-12 items-center">
-        
-        <div className="max-w-xl relative z-20">
-          <h1 className="text-[2rem] md:text-[2.5rem] font-extrabold text-white leading-[1.15] mb-5 tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>
+      <motion.div
+        className="max-w-6xl mx-auto px-2.5 md:px-8 w-full py-10 lg:grid lg:grid-cols-2 gap-12 items-center"
+        variants={containerVariantsHero}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div className="max-w-xl relative z-20" variants={itemLeft}>
+          <motion.h1 className="text-[2rem] md:text-[2.5rem] font-extrabold text-white leading-[1.15] mb-5 tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }} variants={itemLeft}>
             Fast, Reliable & Affordable<br />
             <span className="text-white">Fiber Network</span>
-          </h1>
-          <div className="space-y-2 mb-10">
+          </motion.h1>
+          <motion.div className="space-y-2 mb-10" variants={itemLeft}>
             <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
               <CheckCircle size={18} className="text-[#FF6B35]" /> Unlimited Internet
             </div>
@@ -52,18 +85,18 @@ const HeroSection = () => {
             <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
               <CheckCircle size={18} className="text-[#FF6B35]" /> Speeds from 8 Mbps
             </div>
-          </div>
+          </motion.div>
 
-          <div className="flex flex-wrap gap-4 mb-6">
-            <button className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-8 py-3.5 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
+          <motion.div className="flex flex-wrap gap-4 mb-6" variants={itemLeft}>
+            <button className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
               View Packages
             </button>
-            <button className="bg-white hover:bg-gray-100 text-[#2C3E6B] px-8 py-3.5 rounded-full text-sm font-bold transition-colors shadow-lg border border-white/30" style={{ fontFamily: "'Nunito', sans-serif" }}>
+            <button className="bg-white hover:bg-gray-100 text-[#2C3E6B] px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
               Check Coverage
             </button>
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div variants={itemLeft}>
             <p className="text-gray-300 text-[0.8125rem] mb-4 font-semibold tracking-wide uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>Trusted across Kenya</p>
             <div className="flex items-center gap-8">
               <div className="flex flex-col">
@@ -81,20 +114,26 @@ const HeroSection = () => {
                 <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Support</span>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="relative mt-16 lg:mt-0 hidden md:block h-[450px]">
+        <motion.div className="relative mt-16 lg:mt-0 hidden md:block h-[450px]" variants={itemRight}>
           <div className="relative z-10 flex items-center justify-center h-full">
-            <img 
-              key={heroImgIndex}
-              src={heroImages[heroImgIndex]} 
-              alt="Fast Fiber Internet" 
-              className="w-full max-w-[600px] max-h-full object-contain transition-opacity duration-500"
-            />
+            <AnimatePresence mode="popLayout">
+              <motion.img
+                key={heroImgIndex}
+                src={heroImages[heroImgIndex]}
+                alt="Fast Fiber Internet"
+                className="w-full max-w-[600px] max-h-full object-contain"
+                initial={{ opacity: 0, x: 300 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -300 }}
+                transition={{ type: "spring", stiffness: 60, damping: 20 }}
+              />
+            </AnimatePresence>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
@@ -191,7 +230,7 @@ const MainContent = () => {
 
       {/* WHO WE ARE */}
       <section className="bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-2.5">
           <div className="grid lg:grid-cols-2 gap-10 md:gap-14 items-end">
             
             {/* Left: Image & Badge */}
@@ -249,7 +288,7 @@ const MainContent = () => {
 
       {/* WI-FI PACKAGES */}
       <section id="wifi-packages" className="py-16 md:py-24 relative bg-[#F8F9FA]">
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
+        <div className="max-w-6xl mx-auto px-2.5 relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
             <p className="text-[#2562AE] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">our packages</p>
             <h2 className="text-2xl md:text-3xl font-extrabold mb-2 text-[#2562AE] tracking-tight lowercase">
@@ -324,8 +363,8 @@ const MainContent = () => {
       </section>
 
       {/* HOTSPOT SECTION */}
-      <section id="hotspot-section" className="py-16 md:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
+      <section id="hotspot-section" className="py-16 md:py-24 bg-[#2C3E6B]">
+        <div className="max-w-6xl mx-auto px-2.5">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
             <p className="text-[#E6007E] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">public zones</p>
             <h2 className="text-2xl md:text-3xl font-extrabold text-[#1A1A24] tracking-tight lowercase">

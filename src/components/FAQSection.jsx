@@ -8,7 +8,7 @@ const FAQSection = ({ faqData }) => {
 
   return (
     <section className="bg-gray-50 py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-2.5 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-[#182b5c] mb-8">FAQs</h2>
 
         <div className="grid lg:grid-cols-4 gap-8">

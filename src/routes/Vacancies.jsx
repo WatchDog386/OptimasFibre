@@ -46,7 +46,7 @@ ${formData.message}
         <meta name="description" content="Join the Optimas Fiber team. We are hiring Customer Care Support and more." />
       </Helmet>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-2.5 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="text-center mb-12">

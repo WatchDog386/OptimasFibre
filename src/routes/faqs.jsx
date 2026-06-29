@@ -331,11 +331,8 @@ export default function Faqs() {
         </div>
 
         {/* --- RE-DESIGNED: Explore The Network (Matches UI Image) --- */}
-        <div className="mb-24 bg-gradient-to-br from-[#f8f9fa] to-[#eef2f6] p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
-          {/* Subtle dotted background pattern simulation */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-          
-          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+        <div className="mb-24">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
             <div>
               <div className="flex items-center gap-2 text-[#22c55e] font-bold text-[11px] tracking-[0.08em] lowercase mb-3">
                 <span className="w-2 h-2 bg-[#22c55e] rounded-full"></span>
@@ -351,12 +348,12 @@ export default function Faqs() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {whyChooseData.map((item, index) => (
               <div 
                 key={index} 
                 className={`
-                  relative px-6 pt-8 pb-14 rounded-[20px] transition-all duration-300
+                  px-6 pt-8 pb-8 transition-all duration-300
                   ${item.highlighted 
                     ? "bg-[#ef4444] text-white shadow-xl shadow-red-500/20 scale-105 z-10" 
                     : "bg-white text-gray-800 shadow-sm border border-gray-100 hover:shadow-md"
@@ -376,15 +373,6 @@ export default function Faqs() {
                 <p className={`text-sm leading-relaxed ${item.highlighted ? "text-red-50" : "text-gray-500"}`}>
                   {item.description}
                 </p>
-
-                {/* Arrow Badge Positioned Absolute */}
-                <div className={`absolute -bottom-4 right-6 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 cursor-pointer ${
-                  item.highlighted 
-                    ? "bg-white text-[#22c55e]" 
-                    : "bg-[#111827] text-white"
-                }`}>
-                  <ArrowRight className="w-4 h-4" strokeWidth={3} />
-                </div>
               </div>
             ))}
           </div>
@@ -426,7 +414,7 @@ export default function Faqs() {
         </div>
 
         {/* CTA SECTION */}
-        <div className="max-w-7xl mx-auto px-4 md:px-8 grid md:grid-cols-2 gap-6 pb-16">
+        <div className="max-w-6xl mx-auto px-2.5 md:px-8 grid md:grid-cols-2 gap-6 pb-16">
           <div className="bg-[#E8F0FE] p-8 flex items-center justify-between overflow-hidden relative">
             <div className="relative z-10 w-2/3">
               <p className="text-[#004080] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">residential</p>
