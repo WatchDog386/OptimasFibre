@@ -119,18 +119,13 @@ const HeroSection = () => {
 
         <motion.div className="relative mt-8 md:mt-16 lg:mt-0 h-[200px] md:h-[450px]" variants={itemRight}>
           <div className="relative z-10 flex items-center justify-center h-full">
-            <AnimatePresence mode="popLayout">
-              <motion.img
-                key={heroImgIndex}
-                src={heroImages[heroImgIndex]}
-                alt="Fast Fiber Internet"
-                className="w-full max-w-[600px] max-h-full object-contain"
-                initial={{ opacity: 0, x: 300 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -300 }}
-                transition={{ type: "spring", stiffness: 60, damping: 20 }}
-              />
-            </AnimatePresence>
+<motion.img
+  src={heroImages[heroImgIndex]}
+  alt="Fast Fiber Internet"
+  className="w-full max-w-[600px] max-h-full object-contain"
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ type: "spring", stiffness: 60, damping: 20 }}
+/>
           </div>
         </motion.div>
 
