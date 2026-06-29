@@ -2,36 +2,51 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   MapPin,
-  Send
+  Send,
+  Phone,
+  MessageCircle,
+  Mail,
+  Headphones,
 } from "lucide-react";
 
-// Optimas Brand Colors - Updated to Vuma Fiber palette
-const OPTIMAS_PRIMARY = '#303a4d';
-const OPTIMAS_ACCENT = '#00d084';
-
-// Custom SVG Icons to match the "Real" look
-const CustomIcons = {
-  Phone: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-[#303a4d]">
-      <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.51 1.51c-2.48-1.27-4.5-3.29-5.77-5.77l1.51-1.51c.24-.24.3-.58.24-1.01-.36-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3.76 3 4.41 3 4.99c0 9.8 7.21 17.01 17.01 17.01.58 0 1.23-.65 1.23-1.19v-4.44c0-.54-.45-.99-.99-.99z"/>
-    </svg>
-  ),
-  WhatsApp: () => (
-    <svg viewBox="0 0 24 24" fill="#00d084" className="w-10 h-10">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-  ),
-  Mail: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-10 h-10 text-[#303a4d]">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-  ),
-  Ticket: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-[#303a4d]">
-      <path d="M21 10h-2a2 2 0 0 1 0-4h2V4h-6v2a2 2 0 0 1-4 0V4H5v2a2 2 0 0 1 0 4H3v4h2a2 2 0 0 1 0 4h2v2h6v-2a2 2 0 0 1 4 0v2h6v-2h-2a2 2 0 0 1 0-4h2v-4z" />
-    </svg>
-  )
+const BRAND = {
+  navy: "#2C3E6B",
+  orange: "#FF6B35",
+  light: "#F8F9FA",
+  white: "#FFFFFF",
+  dark: "#1A1A24",
 };
+
+const contactCards = [
+  {
+    title: "Call Us",
+    subtitle: "Mon-Fri from 8am to 6pm",
+    contact: "+254 741 874 200",
+    href: "tel:+254741874200",
+    icon: Phone,
+  },
+  {
+    title: "WhatsApp",
+    subtitle: "Chat with our support",
+    contact: "0741 874 200",
+    href: "https://wa.me/254741874200",
+    icon: MessageCircle,
+  },
+  {
+    title: "Email Us",
+    subtitle: "support@optimaswifi.co.ke",
+    contact: "support@optimaswifi.co.ke",
+    href: "mailto:support@optimaswifi.co.ke",
+    icon: Mail,
+  },
+  {
+    title: "Support",
+    subtitle: "24/7 help center",
+    contact: "optimaswifi.co.ke",
+    href: "https://optimaswifi.co.ke",
+    icon: Headphones,
+  },
+];
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -50,146 +65,114 @@ const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simulate form submission
     console.log(formData);
-    alert("Support ticket submitted successfully! We'll get back to you soon.");
+    alert("Message sent! We'll get back to you soon.");
   };
-
-  // Animation Variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1, 
-      transition: { staggerChildren: 0.1, delayChildren: 0.1 } 
-    }
-  };
-
-  const cardVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.4 } }
-  };
-
-  const contactCards = [
-    {
-      title: "Give us a call",
-      subtitle: "We are here 24/7 for support",
-      contact: "+254 741 874 200",
-      href: "tel:+254741874200",
-      icon: CustomIcons.Phone,
-    },
-    {
-      title: "WhatsApp Us",
-      subtitle: "Chat with our support team",
-      contact: "0741 874 200",
-      href: "https://wa.me/254741874200",
-      icon: CustomIcons.WhatsApp,
-    },
-    {
-      title: "Send Mail",
-      subtitle: "Any questions you can email us",
-      contact: "support@optimaswifi.co.ke",
-      href: "mailto:support@optimaswifi.co.ke",
-      icon: CustomIcons.Mail,
-    },
-    {
-      title: "Ticket Support",
-      subtitle: "Log a ticket online",
-      contact: "optimaswifi.co.ke",
-      href: "https://optimaswifi.co.ke",
-      icon: CustomIcons.Ticket,
-    },
-  ];
 
   return (
-    <div className="min-h-screen bg-[#F4F6F9] font-sans text-gray-900 pb-16 relative">
-      
-      {/* --- TOP HEADER / BACKGROUND --- */}
-      {/* Increased height to cover the new spacing */}
-      <div className="bg-[#015B97] h-[450px] w-full absolute top-0 left-0 z-0"></div>
+    <div className="min-h-screen bg-[#F8F9FA] font-sans text-gray-900 relative">
+      {/* Hero Header */}
+      <div className="bg-[#2C3E6B] pt-28 md:pt-36 pb-16 md:pb-24 relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <p className="text-[#FF6B35] text-[11px] font-bold lowercase tracking-[0.08em] mb-3">
+              get in touch
+            </p>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
+              Contact Us
+            </h1>
+            <p className="text-gray-300 text-sm md:text-base max-w-xl leading-relaxed">
+              Have a question or need help? Reach out and our team will get back to you within 24 hours.
+            </p>
+          </motion.div>
+        </div>
+        {/* Decorative curve */}
+        <div className="absolute bottom-0 left-0 w-full leading-[0]">
+          <svg viewBox="0 0 1440 60" className="w-full h-[40px] md:h-[60px]">
+            <path fill="#F8F9FA" d="M0,0 C480,60 960,60 1440,0 L1440,60 L0,60 Z" />
+          </svg>
+        </div>
+      </div>
 
-      {/* FIX: Increased padding-top (pt-32 md:pt-40) to push content 
-         down below the fixed navbar.
-      */}
-      <div className="relative z-10 container mx-auto px-4 md:px-8 max-w-6xl pt-32 md:pt-40">
-        
-        {/* --- SECTION 1: CONTACT CARDS --- */}
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-16"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+      {/* Contact Cards - horizontal row */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 -mt-4 md:-mt-8 relative z-20">
+        <motion.div
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
           {contactCards.map((card, idx) => (
-            <motion.div 
+            <a
               key={idx}
-              variants={cardVariants}
-              className="bg-white rounded-lg shadow-md p-6 flex flex-col items-start hover:-translate-y-1 transition-transform duration-300 border-b-4 border-transparent hover:border-[#d0b216]"
+              href={card.href}
+              className="bg-white rounded-2xl p-4 md:p-5 shadow-md border border-gray-100 flex flex-col items-start hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
             >
-              <div className="mb-4">
-                <card.icon />
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-[#2C3E6B]/5 flex items-center justify-center text-[#2C3E6B] mb-3 group-hover:bg-[#FF6B35] group-hover:text-white transition-colors">
+                <card.icon className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              {/* Shrunk title text */}
-              <h3 className="text-[#015B97] font-bold text-sm md:text-base mb-1">{card.title}</h3>
-              {/* Shrunk subtitle text */}
-              <p className="text-gray-500 text-xs mb-3 leading-relaxed">{card.subtitle}</p>
-              <a 
-                href={card.href} 
-                className="text-[#015B97] font-bold text-sm hover:text-[#d0b216] transition-colors mt-auto"
-              >
+              <h3 className="font-extrabold text-[#2C3E6B] text-xs md:text-sm mb-1">
+                {card.title}
+              </h3>
+              <p className="text-gray-400 text-[10px] md:text-xs mb-2 leading-snug">
+                {card.subtitle}
+              </p>
+              <span className="text-[#FF6B35] font-bold text-xs md:text-sm group-hover:text-[#e55a2b] transition-colors">
                 {card.contact}
-              </a>
-            </motion.div>
+              </span>
+            </a>
           ))}
         </motion.div>
+      </div>
 
-        {/* --- SECTION 2: TEXT & FORM SPLIT --- */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 items-start">
-          
-          {/* Left Side: Text Content */}
-          <motion.div 
-            className="w-full lg:w-1/3 pt-2"
+      {/* Form Section */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 mt-10 md:mt-14 pb-16">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
+          {/* Left Info */}
+          <motion.div
+            className="w-full lg:w-5/12"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.3 }}
           >
-            {/* Reduced heading size */}
-            <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-[#015B97] mb-4">
-              Get in touch
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#2C3E6B] mb-4">
+              Let's talk about everything.
             </h2>
-            {/* Reduced body text size */}
-            <p className="text-gray-600 text-xs md:text-sm leading-relaxed mb-6">
-              Ready to connect? Whether you need faster internet or support, 
-              Optimas WiFi's team is here to help with reliable fiber solutions.
+            <p className="text-gray-500 text-sm leading-relaxed mb-8">
+              Fill out the form and our team will get back to you within 24 hours.
             </p>
-            
-            {/* Compact Office Location Info */}
-            <div className="bg-white p-5 rounded-lg shadow-sm border border-blue-100 flex items-start gap-3">
-               <MapPin className="w-5 h-5 text-[#d0b216] shrink-0 mt-0.5" />
-               <div>
-                 <h4 className="font-bold text-[#015B97] text-sm mb-1">Our Office</h4>
-                 <p className="text-xs text-gray-500 leading-snug">
-                   Visit our office for WiFi Solutions.<br/>
-                   Nairobi, Kenya
-                 </p>
-               </div>
+
+            <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-gray-100 flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-[#FF6B35]/10 flex items-center justify-center shrink-0">
+                <MapPin className="w-5 h-5 text-[#FF6B35]" />
+              </div>
+              <div>
+                <h4 className="font-extrabold text-[#2C3E6B] text-sm mb-1">Our Office</h4>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  Nairobi, Kenya<br />
+                  Westlands, Biashara Street
+                </p>
+              </div>
             </div>
           </motion.div>
 
-          {/* Right Side: The Form */}
-          <motion.div 
-            className="w-full lg:w-2/3"
+          {/* Right Form Card */}
+          <motion.div
+            className="w-full lg:w-7/12"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.4 }}
           >
-            <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 border border-gray-100">
+            <div className="bg-white rounded-2xl shadow-lg p-5 md:p-8 border border-gray-100">
               <form onSubmit={handleSubmit} className="space-y-4">
-                
-                {/* Row 1: Name */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[#015B97] font-semibold text-xs uppercase tracking-wide">
-                      First Name <span className="text-red-400">*</span>
+                    <label className="text-[#2C3E6B] font-bold text-[10px] uppercase tracking-[0.06em]">
+                      First Name <span className="text-[#FF6B35]">*</span>
                     </label>
                     <input
                       type="text"
@@ -197,13 +180,13 @@ const Contact = () => {
                       value={formData.firstName}
                       onChange={handleChange}
                       required
-                      className="w-full px-3 py-2.5 rounded border border-gray-200 text-sm focus:border-[#015B97] focus:ring-1 focus:ring-[#015B97] outline-none transition-all placeholder:text-gray-300"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50/50 focus:border-[#2C3E6B] focus:bg-white focus:outline-none transition-colors font-medium"
                       placeholder="Jane"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[#015B97] font-semibold text-xs uppercase tracking-wide">
-                      Last Name <span className="text-red-400">*</span>
+                    <label className="text-[#2C3E6B] font-bold text-[10px] uppercase tracking-[0.06em]">
+                      Last Name <span className="text-[#FF6B35]">*</span>
                     </label>
                     <input
                       type="text"
@@ -211,16 +194,15 @@ const Contact = () => {
                       value={formData.lastName}
                       onChange={handleChange}
                       required
-                      className="w-full px-3 py-2.5 rounded border border-gray-200 text-sm focus:border-[#015B97] focus:ring-1 focus:ring-[#015B97] outline-none transition-all placeholder:text-gray-300"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50/50 focus:border-[#2C3E6B] focus:bg-white focus:outline-none transition-colors font-medium"
                       placeholder="Doe"
                     />
                   </div>
                 </div>
 
-                {/* Row 2: Company & Phone */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[#015B97] font-semibold text-xs uppercase tracking-wide">
+                    <label className="text-[#2C3E6B] font-bold text-[10px] uppercase tracking-[0.06em]">
                       Company
                     </label>
                     <input
@@ -228,12 +210,12 @@ const Contact = () => {
                       name="company"
                       value={formData.company}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 rounded border border-gray-200 text-sm focus:border-[#015B97] focus:ring-1 focus:ring-[#015B97] outline-none transition-all placeholder:text-gray-300"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50/50 focus:border-[#2C3E6B] focus:bg-white focus:outline-none transition-colors font-medium"
                       placeholder="Business Ltd"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[#015B97] font-semibold text-xs uppercase tracking-wide">
+                    <label className="text-[#2C3E6B] font-bold text-[10px] uppercase tracking-[0.06em]">
                       Phone Number
                     </label>
                     <input
@@ -241,16 +223,15 @@ const Contact = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 rounded border border-gray-200 text-sm focus:border-[#015B97] focus:ring-1 focus:ring-[#015B97] outline-none transition-all placeholder:text-gray-300"
-                      placeholder="+254..."
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50/50 focus:border-[#2C3E6B] focus:bg-white focus:outline-none transition-colors font-medium"
+                      placeholder="+254 700 000 000"
                     />
                   </div>
                 </div>
 
-                {/* Row 3: Email */}
                 <div className="space-y-1.5">
-                  <label className="text-[#015B97] font-semibold text-xs uppercase tracking-wide">
-                    Email Address <span className="text-red-400">*</span>
+                  <label className="text-[#2C3E6B] font-bold text-[10px] uppercase tracking-[0.06em]">
+                    Email Address <span className="text-[#FF6B35]">*</span>
                   </label>
                   <input
                     type="email"
@@ -258,14 +239,13 @@ const Contact = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2.5 rounded border border-gray-200 text-sm focus:border-[#015B97] focus:ring-1 focus:ring-[#015B97] outline-none transition-all placeholder:text-gray-300"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50/50 focus:border-[#2C3E6B] focus:bg-white focus:outline-none transition-colors font-medium"
                     placeholder="jane@example.com"
                   />
                 </div>
 
-                {/* Row 4: Message */}
                 <div className="space-y-1.5">
-                  <label className="text-[#015B97] font-semibold text-xs uppercase tracking-wide">
+                  <label className="text-[#2C3E6B] font-bold text-[10px] uppercase tracking-[0.06em]">
                     Message
                   </label>
                   <textarea
@@ -273,21 +253,18 @@ const Contact = () => {
                     value={formData.message}
                     onChange={handleChange}
                     rows="4"
-                    className="w-full px-3 py-2.5 rounded border border-gray-200 text-sm focus:border-[#015B97] focus:ring-1 focus:ring-[#015B97] outline-none transition-all resize-none placeholder:text-gray-300"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50/50 focus:border-[#2C3E6B] focus:bg-white focus:outline-none transition-colors resize-none font-medium"
                     placeholder="How can we help you today?"
-                  ></textarea>
+                  />
                 </div>
 
-                {/* Submit Button */}
-                <div className="pt-2">
-                  <button 
-                    type="submit"
-                    className="px-8 py-3 bg-[#015B97] text-white font-bold text-sm rounded-full hover:bg-[#01497a] hover:shadow-lg transition-all transform active:scale-95 flex items-center gap-2"
-                  >
-                    Submit Ticket <Send className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
+                <button
+                  type="submit"
+                  className="mt-2 px-8 py-3.5 bg-[#FF6B35] text-white font-extrabold text-xs uppercase tracking-[0.08em] rounded-full hover:bg-[#e55a2b] hover:shadow-lg transition-all active:scale-95 flex items-center gap-2 shadow-md"
+                >
+                  Send Message
+                  <Send className="w-4 h-4" />
+                </button>
               </form>
             </div>
           </motion.div>
