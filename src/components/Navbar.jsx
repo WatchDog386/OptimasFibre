@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { 
-  Menu, X, Phone, Mail, 
+  Menu, X, Phone, Mail,
+ User, 
   Wifi, ChevronRight, ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
