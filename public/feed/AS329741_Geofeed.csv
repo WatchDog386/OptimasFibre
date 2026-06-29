@@ -1,0 +1,6 @@
+# RFC8805
+# For AS 329741
+
+# prefix,country_code,region_code,city,postal
+102.202.148.0/22,KE,KE-30,Nairobi,100
+2c0f:4ba0::/32,KE,KE-26,Nairobi,100

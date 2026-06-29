@@ -1,0 +1,96 @@
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
+import {
+  createReceipt,
+  getReceipts,
+  getReceiptById,
+  updateReceipt,
+  deleteReceipt,
+  generateReceiptFromInvoice,
+  duplicateReceipt,
+  updateReceiptStatus,
+  markReceiptAsPaid,
+  processReceiptRefund,
+  bulkUpdateReceipts,
+  validateReceiptData,
+  cleanupReceipts,
+  getReceiptTemplates,
+  checkReceiptSystemStatus,
+  sendReceiptToCustomer,
+  sendReceiptWithPdf // 🔥 NEW: Import send with PDF function
+} from '../controllers/receiptController.js';
+
+const router = express.Router();
+
+// Protect all routes
+router.use(protect);
+
+/** =======================
+ * Basic CRUD
+ * ======================= */
+router.post('/', createReceipt);
+router.get('/', getReceipts);
+router.get('/:id', getReceiptById);
+router.put('/:id', updateReceipt);
+router.delete('/:id', deleteReceipt);
+
+/** =======================
+ * Enhanced Operations
+ * ======================= */
+router.post('/generate-from-invoice/:invoiceId', generateReceiptFromInvoice);
+router.post('/:id/duplicate', duplicateReceipt);
+// 🔥 NEW: Send receipt via email with PDF attachment
+router.post('/:id/send', sendReceiptToCustomer);
+router.post('/:id/send-with-pdf', sendReceiptWithPdf);
+
+/** =======================
+ * Status & Payment
+ * ======================= */
+router.patch('/:id/status', updateReceiptStatus);
+router.patch('/:id/mark-paid', markReceiptAsPaid);
+router.patch('/:id/refund', processReceiptRefund);
+
+/** =======================
+ * Bulk Operations
+ * ======================= */
+router.patch('/bulk/update', bulkUpdateReceipts);
+
+/** =======================
+ * System & Validation
+ * ======================= */
+router.post('/validate', validateReceiptData);
+router.post('/cleanup/old-receipts', cleanupReceipts);
+router.get('/templates/available', getReceiptTemplates);
+router.get('/health/status', checkReceiptSystemStatus);
+
+/** =======================
+ * Route Info
+ * ======================= */
+router.get('/routes/info', (req, res) => {
+  res.json({
+    message: 'Optimas Fibre Receipt Management API',
+    version: '2.0.0',
+    features: {
+      itemized_billing: true,
+      bulk_operations: true,
+      advanced_search: true,
+      analytics: true,
+      refund_management: true,
+      email_pdf: true // ✅ Added
+    }
+  });
+});
+
+/** =======================
+ * 404 Catch-All
+ * ======================= */
+router.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: '❌ Receipt API endpoint not found',
+    requested: { method: req.method, path: req.originalUrl },
+    documentation: 'Visit /api/receipts/routes/info for API documentation'
+  });
+});
+
+export default router;

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="refresh" content="0; url=AS329741_Geofeed.csv" />
+    <title>Geofeed</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: Arial, sans-serif;
+        background: #0b0f14;
+        color: #e5e7eb;
+      }
+      a {
+        color: #86bc25;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Redirecting to the geofeed CSV.</p>
+      <p><a href="AS329741_Geofeed.csv">Download AS329741_Geofeed.csv</a></p>
+    </main>
+    <script>
+      // Create an invisible anchor with the `download` attribute and click it
+      // to force the browser to download the CSV instead of displaying it.
+      (function() {
+        try {
+          const url = 'AS329741_Geofeed.csv';
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.setAttribute('download', 'AS329741_Geofeed.csv');
+          document.body.appendChild(a);
+          // A short timeout ensures the page has rendered for users
+          setTimeout(() => a.click(), 50);
+          // Clean up after a few seconds
+          setTimeout(() => a.remove(), 5000);
+        } catch (e) {
+          console.error('Auto-download failed', e);
+        }
+      })();
+    </script>
+  </body>
+</html>
