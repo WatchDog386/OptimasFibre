@@ -220,34 +220,7 @@ const MainContent = () => {
   const [showForm, setShowForm] = useState(false);
   const [showAllWhoWeAre, setShowAllWhoWeAre] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-      const [touchStartX, setTouchStartX] = useState(null);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setHotspotSlide(prev => prev >= hotspotMaxSlide ? 0 : prev + 1);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [hotspotMaxSlide]);
-
-  const handleTouchStart = (e) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = (e) => {
-    if (touchStartX === null) return;
-    const diff = touchStartX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 40) {
-      if (diff > 0 && hotspotSlide < hotspotMaxSlide) {
-        setHotspotSlide(prev => prev + 1);
-      } else if (diff < 0 && hotspotSlide > 0) {
-        setHotspotSlide(prev => prev - 1);
-      }
-    }
-    setTouchStartX(null);
-  };
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "", location: "", connectionType: "" });
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
