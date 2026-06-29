@@ -220,6 +220,31 @@ const MainContent = () => {
   const [showForm, setShowForm] = useState(false);
   const [showAllWhoWeAre, setShowAllWhoWeAre] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+      const [touchStartX, setTouchStartX] = useState(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHotspotSlide(prev => prev >= hotspotMaxSlide ? 0 : prev + 1);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [hotspotMaxSlide]);
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0 && hotspotSlide < hotspotMaxSlide) {
+        setHotspotSlide(prev => prev + 1);
+      } else if (diff < 0 && hotspotSlide > 0) {
+        setHotspotSlide(prev => prev - 1);
+      }
+    }
+    setTouchStartX(null);
+  };
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", location: "", connectionType: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -332,7 +357,7 @@ const MainContent = () => {
       </section>
 
       {/* WI-FI PACKAGES */}
-      <section id="wifi-packages" className="py-16 md:py-24 relative bg-[#F8F9FA]">
+      <section id="wifi-packages" className="py-6 md:py-24 relative bg-[#F8F9FA]">
         <div className="max-w-6xl mx-auto px-2.5 relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
             <p className="text-[#2562AE] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">our packages</p>
@@ -409,7 +434,7 @@ const MainContent = () => {
       </section>
 
       {/* HOTSPOT SECTION */}
-      <section id="hotspot-section" className="py-16 md:py-24 bg-[#F8F9FA]">
+      <section id="hotspot-section" className="pt-4 pb-16 md:py-24 bg-[#F8F9FA]">
         <div className="max-w-6xl mx-auto px-2.5">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
             <p className="text-[#E6007E] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">public zones</p>
@@ -419,39 +444,63 @@ const MainContent = () => {
             <p className="text-gray-500 text-sm md:text-base font-bold">Fast internet on the go.</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-5">
-             {hotspotPlans.map((plan, index) => (
-                <motion.div
-                   key={index}
-                   whileHover={{ y: -5 }}
-                   onClick={handleHotspotSelect}
-                   className={`rounded-2xl p-4 md:p-5 cursor-pointer relative overflow-hidden bg-gradient-to-br ${plan.color} shadow-md`}
-                >
-                   <Wifi className="absolute top-0 right-0 w-8 h-8 md:w-10 md:h-10 lg:w-16 lg:h-16 text-white opacity-20 m-2" />
-                   <div className="relative z-10 text-white h-20 md:h-24 lg:h-32 flex flex-col justify-between">
-                       <div>
-                           <h3 className="font-bold text-[10px] md:text-xs lg:text-sm lowercase tracking-[0.08em] mb-1.5">{plan.name}</h3>
-                           <span className="inline-block bg-white/30 backdrop-blur-sm text-[10px] font-bold px-2 py-1 rounded-md lowercase">
-                              {plan.duration}
-                           </span>
-                       </div>
-                       <div>
-                           <p className="text-[10px] opacity-80 lowercase font-bold mb-0.5">only</p>
-                           <p className="text-lg md:text-xl lg:text-2xl font-bold leading-none">Ksh {plan.price}</p>
-                       </div>
-                   </div>
-                </motion.div>
-             ))}
-          </div>
-          <div className="text-center mt-8">
-            <button onClick={handleHotspotSelect} className="text-[11px] font-bold lowercase bg-[#FCE5F0] text-[#E6007E] px-6 py-3 rounded-full hover:bg-[#E6007E] hover:text-white transition-colors tracking-[0.08em]">
-               view all hotspots <ArrowRight className="w-3 h-3 inline ml-1" />
-            </button>
-          </div>
+          <div className="grid grid-cols-2 md:hidden gap-3">
+          {hotspotPlans.map((plan, index) => (
+            <motion.div
+              key={index}
+              whileHover={{ y: -5 }}
+              onClick={handleHotspotSelect}
+              className={`rounded-2xl p-4 cursor-pointer relative overflow-hidden bg-gradient-to-br ${plan.color} shadow-md`}
+            >
+              <Wifi className="absolute top-0 right-0 w-8 h-8 text-white opacity-20 m-2" />
+              <div className="relative z-10 text-white h-20 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-[10px] lowercase tracking-[0.08em] mb-1.5">{plan.name}</h3>
+                  <span className="inline-block bg-white/30 backdrop-blur-sm text-[10px] font-bold px-2 py-1 rounded-md lowercase">
+                    {plan.duration}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[10px] opacity-80 lowercase font-bold mb-0.5">only</p>
+                  <p className="text-lg font-bold leading-none">Ksh {plan.price}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </section>
+        <div className="hidden md:grid grid-cols-3 lg:grid-cols-6 gap-3 md:gap-5">
+          {hotspotPlans.map((plan, index) => (
+            <motion.div
+              key={index}
+              whileHover={{ y: -5 }}
+              onClick={handleHotspotSelect}
+              className={`rounded-2xl p-4 md:p-5 cursor-pointer relative overflow-hidden bg-gradient-to-br ${plan.color} shadow-md`}
+            >
+              <Wifi className="absolute top-0 right-0 w-8 h-8 md:w-10 md:h-10 lg:w-16 lg:h-16 text-white opacity-20 m-2" />
+              <div className="relative z-10 text-white h-20 md:h-24 lg:h-32 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-[10px] md:text-xs lg:text-sm lowercase tracking-[0.08em] mb-1.5">{plan.name}</h3>
+                  <span className="inline-block bg-white/30 backdrop-blur-sm text-[10px] font-bold px-2 py-1 rounded-md lowercase">
+                    {plan.duration}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[10px] opacity-80 lowercase font-bold mb-0.5">only</p>
+                  <p className="text-lg md:text-xl lg:text-2xl font-bold leading-none">Ksh {plan.price}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        <div className="text-center mt-8">
+          <button onClick={handleHotspotSelect} className="text-[11px] font-bold lowercase bg-[#FCE5F0] text-[#E6007E] px-6 py-3 rounded-full hover:bg-[#E6007E] hover:text-white transition-colors tracking-[0.08em]">
+            view all hotspots <ArrowRight className="w-3 h-3 inline ml-1" />
+          </button>
+        </div>
+      </div>
+    </section>
 
-      {/* MODALS */}
+{/* MODALS */}
       <AnimatePresence>
         {showForm && <BookingModal show={showForm} onClose={() => setShowForm(false)} plan={selectedPlan} formData={formData} onChange={(e) => setFormData({...formData, [e.target.name]: e.target.value})} onSubmit={handleSubmit} isLoading={isLoading} />}
         {showSuccess && <SuccessPopup onClose={() => setShowSuccess(false)} />}
