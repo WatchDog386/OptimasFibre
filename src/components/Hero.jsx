@@ -51,6 +51,12 @@ const itemRight = {
 
 const HeroSection = () => {
   const [heroImgIndex, setHeroImgIndex] = useState(0);
+  const navigate = useNavigate();
+
+  const scrollToPackages = () => {
+    const el = document.getElementById("wifi-packages");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -88,7 +94,7 @@ const HeroSection = () => {
           </motion.div>
 
           <motion.div className="flex flex-wrap gap-4 mb-6" variants={itemLeft}>
-            <button onClick={() => navigate("/wifi-plans")} className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-6 md:px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
+            <button onClick={scrollToPackages} className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-6 md:px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
               View Packages
             </button>
             <button onClick={() => navigate("/coverage")} className="bg-white hover:bg-gray-100 text-[#2C3E6B] px-6 md:px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
@@ -219,7 +225,6 @@ const MainContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
-  const navigate = useNavigate();
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
