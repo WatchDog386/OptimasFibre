@@ -220,6 +220,9 @@ const MainContent = () => {
   const [showForm, setShowForm] = useState(false);
   const [showAllWhoWeAre, setShowAllWhoWeAre] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "", location: "", connectionType: "" });
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
 
   const handlePlanSelect = (plan) => {
