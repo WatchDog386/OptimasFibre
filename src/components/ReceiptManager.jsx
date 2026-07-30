@@ -89,7 +89,7 @@ const DEFAULT_BRAND = {
   },
   contact: {
     email: "support@optimaswifi.co.ke",
-    phone: "+254 790 557 208",
+    phone: "+254 741 874 200",
     address: "Nairobi, Kenya",
     website: "www.optimaswifi.co.ke",
     vatNumber: "VAT00123456",
@@ -2763,7 +2763,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       value={settingsForm.phone}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, phone: e.target.value }))}
                       className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
-                      placeholder="+254 790 557 208"
+                      placeholder="+254 741 874 200"
                     />
                   </div>
                   <div>

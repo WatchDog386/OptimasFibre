@@ -248,7 +248,7 @@ answer: (
 <li>Submit trouble ticket if issue persists</li>
 </ol>
 <div className="bg-[#FF6B35]/10 p-3 rounded-lg border border-[#FF6B35]/20 text-xs text-[#C54D23] font-bold mt-3">
-<p>Emergency: Call 0790557208 for immediate assistance with outages.</p>
+<p>Emergency: Call 0741874200 for immediate assistance with outages.</p>
 </div>
 </div>
 ),

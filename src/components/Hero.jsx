@@ -6,7 +6,7 @@ import {
   Shield, ArrowRight, Users, ChevronRight,
   Server, Activity, Send, MonitorPlay, Gamepad2, Briefcase, Download,
   Gauge, Search, MapPin, ChevronDown,
-  BarChart2, Rocket, Globe, Cloud, Cpu, HardHat
+  BarChart2, Rocket, Globe, Cloud, Cpu, HardHat, Headset
 } from 'lucide-react';
 
 // --- CUSTOM ICONS ---
@@ -18,70 +18,150 @@ const WhatsAppIcon = ({ className }) => (
 );
 
 // --- HERO SECTION ---
+const heroImages = ["/hero.png", "/hero1.png", "/availble.png", "/hero2.png"];
+
+const containerVariantsHero = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemLeft = {
+  hidden: { opacity: 0, x: -200 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring", stiffness: 60, damping: 20 },
+  },
+};
+
+const itemRight = {
+  hidden: { opacity: 0, x: 200 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring", stiffness: 60, damping: 20 },
+  },
+};
+
 const HeroSection = () => {
+  const [heroImgIndex, setHeroImgIndex] = useState(0);
+  const navigate = useNavigate();
+
+  const scrollToPackages = () => {
+    const el = document.getElementById("wifi-packages");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroImgIndex((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="bg-[#2C3E6B] w-full pb-12 pt-10" style={{ fontFamily: "'Nunito', sans-serif" }}>
-      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:grid lg:grid-cols-2 gap-12 items-center">
-        
-        <div className="max-w-xl relative z-20">
-          <h1 className="text-[2rem] md:text-[2.5rem] font-extrabold text-white leading-[1.15] mb-5 tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>
+    <div className="bg-[#2C3E6B] w-full min-h-[460px] md:min-h-[650px] flex items-center relative overflow-hidden" style={{ fontFamily: "'Nunito', sans-serif" }}>
+      <motion.div
+        className="max-w-6xl mx-auto px-2.5 md:px-8 w-full py-10 lg:grid lg:grid-cols-2 gap-12 items-center relative z-10"
+        variants={containerVariantsHero}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div className="max-w-xl relative z-20" variants={itemLeft}>
+          <motion.h1 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-extrabold text-white leading-[1.15] mb-5 tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }} variants={itemLeft}>
             Fast, Reliable & Affordable<br />
             <span className="text-white">Fiber Network</span>
-          </h1>
-          <div className="space-y-2 mb-10">
-            <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
-              <CheckCircle size={18} className="text-[#FF6B35]" /> Unlimited Internet
+          </motion.h1>
+          <motion.div className="grid grid-cols-2 gap-x-3 gap-y-1 md:block md:space-y-2 mb-6 md:mb-10" variants={itemLeft}>
+            <div className="flex items-center gap-2 text-gray-200 text-sm md:text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <CheckCircle size={16} className="text-[#FF6B35] flex-shrink-0" /> Unlimited Internet
             </div>
-            <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
-              <CheckCircle size={18} className="text-[#FF6B35]" /> Free Installation
+            <div className="flex items-center gap-2 text-gray-200 text-sm md:text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <CheckCircle size={16} className="text-[#FF6B35] flex-shrink-0" /> Free Installation
             </div>
-            <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
-              <CheckCircle size={18} className="text-[#FF6B35]" /> No Contracts
+            <div className="flex items-center gap-2 text-gray-200 text-sm md:text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <CheckCircle size={16} className="text-[#FF6B35] flex-shrink-0" /> No Contracts
             </div>
-            <div className="flex items-center gap-2 text-gray-200 text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
-              <CheckCircle size={18} className="text-[#FF6B35]" /> Speeds from 8 Mbps
+            <div className="flex items-center gap-2 text-gray-200 text-sm md:text-base" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <CheckCircle size={16} className="text-[#FF6B35] flex-shrink-0" /> Speeds from 8 Mbps
             </div>
-          </div>
+          </motion.div>
 
-          <div className="flex flex-wrap gap-4 mb-6">
-            <button className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-8 py-3.5 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
+          <motion.div className="flex flex-wrap gap-4 mb-6" variants={itemLeft}>
+            <button onClick={scrollToPackages} className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-6 md:px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
               View Packages
             </button>
-            <button className="bg-white hover:bg-gray-100 text-[#2C3E6B] px-8 py-3.5 rounded-full text-sm font-bold transition-colors shadow-lg border border-white/30" style={{ fontFamily: "'Nunito', sans-serif" }}>
+            <button onClick={() => navigate("/coverage")} className="bg-white hover:bg-gray-100 text-[#2C3E6B] px-6 md:px-8 py-3 rounded-full text-sm font-bold transition-colors shadow-lg" style={{ fontFamily: "'Nunito', sans-serif" }}>
               Check Coverage
             </button>
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div className="hidden md:block" variants={itemLeft}>
             <p className="text-gray-300 text-[0.8125rem] mb-4 font-semibold tracking-wide uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>Trusted across Kenya</p>
             <div className="flex items-center gap-8">
               <div className="flex flex-col">
-                <span className="text-[1.625rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>10K+</span>
-                <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Customers</span>
+                <span className="text-[1.25rem] md:text-[1.625rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>10K+</span>
+                <span className="text-[0.6rem] md:text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Customers</span>
               </div>
               <div className="h-8 w-px bg-white/20"></div>
               <div className="flex flex-col">
-                <span className="text-[1.625rem] font-extrabold text-[#FF6B35] leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>99.9%</span>
+                <span className="text-[1.25rem] md:text-[1.625rem] font-extrabold text-[#FF6B35] leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>99.9%</span>
                 <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Uptime</span>
               </div>
               <div className="h-8 w-px bg-white/20"></div>
               <div className="flex flex-col">
-                <span className="text-[1.625rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>24/7</span>
+                <span className="text-[1.25rem] md:text-[1.625rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>24/7</span>
                 <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Support</span>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="relative mt-16 lg:mt-0 hidden md:block">
-          <div className="relative z-10 flex justify-center">
-            <img 
-              src="/hero.png" 
-              alt="Fast Fiber Internet" 
-              className="w-full max-w-[600px] object-cover"
-            />
+        <motion.div className="relative mt-8 md:mt-16 lg:mt-0 h-[200px] md:h-[450px]" variants={itemRight}>
+          <div className="relative z-10 flex items-center justify-center h-full">
+<motion.img
+  src={heroImages[heroImgIndex]}
+  alt="Fast Fiber Internet"
+  className="w-full max-w-[600px] max-h-full object-contain"
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ type: "spring", stiffness: 60, damping: 20 }}
+/>
           </div>
-        </div>
+        </motion.div>
+
+        {/* Mobile stats - below image */}
+        <motion.div className="md:hidden mt-6" variants={itemLeft}>
+          <p className="text-gray-300 text-[0.8125rem] mb-4 font-semibold tracking-wide uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>Trusted across Kenya</p>
+          <div className="flex items-center gap-8">
+            <div className="flex flex-col">
+              <span className="text-[1.25rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>10K+</span>
+              <span className="text-[0.6rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Customers</span>
+            </div>
+            <div className="h-8 w-px bg-white/20"></div>
+            <div className="flex flex-col">
+              <span className="text-[1.25rem] font-extrabold text-[#FF6B35] leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>99.9%</span>
+              <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Uptime</span>
+            </div>
+            <div className="h-8 w-px bg-white/20"></div>
+            <div className="flex flex-col">
+              <span className="text-[1.25rem] font-extrabold text-white leading-none" style={{ fontFamily: "'Nunito', sans-serif" }}>24/7</span>
+              <span className="text-[0.6875rem] text-gray-300 mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>Support</span>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Bottom downward curve */}
+      <div className="absolute bottom-0 left-0 w-full leading-[0] pointer-events-none md:hidden" style={{ height: '40px' }}>
+        <svg viewBox="0 0 1440 40" className="w-full h-full" preserveAspectRatio="none">
+          <path fill="white" d="M0,0 C360,40 1080,40 1440,0 L1440,40 L0,40 Z" />
+        </svg>
       </div>
     </div>
   );
@@ -111,21 +191,17 @@ const PACKAGE_THEMES = [
 ];
 
 const PLAN_IMAGES = {
-  "Jumbo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLtDRuk2QhRzgJFqmA7jIrUxFwQb470KLtVeLuGb4vwlMhBSOoiK8soiuQEj9JsYFORWw&usqp=CAU",
+  "Jumbo": "https://images.unsplash.com/photo-1564760055775-d63b17a55c44?auto=format&fit=crop&w=1200&q=80",
   "Buffalo": "https://www.travelbutlers.com/images/450px/dreamstimemaximum_20395360_KRUGER.jpg",
   "Ndovu": "https://images.unsplash.com/photo-1564760055775-d63b17a55c44?auto=format&fit=crop&w=1200&q=80",
   "Gazzelle": "https://www.tanzania-experience.com/wp-content/uploads/2015/09/gazelles-antilope-featured.jpg",
-  "Tiger": "https://transforms.stlzoo.org/production/animals/amur-tiger-01-01.jpg?w=1200&h=1200&auto=compress%2Cformat&fit=crop&dm=1658935145&s=95d03aceddd44dc8271beed46eae30bc",
-  "Chui": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Leopard_on_a_horizontal_tree_trunk.jpg",
 };
 
 const plans = [
-  { name: "Jumbo", price: "Ksh 1,500", speed: "8 Mbps", image: PLAN_IMAGES["Jumbo"], features: [{ text: "Uncapped", icon: Download }, { text: "1-2 Devices", icon: Users }, { text: "Free Install", icon: CheckCircle }, { text: "24/7 Support", icon: Phone }], isPopular: false },
-  { name: "Buffalo", price: "Ksh 2,000", speed: "15 Mbps", image: PLAN_IMAGES["Buffalo"], features: [{ text: "HD Stream", icon: MonitorPlay }, { text: "Low Latency", icon: Zap }, { text: "Free Install", icon: CheckCircle }, { text: "24/7 Support", icon: Phone }], isPopular: false },
-  { name: "Ndovu", price: "Ksh 2,500", speed: "20 Mbps", image: PLAN_IMAGES["Ndovu"], features: [{ text: "Dedicated", icon: Server }, { text: "Home Office", icon: Briefcase }, { text: "Free Install", icon: CheckCircle }, { text: "Priority Help", icon: Star }], isPopular: true },
-  { name: "Gazzelle", price: "Ksh 3,000", speed: "30 Mbps", image: PLAN_IMAGES["Gazzelle"], features: [{ text: "4K Stream", icon: MonitorPlay }, { text: "Gaming Ready", icon: Gamepad2 }, { text: "Smart Home", icon: Smartphone }, { text: "Free Install", icon: CheckCircle }], isPopular: false },
-  { name: "Tiger", price: "Ksh 4,000", speed: "40 Mbps", image: PLAN_IMAGES["Tiger"], features: [{ text: "Low Ping", icon: Activity }, { text: "Pro Gaming", icon: Gamepad2 }, { text: "Dedicated Mgr", icon: Users }, { text: "Free Install", icon: CheckCircle }], isPopular: false },
-  { name: "Chui", price: "Ksh 5,000", speed: "60 Mbps", image: PLAN_IMAGES["Chui"], features: [{ text: "Max Speed", icon: Gauge }, { text: "Multi 4K", icon: MonitorPlay }, { text: "Premium SLA", icon: Shield }, { text: "Free Install", icon: CheckCircle }], isPopular: false },
+  { name: "Jumbo", price: "Ksh 1,500", speed: "20 Mbps", image: PLAN_IMAGES["Jumbo"], features: [{ text: "Unlimited Internet", icon: Wifi }, { text: "Free Install", icon: CheckCircle }, { text: "24/7 Support", icon: Phone }, { text: "Reliable Connection", icon: Shield }], isPopular: false },
+  { name: "Buffalo", price: "Ksh 2,000", speed: "30 Mbps", image: PLAN_IMAGES["Buffalo"], features: [{ text: "Unlimited Internet", icon: Wifi }, { text: "Free Install", icon: CheckCircle }, { text: "24/7 Support", icon: Phone }, { text: "High Speed", icon: Zap }], isPopular: false },
+  { name: "Ndovu", price: "Ksh 3,500", speed: "80 Mbps", image: PLAN_IMAGES["Ndovu"], features: [{ text: "Unlimited Internet", icon: Wifi }, { text: "Free Install", icon: CheckCircle }, { text: "Connect More Devices", icon: Users }, { text: "Perfect for Everyone", icon: Star }], isPopular: true },
+  { name: "Gazzelle", price: "Ksh 5,000", speed: "100 Mbps", image: PLAN_IMAGES["Gazzelle"], features: [{ text: "Unlimited Internet", icon: Wifi }, { text: "Free Install", icon: CheckCircle }, { text: "High Speed", icon: Gauge }, { text: "24/7 Support", icon: Phone }], isPopular: false },
 ];
 
 const hotspotPlans = [
@@ -137,16 +213,18 @@ const hotspotPlans = [
   { name: "Power Dual", price: "1000", duration: "30 Days", color: "from-[#00897B] to-[#26A69A]" }
 ];
 
-// ================================
+  // ================================
 // MAIN CONTENT
 // ================================
 
 const MainContent = () => {
   const [showForm, setShowForm] = useState(false);
+  const [showAllWhoWeAre, setShowAllWhoWeAre] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", location: "", connectionType: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
@@ -174,6 +252,7 @@ const MainContent = () => {
     }, 1500);
   };
 
+
   const fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 
   return (
@@ -181,77 +260,73 @@ const MainContent = () => {
       
       <HeroSection />
 
-      {/* NEW: WHO WE ARE SECTION */}
-      <section className="bg-white overflow-hidden pb-16">
-        <div className="max-w-7xl mx-auto px-4">
-          
-          {/* Logo Banner - Overlapping Hero Slightly */}
-          <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-8 md:p-10 transform -translate-y-12 relative z-30 mx-auto max-w-5xl">
-            <h3 className="text-center text-[#2C3E6B] font-extrabold mb-8 text-lg md:text-xl">Join our 10,000+ happy customers</h3>
-            <div className="flex flex-wrap justify-center md:justify-between items-center gap-8 opacity-70">
-              <div className="flex items-center gap-2 font-black text-xl text-gray-500"><Globe className="w-8 h-8"/> LOGOIPSUM</div>
-              <div className="flex items-center gap-2 font-black text-xl text-gray-500"><Cloud className="w-8 h-8"/> logoipsum</div>
-              <div className="flex items-center gap-2 font-black text-xl text-gray-500"><Cpu className="w-8 h-8"/> LOGO</div>
-              <div className="flex items-center gap-2 font-black text-xl text-gray-500"><Shield className="w-8 h-8"/> logoipsum</div>
-              <div className="flex items-center gap-2 font-black text-xl text-gray-500"><Zap className="w-8 h-8"/> logoipsum</div>
-            </div>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-16 md:gap-20 items-center pt-10 md:pt-16 pb-10">
+      {/* WHO WE ARE */}
+      <section className="bg-white overflow-hidden">
+        <div className="max-w-6xl mx-auto px-2.5">
+          <div className="grid lg:grid-cols-2 gap-10 md:gap-14 items-end">
             
-            {/* Left: Image & Badge */}
-            <div className="relative pl-6 md:pl-10">
-              <div 
-                className="absolute inset-0 bg-gradient-to-br from-[#FFD18B] to-[#FF9C35] -z-10 transform -translate-x-6 translate-y-6"
-                style={{ borderRadius: '40% 60% 70% 30% / 40% 50% 50% 60%' }}
-              ></div>
-              
+            {/* Left: Image & Badge — Desktop only */}
+            <div className="hidden lg:block relative flex items-end pl-6 md:pl-10">
               <img 
-                src="https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                src="/browse.png" 
                 alt="Optimas Team" 
-                className="w-full object-cover shadow-2xl h-[400px] md:h-[500px]"
-                style={{ borderRadius: '1rem 8rem 1rem 1rem' }}
+                className="w-full object-contain h-[380px] lg:h-[500px]"
               />
 
-              <div className="absolute top-10 -left-6 md:-left-10 bg-white w-32 h-32 md:w-40 md:h-40 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.15)] flex flex-col items-center justify-center border-[6px] border-white z-20">
-                <span className="text-4xl md:text-5xl font-black text-[#FF6B35]">10+</span>
-                <span className="text-[0.6rem] md:text-xs font-bold text-[#2C3E6B] uppercase tracking-widest mt-1 text-center">Years of<br/>Experience</span>
+              <div className="absolute top-10 -left-6 md:-left-10 bg-white w-32 h-32 lg:w-40 lg:h-40 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.15)] flex flex-col items-center justify-center border-[6px] border-white z-20">
+                <span className="md:text-4xl lg:text-5xl font-black text-[#FF6B35]">10+</span>
+                <span className="md:text-[0.6rem] lg:text-xs font-bold text-[#2C3E6B] uppercase tracking-widest mt-1 text-center">Years of<br/>Experience</span>
               </div>
             </div>
 
-            {/* Right: Text Content */}
-            <div className="pr-4 md:pr-10">
-              <p className="text-[#FF6B35] font-black text-xs uppercase tracking-[0.2em] mb-4">Who We Are</p>
+            {/* Right: Text Content + Mobile Background Image */}
+            <div className="md:mt-0 md:mx-0 bg-white md:bg-transparent rounded-2xl md:rounded-none shadow-md md:shadow-none border border-gray-100 md:border-0 md:px-0 pb-6 md:pb-12 overflow-hidden mt-8 relative">
+              {/* Mobile background image */}
+              <div className="md:hidden absolute bottom-0 left-0 right-0 h-64">
+                <img src="/browse.png" alt="" className="w-full h-full object-contain opacity-70" />
+              </div>
+              <div className="px-4 md:px-0 pt-4 md:pt-20 relative z-10">
+              <p className="text-[#FF6B35] font-black text-xs uppercase tracking-[0.2em] mb-4" style={{ fontFamily: "'Inter', sans-serif" }}>Who We Are</p>
               
-              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-[#2C3E6B] leading-[1.1] mb-6">
+              <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-extrabold text-[#2C3E6B] leading-[1.15] mb-5 tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>
                 Real people delivering real results.
               </h2>
               
-              <p className="text-gray-500 mb-10 text-base md:text-lg leading-relaxed">
+              <p className="text-gray-800 mb-10 text-sm md:text-base lg:text-lg leading-relaxed font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
                 We are dedicated to providing the most reliable and high-speed fiber internet across Kenya. Our infrastructure ensures that your connectivity never drops when you need it the most.
               </p>
 
               <div className="space-y-8">
-                <div className="flex gap-5">
-                  <div className="flex-shrink-0 w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF6B35] shadow-sm">
-                    <BarChart2 className="w-7 h-7" />
+                <div className={`${showAllWhoWeAre ? 'block' : 'hidden'} md:block`}>
+                  <div className="flex gap-5">
+                    <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF6B35] shadow-sm">
+                      <BarChart2 className="w-6 h-6 md:w-7 md:h-7" />
+                    </div>
+                    <div>
+                      <h4 className="text-base md:text-lg lg:text-xl font-extrabold text-[#2C3E6B] mb-2" style={{ fontFamily: "'Nunito', sans-serif" }}>Enterprise Network</h4>
+                      <p className="text-sm text-gray-700 leading-relaxed font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>Tailored fiber optic connections designed to keep your business operations running smoothly without interruptions.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xl font-bold text-[#2C3E6B] mb-2">Enterprise Network</h4>
-                    <p className="text-sm text-gray-500 leading-relaxed">Tailored fiber optic connections designed to keep your business operations running smoothly without interruptions.</p>
+
+                  <div className="flex gap-5 mt-8">
+                    <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF6B35] shadow-sm">
+                      <Rocket className="w-6 h-6 md:w-7 md:h-7" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg md:text-xl font-extrabold text-[#2C3E6B] mb-2" style={{ fontFamily: "'Nunito', sans-serif" }}>High-Speed Home Fiber</h4>
+                      <p className="text-sm text-gray-700 leading-relaxed font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>Experience seamless 4K streaming, low-latency gaming, and rapid downloads with our premium residential packages.</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-5">
-                  <div className="flex-shrink-0 w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF6B35] shadow-sm">
-                    <Rocket className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold text-[#2C3E6B] mb-2">High-Speed Home Fiber</h4>
-                    <p className="text-sm text-gray-500 leading-relaxed">Experience seamless 4K streaming, low-latency gaming, and rapid downloads with our premium residential packages.</p>
-                  </div>
-                </div>
+                <button
+                  onClick={() => setShowAllWhoWeAre(!showAllWhoWeAre)}
+                  className="md:hidden flex items-center gap-2 text-[#FF6B35] font-bold text-sm"
+                >
+                  {showAllWhoWeAre ? 'Show Less' : 'View All'} <ChevronRight className={`w-4 h-4 transition-transform ${showAllWhoWeAre ? 'rotate-90' : ''}`} />
+                </button>
               </div>
+            </div>
             </div>
 
           </div>
@@ -259,18 +334,19 @@ const MainContent = () => {
       </section>
 
       {/* WI-FI PACKAGES */}
-      <section id="wifi-packages" className="py-16 md:py-24 relative bg-[#F8F9FA]">
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
+      <section id="wifi-packages" className="py-6 md:py-24 relative bg-[#F8F9FA]">
+        <div className="max-w-6xl mx-auto px-2.5 relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
-            <p className="text-[#2562AE] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">choose speed</p>
-            <h2 className="text-2xl md:text-3xl font-extrabold mb-2 text-[#2562AE] tracking-tight lowercase">
-              unlimited fiber
+            <p className="text-[#2562AE] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">our packages</p>
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold mb-2 text-[#2562AE] tracking-tight lowercase">
+              unlimited internet
             </h2>
-            <p className="text-gray-500 text-sm md:text-base font-bold">Enterprise-grade speeds. No contracts.</p>
+            <p className="text-gray-500 text-sm md:text-base font-bold">Free installation. 24/7 support. Reliable connection.</p>
           </div>
 
+          {/* Desktop grid */}
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -282,13 +358,13 @@ const MainContent = () => {
                 <motion.div
                   key={plan.name}
                   variants={cardVariants}
-                  className="rounded-2xl overflow-hidden bg-white shadow-md border border-gray-100 hover:shadow-xl transition-shadow duration-300 max-w-sm mx-auto w-full"
+                  className="rounded-2xl overflow-hidden bg-white shadow-md border border-gray-100 hover:shadow-xl transition-shadow duration-300"
                 >
-                  <div className="h-32 md:h-40 relative overflow-hidden">
+                  <div className="h-24 md:h-32 lg:h-40 relative overflow-hidden">
                       <img src={plan.image} alt={plan.name} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/25 z-10" />
                       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pb-1">
-                          <h2 className="text-2xl md:text-4xl font-black text-white tracking-tighter drop-shadow-lg">
+                          <h2 className="text-xl md:text-2xl lg:text-4xl font-black text-white tracking-tighter drop-shadow-lg">
                             {plan.speed}
                           </h2>
                       </div>
@@ -299,7 +375,7 @@ const MainContent = () => {
                       )}
                   </div>
 
-                  <div className="relative -mt-4 bg-white rounded-t-[18px] p-3.5 md:p-4 pt-0 z-30">
+                  <div className="relative -mt-4 bg-white rounded-t-[18px] p-2.5 md:p-3.5 lg:p-4 pt-0 z-30">
                       <div className="flex justify-center -mt-2.5 mb-2.5">
                         <div className={`px-4 py-1.5 rounded-full text-white font-black text-[10px] tracking-widest uppercase bg-gradient-to-r ${theme.gradient} shadow-md`}>
                            {plan.name}
@@ -307,7 +383,7 @@ const MainContent = () => {
                       </div>
 
                       <div className="text-center mb-3 border-b border-gray-100 pb-2.5">
-                        <span className="text-lg md:text-xl font-black text-[#1A1A24]">{plan.price}</span>
+                        <span className="text-base md:text-lg lg:text-xl font-black text-[#1A1A24]">{plan.price}</span>
                         <span className="text-gray-400 font-black text-[10px] uppercase ml-1">/mo</span>
                       </div>
 
@@ -335,48 +411,73 @@ const MainContent = () => {
       </section>
 
       {/* HOTSPOT SECTION */}
-      <section id="hotspot-section" className="py-16 md:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-row justify-between items-end border-b border-gray-100 pb-5 mb-8">
-            <div>
-               <p className="text-[#E6007E] text-[10px] md:text-xs font-black uppercase tracking-widest mb-2">Public Zones</p>
-               <h2 className="text-2xl md:text-4xl font-black text-[#1A1A24] uppercase tracking-tight">
-                 Wifi <span className="text-[#E6007E]">Hotspots</span>
-               </h2>
-            </div>
-            <button onClick={handleHotspotSelect} className="text-[10px] md:text-xs font-black uppercase bg-[#FCE5F0] text-[#E6007E] px-4 py-2 rounded-full flex items-center gap-1 hover:bg-[#E6007E] hover:text-white transition-colors">
-               View All <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
-            </button>
+      <section id="hotspot-section" className="pt-4 pb-16 md:py-24 bg-[#F8F9FA]">
+        <div className="max-w-6xl mx-auto px-2.5">
+          <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
+            <p className="text-[#E6007E] text-[11px] font-bold lowercase tracking-[0.08em] mb-1">public zones</p>
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-[#1A1A24] tracking-tight lowercase">
+              wifi <span className="text-[#E6007E]">hotspots</span>
+            </h2>
+            <p className="text-gray-500 text-sm md:text-base font-bold">Fast internet on the go.</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-5">
-             {hotspotPlans.map((plan, index) => (
-                <motion.div
-                   key={index}
-                   whileHover={{ y: -5 }}
-                   onClick={handleHotspotSelect}
-                   className={`rounded-2xl p-4 md:p-5 cursor-pointer relative overflow-hidden bg-gradient-to-br ${plan.color} shadow-md`}
-                >
-                   <Wifi className="absolute top-0 right-0 w-10 h-10 md:w-16 md:h-16 text-white opacity-20 m-2" />
-                   <div className="relative z-10 text-white h-24 md:h-32 flex flex-col justify-between">
-                       <div>
-                           <h3 className="font-black text-[11px] md:text-xs uppercase tracking-tight mb-1.5">{plan.name}</h3>
-                           <span className="inline-block bg-white/30 backdrop-blur-sm text-[10px] font-black px-2 py-1 rounded-md">
-                              {plan.duration}
-                           </span>
-                       </div>
-                       <div>
-                           <p className="text-[10px] opacity-80 uppercase font-bold mb-0.5">Only</p>
-                           <p className="text-xl md:text-2xl font-black leading-none">Ksh {plan.price}</p>
-                       </div>
-                   </div>
-                </motion.div>
-             ))}
-          </div>
+          <div className="grid grid-cols-2 md:hidden gap-3">
+          {hotspotPlans.map((plan, index) => (
+            <motion.div
+              key={index}
+              whileHover={{ y: -5 }}
+              onClick={handleHotspotSelect}
+              className={`rounded-2xl p-4 cursor-pointer relative overflow-hidden bg-gradient-to-br ${plan.color} shadow-md`}
+            >
+              <Wifi className="absolute top-0 right-0 w-8 h-8 text-white opacity-20 m-2" />
+              <div className="relative z-10 text-white h-20 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-[10px] lowercase tracking-[0.08em] mb-1.5">{plan.name}</h3>
+                  <span className="inline-block bg-white/30 backdrop-blur-sm text-[10px] font-bold px-2 py-1 rounded-md lowercase">
+                    {plan.duration}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[10px] opacity-80 lowercase font-bold mb-0.5">only</p>
+                  <p className="text-lg font-bold leading-none">Ksh {plan.price}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </section>
+        <div className="hidden md:grid grid-cols-3 lg:grid-cols-6 gap-3 md:gap-5">
+          {hotspotPlans.map((plan, index) => (
+            <motion.div
+              key={index}
+              whileHover={{ y: -5 }}
+              onClick={handleHotspotSelect}
+              className={`rounded-2xl p-4 md:p-5 cursor-pointer relative overflow-hidden bg-gradient-to-br ${plan.color} shadow-md`}
+            >
+              <Wifi className="absolute top-0 right-0 w-8 h-8 md:w-10 md:h-10 lg:w-16 lg:h-16 text-white opacity-20 m-2" />
+              <div className="relative z-10 text-white h-20 md:h-24 lg:h-32 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-[10px] md:text-xs lg:text-sm lowercase tracking-[0.08em] mb-1.5">{plan.name}</h3>
+                  <span className="inline-block bg-white/30 backdrop-blur-sm text-[10px] font-bold px-2 py-1 rounded-md lowercase">
+                    {plan.duration}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[10px] opacity-80 lowercase font-bold mb-0.5">only</p>
+                  <p className="text-lg md:text-xl lg:text-2xl font-bold leading-none">Ksh {plan.price}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        <div className="text-center mt-8">
+          <button onClick={handleHotspotSelect} className="text-[11px] font-bold lowercase bg-[#FCE5F0] text-[#E6007E] px-6 py-3 rounded-full hover:bg-[#E6007E] hover:text-white transition-colors tracking-[0.08em]">
+            view all hotspots <ArrowRight className="w-3 h-3 inline ml-1" />
+          </button>
+        </div>
+      </div>
+    </section>
 
-      {/* MODALS */}
+{/* MODALS */}
       <AnimatePresence>
         {showForm && <BookingModal show={showForm} onClose={() => setShowForm(false)} plan={selectedPlan} formData={formData} onChange={(e) => setFormData({...formData, [e.target.name]: e.target.value})} onSubmit={handleSubmit} isLoading={isLoading} />}
         {showSuccess && <SuccessPopup onClose={() => setShowSuccess(false)} />}
@@ -385,11 +486,11 @@ const MainContent = () => {
       <motion.a 
         href="https://wa.me/254741874200  " 
         target="_blank" 
-        className="fixed bottom-6 right-6 z-40 bg-[#25d366] text-white p-4 md:p-5 rounded-full shadow-2xl"
+        className="fixed bottom-6 right-6 z-40 bg-[#25d366] text-white p-3 md:p-4 lg:p-5 rounded-full shadow-2xl"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
       >
-        <WhatsAppIcon className="w-7 h-7 md:w-8 md:h-8" />
+        <WhatsAppIcon className="w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8" />
       </motion.a>
     </div>
   );
@@ -445,7 +546,7 @@ const BookingModal = ({ show, onClose, plan, formData, onChange, onSubmit, isLoa
 
 const SuccessPopup = ({ onClose }) => (
   <div className="fixed inset-0 bg-[#1A1A24]/80 flex items-center justify-center z-[110] p-4 backdrop-blur-sm" onClick={onClose}>
-    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-xs w-full">
+    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="bg-white p-6 md:p-8 rounded-3xl shadow-2xl text-center max-w-xs w-full">
       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <CheckCircle className="w-8 h-8 text-green-500" />
       </div>

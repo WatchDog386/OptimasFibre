@@ -433,9 +433,9 @@ I'm looking forward to getting connected with Optimas Fiber! Please confirm rece
 Thank you!
 ---
 Optimas Fiber - High-Speed Internet Solutions
-+254 790 557 208 | support@optimasfiber.co.ke`;
++254 741 874 200 | support@optimasfiber.co.ke`;
     
-    const whatsappUrl = `https://wa.me/254790557208?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/254741874200?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -630,7 +630,7 @@ Optimas Fiber - High-Speed Internet Solutions
 
           <div className={`text-center mt-8 pt-6 border-t ${darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-600'}`}>
             <p>Thank you for choosing Optimas Fiber!</p>
-            <p>For any queries, contact us at: support@optimasfiber.co.ke | +254 790 557 208</p>
+            <p>For any queries, contact us at: support@optimasfiber.co.ke | +254 741 874 200</p>
           </div>
         </div>
       </motion.div>
