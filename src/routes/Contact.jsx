@@ -21,15 +21,15 @@ const contactCards = [
   {
     title: "Call Us",
     subtitle: "Mon-Fri from 8am to 6pm",
-    contact: "+254 741 874 200",
-    href: "tel:+254741874200",
+    contact: "+254 790 557 208",
+    href: "tel:+254790557208",
     icon: Phone,
   },
   {
     title: "WhatsApp",
     subtitle: "Chat with our support",
-    contact: "0741 874 200",
-    href: "https://wa.me/254741874200",
+    contact: "0790 557 208",
+    href: "https://wa.me/254790557208",
     icon: MessageCircle,
   },
   {

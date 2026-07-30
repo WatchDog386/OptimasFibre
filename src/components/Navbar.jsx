@@ -58,11 +58,11 @@ export default function Navbar() {
       <div className="hidden sm:block bg-[#004080] text-white py-3 text-[13px]">
         <div className="max-w-6xl mx-auto px-2.5 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <a href="tel:+254741874200" className="hidden sm:flex items-center gap-1.5 hover:text-[#FF6B35]">
-              <Phone size={14} /> +254 741 874 200
+            <a href="tel:+254790557208" className="hidden sm:flex items-center gap-1.5 hover:text-[#FF6B35]">
+              <Phone size={14} /> +254 790 557 208
             </a>
             <span className="hidden sm:inline">|</span>
-            <a href="https://wa.me/254741874200" className="flex items-center gap-1.5 hover:text-[#FF6B35]">
+            <a href="https://wa.me/254790557208" className="flex items-center gap-1.5 hover:text-[#FF6B35]">
               <Wifi size={14} /> WhatsApp
             </a>
           </div>
@@ -232,11 +232,11 @@ export default function Navbar() {
                 <div className="mt-4 p-3 sm:p-4 rounded-xl bg-gray-50">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contact Us</p>
                   <a 
-                    href="tel:+254741874200"
+                    href="tel:+254790557208"
                     className="flex items-center gap-3 text-sm text-gray-700 mb-2 hover:text-[#004080] transition-colors"
                   >
                     <Phone size={14} className="text-[#004080] flex-shrink-0" /> 
-                    <span>+254 741 874 200</span>
+                    <span>+254 790 557 208</span>
                   </a>
                   <a 
                     href="mailto:support@optimasfiber.co.ke"
@@ -260,7 +260,7 @@ export default function Navbar() {
                 </NavLink>
                 
                 <a 
-                  href="tel:+254741874200"
+                  href="tel:+254790557208"
                   className="flex items-center justify-center gap-2 w-full py-3 border-2 border-[#004080] rounded-full text-[13px] font-semibold text-[#004080] hover:bg-[#004080] hover:text-white active:scale-[0.98] transition-all"
                 >
                   <Phone size={16} /> Call Support

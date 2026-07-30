@@ -79,7 +79,7 @@ const DEFAULT_COMPANY_INFO = {
   accountNumber: "1234567890",
   branch: "Nairobi Main",
   supportEmail: "support@optimaswifi.co.ke",
-  supportPhone: "+254 741 874 200",
+  supportPhone: "+254 790 557 208",
   paybill: "4092707",
   paybillName: "OPTIMAS NETWORK",
   address: "Nairobi, Kenya",
@@ -2541,7 +2541,7 @@ Price: Ksh 2999`}
                       value={settingsForm.phone}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, phone: e.target.value }))}
                       className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
-                      placeholder="+254 741 874 200"
+                      placeholder="+254 790 557 208"
                     />
                   </div>
                   <div>

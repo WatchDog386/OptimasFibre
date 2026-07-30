@@ -332,7 +332,7 @@ const Dashboard = () => {
       name: 'OPTIMAS NETWORK',
       tagline: 'High-Speed Internet Solutions',
       address: 'Nairobi, Kenya',
-      phone: '+254 741 874 200',
+      phone: '+254 790 557 208',
       email: 'support@optimaswifi.co.ke',
       website: 'www.optimaswifi.co.ke',
       vatNumber: 'VAT00123456',
@@ -2689,7 +2689,7 @@ const SettingsPanel = ({ settingsData, handleSettingsChange, handleCompanyInfoCh
               name="phone"
               value={settingsData.companyInfo?.phone || ''}
               onChange={handleCompanyInfoChange}
-              placeholder="e.g., +254 741 874 200"
+              placeholder="e.g., +254 790 557 208"
               darkMode={darkMode}
               themeClasses={themeClasses}
               icon={<Phone size={18} />}
