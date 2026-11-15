@@ -29,6 +29,8 @@ const connectDB = async () => {
   // Models must be registered before sync — importing the index does that.
   await import('../models/index.js');
   await sequelize.sync();
+  const { runMigrations } = await import('./migrations.js');
+  await runMigrations(sequelize);
   console.log(`✅ PostgreSQL connected: ${sequelize.config.host}:${sequelize.config.port}/${sequelize.config.database}`);
 };
 

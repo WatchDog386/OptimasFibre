@@ -7,7 +7,7 @@ class Portfolio extends Model {
   toJSON() {
     const values = serialize(this);
     values.author = values.author
-      ? { _id: values.author.id, name: values.author.name || '' }
+      ? { _id: values.author.id, name: values.author.name || values.author.username || '' }
       : values.authorId;
     return values;
   }

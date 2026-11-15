@@ -12,10 +12,17 @@ const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const RESET_SENT_MESSAGE = 'If this email is registered, you will receive password reset instructions shortly.';
 
 const normalizeEmail = (email) => (typeof email === 'string' ? email.trim().toLowerCase() : '');
+
+/** Finds an account by username or email (both case-insensitive). */
+export const findByLogin = (identifier, scope = User.unscoped()) => {
+  const value = normalizeEmail(identifier);
+  if (!value) return null;
+  return scope.findOne({ where: value.includes('@') ? { email: value } : { username: value } });
+};
 const hashToken = (token) => crypto.createHash('sha256').update(String(token)).digest('hex');
 
 const signAccessToken = (user) => jwt.sign(
-  { id: user.id, email: user.email },
+  { id: user.id },
   process.env.JWT_SECRET,
   { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
 );
@@ -24,30 +31,38 @@ const signRefreshToken = (user) => (process.env.JWT_REFRESH_SECRET
   ? jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' })
   : undefined);
 
-const sessionUser = (user) => ({ id: user.id, email: user.publicEmail, role: user.role });
-
-const profile = (user) => ({
+const sessionUser = (user) => ({
   id: user.id,
+  username: user.username || '',
+  name: user.displayName,
+  email: user.publicEmail,
+  role: user.role
+});
+
+export const profile = (user) => ({
+  id: user.id,
+  username: user.username || '',
   name: user.name || '',
-  email: user.email,
+  displayName: user.displayName,
+  email: user.email || '',
   phone: user.phone || '',
   role: user.role,
   profileImage: user.profileImage || '',
   createdAt: user.createdAt
 });
 
-/** POST /api/auth/login */
+/** POST /api/auth/login — `identifier` (or the older `email` / `username` fields) can be a username or an email. */
 export const login = async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const identifier = req.body?.identifier ?? req.body?.username ?? req.body?.email;
   const { password } = req.body || {};
 
-  if (!email || typeof password !== 'string' || !password) {
-    throw httpError(400, 'Email and password are required');
+  if (!normalizeEmail(identifier) || typeof password !== 'string' || !password) {
+    throw httpError(400, 'Username (or email) and password are required');
   }
 
-  const user = await User.unscoped().findOne({ where: { email } });
+  const user = await findByLogin(identifier);
   if (!user || !(await user.comparePassword(password))) {
-    throw httpError(401, 'Invalid email or password');
+    throw httpError(401, 'Invalid username or password');
   }
 
   res.json({
@@ -102,11 +117,12 @@ export const refreshToken = async (req, res) => {
 
 /** POST /api/auth/forgot-password — the answer is the same whether or not the email exists. */
 export const forgotPassword = async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
-  if (!email) throw httpError(400, 'Email is required');
+  const identifier = req.body?.identifier ?? req.body?.email ?? req.body?.username;
+  if (!normalizeEmail(identifier)) throw httpError(400, 'Email or username is required');
 
-  const user = await User.findOne({ where: { email } });
-  if (user) {
+  const user = await findByLogin(identifier, User);
+  // Accounts without an email address cannot receive a link; another admin can reset them.
+  if (user?.email) {
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = hashToken(resetToken);
     user.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
@@ -153,7 +169,7 @@ export const changePassword = async (req, res) => {
 
   const user = await User.unscoped().findByPk(req.user.id);
   if (!user) throw httpError(404, 'User not found');
-  if (!(await user.comparePassword(currentPassword))) throw httpError(401, 'Current password is incorrect');
+  if (!(await user.comparePassword(currentPassword))) throw httpError(400, 'Current password is incorrect');
 
   user.password = newPassword;
   await user.save();
@@ -175,12 +191,19 @@ export const getMe = (req, res) => {
 export const updateProfile = async (req, res) => {
   const { name, phone, profileImage } = req.body || {};
   const email = normalizeEmail(req.body?.email);
+  const username = normalizeEmail(req.body?.username);
 
-  if (!name && !email && !phone && !profileImage) {
+  if (!name && !email && !phone && !profileImage && !username) {
     throw httpError(400, 'At least one field is required for update');
   }
 
   const user = req.user;
+
+  if (username && username !== user.username) {
+    const taken = await User.count({ where: { username, id: { [Op.ne]: user.id } } });
+    if (taken) throw httpError(400, 'Username already in use by another account');
+    user.username = username;
+  }
 
   if (email && email !== user.email) {
     const taken = await User.count({ where: { email, id: { [Op.ne]: user.id } } });

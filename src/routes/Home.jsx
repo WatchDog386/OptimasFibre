@@ -26,8 +26,8 @@ export default function Home() {
           content="Experience high-speed fiber internet by Optimas. Designed for homes and businesses across Kenya."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://optimasfiber.co.ke" />
-        {/* <meta property="og:image" content="https://optimasfiber.co.ke/assets/og-image.webp" /> */}
+        <meta property="og:url" content="https://optimaswifi.co.ke/" />
+        <meta property="og:image" content="https://optimaswifi.co.ke/image.png" />
       </Helmet>
 
       <section id="hero">

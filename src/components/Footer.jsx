@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom"; 
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, LogIn } from "lucide-react";
 
 export default function Footer() {
   const scrollToTop = () => {
@@ -13,8 +13,9 @@ export default function Footer() {
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
     { name: 'Our Coverage', path: '/coverage' },
+    { name: 'Blog', path: '/blog' },
     { name: 'Careers', path: '/vacancies' },
-    { name: 'Contact', path: '/contact', isActive: true }
+    { name: 'Contact', path: '/contact' }
   ];
 
   return (
@@ -23,8 +24,17 @@ export default function Footer() {
         
         <div className="relative z-10 max-w-6xl mx-auto px-2.5 py-8 md:h-32 flex flex-col md:flex-row items-center justify-between">
           
-          {/* Spacer for centering logic on desktop */}
-          <div className="hidden md:block w-12"></div>
+          {/* Left: staff login (opens the admin dashboard sign-in) */}
+          <div className="order-last md:order-first mt-6 md:mt-0 flex justify-center md:justify-start md:w-40">
+            <Link
+              to="/admin/login"
+              className="inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-xs md:text-sm font-semibold text-white hover:bg-white hover:text-[#004080] transition-colors duration-300"
+              aria-label="Staff login"
+            >
+              <LogIn size={16} aria-hidden="true" />
+              Staff Login
+            </Link>
+          </div>
 
           {/* Center Content: Links & Copyright */}
           <div className="flex flex-col items-center justify-center space-y-4 w-full md:w-auto">
@@ -51,7 +61,7 @@ export default function Footer() {
           </div>
 
           {/* Right Side: Back to Top Button */}
-          <div className="mt-6 md:mt-0 w-full md:w-auto flex justify-center md:justify-end">
+          <div className="mt-6 md:mt-0 w-full md:w-40 flex justify-center md:justify-end">
             <motion.button
               onClick={scrollToTop}
               whileHover={{ scale: 1.1 }}

@@ -5,7 +5,28 @@ import { isUuid } from '../models/helpers.js';
 import { httpError } from '../middleware/errorHandler.js';
 import { parseDate } from '../utils/query.js';
 
-const withAuthor = { include: [{ model: User, as: 'author', attributes: ['id', 'name'] }] };
+const withAuthor = { include: [{ model: User, as: 'author', attributes: ['id', 'name', 'username'] }] };
+
+const isAdminRequest = (req) => req.user?.role === 'admin';
+
+/** Fields an admin can set on a post. */
+const postFields = (body) => {
+  const { title, content, imageUrl, category, publishedAt, excerpt, published, featured } = body || {};
+  if (typeof title !== 'string' || typeof content !== 'string' || !title.trim() || !content.trim()) {
+    throw httpError(400, 'Title and content are required');
+  }
+  const fields = {
+    title: title.trim(),
+    content: content.trim(),
+    imageUrl: typeof imageUrl === 'string' ? imageUrl.trim() : '',
+    category: (typeof category === 'string' && category.trim()) || 'General',
+    excerpt: typeof excerpt === 'string' ? excerpt : ''
+  };
+  if (typeof published === 'boolean') fields.published = published;
+  if (typeof featured === 'boolean') fields.featured = featured;
+  if (parseDate(publishedAt)) fields.publishedAt = parseDate(publishedAt);
+  return fields;
+};
 
 /** A post can be addressed by its id or by its slug. */
 const findPost = (idOrSlug, options = {}) =>
@@ -17,23 +38,27 @@ const findPostById = async (id) => {
   return post;
 };
 
-/** GET /api/blog */
+/** GET /api/blog — visitors see published posts; admins also see drafts. */
 export const getAllBlogPosts = async (req, res) => {
-  const posts = await BlogPost.findAll({ order: [['publishedAt', 'DESC']], ...withAuthor });
+  const posts = await BlogPost.findAll({
+    where: isAdminRequest(req) ? {} : { published: true },
+    order: [['featured', 'DESC'], ['publishedAt', 'DESC']],
+    ...withAuthor
+  });
   res.json({ success: true, count: posts.length, data: posts });
 };
 
 /** GET /api/blog/:id (id or slug) */
 export const getBlogPostById = async (req, res) => {
   const post = await findPost(req.params.id, withAuthor);
-  if (!post) throw httpError(404, 'Blog post not found');
+  if (!post || (!post.published && !isAdminRequest(req))) throw httpError(404, 'Blog post not found');
   res.json({ success: true, data: post });
 };
 
 /** GET /api/blog/:id/pdf */
 export const generateBlogPDF = async (req, res) => {
   const post = await findPost(req.params.id);
-  if (!post) throw httpError(404, 'Blog post not found');
+  if (!post || (!post.published && !isAdminRequest(req))) throw httpError(404, 'Blog post not found');
 
   const doc = new PDFDocument({ size: 'A4', margins: { top: 60, bottom: 60, left: 60, right: 60 } });
   const filename = `${(post.slug || 'blog-post').replace(/[^a-z0-9-]/gi, '')}.pdf`;
@@ -71,38 +96,19 @@ export const generateBlogPDF = async (req, res) => {
 
 /** POST /api/blog */
 export const createBlogPost = async (req, res) => {
-  const { title, content, imageUrl, category, publishedAt } = req.body || {};
-  if (typeof title !== 'string' || typeof content !== 'string' || !title.trim() || !content.trim()) {
-    throw httpError(400, 'Title and content are required');
-  }
-
   const post = await BlogPost.create({
-    title: title.trim(),
-    content: content.trim(),
-    imageUrl: typeof imageUrl === 'string' ? imageUrl.trim() : '',
-    category: (typeof category === 'string' && category.trim()) || 'General',
-    authorId: req.user.id,
-    publishedAt: parseDate(publishedAt) || new Date()
+    publishedAt: new Date(),
+    ...postFields(req.body),
+    authorId: req.user.id
   });
-
   res.status(201).json({ success: true, message: 'Blog post created successfully', data: await findPostById(post.id) });
 };
 
 /** PUT /api/blog/:id */
 export const updateBlogPost = async (req, res) => {
-  const { title, content, imageUrl, category, publishedAt } = req.body || {};
-  if (typeof title !== 'string' || typeof content !== 'string' || !title.trim() || !content.trim()) {
-    throw httpError(400, 'Title and content are required');
-  }
-
   const post = await findPostById(req.params.id);
-  post.title = title.trim();
-  post.content = content.trim();
-  post.imageUrl = typeof imageUrl === 'string' ? imageUrl.trim() : '';
-  post.category = (typeof category === 'string' && category.trim()) || 'General';
-  if (parseDate(publishedAt)) post.publishedAt = parseDate(publishedAt);
+  post.set(postFields(req.body));
   await post.save();
-
   res.json({ success: true, message: 'Blog post updated successfully', data: post });
 };
 

@@ -16,6 +16,9 @@ import settingRoutes from './routes/settingRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
 import receiptRoutes from './routes/receipts.js';
 import vacancyRoutes from './routes/vacancyRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import sitemapRoutes from './routes/sitemapRoutes.js';
 
 import { isDatabaseUp } from './config/db.js';
 import { isProduction } from './config/env.js';
@@ -84,6 +87,9 @@ app.use('/uploads', express.static(UPLOADS_DIR, {
   setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff')
 }));
 
+/* ---------- Sitemap (Nginx forwards /sitemap.xml here) ---------- */
+app.use(sitemapRoutes);
+
 /* ---------- API ---------- */
 app.use('/api/auth', authRoutes);
 app.use('/api/blog', blogRoutes);
@@ -92,6 +98,8 @@ app.use('/api/settings', settingRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/receipts', receiptRoutes);
 app.use('/api/vacancies', vacancyRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

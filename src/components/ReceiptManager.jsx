@@ -107,7 +107,6 @@ const DEFAULT_BRAND = {
   }
 };
 
-const WEBMAIL_URL = 'https://pld109.truehost.cloud:2096/cpsess2481723632/3rdparty/roundcube/?_task=mail&_mbox=INBOX';
 
 // ✅ PROFESSIONAL: Clean, minimal receipt PDF layout
 const generateReceiptPDF = async (receipt, showNotification, brandInfo = null) => {
@@ -1121,38 +1120,31 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         return;
       }
 
-      // 1) Download receipt PDF first
+      // 1) Saved receipts are emailed by the server (PDF attached automatically).
+      if (!receipt.isLocal && localStorage.getItem('token')) {
+        showNotification('📤 Sending receipt email...', 'info');
+        const response = await fetch(`${API_BASE_URL}/api/receipts/${receipt._id}/send`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+          setReceipts(prev => prev.map(rec => rec._id === receipt._id ? (data.receipt || { ...rec, sentToCustomer: true }) : rec));
+          showNotification(`✅ Receipt emailed to ${receipt.customerEmail}`, 'success');
+          return;
+        }
+        showNotification(`⚠️ ${data.message || 'Server email is not available'}. Opening your email app instead.`, 'warning');
+      }
+
+      // 2) Fallback: download the PDF and open the user's email app with the message filled in.
       const pdfResult = await generateReceiptPDF(receipt, showNotification, BRAND);
       if (!pdfResult?.success) {
         showNotification('❌ Failed to prepare receipt PDF', 'error');
         return;
       }
-      
-      // 2) Prepare draft content and copy to clipboard
       const { subject, body } = prepareReceiptEmailContent(receipt, BRAND);
-
-      const decodedSubject = decodeURIComponent(subject);
-      const decodedBody = decodeURIComponent(body);
-      const draftText = [
-        `To: ${receipt.customerEmail.trim()}`,
-        `CC: ${BRAND.contact.email}`,
-        `Subject: ${decodedSubject}`,
-        '',
-        decodedBody
-      ].join('\n');
-
-      try {
-        await navigator.clipboard.writeText(draftText);
-        showNotification('📋 Receipt email draft copied. Paste in webmail compose.', 'success');
-      } catch {
-        showNotification('ℹ️ PDF downloaded. Compose receipt email manually in webmail.', 'info');
-      }
-
-      // 3) Redirect to webmail
-      showNotification('✅ Receipt PDF downloaded. Redirecting to webmail...', 'info');
-      setTimeout(() => {
-        window.location.href = WEBMAIL_URL;
-      }, 900);
+      showNotification('📎 Receipt PDF downloaded. Attach it to the email that is opening now.', 'info');
+      window.location.href = `mailto:${encodeURIComponent(receipt.customerEmail.trim())}?subject=${subject}&body=${body}`;
       
     } catch (error) {
       console.error('Error preparing receipt email:', error);
@@ -1636,13 +1628,13 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-100 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Receipt #</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden lg:table-cell">Invoice #</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Payment</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Receipt #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Customer</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden 2xl:table-cell">Invoice #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Payment</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Actions</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
@@ -1674,7 +1666,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               ) : (
                 filteredReceipts.map((receipt) => (
                   <tr key={receipt._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <Receipt size={20} className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
@@ -1698,7 +1690,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       </div>
                     </td>
                     
-                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                    <td className="px-4 py-4 whitespace-nowrap hidden md:table-cell">
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {receipt.customerName || 'N/A'}
@@ -1709,11 +1701,11 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       </div>
                     </td>
                     
-                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm text-gray-700 dark:text-gray-300">
+                    <td className="px-4 py-4 whitespace-nowrap hidden 2xl:table-cell text-sm text-gray-700 dark:text-gray-300">
                       {receipt.invoiceNumber || 'N/A'}
                     </td>
                     
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         Ksh {formatPrice(receipt.total || 0)}
                       </div>
@@ -1722,13 +1714,13 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       </div>
                     </td>
                     
-                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                    <td className="px-4 py-4 whitespace-nowrap hidden md:table-cell">
                       <div className="text-sm text-gray-700 dark:text-gray-300 capitalize">
                         {receipt.paymentMethod?.replace('_', ' ') || 'cash'}
                       </div>
                     </td>
                     
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         receipt.status === 'paid' 
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -1748,7 +1740,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       </span>
                     </td>
                     
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-1">
                         <button
                           onClick={() => viewReceipt(receipt)}
@@ -2469,10 +2461,10 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                     <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                       {(selectedReceipt.items || [{ description: 'Internet Service', quantity: 1, unitPrice: selectedReceipt.total || 0, amount: selectedReceipt.total || 0 }]).map((item, idx) => (
                         <tr key={idx} className={`${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
-                          <td className="px-6 py-4 text-sm">{item.description}</td>
-                          <td className="px-6 py-4 text-sm text-center font-medium">{item.quantity || 1}</td>
-                          <td className="px-6 py-4 text-sm text-right">Ksh {formatPrice(item.unitPrice || item.amount)}</td>
-                          <td className="px-6 py-4 text-sm text-right font-semibold">Ksh {formatPrice(item.amount)}</td>
+                          <td className="px-4 py-4 text-sm">{item.description}</td>
+                          <td className="px-4 py-4 text-sm text-center font-medium">{item.quantity || 1}</td>
+                          <td className="px-4 py-4 text-sm text-right">Ksh {formatPrice(item.unitPrice || item.amount)}</td>
+                          <td className="px-4 py-4 text-sm text-right font-semibold">Ksh {formatPrice(item.amount)}</td>
                         </tr>
                       ))}
                     </tbody>

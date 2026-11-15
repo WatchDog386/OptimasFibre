@@ -96,7 +96,6 @@ const DEFAULT_COMPANY_INFO = {
   }
 };
 
-const WEBMAIL_URL = 'https://pld109.truehost.cloud:2096/cpsess2481723632/3rdparty/roundcube/?_task=mail&_mbox=INBOX';
 
 const initialFormState = {
   invoiceNumber: '',
@@ -574,34 +573,21 @@ const openEmailClient = async (invoice, showNotification) => {
     return;
   }
 
-  // 2) Prepare email draft text for quick paste in webmail
+  // 2) Open the user's email app with the message filled in; they attach the downloaded PDF.
   const subject = `Invoice #${invoice.invoiceNumber || invoice._id?.substring(0,8)} from ${COMPANY_INFO.name}`;
-  const bodyLines = [
-    `To: ${invoice.customerEmail?.trim() || ''}`,
-    `CC: ${COMPANY_INFO.supportEmail}`,
-    `Subject: ${subject}`,
-    ``,
+  const body = [
     `Dear ${invoice.customerName || 'Valued Customer'},`,
+    '',
     `Please find attached your invoice ${invoice.invoiceNumber || invoice._id?.substring(0,8)}.`,
     `Total Amount: Ksh ${formatPrice(invoice.totalAmount)}`,
     `Due Date: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}`,
-    ``,
-    `Regards,`,
+    '',
+    'Regards,',
     `${COMPANY_INFO.name}`
-  ];
+  ].join('\n');
 
-  try {
-    await navigator.clipboard.writeText(bodyLines.join('\n'));
-    showNotification('📋 Email draft copied. Paste it in webmail compose.', 'success');
-  } catch {
-    showNotification('ℹ️ PDF downloaded. Compose email manually in webmail.', 'info');
-  }
-
-  // 3) Redirect admin to webmail login/compose page
-  showNotification(`✅ PDF downloaded as "${pdfResult.filename}". Redirecting to webmail...`, 'info');
-  setTimeout(() => {
-    window.location.href = WEBMAIL_URL;
-  }, 900);
+  showNotification(`📎 PDF saved as "${pdfResult.filename}". Attach it to the email that is opening now.`, 'info');
+  window.location.href = `mailto:${encodeURIComponent(invoice.customerEmail.trim())}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 };
 
 const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification, invoices, setInvoices, receipts, setReceipts }) => {
@@ -1161,6 +1147,23 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
     setSendingInvoice(invoice._id);
     try {
+      // Saved invoices are emailed by the server (PDF attached automatically).
+      if (!invoice.isLocal && localStorage.getItem('token')) {
+        showNotification('📤 Sending invoice email...', 'info');
+        const response = await fetch(`${API_BASE_URL}/api/invoices/${invoice._id}/send`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+          setInvoices(prev => prev.map(inv => inv._id === invoice._id
+            ? { ...inv, sentToCustomer: true, lastSentAt: new Date().toISOString(), sendCount: (inv.sendCount || 0) + 1 }
+            : inv));
+          showNotification(`✅ Invoice emailed to ${invoice.customerEmail}`, 'success');
+          return;
+        }
+        showNotification(`⚠️ ${data.message || 'Server email is not available'}. Opening your email app instead.`, 'warning');
+      }
       showNotification('🔄 Preparing invoice PDF...', 'info');
       await openEmailClient(invoice, showNotification);
     } catch (error) {
@@ -1733,13 +1736,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-100 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Invoice #</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden lg:table-cell">Plan/Details</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Total</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden sm:table-cell">Balance</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Invoice #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Customer</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden 2xl:table-cell">Plan/Details</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Total</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden sm:table-cell">Balance</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Actions</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
@@ -1766,7 +1769,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               ) : (
                 filteredInvoices.map((invoice) => (
                   <tr key={invoice._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {invoice.invoiceNumber || `INV-${invoice._id?.substring(0,4)}`}
                         {invoice.isLocal && (
@@ -1777,29 +1780,29 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                    <td className="px-4 py-4 whitespace-nowrap hidden md:table-cell">
                       <div className="text-sm font-medium">{invoice.customerName}</div>
                       <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         {invoice.customerEmail}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                    <td className="px-4 py-4 whitespace-nowrap hidden 2xl:table-cell">
                       <div className="text-sm font-medium">{invoice.planName}</div>
                       <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         {invoice.planSpeed}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-4 py-4 whitespace-nowrap text-right">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         Ksh {formatPrice(invoice.totalAmount || invoice.planPrice || 0)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right hidden sm:table-cell">
+                    <td className="px-4 py-4 whitespace-nowrap text-right hidden sm:table-cell">
                       <div className={`text-sm font-semibold ${invoice.balanceDue > 0 ? 'text-red-500' : 'text-green-500'}`}>
                         Ksh {formatPrice(invoice.balanceDue)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         invoice.status === 'paid' 
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -1818,7 +1821,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                          <><FileText size={12} className="mr-1" /> {invoice.status}</>}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-4 py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end space-x-1">
                         <button
                           onClick={() => viewInvoice(invoice)}
@@ -2388,10 +2391,10 @@ Price: Ksh 2999`}
                     <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                       {selectedInvoice.items?.map((item, idx) => (
                         <tr key={idx} className={`${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
-                          <td className="px-6 py-4 text-sm">{item.description}</td>
-                          <td className="px-6 py-4 text-sm text-center font-medium">{item.quantity || 1}</td>
-                          <td className="px-6 py-4 text-sm text-right">Ksh {formatPrice(item.unitPrice)}</td>
-                          <td className="px-6 py-4 text-sm text-right font-semibold">Ksh {formatPrice(item.amount)}</td>
+                          <td className="px-4 py-4 text-sm">{item.description}</td>
+                          <td className="px-4 py-4 text-sm text-center font-medium">{item.quantity || 1}</td>
+                          <td className="px-4 py-4 text-sm text-right">Ksh {formatPrice(item.unitPrice)}</td>
+                          <td className="px-4 py-4 text-sm text-right font-semibold">Ksh {formatPrice(item.amount)}</td>
                         </tr>
                       ))}
                     </tbody>

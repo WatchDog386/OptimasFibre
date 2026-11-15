@@ -17,10 +17,16 @@ class User extends Model {
     return this.role === 'admin';
   }
 
+  /** Name to show in the UI: display name, else username, else the part of the email before @. */
+  get displayName() {
+    return this.name || this.username || (this.email || '').split('@')[0] || 'Admin';
+  }
+
   /** Masked email for display, e.g. "j***n@example.com". */
   get publicEmail() {
     const email = this.getDataValue('email');
     if (!email) return '';
+    if (!email.includes('@')) return email;
     const [local, domain] = email.split('@');
     const masked = local.length > 3
       ? local[0] + '*'.repeat(local.length - 2) + local.slice(-1)
@@ -35,15 +41,28 @@ class User extends Model {
 
 User.init({
   ...idColumn,
-  email: {
-    type: DataTypes.STRING(254),
-    allowNull: false,
+  // Login name, stored in lower case so sign-in is case-insensitive. Optional for accounts that use email.
+  username: {
+    type: DataTypes.STRING(40),
+    allowNull: true,
     unique: true,
     set(value) {
-      this.setDataValue('email', typeof value === 'string' ? value.trim().toLowerCase() : value);
+      const text = typeof value === 'string' ? value.trim().toLowerCase() : value;
+      this.setDataValue('username', text || null);
     },
     validate: {
-      notNull: { msg: 'Email is required' },
+      is: { args: /^[a-z0-9._-]{3,40}$/, msg: 'Username must be 3-40 characters: letters, numbers, dots, dashes or underscores' }
+    }
+  },
+  email: {
+    type: DataTypes.STRING(254),
+    allowNull: true,
+    unique: true,
+    set(value) {
+      const text = typeof value === 'string' ? value.trim().toLowerCase() : value;
+      this.setDataValue('email', text || null);
+    },
+    validate: {
       isEmail: { msg: 'Please enter a valid email address' }
     }
   },
@@ -71,6 +90,11 @@ User.init({
 }, {
   sequelize,
   modelName: 'User',
+  validate: {
+    hasLoginName() {
+      if (!this.username && !this.email) throw new Error('A username or an email is required');
+    }
+  },
   tableName: 'users',
   defaultScope: { attributes: { exclude: SECRET_FIELDS } },
   scopes: { withSecrets: { attributes: { include: SECRET_FIELDS } } },

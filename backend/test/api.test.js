@@ -111,7 +111,7 @@ test('auth: profile update and change password', async () => {
   assert.equal(upd.body.user.name, 'Felix');
 
   const wrong = await api('PUT', '/api/auth/change-password', { token: userToken, body: { currentPassword: 'x', newPassword: 'new-pass-123' } });
-  assert.equal(wrong.status, 401);
+  assert.equal(wrong.status, 400);
 });
 
 test('admin-only routes reject anonymous and non-admin users', async () => {
@@ -376,4 +376,96 @@ test('unknown API routes return JSON 404', async () => {
   const res = await api('GET', '/api/nothing-here');
   assert.equal(res.status, 404);
   assert.equal(res.body.success, false);
+});
+
+test('username login is case-insensitive and works alongside email', async () => {
+  await User.create({ username: 'Bosley', name: 'Bosley', password: 'optimas@2026!', role: 'admin' });
+  for (const identifier of ['Bosley', 'bosley', 'BOSLEY']) {
+    const res = await api('POST', '/api/auth/login', { body: { identifier, password: 'optimas@2026!' } });
+    assert.equal(res.status, 200, identifier);
+    assert.equal(res.body.user.name, 'Bosley');
+  }
+  // Older clients send the login in the `email` field
+  const legacy = await api('POST', '/api/auth/login', { body: { email: 'bosley', password: 'optimas@2026!' } });
+  assert.equal(legacy.status, 200);
+  const wrong = await api('POST', '/api/auth/login', { body: { identifier: 'bosley', password: 'optimas@2026' } });
+  assert.equal(wrong.status, 401);
+});
+
+test('users API: admins can list, create, update, and safely delete accounts', async () => {
+  assert.equal((await api('GET', '/api/users', { token: userToken })).status, 403);
+
+  const list = await api('GET', '/api/users', { token: adminToken });
+  assert.equal(list.status, 200);
+  assert.ok(list.body.users.every((u) => u.password === undefined));
+
+  const created = await api('POST', '/api/users', { token: adminToken, body: { username: 'Rose', name: 'Rose', password: 'optimas@2026!' } });
+  assert.equal(created.status, 201);
+  assert.equal(created.body.user.username, 'rose');
+  assert.equal(created.body.user.role, 'admin');
+
+  const dup = await api('POST', '/api/users', { token: adminToken, body: { username: 'ROSE', password: 'optimas@2026!' } });
+  assert.equal(dup.status, 400);
+  const weak = await api('POST', '/api/users', { token: adminToken, body: { username: 'x1y', password: 'short' } });
+  assert.equal(weak.status, 400);
+
+  const roseId = created.body.user.id;
+  const reset = await api('PUT', `/api/users/${roseId}`, { token: adminToken, body: { password: 'new-rose-pass-1' } });
+  assert.equal(reset.status, 200);
+  assert.equal((await api('POST', '/api/auth/login', { body: { identifier: 'rose', password: 'new-rose-pass-1' } })).status, 200);
+
+  const me = (await api('GET', '/api/auth/me', { token: adminToken })).body.user;
+  assert.equal((await api('DELETE', `/api/users/${me.id}`, { token: adminToken })).status, 400, 'cannot delete yourself');
+  assert.equal((await api('PUT', `/api/users/${me.id}`, { token: adminToken, body: { role: 'user' } })).status, 400, 'cannot demote yourself');
+  assert.equal((await api('DELETE', `/api/users/${roseId}`, { token: adminToken })).status, 200);
+});
+
+test('blog drafts are hidden from the public but visible to admins', async () => {
+  const content = 'This draft talks about upcoming fibre rollouts in new estates. '.repeat(2);
+  const draft = await api('POST', '/api/blog', { token: adminToken, body: { title: 'Secret draft', content, published: false } });
+  assert.equal(draft.status, 201);
+  assert.equal(draft.body.data.published, false);
+  assert.ok(draft.body.data.excerpt.length > 10, 'excerpt generated');
+
+  const publicList = await api('GET', '/api/blog');
+  assert.ok(!publicList.body.data.some((p) => p.slug === 'secret-draft'));
+  assert.equal((await api('GET', '/api/blog/secret-draft')).status, 404);
+
+  const adminList = await api('GET', '/api/blog', { token: adminToken });
+  assert.ok(adminList.body.data.some((p) => p.slug === 'secret-draft'));
+
+  const publish = await api('PUT', `/api/blog/${draft.body.data.id}`, { token: adminToken, body: { title: 'Secret draft', content, published: true, featured: true } });
+  assert.equal(publish.body.data.featured, true);
+  const first = (await api('GET', '/api/blog')).body.data[0];
+  assert.equal(first.slug, 'secret-draft', 'featured posts come first');
+});
+
+test('image upload endpoint stores an image and rejects other files', async () => {
+  const png = new Blob([Buffer.from('89504e470d0a1a0a', 'hex')], { type: 'image/png' });
+  const form = new FormData();
+  form.append('image', png, 'photo.png');
+  const ok = await fetch(`${base}/api/uploads/image`, { method: 'POST', headers: { Authorization: `Bearer ${adminToken}` }, body: form });
+  assert.equal(ok.status, 201);
+  const { url } = await ok.json();
+  assert.match(url, /^\/uploads\/images\/images-\d+-[0-9a-f]+\.png$/);
+  assert.equal((await fetch(`${base}${url}`)).status, 200);
+
+  const bad = new FormData();
+  bad.append('image', new Blob(['<script>'], { type: 'text/html' }), 'x.html');
+  const rejected = await fetch(`${base}/api/uploads/image`, { method: 'POST', headers: { Authorization: `Bearer ${adminToken}` }, body: bad });
+  assert.equal(rejected.status, 400);
+
+  const anon = await fetch(`${base}/api/uploads/image`, { method: 'POST', body: form });
+  assert.equal(anon.status, 401);
+});
+
+test('sitemap lists public pages and published posts only', async () => {
+  const res = await fetch(`${base}/sitemap.xml`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /xml/);
+  const xml = await res.text();
+  assert.match(xml, /<loc>https:\/\/optimaswifi\.co\.ke\/blog<\/loc>/);
+  assert.match(xml, /\/blog\/secret-draft</, 'published post is listed');
+  const drafts = (await api('GET', '/api/blog', { token: adminToken })).body.data.filter((p) => !p.published);
+  for (const d of drafts) assert.doesNotMatch(xml, new RegExp(`/blog/${d.slug}<`));
 });

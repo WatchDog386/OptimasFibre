@@ -45,6 +45,16 @@ export const protect = async (req, res, next) => {
   next();
 };
 
+/** Attaches req.user when a valid token is sent, but lets anonymous requests through. */
+export const optionalAuth = async (req, res, next) => {
+  try {
+    req.user = (await userFromToken(tokenFrom(req))) || undefined;
+  } catch {
+    req.user = undefined;
+  }
+  next();
+};
+
 /** Restricts a route to admins. Use after `protect`. */
 export const admin = (req, res, next) => {
   if (req.user?.role === 'admin') return next();

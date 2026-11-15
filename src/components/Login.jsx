@@ -114,7 +114,7 @@ const Login = () => {
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier: email.trim(), password }),
       });
 
       const data = await response.json();
@@ -132,7 +132,7 @@ const Login = () => {
         if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
         setSuccess(true);
       } else {
-        setError(data.message || 'Invalid credentials.');
+        setError(data.message || 'Invalid username or password.');
         setLoading(false);
       }
     } catch (err) {
@@ -149,7 +149,7 @@ const Login = () => {
       const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail }),
+        body: JSON.stringify({ identifier: forgotEmail.trim() }),
       });
       const data = await response.json();
       
@@ -200,8 +200,11 @@ const Login = () => {
               {/* Email Input */}
               <div className="space-y-1">
                 <input
-                  type="email"
-                  placeholder="Email Address"
+                  type="text"
+                  placeholder="Username or email"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-5 py-3 rounded-full border border-gray-200 bg-gray-50 text-sm outline-none focus:border-[#00356B] focus:ring-1 focus:ring-[#00356B] transition-all"
@@ -337,11 +340,11 @@ const Login = () => {
               className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl p-8"
             >
               <h3 className="text-xl font-bold mb-2 text-center" style={{ color: BRAND.PRIMARY }}>Recovery</h3>
-              <p className="text-gray-500 text-sm mb-6 text-center">Enter your email to receive a reset link.</p>
+              <p className="text-gray-500 text-sm mb-6 text-center">Enter your email address to receive a reset link. Accounts without an email can be reset by another admin under Users.</p>
                 
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <input 
-                  type="email" 
+                  type="text"
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   className="w-full px-5 py-3 rounded-full bg-gray-50 border border-gray-200 text-sm focus:border-[#00356B] focus:ring-1 focus:ring-[#00356B] outline-none"

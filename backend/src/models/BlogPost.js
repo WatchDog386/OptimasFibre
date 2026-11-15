@@ -8,7 +8,7 @@ class BlogPost extends Model {
     const values = serialize(this);
     // Only a display name is public — never the author's login email.
     values.author = values.author
-      ? { _id: values.author.id, name: values.author.name || '' }
+      ? { _id: values.author.id, name: values.author.name || values.author.username || '' }
       : values.authorId;
     return values;
   }
@@ -43,6 +43,18 @@ BlogPost.init({
     }
   },
   slug: { type: DataTypes.STRING(240), unique: true },
+  // Short summary for cards and search results; generated from the content when left empty.
+  excerpt: {
+    type: DataTypes.STRING(400),
+    allowNull: false,
+    defaultValue: '',
+    set(value) {
+      this.setDataValue('excerpt', String(value ?? '').trim().slice(0, 400));
+    }
+  },
+  // Drafts are only visible in the dashboard.
+  published: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+  featured: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   category: {
     type: DataTypes.STRING(50),
     allowNull: false,
@@ -58,6 +70,17 @@ BlogPost.init({
   hooks: {
     // The slug is the public article URL, so it is set once and kept stable on edits.
     async beforeValidate(post) {
+      if (!post.excerpt && post.content) {
+        const plain = String(post.content)
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/!\[[^\]]*\]\([^)]*\)/g, '')        // images
+          .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')      // links -> their text
+          .replace(/^\s*(#{1,6}|[-*\u2022]|\d+[.)]|>)\s+/gm, '') // headings, bullets, quotes
+          .replace(/[*_`]+/g, '')                     // bold / italic markers
+          .replace(/\s+/g, ' ')
+          .trim();
+        post.excerpt = plain.length > 220 ? `${plain.slice(0, 217).replace(/\s+\S*$/, '')}...` : plain;
+      }
       if (!post.slug && post.title) {
         post.slug = await uniqueSlug(BlogPost, post.title, 'post', post.id);
       }

@@ -14,7 +14,7 @@ import Faqs from "./routes/faqs";
 import Contact from "./routes/Contact";
 import WifiPlans from "./routes/WifiPlans";
 import Articles from "./routes/Articles";
-import ArticleDetail from "./routes/ArticleDetail";
+import BlogPost from "./routes/BlogPost";
 import CoverageMap from "./routes/CoverageMap";
 import BlogList from "./routes/BlogList";
 import Vacancies from "./routes/Vacancies";
@@ -23,7 +23,6 @@ import Vacancies from "./routes/Vacancies";
 import Login from "./components/Login";
 import ResetPassword from "./components/ResetPassword";
 import Dashboard from "./components/Dashboard";
-import ReceiptManager from "./components/ReceiptManager";
 import PrivateRoute from "./components/PrivateRoute";
 
 // Track page views with GA
@@ -54,7 +53,8 @@ function AppRoutes() {
         <Route path="contact" element={<Contact />} />
         <Route path="wifi-plans" element={<WifiPlans />} />
         <Route path="blog" element={<BlogList />} />
-        <Route path="articles/:slug" element={<ArticleDetail />} />
+        <Route path="blog/:slug" element={<BlogPost />} />
+        <Route path="articles/:slug" element={<BlogPost />} />
         <Route path="coverage" element={<CoverageMap />} />
         <Route path="vacancies" element={<Vacancies />} />
       </Route>
@@ -64,20 +64,8 @@ function AppRoutes() {
       <Route path="/admin/reset-password" element={<ResetPassword />} />
 
       {/* Admin Layout Route */}
-      <Route
-        path="/admin"
-        element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        }
-      >
-        {/* Index route (optional): renders when at /admin */}
-        <Route index element={<Navigate to="receipts" replace />} />
-        {/* Child routes */}
-        <Route path="receipts" element={<ReceiptManager />} />
-        {/* You can add more: <Route path="invoices" element={<InvoiceManager />} /> */}
-      </Route>
+      <Route path="/admin" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      <Route path="/admin/:section" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />

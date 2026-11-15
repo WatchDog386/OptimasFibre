@@ -15,9 +15,11 @@ const findItemById = async (id) => {
   return item;
 };
 
-/** Removes an uploaded image from disk. External URLs are left alone. */
+/** Removes an uploaded image from disk. External URLs and shared images are left alone. */
 const removeUploadedImage = async (imageUrl) => {
   if (typeof imageUrl !== 'string' || !imageUrl.startsWith(UPLOAD_PREFIX)) return;
+  const stillUsed = await Portfolio.count({ where: { imageUrl } });
+  if (stillUsed) return;
   const file = path.join(UPLOADS_DIR, 'portfolio', path.basename(imageUrl));
   await fs.unlink(file).catch(() => {});
 };
