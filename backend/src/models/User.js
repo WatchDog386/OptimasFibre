@@ -1,102 +1,86 @@
 // backend/src/models/User.js
-import mongoose from 'mongoose';
+import { DataTypes, Model } from 'sequelize';
 import bcrypt from 'bcryptjs';
+import { sequelize } from '../config/db.js';
+import { idColumn, serialize } from './helpers.js';
 
-/**
- * User Schema — Represents a registered user in the Optimas Fibre system
- * @typedef {Object} User
- * @property {string} email - Unique, validated email address (e.g., customer@optimafibre.com)
- * @property {string} password - Hashed password (never returned by default)
- * @property {string} role - User role: 'user' or 'admin'
- * @property {string} [resetPasswordToken] - Token for password reset
- * @property {Date} [resetPasswordExpires] - Expiry for password reset token
- * @property {Date} createdAt - Auto-generated
- * @property {Date} updatedAt - Auto-generated
- */
-const userSchema = new mongoose.Schema({
+const SECRET_FIELDS = ['password', 'resetPasswordToken', 'resetPasswordExpires'];
+
+class User extends Model {
+  comparePassword(candidate) {
+    const hash = this.getDataValue('password');
+    if (!hash || typeof candidate !== 'string') return Promise.resolve(false);
+    return bcrypt.compare(candidate, hash);
+  }
+
+  isAdmin() {
+    return this.role === 'admin';
+  }
+
+  /** Masked email for display, e.g. "j***n@example.com". */
+  get publicEmail() {
+    const email = this.getDataValue('email');
+    if (!email) return '';
+    const [local, domain] = email.split('@');
+    const masked = local.length > 3
+      ? local[0] + '*'.repeat(local.length - 2) + local.slice(-1)
+      : `${local[0]}*`;
+    return `${masked}@${domain}`;
+  }
+
+  toJSON() {
+    return serialize(this, SECRET_FIELDS);
+  }
+}
+
+User.init({
+  ...idColumn,
   email: {
-    type: String,
-    required: [true, 'Email is required'],
+    type: DataTypes.STRING(254),
+    allowNull: false,
     unique: true,
-    lowercase: true,
-    trim: true,
-    match: [
-      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-      'Please enter a valid email address (e.g., user@optimafibre.com)'
-    ]
+    set(value) {
+      this.setDataValue('email', typeof value === 'string' ? value.trim().toLowerCase() : value);
+    },
+    validate: {
+      notNull: { msg: 'Email is required' },
+      isEmail: { msg: 'Please enter a valid email address' }
+    }
   },
+  // Always a bcrypt hash once saved.
   password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [8, 'Password must be at least 8 characters'],
-    select: false // Never return by default in queries
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notNull: { msg: 'Password is required' },
+      len: { args: [8, 200], msg: 'Password must be at least 8 characters' }
+    }
   },
-  name: {
-    type: String,
-    default: ''
-  },
-  phone: {
-    type: String,
-    default: ''
-  },
-  profileImage: {
-    type: String,
-    default: ''
-  },
+  name: { type: DataTypes.STRING(120), allowNull: false, defaultValue: '' },
+  phone: { type: DataTypes.STRING(40), allowNull: false, defaultValue: '' },
+  profileImage: { type: DataTypes.TEXT, allowNull: false, defaultValue: '' },
   role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'user',
+    validate: { isIn: { args: [['user', 'admin']], msg: 'Role must be user or admin' } }
   },
-  resetPasswordToken: {
-    type: String,
-    select: false // Never expose reset token in API responses
-  },
-  resetPasswordExpires: {
-    type: Date,
-    select: false // Never expose expiry in API responses
-  }
+  // SHA-256 of the token that was emailed; the raw token is never stored.
+  resetPasswordToken: { type: DataTypes.STRING(64) },
+  resetPasswordExpires: { type: DataTypes.DATE }
 }, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
-
-// 🔐 Hash password before saving (only if modified)
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12); // Industry-standard cost factor
-  next();
-});
-
-// 🔍 Instance method to compare passwords
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-
-// 🚀 Helper method to check if user is admin
-userSchema.methods.isAdmin = function () {
-  return this.role === 'admin';
-};
-
-// ✅ Virtual field: Masked email for public display (e.g., "j***n@optimafibre.com")
-userSchema.virtual('publicEmail').get(function () {
-  if (!this.email) return '';
-  const [local, domain] = this.email.split('@');
-  const maskedLocal = local.length > 3 
-    ? local[0] + '*'.repeat(local.length - 2) + local.slice(-1)
-    : local[0] + '*';
-  return `${maskedLocal}@${domain}`;
-});
-
-// ✅ Prevent accidental password leaks in console logs or API responses
-userSchema.set('toJSON', {
-  transform: function (doc, ret, options) {
-    delete ret.password;
-    delete ret.resetPasswordToken;
-    delete ret.resetPasswordExpires;
-    return ret;
+  sequelize,
+  modelName: 'User',
+  tableName: 'users',
+  defaultScope: { attributes: { exclude: SECRET_FIELDS } },
+  scopes: { withSecrets: { attributes: { include: SECRET_FIELDS } } },
+  hooks: {
+    async beforeSave(user) {
+      if (user.changed('password')) {
+        user.setDataValue('password', await bcrypt.hash(user.getDataValue('password'), 12));
+      }
+    }
   }
 });
 
-export default mongoose.model('User', userSchema);
+export default User;

@@ -1,641 +1,266 @@
-// src/models/Receipt.js - COMPLETELY UPDATED (Full Feature Set)
-import mongoose from 'mongoose';
+// backend/src/models/Receipt.js
+import { DataTypes, Model } from 'sequelize';
+import { sequelize } from '../config/db.js';
+import {
+  idColumn, money, serialize, toNumber, round2,
+  normalizeItems, discountAmountFor, nextDocumentNumber
+} from './helpers.js';
+import { PAYMENT_METHODS, DISCOUNT_TYPES } from './Invoice.js';
 
-const receiptSchema = new mongoose.Schema({
-  // 🔗 Enhanced: Link to original invoice (optional for standalone receipts)
-  invoiceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Invoice',
-    index: true
-  },
-  invoiceNumber: {
-    type: String,
-    trim: true,
-    index: true
-  },
+export const RECEIPT_STATUSES = ['draft', 'issued', 'paid', 'cancelled', 'refunded'];
 
-  // ✅ ENHANCED: Sequential receipt numbering (RCP-001, RCP-002...)
-  receiptNumber: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    index: true,
-    default: 'RCP-001'
-  },
-
-  // 👤 Enhanced Client Details
-  customerName: {
-    type: String,
-    required: [true, 'Customer name is required'],
-    trim: true,
-    maxlength: [100, 'Customer name cannot exceed 100 characters']
-  },
-  customerEmail: {
-    type: String,
-    required: [true, 'Customer email is required'],
-    lowercase: true,
-    trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Invalid email format']
-  },
-  customerPhone: {
-    type: String,
-    required: [true, 'Customer phone is required'],
-    trim: true
-  },
-  // ✅ FIXED: Made customerLocation optional to match frontend
-  customerLocation: {
-    type: String,
-    trim: true,
-    maxlength: [200, 'Location cannot exceed 200 characters'],
-    default: '' // Made optional with default value
-  },
-
-  // ✅ NEW: Itemized receipt items for detailed billing
-  items: [{
-    description: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: [200, 'Item description too long']
-    },
-    quantity: {
-      type: Number,
-      default: 1,
-      min: [1, 'Quantity must be at least 1']
-    },
-    unitPrice: {
-      type: Number,
-      required: true,
-      min: [0, 'Unit price cannot be negative']
-    },
-    amount: {
-      type: Number,
-      required: true,
-      min: [0, 'Amount cannot be negative']
-    }
-  }],
-
-  // ✅ ENHANCED: Comprehensive financial fields
-  subtotal: {
-    type: Number,
-    default: 0,
-    min: [0, 'Subtotal cannot be negative']
-  },
-  taxRate: {
-    type: Number,
-    default: 0,
-    min: [0, 'Tax rate cannot be negative'],
-    max: [100, 'Tax rate cannot exceed 100%']
-  },
-  taxAmount: {
-    type: Number,
-    default: 0,
-    min: [0, 'Tax amount cannot be negative']
-  },
-  discount: {
-    type: Number,
-    default: 0,
-    min: [0, 'Discount cannot be negative']
-  },
-  discountType: {
-    type: String,
-    enum: ['percentage', 'fixed', 'none'],
-    default: 'none'
-  },
-  total: {
-    type: Number,
-    required: true,
-    min: [0, 'Total cannot be negative']
-  },
-  amountPaid: {
-    type: Number,
-    required: true,
-    min: [0, 'Amount paid cannot be negative']
-  },
-  balance: {
-    type: Number,
-    default: 0,
-    min: [0, 'Balance cannot be negative']
-  },
-
-  // ✅ ENHANCED: Payment Information
-  paymentMethod: {
-    type: String,
-    required: true,
-    // ✅ FIXED: Added proper enum values that match frontend
-    enum: {
-      values: ['cash', 'card', 'bank_transfer', 'mobile_money', 'cheque', 'other'],
-      message: 'Payment method `{VALUE}` is not supported. Use: cash, card, bank_transfer, mobile_money, cheque, or other'
-    },
-    default: 'cash'
-  },
-  paymentDate: {
-    type: Date,
-    default: Date.now
-  },
-  receiptDate: {
-    type: Date,
-    default: Date.now
-  },
-
-  // ✅ ENHANCED: Status Management
-  status: {
-    type: String,
-    enum: ['draft', 'issued', 'paid', 'cancelled', 'refunded'],
-    default: 'issued'
-  },
-
-  // ✅ NEW: Service/Plan Information (for standalone receipts)
-  serviceDescription: {
-    type: String,
-    trim: true,
-    maxlength: [500, 'Service description too long']
-  },
-  planName: {
-    type: String,
-    trim: true
-  },
-  planPrice: {
-    type: Number,
-    default: 0
-  },
-  planSpeed: {
-    type: String,
-    trim: true
-  },
-
-  // ✅ ENHANCED: Notes & Terms
-  notes: {
-    type: String,
-    trim: true,
-    maxlength: [1000, 'Notes cannot exceed 1000 characters']
-  },
-  terms: {
-    type: String,
-    default: 'Thank you for your business!',
-    maxlength: [500, 'Terms cannot exceed 500 characters']
-  },
-
-  // ✅ NEW: Payment Reference & Tracking
-  paymentReference: {
-    type: String,
-    trim: true
-  },
-  transactionId: {
-    type: String,
-    trim: true
-  },
-  bankReference: {
-    type: String,
-    trim: true
-  },
-
-  // ✅ ENHANCED: Delivery & Notification Status
-  sentToCustomer: {
-    type: Boolean,
-    default: false
-  },
-  sentViaEmail: {
-    type: Boolean,
-    default: false
-  },
-  sentViaWhatsApp: {
-    type: Boolean,
-    default: false
-  },
-  lastSentAt: {
-    type: Date
-  },
-  sendCount: {
-    type: Number,
-    default: 0
-  },
-
-  // ✅ NEW: Client Account Number (FBI-XXXXXXXXX)
-  clientAccountNumber: {
-    type: String,
-    trim: true,
-    uppercase: true,
-    match: [/^FBI-/, 'Client account number must start with FBI-'],
-    index: true
-  },
-
-  // ✅ NEW: PDF & Export Management
-  pdfUrl: {
-    type: String,
-    trim: true
-  },
-  pdfGeneratedAt: {
-    type: Date
-  },
-  pdfSize: {
-    type: Number, // Size in bytes
-    default: 0
-  },
-
-  // ✅ NEW: Audit Trail
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  issuedBy: {
-    type: String,
-    trim: true,
-    default: 'System'
-  },
-
-  // ✅ NEW: Refund Information
-  refunded: {
-    type: Boolean,
-    default: false
-  },
-  refundedAt: {
-    type: Date
-  },
-  refundAmount: {
-    type: Number,
-    default: 0
-  },
-  refundReason: {
-    type: String,
-    trim: true
-  }
-
-}, {
-  timestamps: true
-});
-
-// ✅ ENHANCED Pre-save hook with comprehensive receipt number generation
-receiptSchema.pre('save', async function(next) {
-  console.log('🔍 [RECEIPT MODEL] Pre-save hook started');
-  
-  try {
-    // ✅ AUTO-GENERATE RECEIPT NUMBERS (RCP-001, RCP-002...)
-    if (this.isNew && !this.receiptNumber) {
-      console.log('🔢 Generating receipt number...');
-      
-      // Get the highest receipt number
-      const lastReceipt = await this.constructor.findOne(
-        {}, 
-        {}, 
-        { sort: { createdAt: -1 } }
-      );
-      
-      let nextNumber = 1;
-      if (lastReceipt && lastReceipt.receiptNumber) {
-        const match = lastReceipt.receiptNumber.match(/RCP-(\d+)/);
-        if (match) {
-          nextNumber = parseInt(match[1]) + 1;
-        } else {
-          // Handle existing receipts without RCP- prefix
-          const lastNumber = parseInt(lastReceipt.receiptNumber);
-          nextNumber = isNaN(lastNumber) ? 1 : lastNumber + 1;
-        }
-      }
-      
-      // Format as RCP-001, RCP-002, etc.
-      this.receiptNumber = `RCP-${nextNumber.toString().padStart(3, '0')}`;
-      console.log(`✅ Generated receipt number: ${this.receiptNumber}`);
-    }
-
-    // ✅ Calculate financial fields
-    this.calculateTotals();
-    
-    // ✅ Set payment date if not set and status is paid
-    if (this.status === 'paid' && !this.paymentDate) {
-      this.paymentDate = new Date();
-    }
-    
-    // ✅ Update balance
-    this.balance = Math.max(0, this.total - this.amountPaid);
-    
-    // ✅ Auto-set status based on payment
-    if (this.amountPaid >= this.total) {
-      this.status = 'paid';
-      this.balance = 0;
-    } else if (this.amountPaid > 0) {
-      this.status = 'issued';
-    }
-
-    console.log('✅ [RECEIPT MODEL] Pre-save hook completed');
-    next();
-  } catch (error) {
-    console.error('❌ [RECEIPT MODEL] Pre-save hook error:', error);
-    // Fallback receipt number using timestamp
-    if (this.isNew && !this.receiptNumber) {
-      this.receiptNumber = `RCP-${Date.now().toString().slice(-6)}`;
-      console.log(`🔄 Using fallback receipt number: ${this.receiptNumber}`);
-    }
-    next();
+const text = (name, max) => ({
+  type: DataTypes.STRING(max),
+  allowNull: false,
+  defaultValue: '',
+  set(value) {
+    this.setDataValue(name, String(value ?? '').trim().slice(0, max));
   }
 });
 
-// ✅ NEW: Calculate totals method
-receiptSchema.methods.calculateTotals = function() {
-  // Calculate subtotal from items if items exist, otherwise use planPrice or total
-  if (this.items && this.items.length > 0) {
-    this.subtotal = this.items.reduce((sum, item) => sum + (item.amount || 0), 0);
-  } else {
-    this.subtotal = this.planPrice || this.total || 0;
-  }
-  
-  // Calculate tax
-  this.taxAmount = (this.subtotal * (this.taxRate || 0)) / 100;
-  
-  // Apply discount
-  let discountAmount = 0;
-  if (this.discountType === 'percentage') {
-    discountAmount = (this.subtotal * (this.discount || 0)) / 100;
-  } else if (this.discountType === 'fixed') {
-    discountAmount = this.discount || 0;
-  }
-  
-  // Calculate final totals
-  this.total = this.subtotal + this.taxAmount - discountAmount;
-  this.balance = Math.max(0, this.total - (this.amountPaid || 0));
-};
+class Receipt extends Model {
+  /**
+   * Totals are derived from the line items when there are any. Without items the
+   * amounts that were entered are kept as they are, so saving a receipt again
+   * (for example after emailing it) can never change its total.
+   */
+  calculateTotals() {
+    const items = Array.isArray(this.items) ? this.items : [];
 
-// ✅ NEW: Static method to get the next receipt number
-receiptSchema.statics.getNextReceiptNumber = async function() {
-  try {
-    const lastReceipt = await this.findOne({}, {}, { sort: { createdAt: -1 } });
-    let nextNumber = 1;
-    
-    if (lastReceipt && lastReceipt.receiptNumber) {
-      const match = lastReceipt.receiptNumber.match(/RCP-(\d+)/);
-      if (match) {
-        nextNumber = parseInt(match[1]) + 1;
-      } else {
-        const lastNumber = parseInt(lastReceipt.receiptNumber);
-        nextNumber = isNaN(lastNumber) ? 1 : lastNumber + 1;
-      }
+    if (items.length > 0) {
+      this.subtotal = round2(items.reduce((sum, item) => sum + toNumber(item.amount), 0));
+      this.taxAmount = round2((this.subtotal * toNumber(this.taxRate)) / 100);
+      const discountAmount = discountAmountFor(this.subtotal, this.discount, this.discountType);
+      this.total = Math.max(0, round2(this.subtotal + this.taxAmount - discountAmount));
+    } else if (!toNumber(this.subtotal)) {
+      this.subtotal = round2(toNumber(this.planPrice) || toNumber(this.total));
     }
-    
-    return `RCP-${nextNumber.toString().padStart(3, '0')}`;
-  } catch (error) {
-    console.error('Error getting next receipt number:', error);
-    return 'RCP-001';
-  }
-};
 
-// ✅ NEW: Search receipts with multiple criteria
-receiptSchema.statics.searchReceipts = function(searchTerm, filters = {}) {
-  const searchQuery = {};
-  
-  if (searchTerm) {
-    searchQuery.$or = [
-      { receiptNumber: { $regex: searchTerm, $options: 'i' } },
-      { customerName: { $regex: searchTerm, $options: 'i' } },
-      { customerEmail: { $regex: searchTerm, $options: 'i' } },
-      { customerPhone: { $regex: searchTerm, $options: 'i' } },
-      { invoiceNumber: { $regex: searchTerm, $options: 'i' } },
-      { paymentReference: { $regex: searchTerm, $options: 'i' } }
-    ];
+    this.balance = Math.max(0, round2(toNumber(this.total) - toNumber(this.amountPaid)));
   }
-  
-  // Apply filters
-  if (filters.status) searchQuery.status = filters.status;
-  if (filters.paymentMethod) searchQuery.paymentMethod = filters.paymentMethod;
-  if (filters.customerEmail) searchQuery.customerEmail = filters.customerEmail;
-  
-  // Date range filters
-  if (filters.startDate || filters.endDate) {
-    searchQuery.receiptDate = {};
-    if (filters.startDate) searchQuery.receiptDate.$gte = new Date(filters.startDate);
-    if (filters.endDate) searchQuery.receiptDate.$lte = new Date(filters.endDate);
+
+  markAsSent(method = 'email') {
+    this.sentToCustomer = true;
+    this.lastSentAt = new Date();
+    this.sendCount = (this.sendCount || 0) + 1;
+    if (method === 'email') this.sentViaEmail = true;
+    if (method === 'whatsapp') this.sentViaWhatsApp = true;
+    return this.save();
   }
-  
-  return this.find(searchQuery).sort({ createdAt: -1 });
-};
 
-// ✅ NEW: Get receipt statistics
-receiptSchema.statics.getStatistics = async function() {
-  const stats = await this.aggregate([
-    {
-      $group: {
-        _id: null,
-        totalReceipts: { $sum: 1 },
-        totalAmount: { $sum: '$total' },
-        totalCollected: { $sum: '$amountPaid' },
-        avgReceiptValue: { $avg: '$total' },
-        highestReceipt: { $max: '$total' },
-        lowestReceipt: { $min: '$total' }
-      }
-    },
-    {
-      $project: {
-        _id: 0,
-        totalReceipts: 1,
-        totalAmount: 1,
-        totalCollected: 1,
-        avgReceiptValue: 1,
-        highestReceipt: 1,
-        lowestReceipt: 1
-      }
-    }
-  ]);
-  
-  const statusStats = await this.aggregate([
-    {
-      $group: {
-        _id: '$status',
-        count: { $sum: 1 },
-        totalAmount: { $sum: '$total' }
-      }
-    }
-  ]);
-  
-  const paymentMethodStats = await this.aggregate([
-    {
-      $group: {
-        _id: '$paymentMethod',
-        count: { $sum: 1 },
-        totalAmount: { $sum: '$total' }
-      }
-    }
-  ]);
-  
-  const monthlyStats = await this.aggregate([
-    {
-      $group: {
-        _id: {
-          year: { $year: '$receiptDate' },
-          month: { $month: '$receiptDate' }
-        },
-        count: { $sum: 1 },
-        revenue: { $sum: '$total' }
-      }
-    },
-    { $sort: { '_id.year': -1, '_id.month': -1 } },
-    { $limit: 12 }
-  ]);
-  
-  return {
-    overview: stats[0] || {
-      totalReceipts: 0,
-      totalAmount: 0,
-      totalCollected: 0,
-      avgReceiptValue: 0,
-      highestReceipt: 0,
-      lowestReceipt: 0
-    },
-    byStatus: statusStats,
-    byPaymentMethod: paymentMethodStats,
-    monthly: monthlyStats
-  };
-};
+  processRefund(refundAmount, reason = '') {
+    this.refunded = true;
+    this.refundedAt = new Date();
+    this.refundAmount = refundAmount;
+    this.refundReason = reason;
+    this.status = 'refunded';
+    return this.save();
+  }
 
-// ✅ NEW: Generate receipt from invoice
-receiptSchema.statics.generateFromInvoice = async function(invoiceData) {
-  try {
-    const nextReceiptNumber = await this.getNextReceiptNumber();
-    
-    const receiptData = {
-      invoiceId: invoiceData._id,
-      invoiceNumber: invoiceData.invoiceNumber,
-      receiptNumber: nextReceiptNumber,
-      customerName: invoiceData.customerName,
-      customerEmail: invoiceData.customerEmail,
-      customerPhone: invoiceData.customerPhone,
-      customerLocation: invoiceData.customerLocation || '', // ✅ FIXED: Handle missing location
-      items: invoiceData.items || [],
-      subtotal: invoiceData.subtotal || invoiceData.planPrice,
-      taxRate: invoiceData.taxRate || 0,
-      taxAmount: invoiceData.taxAmount || 0,
-      discount: invoiceData.discount || 0,
-      discountType: invoiceData.discountType || 'none',
-      total: invoiceData.totalAmount || invoiceData.finalAmount,
-      amountPaid: invoiceData.amountPaid || invoiceData.totalAmount,
-      paymentMethod: invoiceData.paymentMethod || 'cash',
+  get paymentStatus() {
+    if (this.status === 'paid') return 'Paid';
+    if (this.status === 'refunded') return 'Refunded';
+    if (toNumber(this.balance) > 0) return 'Partially Paid';
+    return 'Issued';
+  }
+
+  toJSON() {
+    const values = serialize(this);
+    values.displayId = values.receiptNumber;
+    values.paymentStatus = this.paymentStatus;
+    values.isFullyPaid = toNumber(values.amountPaid) >= toNumber(values.total);
+    return values;
+  }
+
+  static getNextReceiptNumber() {
+    return nextDocumentNumber(Receipt, 'receiptNumber', 'RCP', 3);
+  }
+
+  /** Field values for a receipt that settles the given invoice. */
+  static dataFromInvoice(invoice) {
+    const total = toNumber(invoice.totalAmount);
+    return {
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      customerName: invoice.customerName,
+      customerEmail: invoice.customerEmail,
+      customerPhone: invoice.customerPhone,
+      customerLocation: invoice.customerLocation || '',
+      clientAccountNumber: invoice.clientAccountNumber || '',
+      items: invoice.items || [],
+      subtotal: toNumber(invoice.subtotal) || toNumber(invoice.planPrice),
+      taxRate: invoice.taxRate || 0,
+      taxAmount: invoice.taxAmount || 0,
+      discount: invoice.discount || 0,
+      discountType: invoice.discountType || 'none',
+      total,
+      amountPaid: toNumber(invoice.amountPaid) || total,
+      paymentMethod: invoice.paymentMethod || 'cash',
       paymentDate: new Date(),
       receiptDate: new Date(),
       status: 'paid',
-      planName: invoiceData.planName,
-      planPrice: invoiceData.planPrice,
-      planSpeed: invoiceData.planSpeed,
-      notes: `Payment received for invoice ${invoiceData.invoiceNumber}`,
-      serviceDescription: `Internet Service - ${invoiceData.planName} (${invoiceData.planSpeed})`
+      planName: invoice.planName,
+      planPrice: invoice.planPrice,
+      planSpeed: invoice.planSpeed,
+      notes: `Payment received for invoice ${invoice.invoiceNumber}`,
+      serviceDescription: `Internet Service - ${invoice.planName}${invoice.planSpeed ? ` (${invoice.planSpeed})` : ''}`
     };
-    
-    // Calculate balance
-    receiptData.balance = Math.max(0, receiptData.total - receiptData.amountPaid);
-    
-    const receipt = new this(receiptData);
-    return await receipt.save();
-  } catch (error) {
-    console.error('Error generating receipt from invoice:', error);
-    throw error;
   }
-};
+}
 
-// ✅ NEW: Mark as sent to customer
-receiptSchema.methods.markAsSent = function(method = 'email') {
-  this.sentToCustomer = true;
-  this.lastSentAt = new Date();
-  this.sendCount += 1;
-  
-  if (method === 'email') {
-    this.sentViaEmail = true;
-  } else if (method === 'whatsapp') {
-    this.sentViaWhatsApp = true;
+Receipt.init({
+  ...idColumn,
+
+  // Link to the original invoice (optional — receipts can stand alone)
+  invoiceId: { type: DataTypes.UUID },
+  invoiceNumber: text('invoiceNumber', 40),
+
+  receiptNumber: { type: DataTypes.STRING(40), allowNull: false, unique: true },
+
+  // Customer
+  customerName: {
+    ...text('customerName', 100),
+    validate: { notEmpty: { msg: 'Customer name is required' } }
+  },
+  customerEmail: {
+    type: DataTypes.STRING(254),
+    allowNull: false,
+    set(value) {
+      this.setDataValue('customerEmail', String(value ?? '').trim().toLowerCase());
+    },
+    validate: { isEmail: { msg: 'Please enter a valid customer email' } }
+  },
+  customerPhone: text('customerPhone', 40),
+  customerLocation: text('customerLocation', 200),
+
+  items: { type: DataTypes.JSONB, allowNull: false, defaultValue: [] },
+
+  // Financials
+  subtotal: money('subtotal'),
+  taxRate: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 0,
+    get() { return Number(this.getDataValue('taxRate')); },
+    validate: {
+      min: { args: [0], msg: 'Tax rate cannot be negative' },
+      max: { args: [100], msg: 'Tax rate cannot exceed 100%' }
+    }
+  },
+  taxAmount: money('taxAmount'),
+  discount: money('discount', { validate: { min: { args: [0], msg: 'Discount cannot be negative' } } }),
+  discountType: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'none',
+    validate: { isIn: { args: [DISCOUNT_TYPES], msg: 'Invalid discount type' } }
+  },
+  total: money('total', { validate: { min: { args: [0], msg: 'Total cannot be negative' } } }),
+  amountPaid: money('amountPaid', { validate: { min: { args: [0], msg: 'Amount paid cannot be negative' } } }),
+  balance: money('balance'),
+
+  // Payment
+  paymentMethod: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'cash',
+    validate: { isIn: { args: [PAYMENT_METHODS], msg: `Payment method must be one of: ${PAYMENT_METHODS.join(', ')}` } }
+  },
+  paymentDate: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+  receiptDate: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+
+  status: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'issued',
+    validate: { isIn: { args: [RECEIPT_STATUSES], msg: `Status must be one of: ${RECEIPT_STATUSES.join(', ')}` } }
+  },
+
+  // Service / plan (for standalone receipts)
+  serviceDescription: text('serviceDescription', 500),
+  planName: text('planName', 100),
+  planPrice: money('planPrice'),
+  planSpeed: text('planSpeed', 50),
+
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    defaultValue: '',
+    validate: { len: { args: [0, 1000], msg: 'Notes cannot exceed 1000 characters' } }
+  },
+  terms: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    defaultValue: 'Thank you for your business!',
+    validate: { len: { args: [0, 500], msg: 'Terms cannot exceed 500 characters' } }
+  },
+
+  // Payment references
+  paymentReference: text('paymentReference', 100),
+  transactionId: text('transactionId', 100),
+  bankReference: text('bankReference', 100),
+
+  // Delivery tracking
+  sentToCustomer: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  sentViaEmail: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  sentViaWhatsApp: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  lastSentAt: { type: DataTypes.DATE },
+  sendCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+
+  clientAccountNumber: {
+    type: DataTypes.STRING(40),
+    allowNull: false,
+    defaultValue: '',
+    set(value) {
+      this.setDataValue('clientAccountNumber', String(value ?? '').trim().toUpperCase().slice(0, 40));
+    }
+  },
+
+  // Audit
+  createdBy: { type: DataTypes.UUID },
+  issuedBy: { ...text('issuedBy', 120), defaultValue: 'System' },
+
+  // Refunds
+  refunded: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  refundedAt: { type: DataTypes.DATE },
+  refundAmount: money('refundAmount'),
+  refundReason: text('refundReason', 500)
+}, {
+  sequelize,
+  modelName: 'Receipt',
+  tableName: 'receipts',
+  indexes: [
+    { fields: ['customerEmail'] },
+    { fields: ['invoiceId'] },
+    { fields: ['invoiceNumber'] },
+    { fields: ['status'] },
+    { fields: ['receiptDate'] },
+    { fields: ['createdAt'] }
+  ],
+  hooks: {
+    async beforeValidate(receipt) {
+      receipt.items = normalizeItems(receipt.items);
+      if (typeof receipt.receiptNumber === 'string') receipt.receiptNumber = receipt.receiptNumber.trim();
+      if (receipt.isNewRecord && !receipt.receiptNumber) {
+        receipt.receiptNumber = await Receipt.getNextReceiptNumber();
+      }
+    },
+
+    beforeSave(receipt) {
+      receipt.calculateTotals();
+
+      // Refunded, cancelled and draft receipts keep the status they were given.
+      if (!['refunded', 'cancelled', 'draft'].includes(receipt.status)) {
+        const paid = toNumber(receipt.amountPaid);
+        if (paid > 0 && paid >= toNumber(receipt.total)) {
+          receipt.status = 'paid';
+          receipt.balance = 0;
+        } else if (receipt.status === 'paid') {
+          receipt.status = 'issued';
+        }
+      }
+    }
   }
-  
-  return this.save();
-};
-
-// ✅ NEW: Update PDF information
-receiptSchema.methods.updatePDFInfo = function(pdfUrl, pdfSize = 0) {
-  this.pdfUrl = pdfUrl;
-  this.pdfGeneratedAt = new Date();
-  this.pdfSize = pdfSize;
-  return this.save();
-};
-
-// ✅ NEW: Process refund
-receiptSchema.methods.processRefund = function(refundAmount, reason = '') {
-  this.refunded = true;
-  this.refundedAt = new Date();
-  this.refundAmount = refundAmount;
-  this.refundReason = reason;
-  this.status = 'refunded';
-  
-  return this.save();
-};
-
-// ✅ VIRTUAL FIELDS
-
-receiptSchema.virtual('displayId').get(function() {
-  return this.receiptNumber;
 });
 
-receiptSchema.virtual('formattedSubtotal').get(function() {
-  return `Ksh ${(this.subtotal || 0).toLocaleString()}`;
-});
-
-receiptSchema.virtual('formattedTaxAmount').get(function() {
-  return `Ksh ${(this.taxAmount || 0).toLocaleString()}`;
-});
-
-receiptSchema.virtual('formattedTotal').get(function() {
-  return `Ksh ${(this.total || 0).toLocaleString()}`;
-});
-
-receiptSchema.virtual('formattedAmountPaid').get(function() {
-  return `Ksh ${(this.amountPaid || 0).toLocaleString()}`;
-});
-
-receiptSchema.virtual('formattedBalance').get(function() {
-  return `Ksh ${(this.balance || 0).toLocaleString()}`;
-});
-
-receiptSchema.virtual('paymentStatus').get(function() {
-  if (this.status === 'paid') return 'Paid';
-  if (this.status === 'refunded') return 'Refunded';
-  if (this.balance > 0) return 'Partially Paid';
-  return 'Issued';
-});
-
-receiptSchema.virtual('isFullyPaid').get(function() {
-  return this.amountPaid >= this.total;
-});
-
-// ✅ Serialization
-receiptSchema.set('toJSON', { 
-  virtuals: true, 
-  transform: (doc, ret) => { 
-    delete ret.__v; 
-    ret.displayId = ret.receiptNumber;
-    ret.paymentStatus = doc.paymentStatus;
-    ret.isFullyPaid = doc.isFullyPaid;
-    return ret; 
-  } 
-});
-
-receiptSchema.set('toObject', { 
-  virtuals: true, 
-  transform: (doc, ret) => { 
-    delete ret.__v; 
-    ret.displayId = ret.receiptNumber;
-    ret.paymentStatus = doc.paymentStatus;
-    ret.isFullyPaid = doc.isFullyPaid;
-    return ret; 
-  } 
-});
-
-// ✅ INDEXES for performance
-receiptSchema.index({ receiptNumber: 1 }); // For fast receipt number lookups
-receiptSchema.index({ customerEmail: 1 }); // For customer receipt history
-receiptSchema.index({ customerPhone: 1 }); // For phone-based lookups
-receiptSchema.index({ invoiceId: 1 }); // For invoice-receipt relationships
-receiptSchema.index({ invoiceNumber: 1 }); // For invoice number searches
-receiptSchema.index({ status: 1 }); // For status filtering
-receiptSchema.index({ receiptDate: -1 }); // For recent receipts
-receiptSchema.index({ paymentDate: -1 }); // For payment date filtering
-receiptSchema.index({ paymentMethod: 1 }); // For payment method analysis
-receiptSchema.index({ createdAt: -1 }); // For creation date sorting
-receiptSchema.index({ 'items.description': 'text' }); // For item text search
-
-console.log('✅ Receipt model compiled successfully - Full feature set with itemized billing');
-
-export default mongoose.model('Receipt', receiptSchema);
+export default Receipt;

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { API_BASE_URL as CONFIGURED_API_BASE_URL } from '../config/api';
 
 const PortfolioUpload = () => {
   const [title, setTitle] = useState('');
@@ -91,7 +92,7 @@ const PortfolioUpload = () => {
     }
 
     try {
-      const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
+      const API_BASE_URL = CONFIGURED_API_BASE_URL;
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Authentication expired. Please log in again.');
 

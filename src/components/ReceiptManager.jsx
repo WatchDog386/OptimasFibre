@@ -888,7 +888,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           amount: parseFloat(item.amount) || 0
         })),
         subtotal: parseFloat(receiptForm.subtotal) || 0,
-        taxRate: parseFloat(receiptForm.taxRate) || 16,
+        taxRate: (Number.isFinite(parseFloat(receiptForm.taxRate)) ? parseFloat(receiptForm.taxRate) : 16),
         taxAmount: parseFloat(receiptForm.taxAmount) || 0,
         discount: parseFloat(receiptForm.discount) || 0,
         discountType: receiptForm.discountType || 'none',
@@ -962,7 +962,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
           amount: parseFloat(item.amount) || 0
         })),
         subtotal: parseFloat(receiptForm.subtotal) || 0,
-        taxRate: parseFloat(receiptForm.taxRate) || 16,
+        taxRate: (Number.isFinite(parseFloat(receiptForm.taxRate)) ? parseFloat(receiptForm.taxRate) : 16),
         taxAmount: parseFloat(receiptForm.taxAmount) || 0,
         discount: parseFloat(receiptForm.discount) || 0,
         discountType: receiptForm.discountType || 'none',
@@ -1185,7 +1185,7 @@ const ReceiptManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `receipts_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.download = `receipts_${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

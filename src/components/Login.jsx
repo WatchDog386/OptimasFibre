@@ -5,6 +5,7 @@ import {
   CheckCircle, AlertCircle, User
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { API_BASE_URL as CONFIGURED_API_BASE_URL } from '../config/api';
 
 const BRAND = {
   PRIMARY: "#00356B", // Deep Blue
@@ -29,7 +30,7 @@ const Login = () => {
   const [forgotStatus, setForgotStatus] = useState({ type: '', msg: '' });
   
   const navigate = useNavigate();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000'; 
+  const API_BASE_URL = CONFIGURED_API_BASE_URL;
 
   const isTokenUsable = (token) => {
     if (!token || typeof token !== 'string') return false;

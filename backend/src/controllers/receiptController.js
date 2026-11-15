@@ -1,484 +1,352 @@
-// backend/src/controllers/receiptController.js - FULLY UPDATED WITH EMAIL + PDF
-import Receipt from '../models/Receipt.js';
-import Invoice from '../models/Invoice.js';
-import mongoose from 'mongoose';
-import nodemailer from 'nodemailer';
-import puppeteer from 'puppeteer';
+// backend/src/controllers/receiptController.js
+import { Op, fn, col } from 'sequelize';
+import { Receipt, Invoice } from '../models/index.js';
+import { RECEIPT_STATUSES } from '../models/Receipt.js';
+import { isUuid, toNumber } from '../models/helpers.js';
+import { httpError } from '../middleware/errorHandler.js';
+import emailService from '../utils/emailService.js';
+import { renderPdf } from '../utils/pdf.js';
+import { receiptHtml, attachmentEmailHtml, getCompanyInfo } from '../utils/documentTemplates.js';
+import { formatDate, toCsv, pdfBufferFromBase64 } from '../utils/format.js';
+import {
+  parsePagination, parseSort, searchWhere, paginationMeta, pickFields, normalizeEnum
+} from '../utils/query.js';
 
-/**
- * ===============================
- *      Basic CRUD Operations
- * ===============================
- */
+const SEARCH_COLUMNS = ['receiptNumber', 'customerName', 'customerEmail', 'customerPhone', 'invoiceNumber', 'paymentReference'];
+const SORTABLE = ['createdAt', 'updatedAt', 'receiptDate', 'paymentDate', 'receiptNumber', 'customerName', 'total', 'status'];
+
+const WRITABLE = {
+  text: [
+    'receiptNumber', 'invoiceNumber', 'customerName', 'customerEmail', 'customerPhone', 'customerLocation',
+    'discountType', 'paymentMethod', 'status', 'serviceDescription', 'planName', 'planSpeed', 'notes', 'terms',
+    'paymentReference', 'transactionId', 'bankReference', 'clientAccountNumber'
+  ],
+  numbers: ['subtotal', 'taxRate', 'taxAmount', 'discount', 'total', 'amountPaid', 'planPrice'],
+  dates: ['paymentDate', 'receiptDate'],
+  json: ['items']
+};
+
+const receiptFields = (body) => {
+  const fields = pickFields(body, WRITABLE);
+  for (const key of ['status', 'paymentMethod', 'discountType']) {
+    if (fields[key] !== undefined) fields[key] = normalizeEnum(fields[key]);
+  }
+  if (fields.items !== undefined && !Array.isArray(fields.items)) delete fields.items;
+  if (isUuid(body?.invoiceId)) fields.invoiceId = body.invoiceId;
+  return fields;
+};
+
+const findReceipt = async (id) => {
+  const receipt = isUuid(id) ? await Receipt.findByPk(id) : null;
+  if (!receipt) throw httpError(404, 'Receipt not found');
+  return receipt;
+};
+
+/** Creates a receipt, taking the next free number if two are created at the same moment. */
+const createNumbered = async (data) => {
+  const autoNumbered = !data.receiptNumber?.trim();
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await Receipt.create(data);
+    } catch (error) {
+      const numberClash = error.name === 'SequelizeUniqueConstraintError' && autoNumbered && attempt < 5;
+      if (!numberClash) throw error;
+    }
+  }
+};
+
+const receiptPdf = async (receipt) => renderPdf(receiptHtml(receipt, await getCompanyInfo()));
+
+// ============================================================================
+// CRUD
+// ============================================================================
+
+/** POST /api/receipts */
 export const createReceipt = async (req, res) => {
-    try {
-        const receiptData = { ...req.body, createdBy: req.user?._id, issuedBy: req.user?.name || 'System' };
+  const fields = receiptFields(req.body);
+  const hasAmount = toNumber(fields.total) > 0 || (Array.isArray(fields.items) && fields.items.length > 0);
+  if (!fields.customerName?.trim() || !fields.customerEmail?.trim() || !hasAmount) {
+    throw httpError(400, 'Missing required fields: customerName, customerEmail, total');
+  }
 
-        if (!receiptData.customerName || !receiptData.customerEmail || !receiptData.total) {
-            return res.status(400).json({ success: false, message: 'Missing required fields: customerName, customerEmail, total' });
-        }
-
-        const receipt = new Receipt(receiptData);
-        await receipt.save();
-
-        res.status(201).json({ success: true, message: 'Receipt created successfully', receipt });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  const receipt = await createNumbered({
+    ...fields,
+    createdBy: req.user?.id || null,
+    issuedBy: req.user?.name || req.user?.email || 'System'
+  });
+  res.status(201).json({ success: true, message: 'Receipt created successfully', receipt });
 };
 
+/** GET /api/receipts */
 export const getReceipts = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, status, customerEmail, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+  const { page, limit, offset } = parsePagination(req.query);
+  const where = { ...searchWhere(req.query.search, SEARCH_COLUMNS) };
+  if (req.query.status) where.status = String(req.query.status);
+  if (req.query.customerEmail) where.customerEmail = String(req.query.customerEmail).trim().toLowerCase();
 
-        let query = {};
-        if (status) query.status = status;
-        if (customerEmail) query.customerEmail = customerEmail.toLowerCase();
-        if (search) query.$or = [
-            { receiptNumber: { $regex: search, $options: 'i' } },
-            { customerName: { $regex: search, $options: 'i' } },
-            { customerEmail: { $regex: search, $options: 'i' } },
-            { customerPhone: { $regex: search, $options: 'i' } },
-            { invoiceNumber: { $regex: search, $options: 'i' } }
-        ];
-
-        const sortOptions = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
-        const receipts = await Receipt.find(query).sort(sortOptions).limit(limit * 1).skip((page - 1) * limit);
-        const total = await Receipt.countDocuments(query);
-
-        res.json({ success: true, receipts, pagination: { current: parseInt(page), pages: Math.ceil(total / limit), total } });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  const { rows, count } = await Receipt.findAndCountAll({
+    where, order: parseSort(req.query, SORTABLE), limit, offset
+  });
+  res.json({ success: true, receipts: rows, pagination: paginationMeta(page, limit, count) });
 };
 
+/** GET /api/receipts/:id */
 export const getReceiptById = async (req, res) => {
-    try {
-        const receipt = await Receipt.findById(req.params.id);
-        if (!receipt) return res.status(404).json({ success: false, message: 'Receipt not found' });
-        res.json({ success: true, receipt });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  res.json({ success: true, receipt: await findReceipt(req.params.id) });
 };
 
+/** PUT /api/receipts/:id */
 export const updateReceipt = async (req, res) => {
-    try {
-        const receipt = await Receipt.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-        if (!receipt) return res.status(404).json({ success: false, message: 'Receipt not found' });
-        res.json({ success: true, message: 'Receipt updated successfully', receipt });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  const receipt = await findReceipt(req.params.id);
+  const fields = receiptFields(req.body);
+  if (!fields.receiptNumber?.trim()) delete fields.receiptNumber;
+
+  receipt.set(fields);
+  await receipt.save();
+  res.json({ success: true, message: 'Receipt updated successfully', receipt });
 };
 
+/** DELETE /api/receipts/:id */
 export const deleteReceipt = async (req, res) => {
-    try {
-        const receipt = await Receipt.findByIdAndDelete(req.params.id);
-        if (!receipt) return res.status(404).json({ success: false, message: 'Receipt not found' });
-        res.json({ success: true, message: 'Receipt deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  const receipt = await findReceipt(req.params.id);
+  await receipt.destroy();
+  res.json({ success: true, message: 'Receipt deleted successfully' });
 };
 
-/**
- * ===============================
- *    Enhanced Operations
- * ===============================
- */
+// ============================================================================
+// Enhanced operations
+// ============================================================================
+
+/** POST /api/receipts/generate-from-invoice/:invoiceId */
 export const generateReceiptFromInvoice = async (req, res) => {
-    try {
-        const invoice = await Invoice.findById(req.params.invoiceId);
-        if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+  const invoice = isUuid(req.params.invoiceId) ? await Invoice.findByPk(req.params.invoiceId) : null;
+  if (!invoice) throw httpError(404, 'Invoice not found');
 
-        const receipt = await Receipt.generateFromInvoice(invoice);
-        res.status(201).json({ success: true, message: 'Receipt generated from invoice successfully', receipt });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  const receipt = await createNumbered({
+    ...Receipt.dataFromInvoice(invoice),
+    createdBy: req.user?.id || null,
+    issuedBy: req.user?.name || req.user?.email || 'System'
+  });
+  res.status(201).json({ success: true, message: 'Receipt generated from invoice successfully', receipt });
 };
 
+/** POST /api/receipts/:id/duplicate */
 export const duplicateReceipt = async (req, res) => {
-    try {
-        const original = await Receipt.findById(req.params.id);
-        if (!original) return res.status(404).json({ success: false, message: 'Receipt not found' });
+  const original = await findReceipt(req.params.id);
+  const {
+    id, _id, receiptNumber, createdAt, updatedAt, displayId, paymentStatus, isFullyPaid,
+    sentToCustomer, sentViaEmail, sentViaWhatsApp, lastSentAt, sendCount,
+    refunded, refundedAt, refundAmount, refundReason,
+    ...copy
+  } = original.toJSON();
 
-        const receiptData = { ...original.toObject(), _id: undefined, receiptNumber: undefined, createdAt: undefined, updatedAt: undefined };
-        const duplicate = new Receipt(receiptData);
-        await duplicate.save();
-
-        res.status(201).json({ success: true, message: 'Receipt duplicated successfully', receipt: duplicate });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  const duplicate = await createNumbered({
+    ...copy,
+    status: ['refunded', 'cancelled'].includes(copy.status) ? 'issued' : copy.status,
+    receiptDate: new Date(),
+    createdBy: req.user?.id || null
+  });
+  res.status(201).json({ success: true, message: 'Receipt duplicated successfully', receipt: duplicate });
 };
 
-/**
- * ===============================
- *    Status & Payment Management
- * ===============================
- */
+// ============================================================================
+// Status & payment
+// ============================================================================
+
+/** PATCH /api/receipts/:id/status */
 export const updateReceiptStatus = async (req, res) => {
-    try {
-        const { status } = req.body;
-        if (!status) return res.status(400).json({ success: false, message: 'Status is required' });
+  const status = normalizeEnum(req.body?.status);
+  if (!status) throw httpError(400, 'Status is required');
+  if (!RECEIPT_STATUSES.includes(status)) {
+    throw httpError(400, `Status must be one of: ${RECEIPT_STATUSES.join(', ')}`);
+  }
 
-        const receipt = await Receipt.findByIdAndUpdate(req.params.id, { status }, { new: true });
-        if (!receipt) return res.status(404).json({ success: false, message: 'Receipt not found' });
-
-        res.json({ success: true, message: `Receipt status updated to ${status}`, receipt });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  const receipt = await findReceipt(req.params.id);
+  if (status === 'paid' && toNumber(receipt.amountPaid) < toNumber(receipt.total)) receipt.amountPaid = receipt.total;
+  receipt.status = status;
+  await receipt.save();
+  res.json({ success: true, message: `Receipt status updated to ${receipt.status}`, receipt });
 };
 
+/** PATCH /api/receipts/:id/mark-paid */
 export const markReceiptAsPaid = async (req, res) => {
-    try {
-        const receipt = await Receipt.findByIdAndUpdate(
-            req.params.id,
-            { status: 'paid', paymentDate: new Date(), amountPaid: req.body.amount || undefined },
-            { new: true }
-        );
-        if (!receipt) return res.status(404).json({ success: false, message: 'Receipt not found' });
-
-        res.json({ success: true, message: 'Receipt marked as paid', receipt });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  const receipt = await findReceipt(req.params.id);
+  receipt.amountPaid = receipt.total;
+  receipt.status = 'paid';
+  receipt.paymentDate = new Date();
+  await receipt.save();
+  res.json({ success: true, message: 'Receipt marked as paid', receipt });
 };
 
+/** PATCH /api/receipts/:id/refund */
 export const processReceiptRefund = async (req, res) => {
-    try {
-        const { refundAmount, reason } = req.body;
-        if (!refundAmount || refundAmount <= 0) return res.status(400).json({ success: false, message: 'Valid refund amount is required' });
+  const refundAmount = toNumber(req.body?.refundAmount, 0);
+  if (refundAmount <= 0) throw httpError(400, 'Valid refund amount is required');
 
-        const receipt = await Receipt.findById(req.params.id);
-        if (!receipt) return res.status(404).json({ success: false, message: 'Receipt not found' });
+  const receipt = await findReceipt(req.params.id);
+  if (receipt.refunded) throw httpError(400, 'This receipt has already been refunded');
+  if (refundAmount > toNumber(receipt.amountPaid)) {
+    throw httpError(400, 'Refund amount cannot be more than the amount paid');
+  }
 
-        await receipt.processRefund(refundAmount, reason);
-
-        res.json({ success: true, message: 'Refund processed successfully', receipt });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+  await receipt.processRefund(refundAmount, String(req.body?.reason ?? ''));
+  res.json({ success: true, message: 'Refund processed successfully', receipt });
 };
 
-/**
- * ===============================
- *    Bulk Operations
- * ===============================
- */
+/** PATCH /api/receipts/bulk/update — only status and notes can be bulk-edited. */
 export const bulkUpdateReceipts = async (req, res) => {
-    try {
-        const { ids, updateData } = req.body;
-        if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ success: false, message: 'Array of receipt IDs is required' });
-        if (!updateData || !Object.keys(updateData).length) return res.status(400).json({ success: false, message: 'Update data is required' });
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(isUuid) : [];
+  if (!ids.length) throw httpError(400, 'Array of receipt IDs is required');
 
-        const allowedFields = ['status', 'notes', 'tags', 'customFields'];
-        const sanitizedUpdate = {};
-        for (const key of allowedFields) if (updateData[key] !== undefined) sanitizedUpdate[key] = updateData[key];
+  const updates = receiptFields(pickFields(req.body?.updateData, { text: ['status', 'notes'] }));
+  if (!Object.keys(updates).length) throw httpError(400, 'Update data is required');
 
-        const objectIds = ids.map(id => new mongoose.Types.ObjectId(id));
-        const result = await Receipt.updateMany({ _id: { $in: objectIds } }, { $set: sanitizedUpdate });
-
-        res.json({ success: true, message: `${result.modifiedCount} receipt(s) updated`, modifiedCount: result.modifiedCount });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// ============================================================================
-// ✅ Send Receipt via Email with PDF Attachment — FULLY IMPLEMENTED
-// ============================================================================
-
-const formatPrice = (price) => {
-  if (price == null) return '0.00';
-  const num = parseFloat(price);
-  return isNaN(num) ? '0.00' : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
-
-const getReceiptHTML = (receipt) => {
-  const COMPANY_INFO = {
-    name: "OPTIMAS FIBER",
-    tagline: "High-Speed Internet Solutions",
-    logoUrl: "https://optimaswifi.co.ke/oppo.jpg",
-    supportEmail: "support@optimaswifi.co.ke",
-    supportPhone: "+254 741 874 200",
-    bankName: "Equity Bank",
-    accountName: "Optimas Fiber Ltd",
-    paybill: "123456"
-  };
-
-  const statusColor = receipt.status === 'paid' ? '#28a745' : '#ffc107';
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; }
-      </style>
-    </head>
-    <body>
-      <div id="pdf-receipt-content" style="margin: 0 auto; padding: 15px; max-width: 100%; width: 210mm;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #003366; padding-bottom: 10px; margin-bottom: 15px;">
-          <div style="flex-grow: 1;">
-            <h1 style="font-size: 24px; font-weight: 900; color: #003366; margin: 0;">${COMPANY_INFO.name}</h1>
-            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">${COMPANY_INFO.tagline}</p>
-            <div style="font-size: 11px; color: #666; margin-top: 8px;">
-                <p style="margin: 0;">Email: ${COMPANY_INFO.supportEmail}</p>
-                <p style="margin: 0;">Phone: ${COMPANY_INFO.supportPhone}</p>
-            </div>
-          </div>
-          <div style="text-align: right; min-width: 130px;">
-            <img src="${COMPANY_INFO.logoUrl}" alt="Company Logo" style="max-height: 50px; max-width: 90px; object-fit: contain; margin-bottom: 5px;" />
-            <h2 style="font-size: 28px; font-weight: 700; color: #28a745; margin: 0;">RECEIPT</h2>
-            <p style="font-size: 14px; font-weight: bold; color: #003366; margin: 5px 0 0 0;"># ${receipt.receiptNumber || 'N/A'}</p>
-          </div>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #eee; padding: 12px; border-radius: 5px;">
-          <div style="flex: 1;">
-            <h3 style="font-size: 13px; font-weight: bold; color: #003366; margin: 0 0 5px 0;">Received From:</h3>
-            <p style="margin: 2px 0; font-size: 12px; font-weight: bold;">${receipt.customerName || 'N/A'}</p>
-            <p style="margin: 2px 0; font-size: 12px;">${receipt.customerEmail || 'N/A'}</p>
-            <p style="margin: 2px 0; font-size: 12px;">${receipt.customerPhone || 'N/A'}</p>
-          </div>
-          <div style="flex: 1; text-align: right;">
-            <p style="margin: 2px 0; font-size: 12px;"><strong>Receipt Date:</strong> ${receipt.receiptDate ? new Date(receipt.receiptDate).toLocaleDateString() : 'N/A'}</p>
-            <p style="margin: 2px 0; font-size: 12px;"><strong>Invoice #:</strong> ${receipt.invoiceNumber || 'N/A'}</p>
-            <p style="margin: 2px 0; font-size: 12px;">
-                <strong>Status:</strong> 
-                <span style="font-weight: bold; color: ${statusColor}; text-transform: uppercase;">${receipt.status || 'paid'}</span>
-            </p>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-            <thead style="background-color: #f5f5f5; color: #003366;">
-              <tr>
-                <th style="padding: 8px 12px; text-align: left; font-size: 12px; font-weight: bold;">Description</th>
-                <th style="padding: 8px 12px; text-align: right; font-size: 12px; font-weight: bold;">Amount (Ksh)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="border-bottom: 1px solid #f0f0f0;">
-                <td style="padding: 8px 12px; text-align: left; font-size: 13px;">Payment for: ${receipt.description || 'Internet Service'}</td>
-                <td style="padding: 8px 12px; text-align: right; font-size: 13px; font-weight: bold;">Ksh ${formatPrice(receipt.total)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div style="width: 220px; margin-left: auto; font-size: 12px;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr style="border-bottom: 2px solid #28a745;">
-              <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right;">TOTAL PAID:</td>
-              <td style="padding: 8px 0; font-size: 14px; font-weight: bold; text-align: right; color: #28a745;">Ksh ${formatPrice(receipt.total)}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div style="margin-top: 30px; border-top: 1px dashed #ddd; padding-top: 15px; font-size: 11px; color: #666;">
-          <p><strong>Payment Method:</strong> ${receipt.paymentMethod || 'N/A'}</p>
-          <p><strong>Paybill:</strong> ${COMPANY_INFO.paybill}</p>
-          <p><strong>Account Number:</strong> <span style="font-weight:600; color:#ff6b35;">${receipt.clientAccountNumber || 'NOT SET'}</span></p>
-          <p><strong>Reference:</strong> ${receipt.paymentReference || 'N/A'}</p>
-          <p style="margin-top: 10px; text-align: center;">${receipt.notes || 'Thank you for your payment!'}</p>
-          <p style="text-align: center; margin-top: 15px; font-weight: bold; color: #003366;">OFFICIAL RECEIPT — NO FURTHER PAYMENT REQUIRED</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-};
-
-export const sendReceiptToCustomer = async (req, res) => {
-  try {
-    const receipt = await Receipt.findById(req.params.id);
-    if (!receipt) {
-      return res.status(404).json({ success: false, message: 'Receipt not found' });
-    }
-    if (!receipt.customerEmail) {
-      return res.status(400).json({ success: false, message: 'Customer email is missing' });
-    }
-
-    console.log(`📧 Sending receipt ${receipt.receiptNumber} to ${receipt.customerEmail}`);
-
-    // === Generate PDF ===
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    const page = await browser.newPage();
-    const html = getReceiptHTML(receipt);
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({ format: 'A4' });
-    await browser.close();
-
-    // === Send Email ===
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'mail.optimaswifi.co.ke',
-      port: parseInt(process.env.SMTP_PORT) || 465,
-      secure: (process.env.SMTP_SECURE === 'true') || true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    const mailOptions = {
-      from: `"OPTIMAS FIBER" <${process.env.EMAIL_FROM || 'support@optimaswifi.co.ke'}>`,
-      to: receipt.customerEmail,
-      subject: `Receipt ${receipt.receiptNumber || 'N/A'} from Optimas Fiber`,
-      text: `Dear ${receipt.customerName || 'Customer'},\n\nThank you for your payment. Please find your official receipt attached.`,
-      html: `<p>Dear ${receipt.customerName || 'Customer'},</p><p>Thank you for your payment. Please find your official receipt attached.</p><p>Optimas Fiber</p>`,
-      attachments: [{
-        filename: `${receipt.receiptNumber || 'receipt'}-optimas-fiber.pdf`,
-        content: pdfBuffer,
-        contentType: 'application/pdf'
-      }]
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    // === Update DB tracking fields ===
-    receipt.sentToCustomer = true;
-    receipt.lastSentAt = new Date();
-    receipt.sendCount = (receipt.sendCount || 0) + 1;
+  const receipts = await Receipt.findAll({ where: { id: { [Op.in]: ids } } });
+  for (const receipt of receipts) {
+    receipt.set(updates);
     await receipt.save();
-
-    res.json({ success: true, message: 'Receipt sent to customer successfully', receipt });
-
-  } catch (error) {
-    console.error('❌ Error sending receipt email:', error);
-    res.status(500).json({ success: false, message: 'Error sending receipt email', error: error.message });
   }
+  res.json({ success: true, message: `${receipts.length} receipt(s) updated`, modifiedCount: receipts.length });
 };
 
-/**
- * Send Receipt with PDF from Frontend
- * Accepts base64 PDF data from frontend and sends via email
- */
+// ============================================================================
+// PDF, export & email
+// ============================================================================
+
+/** GET /api/receipts/:id/pdf */
+export const exportReceiptPDF = async (req, res) => {
+  const receipt = await findReceipt(req.params.id);
+  const buffer = await receiptPdf(receipt);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="receipt-${String(receipt.receiptNumber).replace(/[^\w.-]/g, '_')}.pdf"`);
+  res.setHeader('Content-Length', buffer.length);
+  res.setHeader('Cache-Control', 'no-store');
+  res.send(buffer);
+};
+
+/** GET /api/receipts/export/excel — a CSV file, which Excel opens directly. */
+export const exportReceiptsExcel = async (req, res) => {
+  const receipts = await Receipt.findAll({ order: [['createdAt', 'DESC']] });
+  const csv = toCsv(
+    ['Receipt Number', 'Invoice Number', 'Customer Name', 'Customer Email', 'Customer Phone', 'Account Number',
+      'Total', 'Amount Paid', 'Balance', 'Payment Method', 'Payment Reference', 'Status', 'Receipt Date'],
+    receipts.map((rec) => [
+      rec.receiptNumber, rec.invoiceNumber, rec.customerName, rec.customerEmail, rec.customerPhone, rec.clientAccountNumber,
+      rec.total, rec.amountPaid, rec.balance, rec.paymentMethod, rec.paymentReference, rec.status, formatDate(rec.receiptDate)
+    ])
+  );
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="receipts-export.csv"');
+  res.send(`﻿${csv}`);
+};
+
+/** POST /api/receipts/:id/send — generates the PDF on the server and emails it. */
+export const sendReceiptToCustomer = async (req, res) => {
+  const receipt = await findReceipt(req.params.id);
+  if (!receipt.customerEmail) throw httpError(400, 'Customer email is missing');
+
+  const company = await getCompanyInfo();
+  const pdfBuffer = await renderPdf(receiptHtml(receipt, company));
+
+  const result = await emailService.sendEmail({
+    to: receipt.customerEmail,
+    subject: `Receipt ${receipt.receiptNumber} from ${company.name}`,
+    text: `Dear ${receipt.customerName || 'Customer'},\n\nThank you for your payment. Your official receipt is attached.\n\n${company.name}`,
+    html: attachmentEmailHtml({
+      companyName: company.name, customerName: receipt.customerName, documentLabel: 'Receipt', documentNumber: receipt.receiptNumber
+    }),
+    attachments: [{ filename: `${receipt.receiptNumber}.pdf`, content: pdfBuffer }]
+  });
+  if (!result.success) throw httpError(502, `Failed to send receipt email: ${result.error}`);
+
+  await receipt.markAsSent('email');
+  res.json({ success: true, message: 'Receipt sent to customer successfully', receipt });
+};
+
+/** POST /api/receipts/:id/send-with-pdf — emails a PDF that was generated in the browser. */
 export const sendReceiptWithPdf = async (req, res) => {
-  try {
-    const { customerEmail, customerName, receiptNumber, pdfData } = req.body;
-    
-    // Validate required fields
-    if (!customerEmail || !pdfData) {
-      return res.status(400).json({
-        success: false,
-        message: 'Customer email and PDF data are required'
-      });
-    }
+  const { customerEmail, customerName, receiptNumber, pdfData } = req.body || {};
+  if (!customerEmail || !pdfData) throw httpError(400, 'Customer email and PDF data are required');
 
-    // Convert base64 to buffer if necessary
-    let pdfBuffer;
-    if (typeof pdfData === 'string') {
-      // Remove data:application/pdf;base64, prefix if present
-      const base64Data = pdfData.replace(/^data:application\/pdf;base64,/, '');
-      pdfBuffer = Buffer.from(base64Data, 'base64');
-    } else {
-      pdfBuffer = pdfData;
-    }
+  const pdfBuffer = pdfBufferFromBase64(pdfData);
+  if (!pdfBuffer) throw httpError(400, 'Invalid PDF data');
 
-    // Verify buffer is valid
-    if (!pdfBuffer || pdfBuffer.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid PDF data'
-      });
-    }
+  const company = await getCompanyInfo();
+  const result = await emailService.sendEmail({
+    to: String(customerEmail).trim(),
+    subject: `Receipt ${receiptNumber || 'N/A'} from ${company.name}`,
+    text: `Dear ${customerName || 'Customer'},\n\nYour receipt is attached.\n\n${company.name}`,
+    html: attachmentEmailHtml({ companyName: company.name, customerName, documentLabel: 'Receipt', documentNumber: receiptNumber }),
+    attachments: [{ filename: `${String(receiptNumber || 'receipt').replace(/[^\w.-]/g, '_')}.pdf`, content: pdfBuffer }]
+  });
+  if (!result.success) throw httpError(502, `Failed to send receipt email: ${result.error}`);
 
-    // === Send Email using Resend ===
-    const emailService = await import('../utils/emailService.js').then(m => m.default || m);
-    
-    const subject = `Receipt ${receiptNumber || 'N/A'} from Optimas Fiber`;
-    const text = `Dear ${customerName || 'Customer'},\n\nYour receipt is attached.`;
-    const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;line-height:1.6;color:#1a1a1a;background:#f5f5f5;margin:0;padding:0}.container{max-width:600px;margin:0 auto;padding:0;background:white}.header{background:#00356B;color:white;padding:30px;text-align:center}.header h1{margin:0;font-size:28px;font-weight:700;letter-spacing:1px}.content{padding:40px;text-align:center;border-bottom:1px solid #e0e0e0}.content p{margin:0 0 20px 0;font-size:15px;line-height:1.6}.attachment{background:#f0f7ff;border:2px solid #00356B;border-radius:8px;padding:20px;margin:25px 0;display:inline-block}.attachment p{margin:0;font-size:13px;color:#00356B;font-weight:600}.footer{padding:20px;text-align:center;font-size:12px;color:#666}</style></head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>OPTIMAS FIBER</h1>
-  </div>
-  <div class="content">
-    <p>Dear <strong>${customerName || 'Customer'}</strong>,</p>
-    <p>Your Receipt #<strong>${receiptNumber || 'N/A'}</strong> is attached below.</p>
-    <div class="attachment">
-      <p>📎 PDF Attached</p>
-    </div>
-  </div>
-  <div class="footer">
-    <p>Optimas Fiber</p>
-  </div>
-</div>
-</body>
-</html>
-    `;
+  const receipt = isUuid(req.params.draftId) ? await Receipt.findByPk(req.params.draftId) : null;
+  if (receipt) await receipt.markAsSent('email');
 
-    const attachments = [{
-      filename: `${receiptNumber || 'receipt'}-optimas-fiber.pdf`,
-      content: pdfBuffer,
-      contentType: 'application/pdf'
-    }];
-
-    const emailResult = await emailService.sendEmail({
-      to: customerEmail,
-      subject,
-      text,
-      html,
-      attachments
-    });
-
-    if (!emailResult.success) {
-      throw new Error(emailResult.error || emailResult.message);
-    }
-
-    // Update receipt record if it exists
-    try {
-      const receipt = await Receipt.findById(req.params.id);
-      if (receipt) {
-        receipt.sentToCustomer = true;
-        receipt.lastSentAt = new Date();
-        receipt.sendCount = (receipt.sendCount || 0) + 1;
-        await receipt.save();
-      }
-    } catch (dbError) {
-      console.warn('⚠️ Could not update receipt record:', dbError.message);
-    }
-
-    res.json({
-      success: true,
-      message: `Receipt sent successfully to ${customerEmail}`,
-      emailInfo: {
-        messageId: emailResult.messageId,
-        timestamp: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    console.error('❌ Error sending receipt with PDF:', error);
-    let userMessage = 'Error sending receipt';
-    if (error.message.includes('authentication')) userMessage = 'Email authentication failed.';
-    if (error.message.includes('Invalid PDF')) userMessage = 'Invalid PDF data provided.';
-    res.status(500).json({ 
-      success: false, 
-      message: userMessage, 
-      error: error.message 
-    });
-  }
+  res.json({
+    success: true,
+    message: `Receipt sent successfully to ${customerEmail}`,
+    emailInfo: { messageId: result.messageId, timestamp: result.timestamp }
+  });
 };
 
-/**
- * ===============================
- *    System & Placeholder Operations
- * ===============================
- */
-export const checkReceiptSystemStatus = async (req, res) => res.json({ success: true, status: 'Receipt system operational' });
-export const validateReceiptData = async (req, res) => res.json({ success: true, message: 'Receipt data validation executed (stub)' });
-export const cleanupReceipts = async (req, res) => res.json({ success: true, message: 'Cleanup operation executed (stub)' });
-export const getReceiptTemplates = async (req, res) => res.json({ success: true, templates: [] });
+// ============================================================================
+// System
+// ============================================================================
+
+/** GET /api/receipts/stats/summary */
+export const getReceiptStats = async (req, res) => {
+  const [overview] = await Receipt.findAll({
+    attributes: [
+      [fn('COUNT', col('id')), 'totalReceipts'],
+      [fn('COALESCE', fn('SUM', col('total')), 0), 'totalAmount'],
+      [fn('COALESCE', fn('SUM', col('amountPaid')), 0), 'totalCollected']
+    ],
+    raw: true
+  });
+  res.json({
+    success: true,
+    stats: {
+      totalReceipts: Number(overview.totalReceipts),
+      totalAmount: Number(overview.totalAmount),
+      totalCollected: Number(overview.totalCollected)
+    }
+  });
+};
+
+/** POST /api/receipts/validate */
+export const validateReceiptData = async (req, res) => {
+  const fields = receiptFields(req.body);
+  const errors = [];
+  if (!fields.customerName?.trim()) errors.push('Customer name is required');
+  if (!fields.customerEmail?.trim()) errors.push('Customer email is required');
+
+  if (!errors.length) {
+    try {
+      await Receipt.build({ ...fields, receiptNumber: 'VALIDATION' }).validate({ hooks: false });
+    } catch (error) {
+      if (error.name !== 'SequelizeValidationError') throw error;
+      errors.push(...error.errors.map((item) => item.message));
+    }
+  }
+
+  if (errors.length) return res.status(400).json({ success: false, message: 'Validation failed', errors });
+  res.json({ success: true, message: 'Receipt data is valid' });
+};
+
+export const getReceiptTemplates = (req, res) => {
+  res.json({
+    success: true,
+    templates: [{ id: 'standard', name: 'Standard Receipt', description: 'Default receipt template' }]
+  });
+};
+
+export const checkReceiptSystemStatus = async (req, res) => {
+  res.json({
+    success: true,
+    status: 'Receipt system operational',
+    totalReceipts: await Receipt.count(),
+    emailConfigured: emailService.isEmailConfigured()
+  });
+};

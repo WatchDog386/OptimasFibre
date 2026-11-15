@@ -1,159 +1,74 @@
 // backend/src/controllers/settingController.js
+import { Setting } from '../models/index.js';
+import { LANGUAGES, defaultCompanyInfo } from '../models/Setting.js';
+import { httpError } from '../middleware/errorHandler.js';
 
-import Setting from '../models/Setting.js';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const COMPANY_FIELDS = Object.keys(defaultCompanyInfo());
 
-/**
- * GET settings — returns global site configuration
- */
-export const getSettings = async (req, res) => {
-  try {
-    const settings = await Setting.getSettings();
-
-    // Remove internal fields from response
-    const { __v, _id, createdAt, updatedAt, ...cleanSettings } = settings.toObject();
-
-    res.status(200).json({
-      success: true,
-      message: 'Settings retrieved successfully',
-       settings: cleanSettings
-    });
-  } catch (err) {
-    console.error('⚙️ Error fetching settings:', err.message);
-    res.status(500).json({
-      success: false,
-      message: 'Unable to fetch settings. Please try again later.'
-    });
-  }
+const clean = (settings) => {
+  const { id, _id, createdAt, updatedAt, ...rest } = settings.toJSON();
+  return rest;
 };
 
-/**
- * UPDATE settings — restricted to admins only (protected by middleware)
- */
+/** GET /api/settings */
+export const getSettings = async (req, res) => {
+  const settings = await Setting.getSettings();
+  res.json({ success: true, message: 'Settings retrieved successfully', settings: clean(settings) });
+};
+
+/** POST /api/settings (admin only) */
 export const updateSettings = async (req, res) => {
-  try {
-    const { siteTitle, adminEmail, notifications, autoSave, language, logoUrl, maintenanceMode, companyInfo } = req.body;
+  const { siteTitle, adminEmail, notifications, autoSave, language, logoUrl, maintenanceMode, companyInfo } = req.body || {};
+  const updates = {};
 
-    // Validate siteTitle
-    if (siteTitle !== undefined) {
-      if (typeof siteTitle !== 'string' || siteTitle.trim().length < 1) {
-        return res.status(400).json({
-          success: false,
-          message: 'Site title must be a non-empty string'
-        });
-      }
-      if (siteTitle.trim().length > 100) {
-        return res.status(400).json({
-          success: false,
-          message: 'Site title cannot exceed 100 characters'
-        });
-      }
-    }
-
-    // Validate adminEmail
-    if (adminEmail !== undefined) {
-      if (typeof adminEmail !== 'string' || !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(adminEmail)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid email format'
-        });
-      }
-    }
-
-    // Validate language (aligned with your Setting model)
-    if (language !== undefined) {
-      const validLanguages = ['en', 'sw', 'es', 'fr']; // ✅ Added 'sw' for Swahili (Kenyan audience)
-      if (!validLanguages.includes(language)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid language code. Supported: en, sw, es, fr'
-        });
-      }
-    }
-
-    // Validate boolean fields
-    const validateBoolean = (value, fieldName) => {
-      if (value !== undefined && typeof value !== 'boolean') {
-        return res.status(400).json({
-          success: false,
-          message: `${fieldName} must be true or false`
-        });
-      }
-      return null;
-    };
-
-    validateBoolean(notifications, 'Notifications');
-    validateBoolean(autoSave, 'AutoSave');
-    validateBoolean(maintenanceMode, 'MaintenanceMode');
-
-    // Validate logoUrl (if provided) - allow relative paths
-    if (logoUrl !== undefined) {
-      if (typeof logoUrl !== 'string') {
-        return res.status(400).json({
-          success: false,
-          message: 'Logo URL must be a string'
-        });
-      }
-      if (logoUrl && !/^(\/|https?:\/\/).+/i.test(logoUrl)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Logo URL must be a valid URL or relative path'
-        });
-      }
-    }
-
-    // Build update object
-    const updates = {};
-    if (siteTitle !== undefined) updates.siteTitle = siteTitle.trim();
-    if (adminEmail !== undefined) updates.adminEmail = adminEmail.trim();
-    if (notifications !== undefined) updates.notifications = notifications;
-    if (autoSave !== undefined) updates.autoSave = autoSave;
-    if (language !== undefined) updates.language = language;
-    if (logoUrl !== undefined) updates.logoUrl = logoUrl;
-    if (maintenanceMode !== undefined) updates.maintenanceMode = maintenanceMode;
-    
-    // ✅ NEW: Handle companyInfo updates (for paybill, bank details, etc.)
-    if (companyInfo !== undefined && typeof companyInfo === 'object') {
-      // Get current settings to merge with new companyInfo
-      const currentSettings = await Setting.getSettings();
-      const currentCompanyInfo = currentSettings.companyInfo?.toObject ? currentSettings.companyInfo.toObject() : (currentSettings.companyInfo || {});
-      
-      // Merge new companyInfo with existing
-      updates.companyInfo = {
-        ...currentCompanyInfo,
-        ...companyInfo
-      };
-      
-      // Validate key fields
-      if (companyInfo.name !== undefined && typeof companyInfo.name !== 'string') {
-        return res.status(400).json({ success: false, message: 'Company name must be a string' });
-      }
-      if (companyInfo.paybill !== undefined && typeof companyInfo.paybill !== 'string') {
-        return res.status(400).json({ success: false, message: 'Paybill must be a string' });
-      }
-      if (companyInfo.email !== undefined) {
-        if (typeof companyInfo.email !== 'string' || !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(companyInfo.email)) {
-          return res.status(400).json({ success: false, message: 'Company email must be a valid email address' });
-        }
-      }
-    }
-
-    // Use model's built-in update method for consistency
-    const updatedSettings = await Setting.updateSettings(updates);
-
-    // Clean response
-    const { __v, _id, createdAt, updatedAt, ...cleanSettings } = updatedSettings.toObject();
-
-    res.status(200).json({
-      success: true,
-      message: 'Settings updated successfully',
-       settings: cleanSettings
-    });
-
-  } catch (err) {
-    console.error('⚙️ Error updating settings:', err.message);
-    res.status(500).json({
-      success: false,
-      message: 'Unable to update settings. Please try again later.'
-    });
+  if (siteTitle !== undefined) {
+    if (typeof siteTitle !== 'string' || !siteTitle.trim()) throw httpError(400, 'Site title must be a non-empty string');
+    if (siteTitle.trim().length > 100) throw httpError(400, 'Site title cannot exceed 100 characters');
+    updates.siteTitle = siteTitle.trim();
   }
+
+  if (adminEmail !== undefined) {
+    if (typeof adminEmail !== 'string' || !EMAIL_RE.test(adminEmail.trim())) throw httpError(400, 'Invalid email format');
+    updates.adminEmail = adminEmail.trim().toLowerCase();
+  }
+
+  if (language !== undefined) {
+    if (!LANGUAGES.includes(language)) throw httpError(400, `Invalid language code. Supported: ${LANGUAGES.join(', ')}`);
+    updates.language = language;
+  }
+
+  for (const [field, value] of Object.entries({ notifications, autoSave, maintenanceMode })) {
+    if (value === undefined) continue;
+    if (typeof value !== 'boolean') throw httpError(400, `${field} must be true or false`);
+    updates[field] = value;
+  }
+
+  if (logoUrl !== undefined) {
+    if (typeof logoUrl !== 'string') throw httpError(400, 'Logo URL must be a string');
+    if (logoUrl && !/^(\/|https?:\/\/|data:image\/).+/i.test(logoUrl)) {
+      throw httpError(400, 'Logo URL must be a valid URL or relative path');
+    }
+    updates.logoUrl = logoUrl;
+  }
+
+  if (companyInfo !== undefined && companyInfo !== null) {
+    if (typeof companyInfo !== 'object' || Array.isArray(companyInfo)) throw httpError(400, 'companyInfo must be an object');
+
+    const incoming = {};
+    for (const field of COMPANY_FIELDS) {
+      if (companyInfo[field] === undefined || companyInfo[field] === null) continue;
+      if (typeof companyInfo[field] !== 'string') throw httpError(400, `Company ${field} must be text`);
+      incoming[field] = companyInfo[field].trim().slice(0, 200);
+    }
+    if (incoming.email && !EMAIL_RE.test(incoming.email)) {
+      throw httpError(400, 'Company email must be a valid email address');
+    }
+
+    const current = (await Setting.getSettings()).toJSON().companyInfo;
+    updates.companyInfo = { ...current, ...incoming };
+  }
+
+  const settings = await Setting.updateSettings(updates);
+  res.json({ success: true, message: 'Settings updated successfully', settings: clean(settings) });
 };

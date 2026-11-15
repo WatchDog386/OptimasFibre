@@ -9,9 +9,10 @@ import {
   Search, ChevronLeft, ChevronRight, Calendar, User, 
   ArrowRight, PlusCircle, BarChart2, X, Clock, Heart, Share2, Filter
 } from 'lucide-react';
+import { API_BASE_URL as CONFIGURED_API_BASE_URL } from '../config/api';
 
 // --- CONFIGURATION ---
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
+const API_BASE_URL = CONFIGURED_API_BASE_URL;
 const COLORS = {
   primary: '#015B97',
   accent: '#d0b216',
@@ -390,7 +391,7 @@ const BlogDetailViewer = ({ blogPost, onClose }) => {
                  </div>
                  <div>
                     <p className="text-xs text-gray-400 font-bold uppercase">Author</p>
-                    <p className="font-bold text-gray-800">{blogPost.author?.email?.split('@')[0] || 'Optimas Team'}</p>
+                    <p className="font-bold text-gray-800">{blogPost.author?.name || 'Optimas Team'}</p>
                  </div>
               </div>
               <div className="flex items-center gap-3">

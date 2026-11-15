@@ -4,13 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, ArrowRight, Wifi, Shield, Zap, Globe 
 } from 'lucide-react';
+import { API_BASE_URL as CONFIGURED_API_BASE_URL } from '../config/api';
 
 // --- CONFIG ---
-const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-  if (import.meta.env.DEV) return 'http://localhost:10000';
-  return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-};
+const getApiBaseUrl = () => CONFIGURED_API_BASE_URL;
 
 // --- CUSTOM COMPONENTS ---
 

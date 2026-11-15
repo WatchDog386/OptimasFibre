@@ -1,99 +1,68 @@
 // backend/src/models/BlogPost.js
+import { DataTypes, Model } from 'sequelize';
+import { sequelize } from '../config/db.js';
+import { idColumn, serialize, isImageReference, uniqueSlug } from './helpers.js';
 
-import mongoose from 'mongoose';
-import slugify from 'slugify';
+class BlogPost extends Model {
+  toJSON() {
+    const values = serialize(this);
+    // Only a display name is public — never the author's login email.
+    values.author = values.author
+      ? { _id: values.author.id, name: values.author.name || '' }
+      : values.authorId;
+    return values;
+  }
+}
 
-/**
- * BlogPost Schema
- * @typedef {Object} BlogPost
- * @property {string} title - Title of the blog post
- * @property {string} content - Main content (HTML or Markdown)
- * @property {string} imageUrl - URL to featured image
- * @property {ObjectId} author - Reference to User model
- * @property {string} slug - URL-friendly unique identifier (auto-generated)
- * @property {string} category - Post category (e.g., 'Technology', 'General')
- * @property {Date} publishedAt - When post was published
- * @property {Date} createdAt - Auto-generated on creation
- * @property {Date} updatedAt - Auto-updated on modification
- */
-const blogPostSchema = new mongoose.Schema({
+BlogPost.init({
+  ...idColumn,
   title: {
-    type: String,
-    required: [true, 'Title is required'],
-    trim: true,
-    maxlength: [200, 'Title cannot exceed 200 characters']
+    type: DataTypes.STRING(200),
+    allowNull: false,
+    validate: {
+      notNull: { msg: 'Title is required' },
+      len: { args: [1, 200], msg: 'Title must be between 1 and 200 characters' }
+    }
   },
   content: {
-    type: String,
-    required: [true, 'Content is required'],
-    minlength: [50, 'Content must be at least 50 characters']
+    type: DataTypes.TEXT,
+    allowNull: false,
+    validate: {
+      notNull: { msg: 'Content is required' },
+      len: { args: [50, 2000000], msg: 'Content must be at least 50 characters' }
+    }
   },
   imageUrl: {
-    type: String,
-    default: '',
+    type: DataTypes.TEXT,
+    allowNull: false,
+    defaultValue: '',
     validate: {
-      validator: function (v) {
-        if (!v) return true;
-        return /^https?:\/\/.+\.(jpg|jpeg|png|webp|avif|gif|svg)$/i.test(v);
-      },
-      message: 'Image URL must be a valid URL ending in a common image extension'
+      isImage(value) {
+        if (!isImageReference(value)) throw new Error('Image URL must be a valid http(s) URL or site path');
+      }
     }
   },
-  author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'Author is required'],
-    index: true
-  },
-  slug: {
-    type: String,
-    unique: true,
-    lowercase: true,
-    trim: true,
-  },
+  slug: { type: DataTypes.STRING(240), unique: true },
   category: {
-    type: String,
-    default: 'General',
-    trim: true,
-    maxlength: [50, 'Category name too long']
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    defaultValue: 'General',
+    validate: { len: { args: [0, 50], msg: 'Category name too long' } }
   },
-  publishedAt: {
-    type: Date,
-    default: Date.now
-  }
+  publishedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
 }, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
-
-// 🔁 Generate or update slug before saving, ensuring uniqueness
-blogPostSchema.pre('save', async function (next) {
-  if (this.isModified('title') || !this.slug) {
-    let baseSlug = slugify(this.title, { lower: true, strict: true, trim: true });
-    
-    if (!baseSlug) {
-      baseSlug = `post-${Date.now()}`;
+  sequelize,
+  modelName: 'BlogPost',
+  tableName: 'blog_posts',
+  indexes: [{ fields: ['publishedAt'] }, { fields: ['authorId'] }],
+  hooks: {
+    // The slug is the public article URL, so it is set once and kept stable on edits.
+    async beforeValidate(post) {
+      if (!post.slug && post.title) {
+        post.slug = await uniqueSlug(BlogPost, post.title, 'post', post.id);
+      }
     }
-
-    let slug = baseSlug;
-    let counter = 1;
-
-    const BlogPostModel = this.constructor;
-    while (await BlogPostModel.exists({ slug, _id: { $ne: this._id } })) {
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-
-    this.slug = slug;
   }
-
-  this.updatedAt = new Date();
-  next();
 });
 
-// 🚀 Add compound index for common queries
-blogPostSchema.index({ author: 1, createdAt: -1 });
-blogPostSchema.index({ publishedAt: -1 });
-
-export default mongoose.model('BlogPost', blogPostSchema);
+export default BlogPost;

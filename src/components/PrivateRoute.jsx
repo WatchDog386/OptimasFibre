@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { API_BASE_URL as CONFIGURED_API_BASE_URL } from '../config/api';
 
 const PrivateRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -31,7 +32,7 @@ const PrivateRoute = ({ children }) => {
         return;
       }
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000';
+        const API_BASE_URL = CONFIGURED_API_BASE_URL;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         

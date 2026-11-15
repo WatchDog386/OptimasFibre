@@ -29,6 +29,7 @@ import {
   LineElement
 } from 'chart.js';
 import { Bar, Pie, Line } from 'react-chartjs-2';
+import { API_BASE_URL as CONFIGURED_API_BASE_URL } from '../config/api';
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -377,17 +378,7 @@ const Dashboard = () => {
     };
   }, [notification]);
 
-  const getApiBaseUrl = () => {
-    if (import.meta.env.VITE_API_BASE_URL) {
-      return import.meta.env.VITE_API_BASE_URL;
-    }
-    if (import.meta.env.DEV) {
-      return 'http://localhost:10000';
-    }
-    return `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-  };
-
-  const API_BASE_URL = getApiBaseUrl();
+  const API_BASE_URL = CONFIGURED_API_BASE_URL;
 
   const showNotification = (message, type = 'info') => {
     let emoji = 'ℹ️';
@@ -1713,7 +1704,7 @@ const DashboardOverview = ({
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `invoices-${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.download = `invoices-${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

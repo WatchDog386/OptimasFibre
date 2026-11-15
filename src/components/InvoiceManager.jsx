@@ -1272,13 +1272,16 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
         setShowCreateModal(false);
         resetForm();
         showNotification('✅ Invoice created!', 'success');
-      } else {
-        // If backend fails, create offline
+      } else if (response.status >= 500) {
+        // Server problem — keep the invoice locally so the work is not lost
         createOfflineInvoice();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showNotification(`🚨 ${errorData.message || 'Could not create invoice'}`, 'error');
       }
     } catch (error) {
       console.error('Error creating invoice:', error);
-      // Fallback to offline creation
+      // Network error — fall back to offline creation
       createOfflineInvoice();
     }
   };
@@ -1420,7 +1423,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `invoices_${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.download = `invoices_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

@@ -21,6 +21,7 @@ import Vacancies from "./routes/Vacancies";
 
 // Admin Components
 import Login from "./components/Login";
+import ResetPassword from "./components/ResetPassword";
 import Dashboard from "./components/Dashboard";
 import ReceiptManager from "./components/ReceiptManager";
 import PrivateRoute from "./components/PrivateRoute";
@@ -60,6 +61,7 @@ function AppRoutes() {
 
       {/* Admin Login */}
       <Route path="/admin/login" element={<Login />} />
+      <Route path="/admin/reset-password" element={<ResetPassword />} />
 
       {/* Admin Layout Route */}
       <Route

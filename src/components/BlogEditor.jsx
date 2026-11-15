@@ -1,5 +1,6 @@
 // BlogEditor.jsx - FULLY UPDATED WITH BEAUTIFUL DESIGN & ENHANCED UX
 import React, { useState } from 'react';
+import { API_BASE_URL as CONFIGURED_API_BASE_URL } from '../config/api';
 
 const BlogEditor = () => {
   const [title, setTitle] = useState('');
@@ -35,7 +36,7 @@ const BlogEditor = () => {
 
     try {
       // ✅ FIXED: Removed extra spaces from URL
-      const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://optimasfibre.onrender.com').trim();
+      const API_BASE_URL = CONFIGURED_API_BASE_URL;
       const token = localStorage.getItem('token');
       
       if (!token) {

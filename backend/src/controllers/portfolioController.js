@@ -1,206 +1,106 @@
 // backend/src/controllers/portfolioController.js
-import Portfolio from '../models/Portfolio.js';
-import mongoose from 'mongoose'; // ✅ needed for id/slug check
+import fs from 'fs/promises';
+import path from 'path';
+import { Portfolio, User } from '../models/index.js';
+import { isUuid } from '../models/helpers.js';
+import { httpError } from '../middleware/errorHandler.js';
+import { UPLOADS_DIR } from '../config/paths.js';
 
-/**
- * Fetch all portfolio items
- * GET /api/portfolio
- * Public
- */
+const withAuthor = { include: [{ model: User, as: 'author', attributes: ['id', 'name'] }] };
+const UPLOAD_PREFIX = '/uploads/portfolio/';
+
+const findItemById = async (id) => {
+  const item = isUuid(id) ? await Portfolio.findByPk(id, withAuthor) : null;
+  if (!item) throw httpError(404, 'Portfolio item not found');
+  return item;
+};
+
+/** Removes an uploaded image from disk. External URLs are left alone. */
+const removeUploadedImage = async (imageUrl) => {
+  if (typeof imageUrl !== 'string' || !imageUrl.startsWith(UPLOAD_PREFIX)) return;
+  const file = path.join(UPLOADS_DIR, 'portfolio', path.basename(imageUrl));
+  await fs.unlink(file).catch(() => {});
+};
+
+/** GET /api/portfolio */
 export const getAllPortfolioItems = async (req, res) => {
-  try {
-    console.log('🎨 Fetching all portfolio items...');
-    const items = await Portfolio.find()
-      .sort({ uploadedAt: -1 })
-      .select('-__v')
-      .populate('author', 'email publicEmail role');
-
-    res.status(200).json({
-      success: true,
-      count: items.length,
-      data: items
-    });
-  } catch (err) {
-    console.error('🎨 Error fetching portfolio items:', err.message);
-    res.status(500).json({
-      success: false,
-      message: 'Unable to fetch portfolio items'
-    });
-  }
+  const items = await Portfolio.findAll({ order: [['uploadedAt', 'DESC']], ...withAuthor });
+  res.json({ success: true, count: items.length, data: items });
 };
 
-/**
- * Fetch single portfolio item by ID or slug
- * GET /api/portfolio/:id
- * Public
- */
+/** GET /api/portfolio/:id (id or slug) */
 export const getPortfolioItemById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    // Allow lookup by ID or slug
-    const query = mongoose.Types.ObjectId.isValid(id)
-      ? { _id: id }
-      : { slug: id };
-
-    const item = await Portfolio.findOne(query)
-      .populate('author', 'email publicEmail role');
-
-    if (!item) {
-      return res.status(404).json({
-        success: false,
-        message: 'Portfolio item not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: item
-    });
-  } catch (err) {
-    console.error('🎨 Error fetching portfolio item:', err.message);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
+  const { id } = req.params;
+  const item = await Portfolio.findOne({
+    where: isUuid(id) ? { id } : { slug: String(id).toLowerCase() },
+    ...withAuthor
+  });
+  if (!item) throw httpError(404, 'Portfolio item not found');
+  res.json({ success: true, data: item });
 };
 
-/**
- * Create new portfolio item
- * POST /api/portfolio
- * Private/Admin
- */
+/** POST /api/portfolio — accepts JSON with imageUrl, or multipart form data with an `image` file. */
 export const createPortfolioItem = async (req, res) => {
+  const { title, category, imageUrl } = req.body || {};
+  // The dashboard's shared editor sends the text as `content`.
+  const description = req.body?.description ?? req.body?.content;
+
   try {
-    const { title, description, category, imageUrl } = req.body;
-
-    if (!title || !description) {
-      return res.status(400).json({
-        success: false,
-        message: 'Title and description are required'
-      });
+    if (typeof title !== 'string' || typeof description !== 'string' || !title.trim() || !description.trim()) {
+      throw httpError(400, 'Title and description are required');
     }
 
-    let finalImageUrl = '';
-    if (req.file) {
-      finalImageUrl = `/uploads/portfolio/${req.file.filename}`;
-    } else if (imageUrl) {
-      finalImageUrl = imageUrl;
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: 'Image file or image URL is required'
-      });
-    }
+    const finalImageUrl = req.file
+      ? `${UPLOAD_PREFIX}${req.file.filename}`
+      : (typeof imageUrl === 'string' ? imageUrl.trim() : '');
+    if (!finalImageUrl) throw httpError(400, 'Image file or image URL is required');
 
-    const newItem = await Portfolio.create({
+    const item = await Portfolio.create({
       title: title.trim(),
       description: description.trim(),
-      category: category || 'General',
+      category: (typeof category === 'string' && category.trim()) || 'General',
       imageUrl: finalImageUrl,
-      author: req.user._id,
+      authorId: req.user.id,
       uploadedAt: new Date()
     });
 
-    res.status(201).json({
-      success: true,
-      message: 'Portfolio item created successfully',
-      data: newItem
-    });
-  } catch (err) {
-    console.error('🎨 Error creating portfolio item:', err.message);
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({
-        success: false,
-        message: Object.values(err.errors).map(e => e.message).join(', ')
-      });
-    }
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
+    res.status(201).json({ success: true, message: 'Portfolio item created successfully', data: await findItemById(item.id) });
+  } catch (error) {
+    // Do not leave an orphaned upload behind when the request is rejected.
+    if (req.file) await fs.unlink(req.file.path).catch(() => {});
+    throw error;
   }
 };
 
-/**
- * Update portfolio item
- * PUT /api/portfolio/:id
- * Private/Admin
- */
+/** PUT /api/portfolio/:id */
 export const updatePortfolioItem = async (req, res) => {
+  const { title, category, imageUrl } = req.body || {};
+  const description = req.body?.description ?? req.body?.content;
+
   try {
-    const { id } = req.params;
-    const { title, description, category, imageUrl } = req.body;
+    const item = await findItemById(req.params.id);
+    const previousImage = item.imageUrl;
 
-    const item = await Portfolio.findById(id);
-    if (!item) {
-      return res.status(404).json({
-        success: false,
-        message: 'Portfolio item not found'
-      });
-    }
+    if (typeof title === 'string' && title.trim()) item.title = title.trim();
+    if (typeof description === 'string' && description.trim()) item.description = description.trim();
+    if (typeof category === 'string' && category.trim()) item.category = category.trim();
+    if (req.file) item.imageUrl = `${UPLOAD_PREFIX}${req.file.filename}`;
+    else if (typeof imageUrl === 'string' && imageUrl.trim()) item.imageUrl = imageUrl.trim();
 
-    item.title = title?.trim() || item.title;
-    item.description = description?.trim() || item.description;
-    item.category = category || item.category;
+    await item.save();
+    if (item.imageUrl !== previousImage) await removeUploadedImage(previousImage);
 
-    if (req.file) {
-      item.imageUrl = `/uploads/portfolio/${req.file.filename}`;
-    } else if (imageUrl) {
-      item.imageUrl = imageUrl;
-    }
-
-    item.updatedAt = new Date();
-
-    const updatedItem = await item.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Portfolio item updated successfully',
-      data: updatedItem
-    });
-  } catch (err) {
-    console.error('🎨 Error updating portfolio item:', err.message);
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({
-        success: false,
-        message: Object.values(err.errors).map(e => e.message).join(', ')
-      });
-    }
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
+    res.json({ success: true, message: 'Portfolio item updated successfully', data: item });
+  } catch (error) {
+    if (req.file) await fs.unlink(req.file.path).catch(() => {});
+    throw error;
   }
 };
 
-/**
- * Delete portfolio item
- * DELETE /api/portfolio/:id
- * Private/Admin
- */
+/** DELETE /api/portfolio/:id */
 export const deletePortfolioItem = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedItem = await Portfolio.findByIdAndDelete(id);
-
-    if (!deletedItem) {
-      return res.status(404).json({
-        success: false,
-        message: 'Portfolio item not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Portfolio item deleted successfully',
-      data: deletedItem
-    });
-  } catch (err) {
-    console.error('🎨 Error deleting portfolio item:', err.message);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
+  const item = await findItemById(req.params.id);
+  await item.destroy();
+  await removeUploadedImage(item.imageUrl);
+  res.json({ success: true, message: 'Portfolio item deleted successfully', data: item });
 };

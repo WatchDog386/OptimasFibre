@@ -1,182 +1,87 @@
-// backend/src/models/Setting.js
+// backend/src/models/Setting.js — global site settings (a single row)
+import { DataTypes, Model } from 'sequelize';
+import { sequelize } from '../config/db.js';
+import { idColumn, serialize, isImageReference } from './helpers.js';
 
-import mongoose from 'mongoose';
+export const LANGUAGES = ['en', 'sw', 'es', 'fr'];
 
-/**
- * Global Site Settings (Singleton Document)
- * @typedef {Object} Setting
- * @property {string} siteTitle - Website title (e.g., "Optimas Fibre")
- * @property {string} adminEmail - Primary admin contact email
- * @property {boolean} notifications - Enable/disable system notifications
- * @property {boolean} autoSave - Enable/disable auto-save features
- * @property {string} language - Default site language
- * @property {Object} companyInfo - Company details for invoices/receipts
- * @property {Date} createdAt - Document creation timestamp
- * @property {Date} updatedAt - Last update timestamp
- */
-const settingSchema = new mongoose.Schema({
-  siteTitle: {
-    type: String,
-    default: 'Optimas Fibre', // ✅ Updated default to match your brand
-    trim: true,
-    maxlength: [100, 'Site title cannot exceed 100 characters']
-  },
-  adminEmail: {
-    type: String,
-    default: 'info@optimafibre.com', // ✅ Updated to match your website's contact email
-    trim: true,
-    lowercase: true,
-    match: [
-      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-      'Please enter a valid email address'
-    ]
-  },
-  notifications: {
-    type: Boolean,
-    default: true
-  },
-  autoSave: {
-    type: Boolean,
-    default: false
-  },
-  language: {
-    type: String,
-    enum: ['en', 'sw', 'es', 'fr'], // ✅ Added 'sw' (Swahili) for Kenyan audience
-    default: 'en'
-  },
-  // Optional: Add logo URL or theme settings
-  logoUrl: {
-    type: String,
-    default: '/oppo.jpg',
-    validate: {
-      validator: function(v) {
-        if (!v) return true;
-        // Allow relative paths and full URLs
-        return /^(\/|https?:\/\/).+/i.test(v);
-      },
-      message: 'Logo URL must be a valid URL or relative path'
-    }
-  },
-  maintenanceMode: {
-    type: Boolean,
-    default: false
-  },
-  
-  // ✅ NEW: Company Information for Invoices & Receipts (Editable by Admin)
-  companyInfo: {
-    name: {
-      type: String,
-      default: 'OPTIMAS NETWORK',
-      trim: true,
-      maxlength: [100, 'Company name cannot exceed 100 characters']
-    },
-    tagline: {
-      type: String,
-      default: 'High-Speed Internet Solutions',
-      trim: true,
-      maxlength: [150, 'Tagline cannot exceed 150 characters']
-    },
-    address: {
-      type: String,
-      default: 'Nairobi, Kenya',
-      trim: true,
-      maxlength: [200, 'Address cannot exceed 200 characters']
-    },
-    phone: {
-      type: String,
-      default: '+254 741 874 200',
-      trim: true
-    },
-    email: {
-      type: String,
-      default: 'support@optimaswifi.co.ke',
-      trim: true,
-      lowercase: true
-    },
-    website: {
-      type: String,
-      default: 'www.optimaswifi.co.ke',
-      trim: true
-    },
-    vatNumber: {
-      type: String,
-      default: 'VAT00123456',
-      trim: true
-    },
-    // M-Pesa Paybill Details
-    paybill: {
-      type: String,
-      default: '4092707',
-      trim: true
-    },
-    paybillName: {
-      type: String,
-      default: 'OPTIMAS NETWORK',
-      trim: true
-    },
-    // Bank Details
-    bankName: {
-      type: String,
-      default: 'Equity Bank',
-      trim: true
-    },
-    bankAccountName: {
-      type: String,
-      default: 'Optimas Network Ltd',
-      trim: true
-    },
-    bankAccountNumber: {
-      type: String,
-      default: '1234567890',
-      trim: true
-    },
-    bankBranch: {
-      type: String,
-      default: 'Nairobi Main',
-      trim: true
-    },
-    bankSwiftCode: {
-      type: String,
-      default: 'EQBLKENA',
-      trim: true
-    }
-  }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+/** Company details printed on invoices and receipts. Seeded from .env on first run, then edited in the dashboard. */
+export const defaultCompanyInfo = () => ({
+  name: process.env.COMPANY_NAME || 'OPTIMAS NETWORK',
+  tagline: 'High-Speed Internet Solutions',
+  address: process.env.COMPANY_ADDRESS || 'Nairobi, Kenya',
+  phone: process.env.COMPANY_PHONE || '+254 741 874 200',
+  email: 'support@optimaswifi.co.ke',
+  website: 'www.optimaswifi.co.ke',
+  vatNumber: '',
+  paybill: process.env.MPESA_PAYBILL || process.env.MOBILE_PAYBILL || '4092707',
+  paybillName: process.env.COMPANY_NAME || 'OPTIMAS NETWORK',
+  bankName: process.env.BANK_NAME || 'Equity Bank',
+  bankAccountName: process.env.BANK_ACCOUNT_NAME || 'Optimas Network Ltd',
+  bankAccountNumber: process.env.BANK_ACCOUNT_NUMBER || '',
+  bankBranch: process.env.BANK_BRANCH || '',
+  bankSwiftCode: 'EQBLKENA'
 });
 
-// 🚀 Singleton Pattern — Ensures only one settings document exists globally
-settingSchema.statics.getSettings = async function() {
-  let settings = await this.findOne();
-
-  // If no settings exist, create default
-  if (!settings) {
-    settings = await this.create({
-      siteTitle: 'Optimas Fibre',
-      adminEmail: 'info@optimafibre.com',
-      language: 'en'
-    });
-    console.log('✅ Default settings document created');
+class Setting extends Model {
+  toJSON() {
+    const values = serialize(this);
+    values.companyInfo = { ...defaultCompanyInfo(), ...(values.companyInfo || {}) };
+    return values;
   }
 
-  return settings;
-};
+  /** Returns the settings row, creating it with defaults the first time. */
+  static async getSettings() {
+    const existing = await Setting.findOne({ order: [['createdAt', 'ASC']] });
+    if (existing) return existing;
+    return Setting.create({ companyInfo: defaultCompanyInfo() });
+  }
 
-// 🔄 Helper method to update settings safely
-settingSchema.statics.updateSettings = async function(updates) {
-  // Get current settings
-  let settings = await this.getSettings();
+  static async updateSettings(updates) {
+    const settings = await Setting.getSettings();
+    settings.set(updates);
+    return settings.save();
+  }
+}
 
-  // Apply updates
-  Object.assign(settings, updates);
+Setting.init({
+  ...idColumn,
+  siteTitle: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    defaultValue: 'Optimas Fibre',
+    validate: { len: { args: [1, 100], msg: 'Site title must be between 1 and 100 characters' } }
+  },
+  adminEmail: {
+    type: DataTypes.STRING(254),
+    allowNull: false,
+    defaultValue: 'info@optimaswifi.co.ke',
+    validate: { isEmail: { msg: 'Please enter a valid email address' } }
+  },
+  notifications: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+  autoSave: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  language: {
+    type: DataTypes.STRING(5),
+    allowNull: false,
+    defaultValue: 'en',
+    validate: { isIn: { args: [LANGUAGES], msg: `Language must be one of: ${LANGUAGES.join(', ')}` } }
+  },
+  logoUrl: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    defaultValue: '/logo.png',
+    validate: {
+      isImage(value) {
+        if (!isImageReference(value)) throw new Error('Logo URL must be a valid URL or relative path');
+      }
+    }
+  },
+  maintenanceMode: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  companyInfo: { type: DataTypes.JSONB, allowNull: false, defaultValue: {} }
+}, {
+  sequelize,
+  modelName: 'Setting',
+  tableName: 'settings'
+});
 
-  // Save and return
-  return await settings.save();
-};
-
-// ✅ Add index for fast singleton lookup
-settingSchema.index({ createdAt: 1 });
-
-export default mongoose.model('Setting', settingSchema);
+export default Setting;
