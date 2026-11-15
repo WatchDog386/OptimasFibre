@@ -70,19 +70,19 @@ const ProfilePanel = ({ me, setMe, notify }) => {
       <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
         <Card className="flex flex-col items-center p-6 text-center">
           <div className="relative">
-            <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-[#00356B] text-4xl font-black text-white ring-4 ring-white shadow-lg dark:ring-slate-700">
+            <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-brand text-4xl font-semibold text-white ring-4 ring-surface shadow">
               {form.profileImage ? <img src={form.profileImage} alt="" className="h-full w-full object-cover" /> : initial}
             </div>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => changePhoto(e.target.files?.[0])} />
             <button type="button" onClick={() => fileRef.current?.click()} aria-label="Change photo"
-              className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-[#D85C2C] text-white shadow hover:bg-[#b84520]">
+              className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-brand text-white shadow hover:bg-brand-strong">
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
             </button>
           </div>
-          <h2 className="mt-4 text-xl font-black text-slate-900 dark:text-white">{me.displayName}</h2>
-          {me.username && <p className="font-mono text-sm text-slate-500">@{me.username}</p>}
+          <h2 className="mt-4 text-[18px] font-semibold text-fg">{me.displayName}</h2>
+          {me.username && <p className="font-mono text-[13px] text-fg-4">@{me.username}</p>}
           <div className="mt-3"><Badge tone="blue">{me.role === 'admin' ? 'Administrator' : 'User'}</Badge></div>
-          <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">Member since {formatDate(me.createdAt)}</p>
+          <p className="mt-4 text-[12px] text-fg-4">Member since {formatDate(me.createdAt)}</p>
         </Card>
 
         <div className="space-y-6">

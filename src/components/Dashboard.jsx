@@ -1,10 +1,11 @@
 // Dashboard.jsx — admin dashboard shell: navigation, data loading and notifications.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link, NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, FileText, Receipt, Newspaper, Images, Users, Settings, UserCircle, LogOut,
-  Menu, X, Moon, Sun, RefreshCw, ExternalLink, CheckCircle2, AlertTriangle, Info, XCircle
+  Home, FileText, Receipt, Newspaper, Images, Users, Settings, UserCircle, LogOut,
+  Menu, X, RefreshCw, ExternalLink, CheckCircle2, AlertTriangle, Info, XCircle, ChevronDown
 } from 'lucide-react';
+import '@fontsource-variable/figtree';
 import InvoiceManager from './InvoiceManager';
 import ReceiptManager from './ReceiptManager';
 import OverviewPanel from './admin/OverviewPanel';
@@ -13,53 +14,53 @@ import PortfolioPanel from './admin/PortfolioPanel';
 import UsersPanel from './admin/UsersPanel';
 import SettingsPanel from './admin/SettingsPanel';
 import ProfilePanel from './admin/ProfilePanel';
-import { Spinner, Button, cx } from './admin/ui';
+import { Spinner, Button, Switch, cx } from './admin/ui';
 import { apiFetch, refreshSession, clearSession } from './admin/api';
 import { API_BASE_URL } from '../config/api';
 
 const NAV = [
-  { group: 'Business', items: [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { items: [{ id: 'overview', label: 'Home', icon: Home }] },
+  { group: 'Billing', items: [
     { id: 'invoices', label: 'Invoices', icon: FileText },
     { id: 'receipts', label: 'Receipts', icon: Receipt }
   ] },
   { group: 'Website', items: [
     { id: 'blog', label: 'Blog', icon: Newspaper },
     { id: 'portfolio', label: 'Portfolio', icon: Images }
-  ] },
-  { group: 'Account', items: [
-    { id: 'users', label: 'Users', icon: Users },
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'profile', label: 'My profile', icon: UserCircle }
   ] }
 ];
-const SECTIONS = NAV.flatMap((g) => g.items.map((i) => i.id));
+const FOOTER_NAV = [
+  { id: 'users', label: 'Team', icon: Users },
+  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'profile', label: 'My profile', icon: UserCircle }
+];
+const ALL_NAV = [...NAV.flatMap((g) => g.items), ...FOOTER_NAV];
+const SECTIONS = ALL_NAV.map((i) => i.id);
+const pathFor = (id) => (id === 'overview' ? '/admin' : `/admin/${id}`);
 
-// Theme passed to the invoice and receipt managers (literal class names so Tailwind generates them).
-const BUTTON_BASE = 'py-2.5 px-5 rounded-lg font-semibold text-xs uppercase tracking-wide transition-colors whitespace-nowrap shadow-sm';
+// Theme passed to the invoice and receipt managers, in the SME style.
+const BUTTON_BASE = 'inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-md font-medium text-[13px] transition-colors whitespace-nowrap';
 const LEGACY_BUTTONS = {
-  primary: { base: BUTTON_BASE, light: 'bg-[#00356B] hover:bg-[#002244] text-white', dark: 'bg-[#00356B] hover:bg-[#002244] text-white' },
-  secondary: { base: BUTTON_BASE, light: 'bg-white hover:bg-slate-50 text-[#00356B] border border-slate-300', dark: 'bg-slate-700 hover:bg-slate-600 text-white border border-slate-600' },
+  primary: { base: BUTTON_BASE, light: 'bg-brand hover:bg-brand-strong text-white shadow-sm', dark: 'bg-brand hover:bg-brand-strong text-white' },
+  secondary: { base: BUTTON_BASE, light: 'bg-surface hover:bg-surface-2 text-fg-2 border border-edge', dark: 'bg-surface hover:bg-surface-2 text-fg-2 border border-edge' },
   danger: { base: BUTTON_BASE, light: 'bg-red-600 hover:bg-red-700 text-white', dark: 'bg-red-600 hover:bg-red-700 text-white' },
-  accent: { base: BUTTON_BASE, light: 'bg-[#D85C2C] hover:bg-[#b84520] text-white', dark: 'bg-[#D85C2C] hover:bg-[#b84520] text-white' },
-  small: { base: 'py-2 px-3 rounded-lg font-semibold text-[11px] uppercase tracking-wide transition-colors whitespace-nowrap', light: 'bg-[#00356B] hover:bg-[#002244] text-white', dark: 'bg-[#00356B] hover:bg-[#002244] text-white' }
+  accent: { base: BUTTON_BASE, light: 'bg-brand hover:bg-brand-strong text-white', dark: 'bg-brand hover:bg-brand-strong text-white' },
+  small: { base: 'inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-md font-medium text-[12.5px] transition-colors whitespace-nowrap', light: 'bg-brand hover:bg-brand-strong text-white', dark: 'bg-brand hover:bg-brand-strong text-white' }
 };
 
-const themeFor = (darkMode) => ({
-  background: darkMode ? 'bg-slate-900' : 'bg-slate-50',
-  text: darkMode ? 'text-slate-100' : 'text-slate-800',
-  card: darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200',
-  input: darkMode
-    ? 'bg-slate-900 border-slate-600 text-white placeholder-slate-500 focus:border-[#00356B] focus:ring-1 focus:ring-[#00356B]'
-    : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400 focus:border-[#00356B] focus:ring-1 focus:ring-[#00356B]',
+const themeFor = () => ({
+  background: 'bg-surface-2',
+  text: 'text-fg',
+  card: 'bg-surface border-edge',
+  input: 'bg-field border-edge-2 text-fg placeholder-fg-5 focus:border-brand focus:ring-1 focus:ring-brand',
   button: LEGACY_BUTTONS
 });
 
 const TOAST_STYLES = {
-  success: { icon: CheckCircle2, className: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100' },
-  error: { icon: XCircle, className: 'border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100' },
-  warning: { icon: AlertTriangle, className: 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100' },
-  info: { icon: Info, className: 'border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100' }
+  success: { icon: CheckCircle2, className: 'border-l-brand', iconClass: 'text-brand' },
+  error: { icon: XCircle, className: 'border-l-red-600', iconClass: 'text-red-600' },
+  warning: { icon: AlertTriangle, className: 'border-l-amber-500', iconClass: 'text-amber-500' },
+  info: { icon: Info, className: 'border-l-blue-500', iconClass: 'text-blue-500' }
 };
 
 const readDarkMode = () => {
@@ -134,7 +135,7 @@ const Dashboard = () => {
   }, [darkMode]);
 
   useEffect(() => {
-    const label = NAV.flatMap((g) => g.items).find((i) => i.id === section)?.label;
+    const label = ALL_NAV.find((i) => i.id === section)?.label;
     document.title = `${label} · Optimas Admin`;
     setSidebarOpen(false);
     window.scrollTo(0, 0);
@@ -142,7 +143,7 @@ const Dashboard = () => {
 
   const goTo = useCallback((id, options = {}) => {
     if (options.create && id === 'blog') setCreatePost(true);
-    navigate(id === 'overview' ? '/admin' : `/admin/${id}`);
+    navigate(pathFor(id));
   }, [navigate]);
 
   const logout = () => {
@@ -150,7 +151,7 @@ const Dashboard = () => {
     navigate('/admin/login', { replace: true });
   };
 
-  const theme = useMemo(() => themeFor(darkMode), [darkMode]);
+  const theme = useMemo(() => themeFor(), []);
 
   const counts = useMemo(() => ({
     invoices: invoices.filter((i) => i.status === 'overdue').length || null,
@@ -161,10 +162,10 @@ const Dashboard = () => {
     if (loading && !me) return <Spinner label="Loading dashboard..." />;
     if (loadError) {
       return (
-        <div className="mx-auto mt-16 max-w-md rounded-2xl border border-red-200 bg-white p-8 text-center dark:border-red-900 dark:bg-slate-800">
+        <div className="mx-auto mt-16 max-w-md rounded-md border border-edge bg-surface p-8 text-center">
           <XCircle size={36} className="mx-auto text-red-500" aria-hidden="true" />
-          <p className="mt-3 font-bold text-slate-900 dark:text-white">The dashboard could not load</p>
-          <p className="mt-1 text-sm text-slate-500">{loadError}</p>
+          <p className="mt-3 text-[15px] font-medium text-fg">The dashboard could not load</p>
+          <p className="mt-1 text-[13px] text-fg-4">{loadError}</p>
           <Button className="mt-5" icon={RefreshCw} onClick={loadAll}>Try again</Button>
         </div>
       );
@@ -196,121 +197,159 @@ const Dashboard = () => {
   };
 
   const displayName = me?.displayName || me?.name || me?.username || 'Admin';
+  const title = ALL_NAV.find((i) => i.id === section)?.label;
+
+  const sideLink = ({ id, label, icon: Icon }) => (
+    <NavLink
+      key={id}
+      to={pathFor(id)}
+      end
+      className={({ isActive }) => cx(
+        'flex h-9 items-center gap-3 rounded-md px-2 text-[13.5px] transition-colors',
+        isActive ? 'text-nav-active' : 'text-nav-text hover:bg-nav-hover/5 hover:text-white'
+      )}
+    >
+      <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} aria-hidden="true" />
+      <span className="truncate">{label}</span>
+      {counts[id] ? (
+        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-semibold text-white">
+          {counts[id]}
+        </span>
+      ) : null}
+    </NavLink>
+  );
 
   const sidebar = (
-    <nav className="flex h-full flex-col" aria-label="Dashboard">
-      <div className="flex items-center gap-3 px-5 py-5">
-        <img src="/logo.png" alt="" className="h-9 w-9 rounded-lg bg-white object-contain p-1" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-        <div>
-          <p className="text-sm font-black tracking-wide text-white">OPTIMAS</p>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#D85C2C]">Admin</p>
+    <div className="flex h-full flex-col">
+      <div className="p-2">
+        <div className="flex items-center gap-2.5 rounded-md bg-nav-hover/[0.06] px-3 py-2.5">
+          <img src="/logo.png" alt="" className="h-8 w-8 shrink-0 rounded bg-white object-contain p-0.5" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate text-[14px] font-semibold text-white">Optimas Fibre</span>
+            <span className="block truncate text-[11px] text-nav-muted">{me?.role === 'admin' ? 'Administrator' : 'Workspace'}</span>
+          </span>
         </div>
       </div>
-      <div className="flex-1 space-y-6 overflow-y-auto px-3 py-2">
-        {NAV.map((group) => (
-          <div key={group.group}>
-            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-widest text-white/40">{group.group}</p>
-            <ul className="space-y-1">
-              {group.items.map(({ id, label, icon: Icon }) => {
-                const active = section === id;
-                return (
-                  <li key={id}>
-                    <Link
-                      to={id === 'overview' ? '/admin' : `/admin/${id}`}
-                      aria-current={active ? 'page' : undefined}
-                      className={cx(
-                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
-                        active ? 'bg-white text-[#00356B] shadow' : 'text-white/75 hover:bg-white/10 hover:text-white'
-                      )}
-                    >
-                      <Icon size={18} aria-hidden="true" />
-                      <span className="flex-1">{label}</span>
-                      {counts[id] && (
-                        <span className={cx('rounded-full px-2 py-0.5 text-[11px] font-bold', id === 'invoices' ? 'bg-red-500 text-white' : 'bg-white/20 text-white', active && 'bg-[#D85C2C] text-white')}>
-                          {counts[id]}
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
+
+      <nav className="flex-1 overflow-y-auto px-2 pb-4 pt-2" aria-label="Main">
+        {NAV.map((group, i) => (
+          <div key={group.group || i} className={cx(i > 0 && 'mt-4')}>
+            {group.group && (
+              <p className="mb-1 px-2 text-[11px] font-medium uppercase tracking-[0.08em] text-nav-muted">{group.group}</p>
+            )}
+            <ul className="space-y-0.5">
+              {group.items.map((item) => <li key={item.id}>{sideLink(item)}</li>)}
             </ul>
           </div>
         ))}
-      </div>
-      <div className="space-y-1 border-t border-white/10 p-3">
-        <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/10 hover:text-white">
-          <ExternalLink size={18} aria-hidden="true" /> View website
+      </nav>
+
+      <div className="space-y-0.5 border-t border-nav-hover/10 px-2 py-3">
+        {FOOTER_NAV.map((item) => sideLink(item))}
+        <a href="/" target="_blank" rel="noopener noreferrer" className="flex h-9 items-center gap-3 rounded-md px-2 text-[13.5px] text-nav-text transition-colors hover:bg-nav-hover/5 hover:text-white">
+          <ExternalLink className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden="true" /> View website
         </a>
-        <button type="button" onClick={logout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-white/75 hover:bg-red-500/20 hover:text-white">
-          <LogOut size={18} aria-hidden="true" /> Sign out
-        </button>
       </div>
-    </nav>
+    </div>
   );
 
   return (
-    <div className={darkMode ? 'dark' : ''}>
-      <div className="min-h-screen bg-slate-50 font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-100">
+    <div className={cx('ui-sme min-h-screen', darkMode && 'dark')}>
+      <div className="flex min-h-screen">
         {/* Desktop sidebar */}
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 bg-gradient-to-b from-[#00356B] to-[#002244] lg:block">{sidebar}</aside>
+        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 bg-nav-bg text-nav-text lg:block">{sidebar}</aside>
 
-        {/* Mobile sidebar */}
+        {/* Phone/tablet sidebar */}
         {sidebarOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
-            <div className="absolute inset-0 bg-slate-900/60" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
-            <aside className="relative h-full w-72 max-w-[85%] bg-gradient-to-b from-[#00356B] to-[#002244] shadow-2xl">
-              <button type="button" onClick={() => setSidebarOpen(false)} className="absolute right-3 top-4 rounded-lg p-2 text-white/70 hover:bg-white/10" aria-label="Close menu">
-                <X size={20} />
+            <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
+            <aside className="relative h-full w-64 max-w-[85%] bg-nav-bg text-nav-text shadow-xl">
+              <button type="button" onClick={() => setSidebarOpen(false)} className="absolute right-2 top-3 rounded-md p-2 text-nav-muted hover:text-white" aria-label="Close menu">
+                <X size={18} />
               </button>
               {sidebar}
             </aside>
           </div>
         )}
 
-        <div className="lg:pl-64">
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/90 sm:px-6">
-            <button type="button" onClick={() => setSidebarOpen(true)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 lg:hidden" aria-label="Open menu">
-              <Menu size={20} />
-            </button>
-            <p className="flex-1 truncate text-sm font-semibold text-slate-500 dark:text-slate-400">
-              {NAV.flatMap((g) => g.items).find((i) => i.id === section)?.label}
-            </p>
-            <button type="button" onClick={loadAll} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" aria-label="Reload data" title="Reload data">
-              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-            </button>
-            <button type="button" onClick={() => setDarkMode((d) => !d)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" aria-label={darkMode ? 'Light mode' : 'Dark mode'} title={darkMode ? 'Light mode' : 'Dark mode'}>
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <Link to="/admin/profile" className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 hover:bg-slate-100 dark:hover:bg-slate-800">
-              <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#00356B] text-sm font-bold text-white">
-                {me?.profileImage ? <img src={me.profileImage} alt="" className="h-full w-full object-cover" /> : displayName[0].toUpperCase()}
-              </span>
-              <span className="hidden text-sm font-semibold text-slate-700 dark:text-slate-200 sm:block">{displayName}</span>
-            </Link>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-edge bg-surface px-4 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2">
+              <button type="button" onClick={() => setSidebarOpen(true)} className="-ml-1 rounded-md p-2 text-fg-3 hover:bg-surface-2 lg:hidden" aria-label="Open menu">
+                <Menu size={20} />
+              </button>
+              <h1 className="truncate text-[15px] font-normal text-fg-2">{title}</h1>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Switch checked={darkMode} onChange={setDarkMode} label={darkMode ? 'Dark' : 'Light'} srLabel="Dark mode" />
+              <button type="button" onClick={loadAll} className="flex h-9 w-9 items-center justify-center rounded-full text-fg-4 transition-colors hover:bg-surface-2 hover:text-fg" aria-label="Reload data" title="Reload data">
+                <RefreshCw className={cx('h-[18px] w-[18px]', loading && 'animate-spin')} strokeWidth={1.75} />
+              </button>
+              <UserMenu me={me} displayName={displayName} onLogout={logout} />
+            </div>
           </header>
 
-          <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">
+          <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6">
             {renderSection()}
           </main>
         </div>
-
-        {/* Notifications */}
-        <div className="pointer-events-none fixed right-4 top-20 z-[200] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2" aria-live="polite">
-          {toasts.map(({ id, text, type }) => {
-            const { icon: Icon, className } = TOAST_STYLES[type];
-            return (
-              <div key={id} className={cx('pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-lg', className)} role={type === 'error' ? 'alert' : 'status'}>
-                <Icon size={18} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
-                <p className="flex-1 leading-snug">{text}</p>
-                <button type="button" onClick={() => setToasts((list) => list.filter((t) => t.id !== id))} className="opacity-60 hover:opacity-100" aria-label="Dismiss">
-                  <X size={16} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
       </div>
+
+      {/* Notifications */}
+      <div className="pointer-events-none fixed right-4 top-16 z-[200] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2" aria-live="polite">
+        {toasts.map(({ id, text, type }) => {
+          const { icon: Icon, className, iconClass } = TOAST_STYLES[type];
+          return (
+            <div key={id} className={cx('pointer-events-auto flex items-start gap-3 rounded-md border border-edge border-l-4 bg-surface px-4 py-3 text-[13px] text-fg-2 shadow-lg', className)} role={type === 'error' ? 'alert' : 'status'}>
+              <Icon size={17} className={cx('mt-0.5 flex-shrink-0', iconClass)} aria-hidden="true" />
+              <p className="flex-1 leading-snug">{text}</p>
+              <button type="button" onClick={() => setToasts((list) => list.filter((t) => t.id !== id))} className="text-fg-4 hover:text-fg" aria-label="Dismiss">
+                <X size={15} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+/** Avatar with a dropdown: profile, settings, sign out. */
+const UserMenu = ({ me, displayName, onLogout }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const close = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
+  }, [open]);
+
+  const initials = displayName.split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase();
+  const item = 'flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-fg-2 hover:bg-surface-2';
+
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-surface-2" aria-haspopup="menu" aria-expanded={open}>
+        <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-brand text-[12px] font-semibold text-white">
+          {me?.profileImage ? <img src={me.profileImage} alt="" className="h-full w-full object-cover" /> : initials}
+        </span>
+        <span className="hidden text-[13px] font-medium text-fg-2 md:block">{displayName}</span>
+        <ChevronDown size={15} className="hidden text-fg-4 md:block" aria-hidden="true" />
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-56 overflow-hidden rounded-md border border-edge bg-surface py-1 shadow-lg">
+          <div className="border-b border-edge px-3 py-2.5">
+            <p className="truncate text-[13.5px] font-medium text-fg">{displayName}</p>
+            <p className="truncate text-[12px] text-fg-4">{me?.username ? `@${me.username}` : me?.email}</p>
+          </div>
+          <Link role="menuitem" to="/admin/profile" onClick={() => setOpen(false)} className={item}><UserCircle size={16} strokeWidth={1.75} />My profile</Link>
+          <Link role="menuitem" to="/admin/settings" onClick={() => setOpen(false)} className={item}><Settings size={16} strokeWidth={1.75} />Settings</Link>
+          <button role="menuitem" type="button" onClick={onLogout} className={cx(item, 'border-t border-edge text-red-600 hover:text-red-700')}><LogOut size={16} strokeWidth={1.75} />Sign out</button>
+        </div>
+      )}
     </div>
   );
 };

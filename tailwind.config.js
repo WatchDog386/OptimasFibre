@@ -5,6 +5,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Admin dashboard tokens (Optimas SME design). Values come from CSS variables
+        // set on .ui-sme in index.css, so they switch automatically in dark mode.
+        surface: { DEFAULT: "rgb(var(--ui-surface) / <alpha-value>)", 2: "rgb(var(--ui-surface-2) / <alpha-value>)", 3: "rgb(var(--ui-surface-3) / <alpha-value>)" },
+        field: "rgb(var(--ui-field) / <alpha-value>)",
+        edge: { DEFAULT: "rgb(var(--ui-edge) / <alpha-value>)", 2: "rgb(var(--ui-edge-2) / <alpha-value>)" },
+        fg: {
+          DEFAULT: "rgb(var(--ui-fg) / <alpha-value>)", 2: "rgb(var(--ui-fg-2) / <alpha-value>)", 3: "rgb(var(--ui-fg-3) / <alpha-value>)",
+          4: "rgb(var(--ui-fg-4) / <alpha-value>)", 5: "rgb(var(--ui-fg-5) / <alpha-value>)"
+        },
+        brand: {
+          DEFAULT: "rgb(var(--ui-brand) / <alpha-value>)", strong: "rgb(var(--ui-brand-strong) / <alpha-value>)",
+          soft: "rgb(var(--ui-brand-soft) / <alpha-value>)", text: "rgb(var(--ui-brand-text) / <alpha-value>)", border: "rgb(var(--ui-brand-border) / <alpha-value>)"
+        },
+        nav: {
+          bg: "rgb(var(--ui-nav-bg) / <alpha-value>)", text: "rgb(var(--ui-nav-text) / <alpha-value>)", muted: "rgb(var(--ui-nav-muted) / <alpha-value>)",
+          active: "rgb(var(--ui-nav-active) / <alpha-value>)", hover: "rgb(var(--ui-nav-hover) / <alpha-value>)"
+        },
         primary: "#303a4d", // Vuma Dark Blue
         secondary: "#676c77", // Vuma Grey
         accent: "#00d084", // Vuma Greenish accent (from HTML styles)
@@ -17,6 +34,7 @@ module.exports = {
         },
       },
       fontFamily: {
+        figtree: ["Figtree Variable", "Figtree", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif"],
         sans: ["Nunito Sans", "sans-serif"],
         nunito: ["Nunito", "sans-serif"],
         heading: ["Nunito Sans", "sans-serif"],

@@ -17,8 +17,8 @@ const COMPANY_FIELDS = [
 
 const StatusRow = ({ icon: Icon, label, ok, detail }) => (
   <div className="flex items-center justify-between gap-3 py-2">
-    <span className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><Icon size={16} aria-hidden="true" />{label}</span>
-    <span className="flex items-center gap-1.5 text-sm font-semibold">
+    <span className="flex items-center gap-2 text-[13px] text-fg-3"><Icon size={16} aria-hidden="true" />{label}</span>
+    <span className="flex items-center gap-1.5 text-[13px] font-semibold">
       {ok ? <CheckCircle2 size={16} className="text-emerald-500" aria-hidden="true" /> : <XCircle size={16} className="text-red-500" aria-hidden="true" />}
       <span className={ok ? 'text-emerald-600' : 'text-red-600'}>{detail}</span>
     </span>
@@ -88,7 +88,7 @@ const SettingsPanel = ({ settings, setSettings, notify }) => {
         <div className="space-y-6">
           {COMPANY_FIELDS.map(({ section, icon: Icon, fields }) => (
             <Card key={section}>
-              <CardHeader title={<span className="flex items-center gap-2"><Icon size={18} className="text-[#D85C2C]" aria-hidden="true" />{section}</span>} />
+              <CardHeader title={<span className="flex items-center gap-2"><Icon size={18} className="text-brand" aria-hidden="true" />{section}</span>} />
               <div className="grid gap-4 p-5 sm:grid-cols-2">
                 {fields.map(([key, label, type]) => (
                   <Field key={key} label={label}>
@@ -119,18 +119,18 @@ const SettingsPanel = ({ settings, setSettings, notify }) => {
                 <>
                   <StatusRow icon={Database} label="Database" ok={system.database === 'connected'} detail={system.database === 'connected' ? 'Connected' : 'Down'} />
                   <StatusRow icon={Mail} label="Email sending" ok={system.emailConfigured} detail={system.emailConfigured ? 'Configured' : 'Not set up'} />
-                  <div className="flex items-center justify-between py-2 text-sm text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center justify-between py-2 text-[13px] text-fg-3">
                     <span className="flex items-center gap-2"><Server size={16} aria-hidden="true" />Server</span>
                     <Badge>{system.environment} · Node {system.nodeVersion}</Badge>
                   </div>
                   {!system.emailConfigured && (
-                    <p className="mt-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                    <p className="mt-2 rounded-md bg-amber-50 p-3 text-[12px] text-amber-800 [.dark_&]:bg-amber-950 [.dark_&]:text-amber-200">
                       To email invoices and receipts directly, add RESEND_API_KEY and EMAIL_FROM to the server's backend/.env file and restart the API.
                       Until then, "Send" opens your own email app instead.
                     </p>
                   )}
                 </>
-              ) : <p className="py-2 text-sm text-slate-500">Status unavailable.</p>}
+              ) : <p className="py-2 text-[13px] text-fg-4">Status unavailable.</p>}
               <Button variant="secondary" size="sm" icon={Mail} loading={testing} onClick={testEmail} className="mt-3 w-full">Send test email</Button>
             </div>
           </Card>

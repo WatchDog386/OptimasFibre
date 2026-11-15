@@ -2,6 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Admin dashboard theme — same font, colours and feel as the Optimas SME system
+ * (Figtree, navy sidebar, Safaricom green). Applied by wrapping the dashboard in .ui-sme;
+ * add .dark for the dark theme.
+ */
+@layer base {
+  .ui-sme {
+    --ui-surface: 255 255 255;
+    --ui-surface-2: 247 249 248;
+    --ui-surface-3: 238 242 240;
+    --ui-field: 255 255 255;
+    --ui-edge: 227 233 230;
+    --ui-edge-2: 203 213 208;
+    --ui-fg: 23 32 28;
+    --ui-fg-2: 43 54 49;
+    --ui-fg-3: 94 107 101;
+    --ui-fg-4: 138 150 144;
+    --ui-fg-5: 170 182 176;
+    --ui-brand: 45 160 67;
+    --ui-brand-strong: 36 133 55;
+    --ui-brand-soft: 234 247 237;
+    --ui-brand-text: 29 106 44;
+    --ui-brand-border: 69 182 92;
+    --ui-nav-bg: 14 33 53;
+    --ui-nav-text: 226 232 240;
+    --ui-nav-muted: 138 154 174;
+    --ui-nav-active: 77 163 255;
+    --ui-nav-hover: 255 255 255;
+
+    color-scheme: light;
+    background-color: #f8fafc;
+    color: rgb(var(--ui-fg));
+    font-family: 'Figtree Variable', 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ui-sme.dark {
+    --ui-surface: 30 30 30;
+    --ui-surface-2: 18 18 18;
+    --ui-surface-3: 48 53 56;
+    --ui-field: 30 30 30;
+    --ui-edge: 46 46 46;
+    --ui-edge-2: 68 68 68;
+    --ui-fg: 255 255 255;
+    --ui-fg-2: 228 228 234;
+    --ui-fg-3: 168 168 176;
+    --ui-fg-4: 130 130 140;
+    --ui-fg-5: 98 98 108;
+    --ui-brand-strong: 69 182 92;
+    --ui-brand-soft: 16 48 24;
+    --ui-brand-text: 157 220 170;
+    --ui-brand-border: 45 160 67;
+    --ui-nav-bg: 11 22 38;
+
+    color-scheme: dark;
+    background-color: #121212;
+  }
+
+  /* The public site gives every heading a large fixed size and colour; inside the dashboard
+     headings take their size from their own classes instead. */
+  .ui-sme :where(h1, h2, h3, h4, h5, h6) {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;

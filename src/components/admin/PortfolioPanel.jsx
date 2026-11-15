@@ -74,17 +74,17 @@ const PortfolioPanel = ({ items, setItems, notify }) => {
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
             <Card key={item._id} className="group overflow-hidden">
-              <div className="relative aspect-[16/10] bg-slate-100 dark:bg-slate-700">
+              <div className="relative aspect-[16/10] bg-surface-3">
                 {item.imageUrl && <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />}
-                <div className="absolute right-2 top-2 flex gap-1 rounded-lg bg-white/90 p-1 shadow opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity dark:bg-slate-800/90">
+                <div className="absolute right-2 top-2 flex gap-1 rounded-md bg-surface p-1 shadow opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   <IconButton icon={Pencil} label="Edit" onClick={() => open(item)} className="h-8 w-8" />
                   <IconButton icon={Trash2} label="Delete" tone="danger" onClick={() => remove(item)} className="h-8 w-8" />
                 </div>
               </div>
               <div className="p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#D85C2C]">{item.category}</p>
-                <h3 className="mt-1 text-base font-bold text-slate-900 dark:text-white">{item.title}</h3>
-                <p className="mt-1 text-sm text-slate-500 line-clamp-2 dark:text-slate-400">{item.description}</p>
+                <p className="text-[12px] font-medium uppercase tracking-wider text-brand">{item.category}</p>
+                <h3 className="mt-1 text-base font-medium text-fg">{item.title}</h3>
+                <p className="mt-1 text-[13px] text-fg-4 line-clamp-2">{item.description}</p>
               </div>
             </Card>
           ))}

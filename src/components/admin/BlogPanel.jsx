@@ -136,7 +136,7 @@ const Editor = ({ initial, categories, onCancel, onSaved, notify }) => {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <button type="button" onClick={cancel} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#00356B] dark:text-slate-400 dark:hover:text-white">
+        <button type="button" onClick={cancel} className="inline-flex items-center gap-2 text-[13px] font-semibold text-fg-4 hover:text-fg">
           <ArrowLeft size={16} aria-hidden="true" /> Back to posts
         </button>
         <div className="flex flex-wrap gap-2">
@@ -157,16 +157,16 @@ const Editor = ({ initial, categories, onCancel, onSaved, notify }) => {
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         <Card className="p-5 space-y-5">
           <Field label="Title" error={errors.title}>
-            <Input value={form.title} onChange={(e) => set('title')(e.target.value)} placeholder="e.g. Fibre is now live in Kilimani" maxLength={200} className="text-lg font-semibold" />
+            <Input value={form.title} onChange={(e) => set('title')(e.target.value)} placeholder="e.g. Fibre is now live in Kilimani" maxLength={200} className="text-[15px] font-semibold" />
           </Field>
 
           <div>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Content</span>
-              <div className="flex rounded-lg bg-slate-100 p-1 text-xs font-semibold dark:bg-slate-900" role="tablist">
+              <span className="text-[13px] font-semibold text-fg-2">Content</span>
+              <div className="flex rounded-md bg-surface-3 p-1 text-[12px] font-medium" role="tablist">
                 {['write', 'preview'].map((t) => (
                   <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-                    className={cx('rounded-md px-3 py-1 capitalize', tab === t ? 'bg-white text-[#00356B] shadow dark:bg-slate-700 dark:text-white' : 'text-slate-500')}>
+                    className={cx('rounded-md px-3 py-1 capitalize', tab === t ? 'bg-surface text-fg shadow-sm' : 'text-fg-4')}>
                     {t}
                   </button>
                 ))}
@@ -174,8 +174,8 @@ const Editor = ({ initial, categories, onCancel, onSaved, notify }) => {
             </div>
 
             {tab === 'write' ? (
-              <div className="overflow-hidden rounded-lg border border-slate-300 focus-within:border-[#00356B] focus-within:ring-2 focus-within:ring-[#00356B]/20 dark:border-slate-600">
-                <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-2 py-1.5 dark:border-slate-700 dark:bg-slate-900">
+              <div className="overflow-hidden rounded-md border border-edge-2 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20">
+                <div className="flex flex-wrap items-center gap-1 border-b border-edge bg-surface-2 px-2 py-1.5">
                   {tools.map((t) => <IconButton key={t.label} icon={t.icon} label={t.label} onClick={t.run} className="h-8 w-8" />)}
                   <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => insertImage(e.target.files?.[0])} />
                   <IconButton icon={inserting ? Loader2 : ImageIcon} label="Insert image" onClick={() => fileRef.current?.click()} className={cx('h-8 w-8', inserting && 'animate-spin')} />
@@ -186,15 +186,15 @@ const Editor = ({ initial, categories, onCancel, onSaved, notify }) => {
                   onChange={(e) => set('content')(e.target.value)}
                   rows={20}
                   placeholder={'Start writing...\n\nTips: "## " starts a heading, "- " a bullet point, **bold**, *italic*.\nLeave an empty line between paragraphs.'}
-                  className="block w-full resize-y bg-white px-4 py-3 font-mono text-sm leading-relaxed text-slate-900 outline-none dark:bg-slate-800 dark:text-slate-100"
+                  className="block w-full resize-y bg-field px-4 py-3 font-mono text-[13px] leading-relaxed text-fg outline-none"
                 />
               </div>
             ) : (
-              <div className="min-h-[300px] rounded-lg border border-slate-200 bg-white px-6 py-4 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                {form.content.trim() ? <RichText content={form.content} /> : <p className="text-slate-400">Nothing to preview yet.</p>}
+              <div className="min-h-[300px] rounded-md border border-edge bg-surface px-6 py-4 text-fg-2">
+                {form.content.trim() ? <RichText content={form.content} /> : <p className="text-fg-5">Nothing to preview yet.</p>}
               </div>
             )}
-            <p className={cx('mt-1.5 text-xs', errors.content ? 'font-medium text-red-600' : 'text-slate-500 dark:text-slate-400')}>
+            <p className={cx('mt-1.5 text-[12px]', errors.content ? 'font-medium text-red-600' : 'text-fg-4')}>
               {errors.content || `${form.content.trim().split(/\s+/).filter(Boolean).length} words · about ${readingTime(form.content)} min read`}
             </p>
           </div>
@@ -309,17 +309,17 @@ const BlogPanel = ({ posts, setPosts, notify, startCreating, onCreateHandled }) 
       />
 
       <Card>
-        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 dark:border-slate-700 md:flex-row md:items-center md:justify-between">
-          <div className="flex gap-1 rounded-lg bg-slate-100 p-1 text-sm font-semibold dark:bg-slate-900">
+        <div className="flex flex-col gap-3 border-b border-edge p-4  md:flex-row md:items-center md:justify-between">
+          <div className="flex gap-1 rounded-md bg-surface-3 p-1 text-[13px] font-medium">
             {['all', 'published', 'drafts'].map((f) => (
               <button key={f} type="button" onClick={() => setFilter(f)}
-                className={cx('rounded-md px-3 py-1.5 capitalize', filter === f ? 'bg-white text-[#00356B] shadow dark:bg-slate-700 dark:text-white' : 'text-slate-500')}>
+                className={cx('rounded-md px-3 py-1.5 capitalize', filter === f ? 'bg-surface text-fg shadow-sm' : 'text-fg-4')}>
                 {f} <span className="opacity-60">{counts[f]}</span>
               </button>
             ))}
           </div>
           <div className="relative md:w-72">
-            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-5" aria-hidden="true" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search posts" className="pl-9" aria-label="Search posts" />
           </div>
         </div>
@@ -332,20 +332,20 @@ const BlogPanel = ({ posts, setPosts, notify, startCreating, onCreateHandled }) 
             action={!posts.length && <Button icon={Plus} onClick={() => setEditing({})}>Write the first post</Button>}
           />
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-700">
+          <ul className="divide-y divide-edge">
             {visible.map((post) => (
               <li key={post._id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-                <div className="h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-700">
-                  {post.imageUrl ? <img src={post.imageUrl} alt="" className="h-full w-full object-cover" /> : <Newspaper className="m-auto mt-5 text-slate-300" size={22} aria-hidden="true" />}
+                <div className="h-16 w-24 flex-shrink-0 overflow-hidden rounded-md bg-surface-3">
+                  {post.imageUrl ? <img src={post.imageUrl} alt="" className="h-full w-full object-cover" /> : <Newspaper className="m-auto mt-5 text-fg-5" size={22} aria-hidden="true" />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <button type="button" onClick={() => setEditing(post)} className="truncate text-left font-bold text-slate-900 hover:text-[#00356B] dark:text-white">
+                    <button type="button" onClick={() => setEditing(post)} className="truncate text-left font-medium text-fg hover:text-brand-text">
                       {post.title}
                     </button>
                     {post.featured && <Star size={14} className="fill-amber-400 text-amber-400" aria-label="Featured" />}
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-fg-4">
                     <Badge tone={post.published === false ? 'slate' : 'green'}>{post.published === false ? 'Draft' : 'Published'}</Badge>
                     <span>{post.category || 'General'}</span>
                     <span>·</span>
@@ -354,7 +354,7 @@ const BlogPanel = ({ posts, setPosts, notify, startCreating, onCreateHandled }) 
                   </div>
                 </div>
                 <div className="flex items-center gap-1 self-end sm:self-center">
-                  {busyId === post._id && <Loader2 size={16} className="mr-1 animate-spin text-slate-400" aria-hidden="true" />}
+                  {busyId === post._id && <Loader2 size={16} className="mr-1 animate-spin text-fg-5" aria-hidden="true" />}
                   <IconButton
                     icon={post.published === false ? Eye : EyeOff}
                     label={post.published === false ? 'Publish' : 'Unpublish'}

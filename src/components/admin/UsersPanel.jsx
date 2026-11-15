@@ -80,7 +80,7 @@ const UsersPanel = ({ me, notify }) => {
     <div>
       {confirmDialog}
       <PageHeader
-        title="Users"
+        title="Team"
         subtitle="People who can sign in to this dashboard."
         actions={<Button icon={Plus} onClick={() => open('create')}>Add account</Button>}
       />
@@ -89,8 +89,8 @@ const UsersPanel = ({ me, notify }) => {
           <EmptyState icon={Users} title="No accounts" />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            <table className="w-full text-left text-[13px]">
+              <thead className="border-b border-edge text-[12px] text-fg-4 ">
                 <tr>
                   <th className="px-5 py-3 font-semibold">Name</th>
                   <th className="px-5 py-3 font-semibold">Sign-in</th>
@@ -99,32 +99,32 @@ const UsersPanel = ({ me, notify }) => {
                   <th className="px-5 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+              <tbody className="divide-y divide-edge">
                 {users.map((user) => (
                   <tr key={user.id}>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#00356B] text-sm font-bold text-white">
+                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-[13px] font-medium text-white">
                           {user.profileImage ? <img src={user.profileImage} alt="" className="h-full w-full object-cover" /> : (user.displayName || '?')[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-900 dark:text-white">
-                            {user.displayName}{user.id === me?.id && <span className="ml-2 text-xs font-normal text-slate-400">(you)</span>}
+                          <p className="font-semibold text-fg">
+                            {user.displayName}{user.id === me?.id && <span className="ml-2 text-[12px] font-normal text-fg-5">(you)</span>}
                           </p>
-                          {user.phone && <p className="text-xs text-slate-500">{user.phone}</p>}
+                          {user.phone && <p className="text-[12px] text-fg-4">{user.phone}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
+                    <td className="px-5 py-3 text-fg-3">
                       {user.username && <p className="font-mono">{user.username}</p>}
-                      {user.email && <p className="text-xs text-slate-500">{user.email}</p>}
+                      {user.email && <p className="text-[12px] text-fg-4">{user.email}</p>}
                     </td>
                     <td className="px-5 py-3">
                       {user.role === 'admin'
                         ? <Badge tone="blue"><ShieldCheck size={12} className="mr-1" aria-hidden="true" />Admin</Badge>
                         : <Badge>User</Badge>}
                     </td>
-                    <td className="hidden px-5 py-3 text-slate-500 md:table-cell">{formatDate(user.createdAt)}</td>
+                    <td className="hidden px-5 py-3 text-fg-4 md:table-cell">{formatDate(user.createdAt)}</td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end gap-1">
                         <IconButton icon={KeyRound} label="Set new password" onClick={() => open('password', user)} />

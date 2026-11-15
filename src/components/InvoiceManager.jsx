@@ -1560,10 +1560,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-[#003366] to-[#FFCC00] bg-clip-text text-transparent">
-            Invoice Management
+          <h2 className="text-[28px] font-normal leading-tight tracking-tight mb-1 text-fg">
+            Invoices
           </h2>
-          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          <p className="text-[13px] text-fg-4">
             Total: {invoices.length} invoices | Total Revenue: Ksh {formatPrice(stats.totalRevenue)} | Offline: {stats.localInvoices}
           </p>
         </div>
@@ -1628,7 +1628,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               });
               setShowSettingsModal(true);
             }}
-            className={`${themeClasses.button.small.base} bg-gradient-to-r from-purple-600 to-purple-800 text-white hover:from-purple-700 hover:to-purple-900 flex items-center`}
+            className={`${themeClasses.button.small.base} bg-surface border border-edge text-fg-2 hover:bg-surface-2 flex items-center`}
             title="Edit Company & Billing Settings"
           >
             <Edit size={16} className="mr-1.5" />
@@ -1639,19 +1639,19 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
 
       {/* STATS CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className={`${themeClasses.card} rounded-xl p-4 border-l-4 border-[#003366]`}>
+        <div className={`${themeClasses.card} rounded-md border p-4 border-l-4 border-[#003366]`}>
           <div className="flex items-center">
             <FileText className={`h-8 w-8 mr-3 ${darkMode ? 'text-blue-400' : 'text-[#003366]'}`} />
             <div>
               <p className="text-sm font-medium">Total Invoices</p>
               <p className="text-2xl font-bold">{stats.totalInvoices}</p>
               {stats.localInvoices > 0 && (
-                <p className="text-xs text-gray-500">({stats.localInvoices} offline)</p>
+                <p className="text-xs text-fg-4">({stats.localInvoices} offline)</p>
               )}
             </div>
           </div>
         </div>
-        <div className={`${themeClasses.card} rounded-xl p-4 border-l-4 border-[#FFCC00]`}>
+        <div className={`${themeClasses.card} rounded-md border p-4 border-l-4 border-[#FFCC00]`}>
           <div className="flex items-center">
             <Clock className={`h-8 w-8 mr-3 ${darkMode ? 'text-yellow-400' : 'text-[#FFCC00]'}`} />
             <div>
@@ -1660,7 +1660,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </div>
           </div>
         </div>
-        <div className={`${themeClasses.card} rounded-xl p-4 border-l-4 border-[#28a745]`}>
+        <div className={`${themeClasses.card} rounded-md border p-4 border-l-4 border-[#28a745]`}>
           <div className="flex items-center">
             <CheckCircle className={`h-8 w-8 mr-3 ${darkMode ? 'text-green-400' : 'text-[#28a745]'}`} />
             <div>
@@ -1669,7 +1669,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
             </div>
           </div>
         </div>
-        <div className={`${themeClasses.card} rounded-xl p-4 border-l-4 border-[#dc3545]`}>
+        <div className={`${themeClasses.card} rounded-md border p-4 border-l-4 border-[#dc3545]`}>
           <div className="flex items-center">
             <AlertCircle className={`h-8 w-8 mr-3 ${darkMode ? 'text-red-400' : 'text-[#dc3545]'}`} />
             <div>
@@ -1681,14 +1681,14 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       </div>
 
       {/* FILTERS & SEARCH */}
-      <div className={`${themeClasses.card} rounded-xl p-4 mb-6`}>
+      <div className={`${themeClasses.card} rounded-md p-4 mb-6`}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'all' 
-                ? 'bg-[#003366] text-white' 
-                : darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+                ? 'bg-brand text-white' 
+                : darkMode ? 'bg-surface-3' : 'bg-surface-3'}`}
             >
               All Invoices
             </button>
@@ -1696,7 +1696,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               onClick={() => setFilter('pending')}
               className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center ${filter === 'pending' 
                 ? 'bg-yellow-500 text-white' 
-                : darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+                : darkMode ? 'bg-surface-3' : 'bg-surface-3'}`}
             >
               <Clock size={14} className="mr-1" /> Pending
             </button>
@@ -1704,7 +1704,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               onClick={() => setFilter('paid')}
               className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center ${filter === 'paid' 
                 ? 'bg-green-500 text-white' 
-                : darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+                : darkMode ? 'bg-surface-3' : 'bg-surface-3'}`}
             >
               <CheckCircle size={14} className="mr-1" /> Paid
             </button>
@@ -1712,13 +1712,13 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
               onClick={() => setFilter('overdue')}
               className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center ${filter === 'overdue' 
                 ? 'bg-red-500 text-white' 
-                : darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+                : darkMode ? 'bg-surface-3' : 'bg-surface-3'}`}
             >
               <AlertCircle size={14} className="mr-1" /> Overdue
             </button>
           </div>
           <div className="relative w-full md:w-64">
-            <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+            <Search size={18} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-fg-3' : 'text-fg-3'}`} />
             <input
               type="text"
               placeholder="Search invoices..."
@@ -1731,26 +1731,26 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       </div>
 
       {/* TABLE */}
-      <div className={`${themeClasses.card} rounded-xl shadow-md border overflow-hidden`}>
+      <div className={`${themeClasses.card} rounded-md border overflow-hidden`}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-100 dark:bg-gray-800">
+          <table className="min-w-full divide-y divide-edge dark:divide-edge">
+            <thead className="bg-surface-2 dark:bg-surface-3">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Invoice #</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden md:table-cell">Customer</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden 2xl:table-cell">Plan/Details</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Total</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white hidden sm:table-cell">Balance</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Status</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-fg dark:text-white">Invoice #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-fg dark:text-white hidden md:table-cell">Customer</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-fg dark:text-white hidden 2xl:table-cell">Plan/Details</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-fg dark:text-white">Total</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-fg dark:text-white hidden sm:table-cell">Balance</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-fg dark:text-white">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-fg dark:text-white">Actions</th>
               </tr>
             </thead>
-            <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <tbody className={`divide-y ${darkMode ? 'divide-edge' : 'divide-edge'}`}>
               {filteredInvoices.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="px-6 py-8 text-center">
-                    <FileText size={48} className={`mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-                    <p className={`text-lg font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <FileText size={48} className={`mb-4 ${darkMode ? 'text-fg-3' : 'text-fg-4'}`} />
+                    <p className={`text-lg font-medium mb-2 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       {invoices.length === 0 ? 'No invoices yet' : 'No matching invoices found'}
                     </p>
                     <button 
@@ -1760,7 +1760,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         setInvoiceForm(prev => ({...prev, invoiceNumber: generateInvoiceNumber()}));
                         setShowCreateModal(true);
                       }}
-                      className="px-4 py-2 bg-[#003366] text-white rounded-lg hover:bg-[#002244] transition-colors"
+                      className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-[#002244] transition-colors"
                     >
                       Create Your First Invoice
                     </button>
@@ -1768,32 +1768,32 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                 </tr>
               ) : (
                 filteredInvoices.map((invoice) => (
-                  <tr key={invoice._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                  <tr key={invoice._id} className={`${darkMode ? 'hover:bg-surface-3' : 'hover:bg-surface-2'}`}>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <div className="text-sm font-medium text-fg dark:text-fg">
                         {invoice.invoiceNumber || `INV-${invoice._id?.substring(0,4)}`}
                         {invoice.isLocal && (
                           <span className="ml-1 px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded">Offline</span>
                         )}
                       </div>
-                      <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <div className={`text-xs ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                         Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap hidden md:table-cell">
                       <div className="text-sm font-medium">{invoice.customerName}</div>
-                      <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <div className={`text-xs ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                         {invoice.customerEmail}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap hidden 2xl:table-cell">
                       <div className="text-sm font-medium">{invoice.planName}</div>
-                      <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <div className={`text-xs ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                         {invoice.planSpeed}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <div className="text-sm font-medium text-fg dark:text-fg">
                         Ksh {formatPrice(invoice.totalAmount || invoice.planPrice || 0)}
                       </div>
                     </td>
@@ -1812,7 +1812,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                           ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                           : invoice.status === 'partially_paid'
                           ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                          : 'bg-surface-2 text-fg dark:bg-surface dark:text-gray-200'
                       }`}>
                         {invoice.status === 'paid' ? <><CheckCircle size={12} className="mr-1" /> Paid</> :
                          invoice.status === 'pending' ? <><Clock size={12} className="mr-1" /> Pending</> :
@@ -1825,14 +1825,14 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       <div className="flex justify-end space-x-1">
                         <button
                           onClick={() => viewInvoice(invoice)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-fg-3 hover:bg-edge-2' : 'text-fg-2 hover:bg-surface-2'}`}
                           title="View Details"
                         >
                           <Eye size={16} />
                         </button>
                         <button
                           onClick={() => editInvoice(invoice)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-yellow-400 hover:bg-gray-600' : 'text-yellow-600 hover:bg-gray-100'}`}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-yellow-400 hover:bg-edge-2' : 'text-yellow-600 hover:bg-surface-2'}`}
                           title="Edit Invoice"
                         >
                           <Edit size={16} />
@@ -1840,7 +1840,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         <button
                           onClick={() => downloadPDFHandler(invoice)}
                           disabled={generatingPDF === invoice._id}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'} ${
+                          className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-edge-2' : 'text-blue-600 hover:bg-surface-2'} ${
                             generatingPDF === invoice._id ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
                           title="Download PDF"
@@ -1853,7 +1853,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         </button>
                         <button
                           onClick={() => handleShareInvoice(invoice)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-purple-400 hover:bg-gray-600' : 'text-purple-600 hover:bg-gray-100'}`}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-purple-400 hover:bg-edge-2' : 'text-purple-600 hover:bg-surface-2'}`}
                           title="Share Invoice"
                         >
                           <Share2 size={16} />
@@ -1861,7 +1861,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         {invoice.status !== 'paid' && (
                           <button
                             onClick={() => markAsPaid(invoice._id)}
-                            className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-600' : 'text-blue-600 hover:bg-gray-100'}`}
+                            className={`p-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-edge-2' : 'text-blue-600 hover:bg-surface-2'}`}
                             title="Mark as Paid"
                           >
                             <CreditCard size={16} />
@@ -1869,7 +1869,7 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                         )}
                         <button
                           onClick={() => deleteInvoice(invoice._id)}
-                          className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-gray-100'}`}
+                          className={`p-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-edge-2' : 'text-red-600 hover:bg-surface-2'}`}
                           title="Delete Invoice"
                         >
                           <Trash2 size={16} />
@@ -1887,10 +1887,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       {/* Share Options Popup */}
       {showShareOptions && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-md w-full mx-4`}>
+          <div className={`${themeClasses.card} rounded-md shadow-2xl max-w-md w-full mx-4`}>
             <div className="flex justify-between items-center border-b p-4">
               <h3 className="text-lg font-semibold">Share Invoice</h3>
-              <button onClick={() => setShowShareOptions(null)} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button onClick={() => setShowShareOptions(null)} className="p-1 rounded-full hover:bg-surface-2 dark:hover:bg-surface-3">
                 <X size={20} />
               </button>
             </div>
@@ -1904,11 +1904,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       setShowShareOptions(null);
                     }
                   }}
-                  className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex flex-col items-center"
+                  className="p-3 border rounded-lg hover:bg-surface-2 dark:hover:bg-surface-3 flex flex-col items-center"
                 >
                   <Download size={24} className="mb-2 text-blue-500" />
                   <span className="text-sm font-medium">Download PDF</span>
-                  <span className="text-xs text-gray-600">Professional invoice</span>
+                  <span className="text-xs text-fg-3">Professional invoice</span>
                 </button>
                 <button
                   onClick={() => {
@@ -1918,11 +1918,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       setShowShareOptions(null);
                     }
                   }}
-                  className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex flex-col items-center"
+                  className="p-3 border rounded-lg hover:bg-surface-2 dark:hover:bg-surface-3 flex flex-col items-center"
                 >
                   <Mail size={24} className="mb-2 text-green-500" />
                   <span className="text-sm font-medium">Open Webmail</span>
-                  <span className="text-xs text-gray-600">Download & send manually</span>
+                  <span className="text-xs text-fg-3">Download & send manually</span>
                 </button>
                 <button
                   onClick={() => {
@@ -1932,11 +1932,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       setShowShareOptions(null);
                     }
                   }}
-                  className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex flex-col items-center"
+                  className="p-3 border rounded-lg hover:bg-surface-2 dark:hover:bg-surface-3 flex flex-col items-center"
                 >
                   <MessageCircle size={24} className="mb-2 text-green-600" />
                   <span className="text-sm font-medium">WhatsApp</span>
-                  <span className="text-xs text-gray-600">Share via chat</span>
+                  <span className="text-xs text-fg-3">Share via chat</span>
                 </button>
                 <button
                   onClick={() => {
@@ -1946,11 +1946,11 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
                       setShowShareOptions(null);
                     }
                   }}
-                  className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex flex-col items-center"
+                  className="p-3 border rounded-lg hover:bg-surface-2 dark:hover:bg-surface-3 flex flex-col items-center"
                 >
                   <Link size={24} className="mb-2 text-purple-500" />
                   <span className="text-sm font-medium">Export Data</span>
-                  <span className="text-xs text-gray-600">JSON format</span>
+                  <span className="text-xs text-fg-3">JSON format</span>
                 </button>
               </div>
             </div>
@@ -1962,10 +1962,10 @@ const InvoiceManager = ({ darkMode, themeClasses, API_BASE_URL, showNotification
       {/* Paste WhatsApp Modal */}
       {showPasteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto`}>
+          <div className={`${themeClasses.card} rounded-md shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto`}>
             <div className="flex justify-between items-center border-b p-4">
               <h3 className="text-xl font-semibold">Paste WhatsApp Message</h3>
-              <button onClick={() => setShowPasteModal(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button onClick={() => setShowPasteModal(false)} className="p-2 rounded-full hover:bg-surface-2 dark:hover:bg-surface-3">
                 <X size={20} />
               </button>
             </div>
@@ -1985,8 +1985,8 @@ Price: Ksh 2999`}
                 className={`w-full h-48 p-3 border rounded-lg resize-none ${themeClasses.input}`}
               />
               <div className="flex justify-end gap-3 mt-6">
-                <button onClick={() => setShowPasteModal(false)} className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>Cancel</button>
-                <button onClick={parseAndPopulateFromWhatsApp} disabled={!whatsappText.trim()} className="px-4 py-2 rounded-lg bg-[#003366] text-white">Populate Form</button>
+                <button onClick={() => setShowPasteModal(false)} className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-surface-3' : 'bg-surface-3'}`}>Cancel</button>
+                <button onClick={parseAndPopulateFromWhatsApp} disabled={!whatsappText.trim()} className="px-4 py-2 rounded-lg bg-brand text-white">Populate Form</button>
               </div>
             </div>
           </div>
@@ -1996,41 +1996,41 @@ Price: Ksh 2999`}
       {/* Create/Edit Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
+          <div className={`${themeClasses.card} rounded-md shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
             <div className="flex justify-between items-center border-b p-4">
               <h3 className="text-xl font-semibold">{editingInvoice ? 'Edit Invoice' : 'Create New Invoice'}</h3>
-              <button onClick={() => { setShowCreateModal(false); setEditingInvoice(null); resetForm(); }} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button onClick={() => { setShowCreateModal(false); setEditingInvoice(null); resetForm(); }} className="p-2 rounded-full hover:bg-surface-2 dark:hover:bg-surface-3">
                 <X size={20} />
               </button>
             </div>
             <div className="p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Invoice Number *</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Invoice Number *</label>
                   <input type="text" name="invoiceNumber" value={invoiceForm.invoiceNumber} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} required />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Invoice Date *</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Invoice Date *</label>
                   <input type="date" name="invoiceDate" value={invoiceForm.invoiceDate} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} required />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Customer Name *</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Customer Name *</label>
                   <input type="text" name="customerName" value={invoiceForm.customerName} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} required />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Customer Email *</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Customer Email *</label>
                   <input type="email" name="customerEmail" value={invoiceForm.customerEmail} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} required />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Customer Phone</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Customer Phone</label>
                   <input type="text" name="customerPhone" value={invoiceForm.customerPhone} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Customer Location</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Customer Location</label>
                   <input type="text" name="customerLocation" value={invoiceForm.customerLocation} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Client Account Number (FBI-XXXXXXXX) *</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Client Account Number (FBI-XXXXXXXX) *</label>
                   <input 
                     type="text" 
                     name="clientAccountNumber" 
@@ -2040,16 +2040,16 @@ Price: Ksh 2999`}
                     className={`w-full p-2 border rounded ${themeClasses.input}`}
                     required 
                   />
-                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Each client has a unique account number starting with FBI-</p>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-fg-3' : 'text-fg-3'}`}>Each client has a unique account number starting with FBI-</p>
                 </div>
                 <div className="md:col-span-2">
                   <div className="flex justify-between items-center mb-2">
-                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Select Plan *</label>
+                    <label className={`block text-sm font-medium ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Select Plan *</label>
                   </div>
                   <div className="flex flex-col gap-3">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div>
-                        <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Plan Name</label>
+                        <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>Plan Name</label>
                         <select 
                           name="planName" 
                           value={invoiceForm.planName} 
@@ -2083,24 +2083,24 @@ Price: Ksh 2999`}
                         </select>
                       </div>
                       <div>
-                        <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Speed</label>
-                        <input type="text" name="planSpeed" value={invoiceForm.planSpeed} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input} ${darkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-100 text-gray-900'}`} readOnly />
+                        <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>Speed</label>
+                        <input type="text" name="planSpeed" value={invoiceForm.planSpeed} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input} ${darkMode ? 'bg-surface-3 text-fg' : 'bg-surface-2 text-fg'}`} readOnly />
                       </div>
                       <div>
-                        <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price</label>
-                        <input type="number" name="planPrice" value={invoiceForm.planPrice} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input} ${darkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-100 text-gray-900'}`} step="0.01" readOnly />
+                        <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>Price</label>
+                        <input type="number" name="planPrice" value={invoiceForm.planPrice} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input} ${darkMode ? 'bg-surface-3 text-fg' : 'bg-surface-2 text-fg'}`} step="0.01" readOnly />
                       </div>
                       <div>
-                        <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Type</label>
-                        <input type="text" name="connectionType" value={invoiceForm.connectionType} className={`w-full p-2 border rounded ${themeClasses.input} ${darkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-100 text-gray-900'}`} readOnly />
+                        <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>Type</label>
+                        <input type="text" name="connectionType" value={invoiceForm.connectionType} className={`w-full p-2 border rounded ${themeClasses.input} ${darkMode ? 'bg-surface-3 text-fg' : 'bg-surface-2 text-fg'}`} readOnly />
                       </div>
                     </div>
                     {invoiceForm.features && invoiceForm.features.length > 0 && (
-                      <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-blue-50'} border ${darkMode ? 'border-gray-700' : 'border-blue-200'}`}>
-                        <p className={`text-xs font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Plan Features:</p>
+                      <div className={`p-3 rounded-lg ${darkMode ? 'bg-surface-3' : 'bg-blue-50'} border ${darkMode ? 'border-edge' : 'border-blue-200'}`}>
+                        <p className={`text-xs font-medium mb-2 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>Plan Features:</p>
                         <ul className="flex flex-wrap gap-2">
                           {invoiceForm.features.map((feature, idx) => (
-                            <li key={idx} className={`text-xs px-2 py-1 rounded-full ${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-blue-100 text-blue-700'}`}>
+                            <li key={idx} className={`text-xs px-2 py-1 rounded-full ${darkMode ? 'bg-surface-3 text-fg-2' : 'bg-blue-100 text-blue-700'}`}>
                               ✓ {feature}
                             </li>
                           ))}
@@ -2114,11 +2114,11 @@ Price: Ksh 2999`}
               {/* Tax & Discount */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Tax Rate (%)</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Tax Rate (%)</label>
                   <input type="number" name="taxRate" value={invoiceForm.taxRate} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} step="0.01" min="0" />
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Discount Type</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Discount Type</label>
                   <select name="discountType" value={invoiceForm.discountType} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`}>
                     <option value="none">No Discount</option>
                     <option value="percentage">Percentage (%)</option>
@@ -2126,7 +2126,7 @@ Price: Ksh 2999`}
                   </select>
                 </div>
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Discount Value</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-2' : 'text-fg-2'}`}>Discount Value</label>
                   <input type="number" name="discount" value={invoiceForm.discount} onChange={handleInputChange} className={`w-full p-2 border rounded ${themeClasses.input}`} step="0.01" min="0" />
                 </div>
               </div>
@@ -2135,11 +2135,11 @@ Price: Ksh 2999`}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="text-lg font-medium">Invoice Items</h4>
-                  <button onClick={addItem} className={`px-3 py-1 text-sm rounded ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>+ Add Item</button>
+                  <button onClick={addItem} className={`px-3 py-1 text-sm rounded ${darkMode ? 'bg-surface-3' : 'bg-surface-3'}`}>+ Add Item</button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-800">
+                  <table className="min-w-full divide-y divide-edge dark:divide-edge">
+                    <thead className="bg-surface-2 dark:bg-surface-3">
                       <tr>
                         <th className="px-4 py-2 text-left text-xs font-medium">Description</th>
                         <th className="px-4 py-2 text-left text-xs font-medium w-20">Qty</th>
@@ -2195,7 +2195,7 @@ Price: Ksh 2999`}
                   </div>
                 </div>
                 <div>
-                  <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <div className={`p-4 rounded-lg ${darkMode ? 'bg-surface-3' : 'bg-surface-2'} border ${darkMode ? 'border-edge' : 'border-edge'}`}>
                     <h4 className="text-lg font-medium mb-3">Invoice Summary</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between"><span>Subtotal:</span><span>Ksh {formatPrice(invoiceForm.subtotal)}</span></div>
@@ -2238,8 +2238,8 @@ Price: Ksh 2999`}
               )}
               
               <div className="flex justify-end gap-3 mt-8 pt-4 border-t">
-                <button onClick={() => { setShowCreateModal(false); setEditingInvoice(null); resetForm(); }} className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>Cancel</button>
-                <button onClick={editingInvoice ? updateInvoice : createInvoice} className="px-6 py-2 rounded-lg bg-[#003366] text-white hover:bg-[#002244] transition-colors">
+                <button onClick={() => { setShowCreateModal(false); setEditingInvoice(null); resetForm(); }} className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-surface-3' : 'bg-surface-3'}`}>Cancel</button>
+                <button onClick={editingInvoice ? updateInvoice : createInvoice} className="px-6 py-2 rounded-lg bg-brand text-white hover:bg-[#002244] transition-colors">
                   {editingInvoice ? 'Update Invoice' : 'Create Invoice'}
                 </button>
               </div>
@@ -2251,10 +2251,10 @@ Price: Ksh 2999`}
       {/* Plan Selection Modal */}
       {showPlanSelection && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className={`${themeClasses.card} rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
+          <div className={`${themeClasses.card} rounded-md shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
             <div className="flex justify-between items-center border-b p-4">
               <h3 className="text-xl font-semibold">Select Internet Plan</h3>
-              <button onClick={() => setShowPlanSelection(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button onClick={() => setShowPlanSelection(false)} className="p-2 rounded-full hover:bg-surface-2 dark:hover:bg-surface-3">
                 <X size={20} />
               </button>
             </div>
@@ -2263,15 +2263,15 @@ Price: Ksh 2999`}
                 {WIFI_PLANS.map((plan) => (
                   <div
                     key={plan.id}
-                    className={`border rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg ${
+                    className={`border rounded-md p-4 cursor-pointer transition-all hover:shadow-lg ${
                       plan.popular ? 'border-[#FFCC00] ring-2 ring-[#FFCC00]' : ''
-                    } ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+                    } ${darkMode ? 'bg-surface-3 border-edge' : 'bg-white border-edge'}`}
                     onClick={() => selectPlan(plan)}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="text-lg font-bold">{plan.name}</h4>
-                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{plan.speed}</p>
+                        <p className={`text-sm ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>{plan.speed}</p>
                       </div>
                       {plan.popular && (
                         <span className="px-2 py-1 text-xs font-bold bg-[#FFCC00] text-black rounded-full">POPULAR</span>
@@ -2279,7 +2279,7 @@ Price: Ksh 2999`}
                     </div>
                     <div className="mb-4">
                       <div className="text-2xl font-bold text-[#003366]">
-                        Ksh {plan.price}<span className="text-sm font-normal text-gray-500">/month</span>
+                        Ksh {plan.price}<span className="text-sm font-normal text-fg-4">/month</span>
                       </div>
                     </div>
                     <ul className="space-y-2 mb-4">
@@ -2289,7 +2289,7 @@ Price: Ksh 2999`}
                         </li>
                       ))}
                     </ul>
-                    <button className={`w-full py-2 rounded-lg font-medium ${darkMode ? 'bg-[#003366] text-white' : 'bg-[#003366] text-white'}`}>
+                    <button className={`w-full py-2 rounded-lg font-medium ${darkMode ? 'bg-brand text-white' : 'bg-brand text-white'}`}>
                       Select Plan
                     </button>
                   </div>
@@ -2303,18 +2303,18 @@ Price: Ksh 2999`}
       {/* View Invoice Modal */}
       {showInvoiceModal && selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className={`${themeClasses.card} rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className={`${themeClasses.card} rounded-md shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border ${darkMode ? 'border-edge' : 'border-edge'}`}>
             {/* Header with Logo and Title */}
-            <div className={`relative ${darkMode ? 'bg-gradient-to-r from-gray-900 to-gray-800' : 'bg-gradient-to-r from-[#003366] to-[#004488]'} p-8 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`relative ${darkMode ? 'bg-gradient-to-r from-gray-900 to-gray-800' : 'bg-gradient-to-r from-[#003366] to-[#004488]'} p-8 border-b ${darkMode ? 'border-edge' : 'border-edge'}`}>
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
                   <img src="/oppo.jpg" alt="OPTIMAS Logo" className="h-16 w-16 rounded-lg shadow-lg object-cover" />
                   <div>
                     <h2 className="text-3xl font-bold text-white">{COMPANY_INFO.name}</h2>
-                    <p className="text-gray-200 text-sm mt-1">{COMPANY_INFO.tagline}</p>
+                    <p className="text-fg-2 text-sm mt-1">{COMPANY_INFO.tagline}</p>
                   </div>
                 </div>
-                <button onClick={() => setShowInvoiceModal(false)} className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-white hover:bg-opacity-20 text-white'}`}>
+                <button onClick={() => setShowInvoiceModal(false)} className={`p-2 rounded-lg ${darkMode ? 'hover:bg-surface-3 text-fg-3' : 'hover:bg-white hover:bg-opacity-20 text-white'}`}>
                   <X size={24} />
                 </button>
               </div>
@@ -2340,16 +2340,16 @@ Price: Ksh 2999`}
             <div className="p-8 space-y-8">
               {/* Invoice Number and Dates */}
               <div className="grid grid-cols-3 gap-6">
-                <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-blue-50 to-blue-100'} border ${darkMode ? 'border-gray-700' : 'border-blue-200'}`}>
-                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-blue-600'}`}>Invoice Number</p>
+                <div className={`p-4 rounded-md ${darkMode ? 'bg-surface-3' : 'bg-gradient-to-br from-blue-50 to-blue-100'} border ${darkMode ? 'border-edge' : 'border-blue-200'}`}>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-fg-4' : 'text-blue-600'}`}>Invoice Number</p>
                   <p className="text-xl font-bold mt-2">{selectedInvoice.invoiceNumber || selectedInvoice._id.substring(0,8)}</p>
                 </div>
-                <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-purple-50 to-purple-100'} border ${darkMode ? 'border-gray-700' : 'border-purple-200'}`}>
-                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-purple-600'}`}>Invoice Date</p>
+                <div className={`p-4 rounded-md ${darkMode ? 'bg-surface-3' : 'bg-gradient-to-br from-purple-50 to-purple-100'} border ${darkMode ? 'border-edge' : 'border-purple-200'}`}>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-fg-4' : 'text-purple-600'}`}>Invoice Date</p>
                   <p className="text-lg font-semibold mt-2">{new Date(selectedInvoice.invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 </div>
-                <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-orange-50 to-orange-100'} border ${darkMode ? 'border-gray-700' : 'border-orange-200'}`}>
-                  <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-orange-600'}`}>Due Date</p>
+                <div className={`p-4 rounded-md ${darkMode ? 'bg-surface-3' : 'bg-gradient-to-br from-orange-50 to-orange-100'} border ${darkMode ? 'border-edge' : 'border-orange-200'}`}>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-fg-4' : 'text-orange-600'}`}>Due Date</p>
                   <p className="text-lg font-semibold mt-2">{new Date(selectedInvoice.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 </div>
               </div>
@@ -2357,30 +2357,30 @@ Price: Ksh 2999`}
               {/* Customer and Invoice Details */}
               <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <h3 className={`text-sm font-bold uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Bill To</h3>
+                  <h3 className={`text-sm font-bold uppercase tracking-wide ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>Bill To</h3>
                   <div className="mt-3 space-y-2">
                     <p className="text-lg font-semibold">{selectedInvoice.customerName}</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedInvoice.customerEmail}</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedInvoice.customerPhone}</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedInvoice.customerLocation}</p>
+                    <p className={`text-sm ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>{selectedInvoice.customerEmail}</p>
+                    <p className={`text-sm ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>{selectedInvoice.customerPhone}</p>
+                    <p className={`text-sm ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>{selectedInvoice.customerLocation}</p>
                   </div>
                 </div>
                 <div>
-                  <h3 className={`text-sm font-bold uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Plan & Account</h3>
+                  <h3 className={`text-sm font-bold uppercase tracking-wide ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>Plan & Account</h3>
                   <div className="mt-3 space-y-2">
                     <p className="text-lg font-semibold text-[#003366]">{selectedInvoice.planName}</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Speed: <span className="font-semibold">{selectedInvoice.planSpeed}</span></p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Account: <span className="font-bold text-orange-600">{selectedInvoice.clientAccountNumber || 'N/A'}</span></p>
+                    <p className={`text-sm ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>Speed: <span className="font-semibold">{selectedInvoice.planSpeed}</span></p>
+                    <p className={`text-sm ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>Account: <span className="font-bold text-orange-600">{selectedInvoice.clientAccountNumber || 'N/A'}</span></p>
                   </div>
                 </div>
               </div>
 
               {/* Items Table */}
               <div>
-                <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Invoice Items</h3>
-                <div className={`rounded-xl overflow-hidden border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>Invoice Items</h3>
+                <div className={`rounded-md overflow-hidden border ${darkMode ? 'border-edge' : 'border-edge'}`}>
                   <table className="w-full">
-                    <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                    <thead className={`${darkMode ? 'bg-surface-3' : 'bg-surface-2'}`}>
                       <tr>
                         <th className="px-6 py-3 text-left text-sm font-semibold">Description</th>
                         <th className="px-6 py-3 text-center text-sm font-semibold">Qty</th>
@@ -2388,9 +2388,9 @@ Price: Ksh 2999`}
                         <th className="px-6 py-3 text-right text-sm font-semibold">Amount</th>
                       </tr>
                     </thead>
-                    <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                    <tbody className={`divide-y ${darkMode ? 'divide-edge' : 'divide-edge'}`}>
                       {selectedInvoice.items?.map((item, idx) => (
-                        <tr key={idx} className={`${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
+                        <tr key={idx} className={`${darkMode ? 'hover:bg-surface-3' : 'hover:bg-surface-2'}`}>
                           <td className="px-4 py-4 text-sm">{item.description}</td>
                           <td className="px-4 py-4 text-sm text-center font-medium">{item.quantity || 1}</td>
                           <td className="px-4 py-4 text-sm text-right">Ksh {formatPrice(item.unitPrice)}</td>
@@ -2405,8 +2405,8 @@ Price: Ksh 2999`}
               {/* Summary Section */}
               <div className="grid grid-cols-2 gap-8">
                 <div></div>
-                <div className={`rounded-xl p-6 ${darkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-gray-50 to-gray-100'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Summary</h3>
+                <div className={`rounded-md p-6 ${darkMode ? 'bg-surface-3' : 'bg-gradient-to-br from-gray-50 to-gray-100'} border ${darkMode ? 'border-edge' : 'border-edge'}`}>
+                  <h3 className={`text-sm font-bold uppercase tracking-wide mb-4 ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>Summary</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span>Subtotal</span>
@@ -2424,7 +2424,7 @@ Price: Ksh 2999`}
                         <span className="font-medium">-Ksh {formatPrice(selectedInvoice.discountType === 'percentage' ? (selectedInvoice.subtotal * selectedInvoice.discount / 100) : selectedInvoice.discount)}</span>
                       </div>
                     )}
-                    <div className={`border-t pt-3 flex justify-between ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+                    <div className={`border-t pt-3 flex justify-between ${darkMode ? 'border-edge' : 'border-edge-2'}`}>
                       <span className="font-bold">Total Amount</span>
                       <span className="text-xl font-bold text-[#003366]">Ksh {formatPrice(selectedInvoice.totalAmount)}</span>
                     </div>
@@ -2432,7 +2432,7 @@ Price: Ksh 2999`}
                       <span>Amount Paid</span>
                       <span className="font-medium text-green-600 dark:text-green-400">Ksh {formatPrice(selectedInvoice.amountPaid)}</span>
                     </div>
-                    <div className={`border-t pt-3 flex justify-between ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+                    <div className={`border-t pt-3 flex justify-between ${darkMode ? 'border-edge' : 'border-edge-2'}`}>
                       <span className="font-bold">Balance Due</span>
                       <span className={`text-lg font-bold ${selectedInvoice.balanceDue > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                         Ksh {formatPrice(selectedInvoice.balanceDue)}
@@ -2443,7 +2443,7 @@ Price: Ksh 2999`}
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-wrap gap-3 pt-6 border-t border-edge dark:border-edge">
                 <button
                   onClick={() => downloadPDFHandler(selectedInvoice)}
                   disabled={generatingPDF === selectedInvoice._id}
@@ -2477,19 +2477,19 @@ Price: Ksh 2999`}
       {/* ✅ COMPANY SETTINGS MODAL - Editable by Admin */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className={`${themeClasses.card} rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl`}>
-            <div className={`sticky top-0 z-10 ${darkMode ? 'bg-gray-900' : 'bg-white'} px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex justify-between items-center`}>
+          <div className={`${themeClasses.card} rounded-md w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl`}>
+            <div className={`sticky top-0 z-10 ${darkMode ? 'bg-surface' : 'bg-white'} px-6 py-4 border-b ${darkMode ? 'border-edge' : 'border-edge'} flex justify-between items-center`}>
               <div>
-                <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+                <h3 className="text-[16px] font-medium text-fg">
                   ⚙️ Company & Billing Settings
                 </h3>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-sm ${darkMode ? 'text-fg-4' : 'text-fg-3'}`}>
                   Edit paybill, bank details, and company info for invoices & receipts
                 </p>
               </div>
               <button
                 onClick={() => setShowSettingsModal(false)}
-                className={`p-2 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                className={`p-2 rounded-full ${darkMode ? 'hover:bg-surface-3' : 'hover:bg-surface-2'}`}
               >
                 <X size={20} />
               </button>
@@ -2497,104 +2497,104 @@ Price: Ksh 2999`}
 
             <div className="p-6 space-y-6">
               {/* Company Information */}
-              <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800/50' : 'bg-gradient-to-br from-blue-50 to-indigo-50'} border ${darkMode ? 'border-gray-700' : 'border-blue-200'}`}>
+              <div className={`p-4 rounded-md ${darkMode ? 'bg-surface-2' : 'bg-gradient-to-br from-blue-50 to-indigo-50'} border ${darkMode ? 'border-edge' : 'border-blue-200'}`}>
                 <h4 className="font-semibold mb-4 flex items-center gap-2 text-blue-600">
                   <Building size={18} /> Company Information
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Company Name *
                     </label>
                     <input
                       type="text"
                       value={settingsForm.name}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, name: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-blue-500`}
                       placeholder="OPTIMAS NETWORK"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Tagline
                     </label>
                     <input
                       type="text"
                       value={settingsForm.tagline}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, tagline: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-blue-500`}
                       placeholder="High-Speed Internet Solutions"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Email
                     </label>
                     <input
                       type="email"
                       value={settingsForm.email}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, email: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-blue-500`}
                       placeholder="support@optimaswifi.co.ke"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Phone
                     </label>
                     <input
                       type="text"
                       value={settingsForm.phone}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, phone: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-blue-500`}
                       placeholder="+254 741 874 200"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Address
                     </label>
                     <input
                       type="text"
                       value={settingsForm.address}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, address: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-blue-500`}
                       placeholder="Nairobi, Kenya"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Website
                     </label>
                     <input
                       type="text"
                       value={settingsForm.website}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, website: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-blue-500`}
                       placeholder="www.optimaswifi.co.ke"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       VAT Number
                     </label>
                     <input
                       type="text"
                       value={settingsForm.vatNumber}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, vatNumber: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-blue-500`}
                       placeholder="VAT00123456"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Logo URL
                     </label>
                     <input
                       type="text"
                       value={settingsForm.logoUrl}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, logoUrl: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-blue-500`}
                       placeholder="/oppo.jpg"
                     />
                   </div>
@@ -2602,32 +2602,32 @@ Price: Ksh 2999`}
               </div>
 
               {/* M-Pesa Paybill Settings */}
-              <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800/50' : 'bg-gradient-to-br from-green-50 to-emerald-50'} border ${darkMode ? 'border-gray-700' : 'border-green-200'}`}>
+              <div className={`p-4 rounded-md ${darkMode ? 'bg-surface-2' : 'bg-gradient-to-br from-green-50 to-emerald-50'} border ${darkMode ? 'border-edge' : 'border-green-200'}`}>
                 <h4 className="font-semibold mb-4 flex items-center gap-2 text-green-600">
                   <Smartphone size={18} /> M-Pesa Paybill Settings
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Paybill Number *
                     </label>
                     <input
                       type="text"
                       value={settingsForm.paybill}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, paybill: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-green-500 text-lg font-mono`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-green-500 text-lg font-mono`}
                       placeholder="4092707"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Paybill Business Name
                     </label>
                     <input
                       type="text"
                       value={settingsForm.paybillName}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, paybillName: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-green-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-green-500`}
                       placeholder="OPTIMAS NETWORK"
                     />
                   </div>
@@ -2635,68 +2635,68 @@ Price: Ksh 2999`}
               </div>
 
               {/* Bank Details */}
-              <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800/50' : 'bg-gradient-to-br from-amber-50 to-orange-50'} border ${darkMode ? 'border-gray-700' : 'border-amber-200'}`}>
+              <div className={`p-4 rounded-md ${darkMode ? 'bg-surface-2' : 'bg-gradient-to-br from-amber-50 to-orange-50'} border ${darkMode ? 'border-edge' : 'border-amber-200'}`}>
                 <h4 className="font-semibold mb-4 flex items-center gap-2 text-amber-600">
                   <CreditCard size={18} /> Bank Account Details
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Bank Name *
                     </label>
                     <input
                       type="text"
                       value={settingsForm.bankName}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, bankName: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-amber-500`}
                       placeholder="Equity Bank"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Account Name
                     </label>
                     <input
                       type="text"
                       value={settingsForm.bankAccountName}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, bankAccountName: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-amber-500`}
                       placeholder="Optimas Network Ltd"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Account Number *
                     </label>
                     <input
                       type="text"
                       value={settingsForm.bankAccountNumber}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, bankAccountNumber: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500 font-mono`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-amber-500 font-mono`}
                       placeholder="1234567890"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       Branch
                     </label>
                     <input
                       type="text"
                       value={settingsForm.bankBranch}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, bankBranch: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-amber-500`}
                       placeholder="Nairobi Main"
                     />
                   </div>
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-fg-3' : 'text-fg-2'}`}>
                       SWIFT Code
                     </label>
                     <input
                       type="text"
                       value={settingsForm.bankSwiftCode}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, bankSwiftCode: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-amber-500 font-mono`}
+                      className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-surface-3 border-edge-2 text-white' : 'bg-white border-edge-2'} focus:ring-2 focus:ring-amber-500 font-mono`}
                       placeholder="EQBLKENA"
                     />
                   </div>
@@ -2704,22 +2704,22 @@ Price: Ksh 2999`}
               </div>
 
               {/* Preview */}
-              <div className={`p-4 rounded-xl ${darkMode ? 'bg-blue-900/20' : 'bg-blue-50'} border ${darkMode ? 'border-blue-800' : 'border-blue-200'}`}>
+              <div className={`p-4 rounded-md ${darkMode ? 'bg-blue-900/20' : 'bg-blue-50'} border ${darkMode ? 'border-blue-800' : 'border-blue-200'}`}>
                 <h4 className="font-semibold mb-3 flex items-center gap-2 text-blue-600">
                   <Eye size={18} /> Preview (How it will appear on invoices)
                 </h4>
-                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+                <div className={`p-4 rounded-lg ${darkMode ? 'bg-surface-3' : 'bg-white'} shadow-sm`}>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="font-bold text-lg">{settingsForm.name || 'Company Name'}</p>
-                      <p className="text-gray-500">{settingsForm.tagline || 'Tagline'}</p>
+                      <p className="text-fg-4">{settingsForm.tagline || 'Tagline'}</p>
                       <p className="mt-2">{settingsForm.email}</p>
                       <p>{settingsForm.phone}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">M-Pesa Paybill: <span className="text-green-600 font-mono">{settingsForm.paybill}</span></p>
-                      <p className="text-xs text-gray-500 mt-1">Bank: {settingsForm.bankName}</p>
-                      <p className="text-xs text-gray-500">A/C: {settingsForm.bankAccountNumber}</p>
+                      <p className="text-xs text-fg-4 mt-1">Bank: {settingsForm.bankName}</p>
+                      <p className="text-xs text-fg-4">A/C: {settingsForm.bankAccountNumber}</p>
                     </div>
                   </div>
                 </div>
@@ -2727,17 +2727,17 @@ Price: Ksh 2999`}
             </div>
 
             {/* Footer Actions */}
-            <div className={`sticky bottom-0 ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} px-6 py-4 border-t flex justify-end gap-3`}>
+            <div className={`sticky bottom-0 ${darkMode ? 'bg-surface border-edge' : 'bg-surface-2 border-edge'} px-6 py-4 border-t flex justify-end gap-3`}>
               <button
                 onClick={() => setShowSettingsModal(false)}
-                className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} transition-colors`}
+                className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-surface-3 hover:bg-edge-2' : 'bg-surface-3 hover:bg-edge'} transition-colors`}
               >
                 Cancel
               </button>
               <button
                 onClick={saveCompanySettings}
                 disabled={savingSettings}
-                className={`px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-colors flex items-center gap-2 ${savingSettings ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`px-6 py-2 rounded-lg bg-brand text-white hover:bg-brand-strong transition-colors flex items-center gap-2 ${savingSettings ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {savingSettings ? (
                   <>
